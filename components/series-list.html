@@ -1,0 +1,508 @@
+<template id="series-list">
+    <div class="series-list">
+        <div class="series-grid" id="seriesGrid">
+            <!-- Series cards will be dynamically inserted here -->
+        </div>
+        
+            <!-- Skeleton loading -->
+    <div id="seriesSkeleton" class="skeleton-loading" style="display: none;">
+        <!-- Skeleton cards will be populated by JavaScript -->
+    </div>
+        
+        <!-- Pagination -->
+        <div id="seriesPagination"></div>
+        
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <h3>No Series Created Yet</h3>
+            <p>Create your first racing series to get started. Once created, you can add classes, configure settings, and manage events.</p>
+        </div>
+    </div>
+
+    <style>
+        .series-list {
+            padding: 0;
+        }
+
+        .series-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            align-items: start; /* Prevent stretching */
+        }
+
+        .series-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            min-width: 0; /* Allow flex items to shrink */
+        }
+
+        .series-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .series-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .series-card-header h3 {
+            margin: 0;
+            color: var(--accent-primary);
+            font-size: 1.25rem;
+            flex: 1;
+        }
+
+        .series-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .series-card-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .series-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .series-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .meta-label {
+            color: var(--text-secondary);
+        }
+
+        .meta-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .series-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            width: 100%;
+            min-width: 0; /* Allow flex items to shrink */
+        }
+        
+        .primary-actions {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 0.5rem !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+        
+        .secondary-actions {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .series-actions .btn {
+            flex: none;
+            min-width: unset;
+            padding: 0.5rem 1rem;
+            font-size: 0.95rem;
+            border-radius: 6px;
+        }
+        
+        .btn-configure {
+            background: var(--accent-primary) !important;
+            color: white !important;
+            font-weight: 600;
+            flex: 1 !important;
+            margin-right: 0.5rem !important;
+        }
+        
+        .btn-configure:hover {
+            background: var(--accent-secondary) !important;
+        }
+        
+        .btn-view {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+            width: 100%;
+        }
+        
+        .btn-view:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+        
+        .btn-delete.btn-icon {
+            background: transparent !important;
+            color: var(--error) !important;
+            border: none !important;
+            padding: 0.5rem !important;
+            width: 2.2rem !important;
+            height: 2.2rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 50% !important;
+            transition: background 0.15s !important;
+            flex: none !important;
+            margin-left: 0 !important;
+        }
+        
+        .btn-delete.btn-icon:hover {
+            background: rgba(200, 35, 51, 0.1) !important;
+            color: #c82333 !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Force side-by-side layout for buttons */
+        .series-card .primary-actions {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            overflow: visible !important;
+        }
+        
+        .series-card .primary-actions .btn-configure {
+            flex: 1 !important;
+            white-space: nowrap !important;
+            display: inline-block !important;
+            min-width: 0 !important;
+            max-width: none !important;
+        }
+        
+        .series-card .primary-actions .btn-delete {
+            flex: none !important;
+            width: 2.2rem !important;
+            height: 2.2rem !important;
+            display: flex !important;
+        }
+        
+        /* Override any global button styles that might interfere */
+        .series-card .primary-actions .btn {
+            display: inline-block !important;
+            margin: 0 !important;
+            vertical-align: middle !important;
+            float: none !important;
+        }
+        
+        .series-card .primary-actions .btn-delete.btn-icon {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        /* Force buttons to be side by side with inline-block */
+        .series-card .primary-actions {
+            display: block !important;
+            white-space: nowrap !important;
+            font-size: 0 !important; /* Remove whitespace between inline-block elements */
+        }
+        
+        .series-card .primary-actions > * {
+            font-size: 0.95rem !important; /* Restore font size */
+            display: inline-block !important;
+            vertical-align: middle !important;
+        }
+        
+        .series-card .primary-actions .btn-configure {
+            width: calc(100% - 3rem) !important; /* Take most space minus delete button */
+            margin-right: 0.5rem !important;
+        }
+        
+        .series-card .primary-actions .btn-delete {
+            width: 2.2rem !important;
+        }
+
+        @media (max-width: 768px) {
+            .series-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .series-meta {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Keep buttons side by side even on mobile */
+            .series-actions {
+                flex-direction: column;
+            }
+            
+            .series-actions .primary-actions {
+                flex-direction: row !important;
+                gap: 0.5rem !important;
+            }
+            
+            .series-actions .btn {
+                width: auto;
+            }
+            
+            .series-actions .btn-configure {
+                flex: 1 !important;
+            }
+            
+            .series-actions .btn-delete {
+                flex: none !important;
+            }
+        }
+    </style>
+
+    <script>
+        // Pagination variables
+        let currentPage = 1;
+        const itemsPerPage = 24; // 24 series per page as requested
+        
+        // Load and display series when component is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (window.seriesManager) {
+                    loadSeriesList();
+                }
+            }, 200);
+        });
+
+        async function loadSeriesList() {
+            const container = document.getElementById('seriesGrid');
+            const emptyState = document.getElementById('emptyState');
+            const skeleton = document.getElementById('seriesSkeleton');
+            const pagination = document.getElementById('seriesPagination');
+            
+            if (!container || !window.seriesManager) return;
+            
+            // Show skeleton loading
+            showSkeletonLoading();
+            
+            // Simulate loading delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const allSeries = window.seriesManager.getAllSeries();
+            
+            hideSkeletonLoading();
+            
+            if (allSeries.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                if (pagination) pagination.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(allSeries.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentPageSeries = allSeries.slice(startIndex, endIndex);
+            
+            const seriesHtml = currentPageSeries.map(series => generateSeriesCardHtml(series)).join('');
+            container.innerHTML = seriesHtml;
+            
+            // Render pagination
+            if (pagination && totalPages > 1) {
+                pagination.style.display = 'block';
+                pagination.innerHTML = UIComponents.createPagination(
+                    currentPage, 
+                    totalPages, 
+                    allSeries.length, 
+                    itemsPerPage, 
+                    'changeSeriesPage'
+                );
+            } else if (pagination) {
+                pagination.style.display = 'none';
+            }
+        }
+
+        // Show skeleton loading
+        function showSkeletonLoading() {
+            const container = document.getElementById('seriesGrid');
+            const skeleton = document.getElementById('seriesSkeleton');
+            const pagination = document.getElementById('seriesPagination');
+            
+            if (container) container.style.display = 'none';
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(6, 'card');
+                skeleton.style.display = 'block';
+            }
+            if (pagination) pagination.style.display = 'none';
+        }
+
+        // Hide skeleton loading
+        function hideSkeletonLoading() {
+            const container = document.getElementById('seriesGrid');
+            const skeleton = document.getElementById('seriesSkeleton');
+            const pagination = document.getElementById('seriesPagination');
+            
+            if (container) container.style.display = 'grid';
+            if (skeleton) skeleton.style.display = 'none';
+            if (pagination) pagination.style.display = 'block';
+        }
+
+        // Change series page
+        function changeSeriesPage(page) {
+            if (page < 1) return;
+            
+            const allSeries = window.seriesManager.getAllSeries();
+            const totalPages = Math.ceil(allSeries.length / itemsPerPage);
+            if (page > totalPages) return;
+            
+            currentPage = page;
+            loadSeriesList();
+            
+            // Scroll to top of series list
+            const seriesList = document.querySelector('.series-list');
+            if (seriesList) {
+                seriesList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function generateSeriesCardHtml(series) {
+            const createdDate = new Date(series.createdDate || series.createdAt).toLocaleDateString();
+            
+            return `
+                <div class="series-card" data-series-id="${series.id}">
+                    <div class="series-card-header">
+                        <h3>${series.name}</h3>
+                        <span class="series-status">Active</span>
+                    </div>
+                    
+                    <div class="series-card-body">
+                        ${series.description ? `
+                            <div class="series-description">
+                                ${series.description}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="series-meta">
+                            <div class="meta-item">
+                                <span class="meta-label">Created:</span>
+                                <span class="meta-value">${createdDate}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Events:</span>
+                                <span class="meta-value">0</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Classes:</span>
+                                <span class="meta-value">0</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Participants:</span>
+                                <span class="meta-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="series-actions">
+                        <div class="primary-actions">
+                            <button class="btn btn-configure" onclick="configureSeries('${series.id}')">
+                                <i class="fas fa-cog"></i> Configure
+                            </button>
+                            <button class="btn btn-delete btn-icon" onclick="deleteSeries('${series.id}')" title="Delete Series">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="secondary-actions">
+                            <button class="btn btn-view" onclick="viewSeriesDetails('${series.id}')">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Global functions for series actions
+        window.viewSeriesDetails = function(seriesId) {
+            alert(`View details for series ${seriesId} - Feature coming soon!`);
+        };
+
+        window.deleteSeries = async function(seriesId) {
+            console.log('🔥 DELETE SERIES CALLED:', seriesId);
+            const series = window.seriesManager.getSeries(seriesId);
+            console.log('🔍 Found series:', series);
+            if (!series) return;
+            
+            console.log('🎯 Calling confirmDelete with:', series.name);
+            console.log('🔧 confirmDelete function exists:', typeof window.confirmDelete);
+            
+            window.confirmDelete(series.name, async () => {
+                console.log('✅ User confirmed series delete, proceeding...');
+                try {
+                    await window.seriesManager.deleteSeries(seriesId);
+                    loadSeriesList();
+                    
+                    // Update stats
+                    if (window.loadSeriesStats) {
+                        window.loadSeriesStats();
+                    }
+                    
+                    // Show success toast if available
+                    if (window.showToast) {
+                        window.showToast(`Series "${series.name}" deleted successfully`, 'success');
+                    }
+                    
+                    console.log(`Series "${series.name}" deleted successfully`);
+                } catch (error) {
+                    console.error('Error deleting series:', error);
+                    if (window.showToast) {
+                        window.showToast('Error deleting series. Please try again.', 'error');
+                    }
+                    throw error; // Re-throw to show error in modal
+                }
+            });
+        };
+
+        // Make functions available globally
+        window.loadSeriesList = loadSeriesList;
+        window.changeSeriesPage = changeSeriesPage;
+    </script>
+</template> 

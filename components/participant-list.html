@@ -1,0 +1,1876 @@
+<div class="participant-list">
+    <div class="list-header">
+        <h3>Registered Participants</h3>
+        <div class="component-status" id="componentStatus" style="color: orange; font-size: 0.9rem; margin-bottom: 0.5rem;">
+            🔄 Loading participant list component...
+        </div>
+        <div class="list-filters">
+            <input type="text" class="form-control" placeholder="Search participants by name, number, sled..." id="participantSearch">
+            
+            <!-- Event Combo Box -->
+            <div class="combo-box-container">
+                <input type="text" class="form-control combo-input" id="eventFilterInput" placeholder="Search events..." autocomplete="off">
+                <div class="combo-dropdown" id="eventFilterDropdown" style="display: none;">
+                    <div class="combo-option" data-value="">All Events</div>
+                </div>
+                <input type="hidden" id="eventFilter" value="">
+            </div>
+            
+            <!-- Class Combo Box -->
+            <div class="combo-box-container">
+                <input type="text" class="form-control combo-input" id="classFilterInput" placeholder="Search classes..." autocomplete="off">
+                <div class="combo-dropdown" id="classFilterDropdown" style="display: none;">
+                    <div class="combo-option" data-value="">All Classes</div>
+                </div>
+                <input type="hidden" id="classFilter" value="">
+            </div>
+            
+            <select class="form-control" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+            <button class="btn btn-secondary" onclick="clearFilters()" title="Clear all filters">
+                <i class="fas fa-filter-circle-xmark"></i> Clear
+            </button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card">
+            <h4>Total Participants</h4>
+            <div class="stat-value" id="totalCount">0</div>
+        </div>
+
+
+    </div>
+
+    <div class="table-wrapper">
+        <table id="participantsTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Racing #</th>
+                    <th>Classes</th>
+                    <th>Sled Info</th>
+                    <th>Total Fee</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="participantsTableBody"></tbody>
+        </table>
+        
+            <!-- Skeleton loading -->
+    <div id="participantsSkeleton" class="skeleton-loading" style="display: none;">
+        <!-- Skeleton cards will be populated by JavaScript -->
+    </div>
+        
+        <!-- Pagination -->
+        <div id="participantsPagination"></div>
+    </div>
+</div>
+
+<style>
+.participant-list {
+    padding: 1rem;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.list-filters {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Combo Box Styles */
+.combo-box-container {
+    position: relative;
+    min-width: 200px;
+}
+
+.combo-input {
+    width: 100%;
+    cursor: pointer;
+}
+
+.combo-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.combo-option {
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.combo-option:last-child {
+    border-bottom: none;
+}
+
+.combo-option:hover {
+    background: var(--bg-secondary);
+}
+
+.combo-option.selected {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.combo-option.highlighted {
+    background: var(--bg-tertiary, var(--bg-secondary));
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+}
+
+.table-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--bg-primary);
+}
+
+th {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+tr:hover {
+    background: var(--bg-primary);
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.status-rejected { background-color: var(--error); }
+
+
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    margin-right: 0.25rem;
+}
+
+.btn-sm:last-child {
+    margin-right: 0;
+}
+
+@media (max-width: 768px) {
+    .list-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .list-filters {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .combo-box-container {
+        min-width: auto;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+}
+</style>
+
+<script>
+// Prevent multiple script executions
+if (!window.participantListScriptLoaded) {
+    window.participantListScriptLoaded = true;
+
+// Global variables for the participant list (only declare if not already declared)
+if (typeof window.allParticipants === 'undefined') {
+    window.allParticipants = [];
+    window.filteredParticipants = [];
+    window.allEvents = [];
+}
+
+// Use existing variables or create new ones
+var allParticipants = window.allParticipants;
+var filteredParticipants = window.filteredParticipants;
+var allEvents = window.allEvents;
+
+// Pagination variables (only declare if not already declared)
+if (typeof window.participantListCurrentPage === 'undefined') {
+    window.participantListCurrentPage = 1;
+}
+var currentPage = window.participantListCurrentPage;
+
+// Only declare itemsPerPage if not already declared
+if (typeof window.participantListItemsPerPage === 'undefined') {
+    window.participantListItemsPerPage = 40; // 40 participants per page as requested
+}
+var itemsPerPage = window.participantListItemsPerPage;
+
+// Initialize the participant list
+function initializeParticipantList() {
+    // Prevent multiple initializations
+    if (window.participantListInitialized) {
+        console.log('🚫 Participant list already initialized, skipping');
+        return;
+    }
+    
+    console.log('🔄 Initializing participant list component...');
+    console.log('📊 DataManager available:', !!window.dataManager);
+    console.log('📊 DataManager methods:', window.dataManager ? Object.keys(window.dataManager) : 'N/A');
+    
+    // Check if DataManager is properly loaded
+    if (!window.dataManager || typeof window.dataManager.getParticipants !== 'function') {
+        console.warn('⚠️ DataManager not ready, retrying in 500ms...');
+        setTimeout(initializeParticipantList, 500);
+        return;
+    }
+    
+    // Verify we actually have data before proceeding
+    const testParticipants = window.dataManager.getParticipantsArray();
+    const testEvents = window.dataManager.getEventsArray();
+    console.log('🔍 Pre-init data check - Participants:', testParticipants?.length, 'Events:', testEvents?.length);
+    
+    // Initialize even with empty data - don't retry
+    if ((!testParticipants || testParticipants.length === 0) && (!testEvents || testEvents.length === 0)) {
+        console.log('ℹ️ DataManager has no data yet, but initializing component anyway');
+    }
+    
+    window.participantListInitialized = true;
+    
+    // Load data first
+    loadParticipantData();
+    
+    // Set up filters after data is loaded
+    setupParticipantFilters();
+    
+    // Load dropdown options after data is available
+    loadEventOptions();
+    loadClassOptions();
+    
+    // Set up combo box functionality
+    setupComboBoxes();
+    
+    console.log('✅ Participant list initialization complete');
+    
+    // Update status indicator
+    const statusElement = document.getElementById('componentStatus');
+    if (statusElement) {
+        statusElement.innerHTML = '✅ Component ready - Search and filters active';
+        statusElement.style.color = 'green';
+        
+        // Hide status after 3 seconds
+        setTimeout(() => {
+            statusElement.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// Load all participant data
+async function loadParticipantData() {
+    try {
+        console.log('📦 Loading participant data...');
+        console.log('🔗 DataManager:', !!window.dataManager);
+        
+        // Show skeleton loading
+        showSkeletonLoading();
+        
+        if (!window.dataManager) {
+            console.error('❌ DataManager not available');
+            allParticipants = window.allParticipants = [];
+            allEvents = window.allEvents = [];
+            filteredParticipants = window.filteredParticipants = [];
+            hideSkeletonLoading();
+            return;
+        }
+        
+        // Simulate loading delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Get data from DataManager - use array methods for component compatibility
+        allParticipants = window.allParticipants = window.dataManager.getParticipantsArray() || [];
+        allEvents = window.allEvents = window.dataManager.getEventsArray() || [];
+        filteredParticipants = window.filteredParticipants = [...allParticipants];
+        
+        console.log('📋 Loaded participants:', allParticipants.length);
+        console.log('📅 Loaded events:', allEvents.length);
+        
+        // Log sample data for debugging
+        if (allParticipants.length > 0) {
+            console.log('👤 Sample participant:', allParticipants[0]);
+        }
+        if (allEvents.length > 0) {
+            console.log('📅 Sample event:', allEvents[0]);
+        }
+        
+        hideSkeletonLoading();
+        updateParticipantStats();
+        renderParticipantTable();
+    } catch (error) {
+        console.error('❌ Error loading participant data:', error);
+        allParticipants = window.allParticipants = [];
+        allEvents = window.allEvents = [];
+        filteredParticipants = window.filteredParticipants = [];
+        hideSkeletonLoading();
+    }
+}
+
+// Show skeleton loading
+function showSkeletonLoading() {
+    const tableBody = document.getElementById('participantsTableBody');
+    const skeleton = document.getElementById('participantsSkeleton');
+    const pagination = document.getElementById('participantsPagination');
+    
+    if (tableBody) tableBody.style.display = 'none';
+    if (skeleton) {
+        skeleton.innerHTML = UIComponents.createSkeletonCards(8, 'table');
+        skeleton.style.display = 'block';
+    }
+    if (pagination) pagination.style.display = 'none';
+}
+
+// Hide skeleton loading
+function hideSkeletonLoading() {
+    const tableBody = document.getElementById('participantsTableBody');
+    const skeleton = document.getElementById('participantsSkeleton');
+    const pagination = document.getElementById('participantsPagination');
+    
+    if (tableBody) tableBody.style.display = 'table-row-group';
+    if (skeleton) skeleton.style.display = 'none';
+    if (pagination) pagination.style.display = 'block';
+}
+
+// Setup event listeners for filters
+function setupParticipantFilters() {
+    const searchInput = document.getElementById('participantSearch');
+    const eventFilter = document.getElementById('eventFilter');
+    const classFilter = document.getElementById('classFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    console.log('🔍 Setting up filters...');
+    console.log('   - Search input found:', !!searchInput);
+    console.log('   - Event filter found:', !!eventFilter);
+    console.log('   - Class filter found:', !!classFilter);
+    console.log('   - Status filter found:', !!statusFilter);
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', applyParticipantFilters);
+        console.log('   ✅ Search input listener attached');
+    }
+    
+    if (eventFilter) {
+        eventFilter.addEventListener('change', applyParticipantFilters);
+        console.log('   ✅ Event filter listener attached');
+    }
+    
+    if (classFilter) {
+        classFilter.addEventListener('change', applyParticipantFilters);
+        console.log('   ✅ Class filter listener attached');
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', applyParticipantFilters);
+        console.log('   ✅ Status filter listener attached');
+    }
+}
+
+// Load event options for the filter combo box
+function loadEventOptions() {
+    console.log('🔄 Loading event options...');
+    const eventFilterDropdown = document.getElementById('eventFilterDropdown');
+    console.log('📋 Event filter dropdown found:', !!eventFilterDropdown);
+    console.log('📊 Available events:', allEvents.length);
+    
+    if (!eventFilterDropdown) {
+        console.error('❌ Event filter dropdown not found');
+        return;
+    }
+    
+    if (allEvents.length === 0) {
+        console.warn('⚠️ No events available for dropdown');
+        eventFilterDropdown.innerHTML = '<div class="combo-option" data-value="">No Events Available</div>';
+        return;
+    }
+    
+    const eventOptions = allEvents.map(event => 
+        `<div class="combo-option" data-value="${event.id}">${event.name} - ${new Date(event.date).toLocaleDateString()}</div>`
+    ).join('');
+    
+    eventFilterDropdown.innerHTML = '<div class="combo-option" data-value="">All Events</div>' + eventOptions;
+    console.log('✅ Event combo box populated with', allEvents.length, 'events');
+}
+
+// Load class options for the filter combo box
+function loadClassOptions() {
+    console.log('🔄 Loading class options...');
+    const classFilterDropdown = document.getElementById('classFilterDropdown');
+    console.log('📋 Class filter dropdown found:', !!classFilterDropdown);
+    console.log('👥 Available participants:', allParticipants.length);
+    
+    if (!classFilterDropdown) {
+        console.error('❌ Class filter dropdown not found');
+        return;
+    }
+    
+    // Get unique classes from all participants
+    const allClasses = new Set();
+    allParticipants.forEach(participant => {
+        const classes = participant.selectedClasses || [];
+        classes.forEach(className => allClasses.add(className));
+    });
+    
+    console.log('🏷️ Unique classes found:', Array.from(allClasses));
+    
+    const classOptions = Array.from(allClasses).sort().map(className =>
+        `<div class="combo-option" data-value="${className}">${className}</div>`
+    ).join('');
+    
+    classFilterDropdown.innerHTML = '<div class="combo-option" data-value="">All Classes</div>' + classOptions;
+    console.log('✅ Class combo box populated with', allClasses.size, 'classes');
+}
+
+// Set up combo box functionality
+function setupComboBoxes() {
+    console.log('🔧 Setting up combo boxes...');
+    
+    // Event combo box
+    const eventInput = document.getElementById('eventFilterInput');
+    const eventDropdown = document.getElementById('eventFilterDropdown');
+    const eventHidden = document.getElementById('eventFilter');
+    
+    if (eventInput && eventDropdown && eventHidden) {
+        setupComboBox(eventInput, eventDropdown, eventHidden, 'All Events');
+    }
+    
+    // Class combo box
+    const classInput = document.getElementById('classFilterInput');
+    const classDropdown = document.getElementById('classFilterDropdown');
+    const classHidden = document.getElementById('classFilter');
+    
+    if (classInput && classDropdown && classHidden) {
+        setupComboBox(classInput, classDropdown, classHidden, 'All Classes');
+    }
+}
+
+// Set up individual combo box
+function setupComboBox(input, dropdown, hiddenInput, defaultText) {
+    let selectedValue = '';
+    let selectedText = defaultText;
+    
+    // Show dropdown on input focus
+    input.addEventListener('focus', () => {
+        dropdown.style.display = 'block';
+        // Clear the input text to show all options immediately
+        input.value = '';
+        filterComboOptions(input, dropdown);
+    });
+    
+    // Handle input changes for filtering
+    input.addEventListener('input', () => {
+        dropdown.style.display = 'block';
+        filterComboOptions(input, dropdown);
+    });
+    
+    // Handle option selection
+    dropdown.addEventListener('click', (e) => {
+        if (e.target.classList.contains('combo-option')) {
+            const value = e.target.dataset.value;
+            const text = e.target.textContent;
+            
+            selectedValue = value;
+            selectedText = text;
+            
+            // Only set text if it's not the "All" option
+            if (value !== '') {
+                input.value = text;
+            } else {
+                input.value = '';
+            }
+            hiddenInput.value = value;
+            dropdown.style.display = 'none';
+            
+            // Update visual selection
+            updateComboSelection(dropdown, value);
+            
+            // Apply filters
+            applyParticipantFilters();
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Handle keyboard navigation
+    input.addEventListener('keydown', (e) => {
+        const options = dropdown.querySelectorAll('.combo-option');
+        const highlighted = dropdown.querySelector('.combo-option.highlighted');
+        
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                if (!highlighted) {
+                    options[0]?.classList.add('highlighted');
+                } else {
+                    const nextIndex = Array.from(options).indexOf(highlighted) + 1;
+                    if (nextIndex < options.length) {
+                        highlighted.classList.remove('highlighted');
+                        options[nextIndex].classList.add('highlighted');
+                    }
+                }
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                if (highlighted) {
+                    const prevIndex = Array.from(options).indexOf(highlighted) - 1;
+                    if (prevIndex >= 0) {
+                        highlighted.classList.remove('highlighted');
+                        options[prevIndex].classList.add('highlighted');
+                    }
+                }
+                break;
+                
+            case 'Enter':
+                e.preventDefault();
+                if (highlighted) {
+                    const value = highlighted.dataset.value;
+                    const text = highlighted.textContent;
+                    
+                    selectedValue = value;
+                    selectedText = text;
+                    
+                    // Only set text if it's not the "All" option
+                    if (value !== '') {
+                        input.value = text;
+                    } else {
+                        input.value = '';
+                    }
+                    hiddenInput.value = value;
+                    dropdown.style.display = 'none';
+                    
+                    updateComboSelection(dropdown, value);
+                    applyParticipantFilters();
+                }
+                break;
+                
+            case 'Escape':
+                dropdown.style.display = 'none';
+                break;
+        }
+    });
+}
+
+// Filter combo box options based on input
+function filterComboOptions(input, dropdown) {
+    const searchTerm = input.value.toLowerCase();
+    const options = dropdown.querySelectorAll('.combo-option');
+    
+    options.forEach(option => {
+        const text = option.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            option.style.display = 'block';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Remove any existing highlights
+    dropdown.querySelectorAll('.combo-option.highlighted').forEach(opt => {
+        opt.classList.remove('highlighted');
+    });
+}
+
+// Update visual selection in combo box
+function updateComboSelection(dropdown, selectedValue) {
+    dropdown.querySelectorAll('.combo-option').forEach(option => {
+        option.classList.remove('selected');
+        if (option.dataset.value === selectedValue) {
+            option.classList.add('selected');
+        }
+    });
+}
+
+// Apply all filters to participants
+function applyParticipantFilters() {
+    const searchTerm = document.getElementById('participantSearch')?.value?.toLowerCase() || '';
+    const eventFilter = document.getElementById('eventFilter')?.value || '';
+    const classFilter = document.getElementById('classFilter')?.value || '';
+    const statusFilter = document.getElementById('statusFilter')?.value || '';
+    
+    filteredParticipants = window.filteredParticipants = allParticipants.filter(participant => {
+        // Search filter
+        if (searchTerm) {
+            const searchableText = [
+                participant.name,
+                participant.nickname,
+                participant.racingNumber,
+                participant.sledMake,
+                participant.sledModel,
+                participant.sledYear,
+                participant.contact?.email,
+                participant.contactEmail
+            ].filter(Boolean).join(' ').toLowerCase();
+            
+            if (!searchableText.includes(searchTerm)) {
+                return false;
+            }
+        }
+        
+        // Event filter - check if participant is registered for the selected event
+        if (eventFilter) {
+            const selectedEvent = allEvents.find(e => e.id === eventFilter);
+            if (!selectedEvent || !selectedEvent.participants || !selectedEvent.participants.includes(participant.id)) {
+                return false;
+            }
+        }
+        
+        // Class filter
+        if (classFilter) {
+            const participantClasses = participant.selectedClasses || [];
+            if (!participantClasses.includes(classFilter)) {
+                return false;
+            }
+        }
+        
+        // Status filter
+        if (statusFilter) {
+            const participantStatus = participant.status || 'active';
+            if (participantStatus !== statusFilter) {
+                return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    // Reset to first page when filters are applied
+            currentPage = window.participantListCurrentPage = 1;
+    
+    updateParticipantStats();
+    renderParticipantTable();
+}
+
+// Clear all filters
+function clearFilters() {
+    document.getElementById('participantSearch').value = '';
+    document.getElementById('eventFilter').value = '';
+    document.getElementById('classFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    
+    // Clear combo box inputs (keep empty for better UX)
+    document.getElementById('eventFilterInput').value = '';
+    document.getElementById('classFilterInput').value = '';
+    
+    // Hide dropdowns
+    document.getElementById('eventFilterDropdown').style.display = 'none';
+    document.getElementById('classFilterDropdown').style.display = 'none';
+    
+    applyParticipantFilters();
+}
+
+// Update participant statistics
+function updateParticipantStats() {
+    console.log('📊 Updating participant stats...');
+    const totalCount = filteredParticipants.length;
+    
+    console.log('📊 Stats calculated:', { totalCount });
+    
+    const totalEl = document.getElementById('totalCount');
+    
+    console.log('📊 Stats elements found:', {
+        total: !!totalEl
+    });
+    
+    if (totalEl) totalEl.textContent = totalCount;
+    
+    
+    console.log('✅ Stats updated successfully');
+}
+
+// Render the participant table with pagination
+function renderParticipantTable() {
+    console.log('🗂️ Rendering participant table...');
+    const tbody = document.getElementById('participantsTableBody');
+    const paginationContainer = document.getElementById('participantsPagination');
+    
+    console.log('🗂️ Table body found:', !!tbody);
+    console.log('🗂️ Pagination container found:', !!paginationContainer);
+    
+    if (!tbody) {
+        console.error('❌ Table body not found!');
+        return;
+    }
+    
+    console.log('🗂️ Rendering', filteredParticipants.length, 'participants');
+    
+    if (filteredParticipants.length === 0) {
+        console.log('📋 No participants to display, showing empty message');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                    ${allParticipants.length === 0 ? 'No participants registered yet.' : 'No participants match the current filters.'}
+                </td>
+            </tr>
+        `;
+        if (paginationContainer) {
+            paginationContainer.innerHTML = '';
+        }
+        return;
+    }
+    
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredParticipants.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageParticipants = filteredParticipants.slice(startIndex, endIndex);
+    
+    console.log(`📄 Page ${currentPage} of ${totalPages} (showing ${currentPageParticipants.length} of ${filteredParticipants.length} participants)`);
+    
+    const rowsHtml = currentPageParticipants.map(participant => {
+        // Find all events this participant is registered for
+        const registeredEvents = allEvents.filter(event => 
+            event.participants && event.participants.includes(participant.id)
+        );
+        const eventName = registeredEvents.length > 0 
+            ? registeredEvents.map(e => e.name).join(', ') 
+            : 'Not registered for any event';
+        
+        const classes = participant.selectedClasses || [];
+        const classesText = classes.join(', ') || 'N/A';
+        
+        const sledInfo = [
+            participant.sledYear,
+            participant.sledMake,
+            participant.sledModel
+        ].filter(Boolean).join(' ') || 'N/A';
+        
+        const status = participant.status || 'active';
+        const statusClass = `status-${status}`;
+        
+        return `
+            <tr>
+                <td>
+                    <strong>${participant.name}</strong>
+                    ${participant.nickname ? `<br><small>(${participant.nickname})</small>` : ''}
+                </td>
+                <td>${participant.racingNumber ? `#${participant.racingNumber}` : 'N/A'}</td>
+                <td>${classesText}</td>
+                <td>${sledInfo}</td>
+                <td>${participant.totalFee ? `$${participant.totalFee.toFixed(2)}` : 'N/A'}</td>
+                <td><span class="status-badge ${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editParticipant('${participant.id}')" title="Edit Participant">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteParticipant('${participant.id}')" title="Delete Participant">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tbody.innerHTML = rowsHtml;
+    
+    // Render pagination
+    if (paginationContainer && totalPages > 1) {
+        paginationContainer.innerHTML = UIComponents.createPagination(
+            currentPage, 
+            totalPages, 
+            filteredParticipants.length, 
+            itemsPerPage, 
+            'changeParticipantPage'
+        );
+    } else if (paginationContainer) {
+        paginationContainer.innerHTML = '';
+    }
+}
+
+// Change participant page
+function changeParticipantPage(page) {
+    if (page < 1) return;
+    
+    const totalPages = Math.ceil(filteredParticipants.length / itemsPerPage);
+    if (page > totalPages) return;
+    
+            currentPage = window.participantListCurrentPage = page;
+    renderParticipantTable();
+    
+    // Scroll to top of table
+    const table = document.getElementById('participantsTable');
+    if (table) {
+        table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Edit participant function
+function editParticipant(participantId) {
+    console.log('📝 Opening edit form for participant:', participantId);
+    
+    try {
+        const participant = window.dataManager.getParticipant(participantId);
+        if (!participant) {
+            alert('Participant not found');
+            return;
+        }
+        
+        // Create edit modal HTML
+        const editModalHtml = createEditParticipantModal(participant);
+        
+        // Show the modal
+        showEditModal('Edit Participant', editModalHtml);
+        
+        // Initialize form after modal is shown
+        setTimeout(() => {
+            initializeEditForm(participant);
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error opening edit form:', error);
+        alert('Error opening edit form. Please try again.');
+    }
+}
+
+// Create edit participant modal HTML
+function createEditParticipantModal(participant) {
+    return `
+        <div class="edit-participant-modal">
+            <form id="editParticipantForm" class="edit-form">
+                <input type="hidden" id="editParticipantId" value="${participant.id}">
+                
+                <!-- Driver Information -->
+                <div class="form-section">
+                    <h3>Driver Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="editName" value="${participant.name || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nickname</label>
+                            <input type="text" class="form-control" id="editNickname" value="${participant.nickname || ''}" placeholder="Racing nickname">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Racing Number</label>
+                            <input type="number" class="form-control" id="editRacingNumber" value="${participant.racingNumber || ''}" min="1" max="999" placeholder="Preferred racing number">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth *</label>
+                            <input type="date" class="form-control" id="editDob" value="${participant.dob || ''}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sponsors -->
+                <div class="form-section">
+                    <h3>Sponsors (Optional)</h3>
+                    <div class="form-group">
+                        <label class="form-label">Add Sponsors</label>
+                        <div class="sponsor-input-container">
+                            <input type="text" class="form-control sponsor-input" id="editSponsorInput" placeholder="Enter sponsor name and press Enter">
+                            <button type="button" class="btn btn-secondary sponsor-add-btn" onclick="addEditSponsor()">Add</button>
+                        </div>
+                        <div class="sponsor-tags" id="editSponsorTags">
+                            <!-- Sponsor tags will be added here -->
+                        </div>
+                        <p class="help-text">Add multiple sponsors by typing and pressing Enter or clicking Add. Click on a sponsor tag to remove it.</p>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="form-section">
+                    <h3>Contact Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" value="${participant.contact?.email || participant.contactEmail || ''}" placeholder="your.email@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="editPhone" value="${participant.contact?.phone || participant.contactPhone || ''}" placeholder="(555) 123-4567">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Emergency Contact</label>
+                        <input type="text" class="form-control" id="editEmergencyContact" value="${participant.contact?.emergency || participant.emergencyContact || ''}" placeholder="Emergency contact name and phone">
+                    </div>
+                </div>
+
+                <!-- Racing Classes -->
+                <div class="form-section">
+                    <h3>Racing Classes</h3>
+                    <div id="editClassSelection" class="class-selection">
+                        <!-- Classes will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Event Assignment -->
+                <div class="form-section">
+                    <h3>Event Assignments</h3>
+                    <div class="form-group">
+                        <label class="form-label">Select Events (multiple selection supported)</label>
+                        <div id="editEventSelection" class="event-selection">
+                            <!-- Events will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Participant Status -->
+                <div class="form-section">
+                    <h3>Status</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" id="editStatus">
+                                <option value="active" ${(participant.status || 'active') === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="inactive" ${participant.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Fee</label>
+                            <input type="number" class="form-control" id="editTotalFee" value="${participant.totalFee || ''}" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+        
+        <style>
+            .edit-participant-modal {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            
+            .edit-form {
+                padding: 2rem;
+                overflow-y: auto;
+                flex: 1;
+                min-height: 0;
+            }
+            
+            .form-section {
+                margin-bottom: 2rem;
+                padding: 1.5rem;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                background: var(--bg-secondary);
+            }
+            
+            .form-section h3 {
+                margin: 0 0 1rem 0;
+                color: var(--text-primary);
+                font-size: 1.1rem;
+                font-weight: 600;
+            }
+            
+            .form-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+            
+            .form-label, label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+                color: var(--text-primary);
+            }
+            
+            .form-control {
+                width: 100%;
+                padding: 0.75rem;
+                border: 1px solid var(--text-secondary);
+                border-radius: 4px;
+                font-size: 1rem;
+                background-color: var(--bg-primary);
+                color: var(--text-primary);
+                transition: border-color 0.2s;
+            }
+            
+            .form-control:focus {
+                outline: none;
+                border-color: var(--accent-primary);
+            }
+            
+            .class-selection {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem;
+            }
+            
+            .class-option {
+                padding: 0.75rem;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                text-align: center;
+                background: var(--bg-primary);
+            }
+            
+            .class-option:hover {
+                border-color: var(--accent-primary);
+            }
+            
+            .class-option.selected {
+                border-color: var(--accent-primary);
+                background: var(--bg-secondary);
+            }
+            
+            .class-option h5 {
+                margin: 0 0 0.5rem 0;
+                color: var(--text-primary);
+            }
+            
+            .class-fee {
+                font-weight: 600;
+                color: var(--success);
+                margin-bottom: 0.25rem;
+            }
+            
+            .class-description {
+                font-size: 0.8rem;
+                color: var(--text-secondary);
+            }
+            
+            .event-selection {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+                max-height: 400px;
+                overflow-y: auto;
+                padding: 0.5rem;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                background: var(--bg-primary);
+            }
+            
+            .event-option {
+                padding: 1rem;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                background: var(--bg-secondary);
+                position: relative;
+            }
+            
+            .event-option:hover {
+                border-color: var(--accent-primary);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            .event-option.selected {
+                border-color: var(--accent-primary);
+                background: var(--bg-primary);
+                box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+            }
+            
+            .event-option .event-checkbox {
+                position: absolute;
+                top: 0.75rem;
+                right: 0.75rem;
+                width: 1.2rem;
+                height: 1.2rem;
+                accent-color: var(--accent-primary);
+            }
+            
+            .event-option .event-name {
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: 0.5rem;
+                padding-right: 2rem;
+            }
+            
+            .event-option .event-details {
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+                margin-bottom: 0.25rem;
+            }
+            
+            .event-option .event-status {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                display: inline-block;
+                margin-top: 0.5rem;
+            }
+            
+            .event-option .event-status.active {
+                background: var(--success);
+                color: white;
+            }
+            
+            .event-option .event-status.upcoming {
+                background: var(--warning);
+                color: white;
+            }
+            
+            .event-option .event-status.completed {
+                background: var(--text-secondary);
+                color: white;
+            }
+            
+            .no-events {
+                text-align: center;
+                color: var(--text-secondary);
+                padding: 2rem;
+                font-style: italic;
+            }
+            
+            .form-actions {
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+                margin-top: 2rem;
+                padding-top: 1rem;
+                border-top: 1px solid var(--border-color);
+            }
+            
+            .btn {
+                padding: 0.75rem 1.5rem;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 1rem;
+                font-weight: 500;
+                transition: background-color 0.2s;
+            }
+            
+            .btn-primary {
+                background: var(--accent-primary);
+                color: white;
+            }
+            
+            .btn-primary:hover {
+                background: var(--accent-secondary);
+            }
+            
+            .btn-secondary {
+                background: var(--text-secondary);
+                color: var(--bg-primary);
+            }
+            
+            .btn-secondary:hover {
+                background: var(--text-primary);
+            }
+            
+            /* Sponsor Section Styles */
+            .sponsor-input-container {
+                display: flex;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .sponsor-input {
+                flex: 1;
+            }
+
+            .sponsor-add-btn {
+                white-space: nowrap;
+                min-width: 80px;
+            }
+
+            .sponsor-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin-top: 0.5rem;
+            }
+
+            .sponsor-tag {
+                background: var(--accent-primary);
+                color: white;
+                padding: 0.5rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border: none;
+                user-select: none;
+            }
+
+            .sponsor-tag:hover {
+                background: var(--accent-secondary);
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            }
+
+            .sponsor-tag .remove-icon {
+                font-size: 1.1rem;
+                font-weight: bold;
+                line-height: 1;
+                opacity: 0.8;
+            }
+
+            .sponsor-tag:hover .remove-icon {
+                opacity: 1;
+            }
+
+            .help-text {
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+                margin-top: 0.5rem;
+                font-style: italic;
+            }
+            
+            @media (max-width: 768px) {
+                .edit-form {
+                    padding: 1rem;
+                }
+                
+                .form-row {
+                    grid-template-columns: 1fr;
+                }
+                
+                .class-selection {
+                    grid-template-columns: 1fr;
+                }
+                
+                .event-selection {
+                    grid-template-columns: 1fr;
+                }
+                
+                .sponsor-input-container {
+                    flex-direction: column;
+                }
+
+                .sponsor-add-btn {
+                    width: 100%;
+                }
+                
+                .form-actions {
+                    flex-direction: column;
+                }
+            }
+        </style>
+    `;
+}
+
+// Show edit modal
+function showEditModal(title, content) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'editModalBackdrop';
+    overlay.className = 'modal-overlay active';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        z-index: 1000;
+        overflow-y: auto;
+        padding: 1rem;
+    `;
+    
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    modalContent.style.cssText = `
+        background: var(--bg-primary);
+        border-radius: 8px;
+        width: 100%;
+        max-width: 1000px;
+        margin: 2rem auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        position: relative;
+        max-height: calc(100vh - 4rem);
+        display: flex;
+        flex-direction: column;
+    `;
+    
+    modalContent.innerHTML = `
+        <div class="modal-header" style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+            flex-shrink: 0;
+        ">
+            <h2 style="color: var(--text-primary); margin: 0; font-size: 1.5rem;">${title}</h2>
+            <button class="modal-close" onclick="closeEditModal()" style="
+                background: none;
+                border: none;
+                font-size: 2rem;
+                color: var(--text-secondary);
+                cursor: pointer;
+                padding: 0;
+                width: 2rem;
+                height: 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                transition: background-color 0.2s ease;
+            ">&times;</button>
+        </div>
+        <div class="modal-body" style="
+            padding: 0;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        ">
+            ${content}
+        </div>
+    `;
+    
+    overlay.appendChild(modalContent);
+    document.body.appendChild(overlay);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Add hover effect for close button
+    const closeBtn = modalContent.querySelector('.modal-close');
+    closeBtn.addEventListener('mouseenter', () => {
+        closeBtn.style.background = 'var(--bg-primary)';
+        closeBtn.style.color = 'var(--text-primary)';
+    });
+    closeBtn.addEventListener('mouseleave', () => {
+        closeBtn.style.background = 'none';
+        closeBtn.style.color = 'var(--text-secondary)';
+    });
+    
+    // Add responsive styles
+    if (window.innerWidth <= 768) {
+        modalContent.style.margin = '1rem';
+        modalContent.style.width = 'calc(100% - 2rem)';
+        modalContent.querySelector('.modal-header').style.padding = '1rem';
+    }
+}
+
+// Close edit modal
+window.closeEditModal = function() {
+    const backdrop = document.getElementById('editModalBackdrop');
+    if (backdrop) {
+        backdrop.remove();
+    }
+    document.body.style.overflow = '';
+};
+
+// Initialize edit form
+function initializeEditForm(participant) {
+    // Load available classes
+    loadEditClassOptions(participant);
+    
+    // Load available events
+    loadEditEventOptions(participant);
+    loadEditSponsors(participant);
+    
+    // Setup form submission
+    const form = document.getElementById('editParticipantForm');
+    if (form) {
+        form.addEventListener('submit', handleEditFormSubmit);
+    }
+    
+    // Add sponsor input event listener
+    const sponsorInput = document.getElementById('editSponsorInput');
+    if (sponsorInput) {
+        sponsorInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addEditSponsor();
+            }
+        });
+    }
+}
+
+// Load class options for editing
+function loadEditClassOptions(participant) {
+    const container = document.getElementById('editClassSelection');
+    if (!container) return;
+    
+    // Get unique classes from all events and participants
+    const allClasses = new Set();
+    
+    // Add classes from events
+    allEvents.forEach(event => {
+        if (event.classSettings) {
+            event.classSettings.forEach(cls => {
+                allClasses.add(cls.className || cls.name);
+            });
+        }
+    });
+    
+    // Add classes from all participants
+    allParticipants.forEach(p => {
+        if (p.selectedClasses) {
+            p.selectedClasses.forEach(cls => allClasses.add(cls));
+        }
+    });
+    
+    // Don't add default classes if none found - classes should come from events/series
+    if (allClasses.size === 0) {
+        console.log('No classes found from participants - classes should be configured in events/series');
+    }
+    
+    const classOptions = Array.from(allClasses).sort().map(className => {
+        const isSelected = participant.selectedClasses && participant.selectedClasses.includes(className);
+        return `
+            <div class="class-option ${isSelected ? 'selected' : ''}" data-class="${className}" onclick="toggleEditClass('${className}')">
+                <h5>${className}</h5>
+                <div class="class-fee">$50.00</div>
+                <div class="class-description">Racing class</div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = classOptions;
+}
+
+// Load event options for editing
+function loadEditEventOptions(participant) {
+    const container = document.getElementById('editEventSelection');
+    if (!container) return;
+    
+    // Get participant's current events
+    const participantEvents = [];
+    if (participant.eventId) {
+        participantEvents.push(participant.eventId);
+    }
+    
+    // Check if participant is in multiple events based on event participant lists
+    allEvents.forEach(event => {
+        if (event.participants && event.participants.includes(participant.id)) {
+            if (!participantEvents.includes(event.id)) {
+                participantEvents.push(event.id);
+            }
+        }
+    });
+    
+    if (allEvents.length === 0) {
+        container.innerHTML = '<div class="no-events">No events available for assignment.</div>';
+        return;
+    }
+    
+    const eventOptions = allEvents.map(event => {
+        const isSelected = participantEvents.includes(event.id);
+        const eventDate = event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD';
+        const eventStatus = event.status || 'active';
+        const eventLocation = event.location || 'Location TBD';
+        
+        return `
+            <div class="event-option ${isSelected ? 'selected' : ''}" data-event-id="${event.id}" onclick="toggleEditEvent('${event.id}')">
+                <input type="checkbox" class="event-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleEditEvent('${event.id}')">
+                <div class="event-name">${event.name}</div>
+                <div class="event-details">📅 ${eventDate}</div>
+                <div class="event-details">📍 ${eventLocation}</div>
+                <div class="event-status ${eventStatus}">${eventStatus.charAt(0).toUpperCase() + eventStatus.slice(1)}</div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = eventOptions;
+}
+
+// Load sponsors for editing
+function loadEditSponsors(participant) {
+    const container = document.getElementById('editSponsorTags');
+    if (!container) return;
+    
+    // Clear existing sponsors
+    container.innerHTML = '';
+    
+    // Load existing sponsors from participant data
+    const existingSponsors = participant.sponsors || [];
+    existingSponsors.forEach(sponsor => {
+        addEditSponsorTag(sponsor);
+    });
+}
+
+// Add sponsor in edit form
+window.addEditSponsor = function() {
+    const input = document.getElementById('editSponsorInput');
+    const sponsorName = input.value.trim();
+    
+    if (sponsorName) {
+        addEditSponsorTag(sponsorName);
+        input.value = '';
+        input.focus();
+    }
+};
+
+// Add sponsor tag to edit form
+function addEditSponsorTag(sponsorName) {
+    const container = document.getElementById('editSponsorTags');
+    if (!container) return;
+    
+    // Check if sponsor already exists
+    const existingTags = container.querySelectorAll('.sponsor-tag span:first-child');
+    const sponsorExists = Array.from(existingTags).some(tag => tag.textContent === sponsorName);
+    
+    if (!sponsorExists) {
+        const tag = document.createElement('div');
+        tag.className = 'sponsor-tag';
+        tag.innerHTML = `
+            <span>${sponsorName}</span>
+            <span class="remove-icon" onclick="removeEditSponsor('${sponsorName}')">&times;</span>
+        `;
+        container.appendChild(tag);
+    }
+};
+
+// Remove sponsor from edit form
+window.removeEditSponsor = function(sponsorName) {
+    const container = document.getElementById('editSponsorTags');
+    if (!container) return;
+    
+    const tags = container.querySelectorAll('.sponsor-tag');
+    tags.forEach(tag => {
+        const sponsorSpan = tag.querySelector('span:first-child');
+        if (sponsorSpan && sponsorSpan.textContent === sponsorName) {
+            tag.remove();
+        }
+    });
+};
+
+// Toggle class selection in edit form
+window.toggleEditClass = function(className) {
+    const classOption = document.querySelector(`[data-class="${className}"]`);
+    if (!classOption) return;
+    
+    classOption.classList.toggle('selected');
+};
+
+// Toggle event selection in edit form
+window.toggleEditEvent = function(eventId) {
+    const eventOption = document.querySelector(`[data-event-id="${eventId}"]`);
+    const checkbox = eventOption.querySelector('.event-checkbox');
+    if (!eventOption || !checkbox) return;
+    
+    eventOption.classList.toggle('selected');
+    checkbox.checked = eventOption.classList.contains('selected');
+};
+
+// Handle edit form submission
+async function handleEditFormSubmit(event) {
+    event.preventDefault();
+    
+    try {
+        const participantId = document.getElementById('editParticipantId').value;
+        
+        // Gather form data
+        const selectedClassElements = document.querySelectorAll('.class-option.selected');
+        const selectedClasses = Array.from(selectedClassElements).map(el => el.dataset.class);
+        
+        const selectedEventElements = document.querySelectorAll('.event-option.selected');
+        const selectedEvents = Array.from(selectedEventElements).map(el => el.dataset.eventId);
+        
+        // Gather sponsors from tags
+        const sponsorTags = document.querySelectorAll('#editSponsorTags .sponsor-tag span:first-child');
+        const sponsors = Array.from(sponsorTags).map(tag => tag.textContent);
+        
+        const updatedData = {
+            name: document.getElementById('editName').value.trim(),
+            nickname: document.getElementById('editNickname').value.trim(),
+            racingNumber: document.getElementById('editRacingNumber').value ? parseInt(document.getElementById('editRacingNumber').value) : null,
+            dob: document.getElementById('editDob').value,
+            contact: {
+                email: document.getElementById('editEmail').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
+                emergency: document.getElementById('editEmergencyContact').value.trim()
+            },
+            sponsors: sponsors,
+            selectedClasses: selectedClasses,
+            selectedEvents: selectedEvents, // Multiple events support
+            eventId: selectedEvents.length > 0 ? selectedEvents[0] : null, // Keep backward compatibility
+            status: document.getElementById('editStatus').value,
+            totalFee: parseFloat(document.getElementById('editTotalFee').value) || 0
+        };
+        
+        // Validate required fields
+        if (!updatedData.name || !updatedData.dob) {
+            alert('Please fill in all required fields (Name and Date of Birth).');
+            return;
+        }
+        
+        if (selectedClasses.length === 0) {
+            alert('Please select at least one racing class.');
+            return;
+        }
+        
+        if (selectedEvents.length === 0) {
+            alert('Please select at least one event.');
+            return;
+        }
+        
+        console.log('💾 Updating participant:', participantId, updatedData);
+        
+        // Update participant using DataManager
+        const success = await window.dataManager.updateParticipant(participantId, updatedData);
+        
+        if (success) {
+            // Register participant for all selected events
+            for (const eventId of selectedEvents) {
+                try {
+                    await window.dataManager.registerParticipantForEvent(eventId, participantId);
+                } catch (error) {
+                    console.warn(`Failed to register participant for event ${eventId}:`, error);
+                }
+            }
+            
+            const eventCount = selectedEvents.length;
+            const eventText = eventCount === 1 ? 'event' : 'events';
+            alert(`Participant updated successfully! Registered for ${eventCount} ${eventText}.`);
+            closeEditModal();
+            
+            // Refresh participant list
+            loadParticipantData();
+        } else {
+            alert('Failed to update participant. Please try again.');
+        }
+        
+    } catch (error) {
+        console.error('Error updating participant:', error);
+        alert('Error updating participant: ' + error.message);
+    }
+}
+
+// Delete participant function
+function deleteParticipant(participantId) {
+    if (!confirm('Are you sure you want to delete this participant? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        // Remove from data manager
+        if (window.dataManager) {
+            window.dataManager.deleteParticipant(participantId);
+        }
+        
+        // Reload the participant list
+        loadParticipantData();
+        
+        // Show success message
+        alert('Participant deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting participant:', error);
+        alert('Error deleting participant. Please try again.');
+    }
+}
+
+// Cleanup function to reset initialization state
+function cleanupParticipantList() {
+    console.log('🧹 Cleaning up participant list component');
+    window.participantListInitialized = false;
+    
+    // Remove event listeners to prevent memory leaks
+    const searchInput = document.getElementById('participantSearch');
+    const eventFilter = document.getElementById('eventFilter');
+    const classFilter = document.getElementById('classFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    if (searchInput) {
+        searchInput.removeEventListener('input', applyParticipantFilters);
+    }
+    if (eventFilter) {
+        eventFilter.removeEventListener('change', applyParticipantFilters);
+    }
+    if (classFilter) {
+        classFilter.removeEventListener('change', applyParticipantFilters);
+    }
+    if (statusFilter) {
+        statusFilter.removeEventListener('change', applyParticipantFilters);
+    }
+}
+
+// Debug function to test data loading directly
+async function debugParticipantLoading() {
+    console.log('🔍 DEBUGGING PARTICIPANT LOADING...');
+    console.log('🔗 window.dataManager:', !!window.dataManager);
+    console.log('🔗 dataManager methods:', window.dataManager ? Object.keys(window.dataManager) : 'N/A');
+    
+    if (window.dataManager) {
+        console.log('📊 Testing direct data access...');
+        try {
+            // First force a data load
+            console.log('🔄 Forcing loadFromStorage()...');
+            await window.dataManager.loadFromStorage();
+            
+            const participants = window.dataManager.getParticipantsArray();
+            const events = window.dataManager.getEventsArray();
+            console.log('✅ After forced load - Participants:', participants?.length || 0);
+            console.log('✅ After forced load - Events:', events?.length || 0);
+            
+            if (participants && participants.length > 0) {
+                console.log('👤 First participant:', participants[0]);
+            }
+            if (events && events.length > 0) {
+                console.log('📅 First event:', events[0]);
+            }
+            
+            // Try to manually load the data into the component
+            allParticipants = window.allParticipants = participants || [];
+            allEvents = window.allEvents = events || [];
+            filteredParticipants = window.filteredParticipants = [...allParticipants];
+            
+            console.log('🔄 Manually loading data into component variables...');
+            console.log('📋 allParticipants:', allParticipants.length);
+            console.log('📅 allEvents:', allEvents.length);
+            
+            // Try to update the display
+            updateParticipantStats();
+            renderParticipantTable();
+            loadEventOptions();
+            loadClassOptions();
+            
+            console.log('✅ Manual data loading complete!');
+            
+        } catch (error) {
+            console.error('❌ Error in direct data access:', error);
+        }
+    } else {
+        console.error('❌ DataManager not available for debugging');
+    }
+}
+
+// Make functions globally available
+window.initializeParticipantList = initializeParticipantList;
+window.cleanupParticipantList = cleanupParticipantList;
+window.loadParticipantData = loadParticipantData;
+window.applyParticipantFilters = applyParticipantFilters;
+window.clearFilters = clearFilters;
+window.editParticipant = editParticipant;
+window.deleteParticipant = deleteParticipant;
+window.debugParticipantLoading = debugParticipantLoading;
+window.createEditParticipantModal = createEditParticipantModal;
+window.showEditModal = showEditModal;
+window.initializeEditForm = initializeEditForm;
+window.loadEditEventOptions = loadEditEventOptions;
+window.loadEditClassOptions = loadEditClassOptions;
+window.loadEditSponsors = loadEditSponsors;
+window.addEditSponsor = addEditSponsor;
+window.removeEditSponsor = removeEditSponsor;
+window.setupComboBoxes = setupComboBoxes;
+window.setupComboBox = setupComboBox;
+window.filterComboOptions = filterComboOptions;
+window.updateComboSelection = updateComboSelection;
+window.handleEditFormSubmit = handleEditFormSubmit;
+window.changeParticipantPage = changeParticipantPage;
+
+// Auto-initialize when the component loads
+async function attemptInitialization() {
+    console.log('🚀 Attempting component initialization...');
+    console.log('🔗 DataManager available:', !!window.dataManager);
+    
+    if (window.dataManager && typeof window.dataManager.getParticipants === 'function') {
+        console.log('✅ DataManager ready, ensuring data is loaded...');
+        
+        try {
+            // Force data loading if not already done
+            console.log('🔄 Calling loadFromStorage() to ensure data is loaded...');
+            await window.dataManager.loadFromStorage();
+            
+            // Now check if we have data
+            const testParticipants = window.dataManager.getParticipants();
+            const testEvents = window.dataManager.getEvents();
+            console.log('📊 After loadFromStorage - Participants:', testParticipants?.length, 'Events:', testEvents?.length);
+            
+            // Initialize component regardless of data availability
+            console.log('✅ DataManager ready, initializing component...');
+            initializeParticipantList();
+            
+            // If no data found, just log it but don't retry
+            if (!testParticipants?.length && !testEvents?.length) {
+                console.log('ℹ️ No data found yet, but component initialized successfully');
+            }
+        } catch (error) {
+            console.error('❌ Error loading data from DataManager:', error);
+            // Don't retry on error, just initialize with empty data
+            console.log('🔄 Initializing component with empty data due to error...');
+            initializeParticipantList();
+        }
+    } else {
+        console.log('⏳ DataManager not ready, retrying in 500ms...');
+        setTimeout(attemptInitialization, 500);
+    }
+}
+
+// Start initialization attempt
+attemptInitialization();
+
+// Basic component load test
+console.log('🎯 PARTICIPANT LIST COMPONENT LOADED!');
+console.log('🎯 Current timestamp:', new Date().toISOString());
+console.log('🎯 Component variables initialized:', {
+    allParticipants: typeof allParticipants,
+    allEvents: typeof allEvents,
+    filteredParticipants: typeof filteredParticipants
+});
+
+} // End of script protection block
+</script> 

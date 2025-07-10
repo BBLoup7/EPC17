@@ -1,0 +1,679 @@
+<template id="registration-form">
+    <form id="participantRegistrationForm" class="registration-form">
+        <div class="form-section">
+            <h3>Driver Information</h3>
+            <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input type="text" class="form-control" name="name" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nickname (Optional)</label>
+                <input type="text" class="form-control" name="nickname" placeholder="Racing nickname">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Racing Number (Optional)</label>
+                <input type="number" class="form-control" name="racingNumber" min="1" max="999" placeholder="Preferred racing number">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date of Birth *</label>
+                <input type="date" class="form-control" name="dob" required>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Sponsors (Optional)</h3>
+            <div class="form-group">
+                <label class="form-label">Add Sponsors</label>
+                <div class="sponsor-input-container">
+                    <input type="text" class="form-control sponsor-input" id="sponsorInput" placeholder="Enter sponsor name and press Enter">
+                    <button type="button" class="btn btn-secondary sponsor-add-btn" onclick="addSponsor()">Add</button>
+                </div>
+                <div class="sponsor-tags" id="sponsorTags">
+                    <!-- Sponsor tags will be added here -->
+                </div>
+                <p class="help-text">Add multiple sponsors by typing and pressing Enter or clicking Add. Click on a sponsor tag to remove it.</p>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Contact Information (Optional)</h3>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="contact.email" placeholder="your.email@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-control" name="contact.phone" placeholder="(555) 123-4567">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Emergency Contact</label>
+                <input type="text" class="form-control" name="contact.emergency" placeholder="Emergency contact name and phone">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Racing Classes & Sled Information *</h3>
+            <div class="form-group">
+                <label class="form-label">Select Classes and Configure Sleds</label>
+                <div id="sledClassesContainer" class="classes-container">
+                    <!-- Classes will be populated dynamically from series data -->
+                </div>
+                <p class="help-text">Select all classes you want to compete in and configure sled information for each class.</p>
+            </div>
+            
+            <div id="sledConfigContainer" class="sled-config-container">
+                <!-- Sled configurations for selected classes will appear here -->
+            </div>
+        </div>
+
+        <div class="form-section payment-summary">
+            <h3>Payment Summary</h3>
+            <div class="payment-details">
+                <div class="payment-breakdown" id="paymentBreakdown">
+                    <!-- Payment breakdown will be populated here -->
+                </div>
+                <div class="payment-total">
+                    <strong>Total Amount: $<span id="totalAmount">0.00</span></strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Submit Registration</button>
+            <button type="reset" class="btn btn-secondary">Reset Form</button>
+        </div>
+    </form>
+</template>
+
+<style>
+.registration-form {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.form-section {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.classes-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.class-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-primary);
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.class-option:hover {
+    background: var(--bg-tertiary, var(--bg-primary));
+    border-color: var(--accent-primary);
+}
+
+.class-option.selected {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+.class-option input[type="checkbox"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+.class-option label {
+    color: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.class-fee {
+    color: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.sled-config-container {
+    margin-top: 1.5rem;
+}
+
+.sled-config {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 2px solid var(--accent-primary);
+}
+
+.sled-config h4 {
+    color: var(--accent-primary);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sled-config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.payment-summary {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+}
+
+.payment-summary h3 {
+    color: white;
+}
+
+.payment-details {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.payment-breakdown {
+    margin-bottom: 1rem;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.payment-item:last-child {
+    border-bottom: none;
+}
+
+.payment-total {
+    text-align: center;
+    font-size: 1.3rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.help-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* Sponsor Section Styles */
+.sponsor-input-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.sponsor-input {
+    flex: 1;
+}
+
+.sponsor-add-btn {
+    white-space: nowrap;
+    min-width: 80px;
+}
+
+.sponsor-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.sponsor-tag {
+    background: var(--accent-primary);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    user-select: none;
+}
+
+.sponsor-tag:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sponsor-tag .remove-icon {
+    font-size: 1.1rem;
+    font-weight: bold;
+    line-height: 1;
+    opacity: 0.8;
+}
+
+.sponsor-tag:hover .remove-icon {
+    opacity: 1;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .registration-form {
+        padding: 1rem;
+    }
+
+    .classes-container {
+        grid-template-columns: 1fr;
+    }
+
+    .sled-config-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sponsor-input-container {
+        flex-direction: column;
+    }
+
+    .sponsor-add-btn {
+        width: 100%;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+// Registration form functionality
+let selectedClasses = new Set();
+let classFees = {};
+let currentSeries = null;
+let sponsors = new Set();
+
+// Initialize form when component loads
+function initializeRegistrationForm() {
+    console.log('Initializing registration form...');
+    
+    // Wait for DOM elements to be available
+    const checkElements = () => {
+        const form = document.getElementById('participantRegistrationForm');
+        const container = document.getElementById('sledClassesContainer');
+        
+        if (form && container) {
+            console.log('Form elements found, proceeding with initialization');
+            loadSeriesData();
+            setupEventListeners();
+            updatePaymentSummary(); // Initialize payment summary
+            return true;
+        }
+        return false;
+    };
+    
+    if (!checkElements()) {
+        console.log('Form elements not ready, waiting...');
+        // If elements aren't ready, wait a bit and try again
+        setTimeout(() => {
+            if (!checkElements()) {
+                console.log('Elements still not ready, trying once more...');
+                setTimeout(checkElements, 200);
+            }
+        }, 100);
+    }
+}
+
+function loadSeriesData() {
+    console.log('Loading series data...');
+    // This will be populated from the parent page with series data
+    if (window.currentSeries) {
+        console.log('Found window.currentSeries:', window.currentSeries);
+        currentSeries = window.currentSeries;
+        populateClasses();
+    } else {
+        console.log('No window.currentSeries found, no default classes will be provided');
+        // Don't use default classes if no series data is available
+        currentSeries = {
+            name: 'No Event Selected',
+            classes: []
+        };
+        populateClasses();
+    }
+}
+
+function populateClasses() {
+    console.log('Populating classes...');
+    const container = document.getElementById('sledClassesContainer');
+    
+    if (!container) {
+        console.warn('Classes container not found');
+        return;
+    }
+    
+    if (!currentSeries || !currentSeries.classes) {
+        console.warn('No series data or classes available:', currentSeries);
+        return;
+    }
+    
+    console.log('Populating with classes:', currentSeries.classes);
+    container.innerHTML = '';
+    
+    currentSeries.classes.forEach(classInfo => {
+        const fee = classInfo.fee || 50; // Default fee if not specified
+        classFees[classInfo.name] = fee;
+        
+        const classDiv = document.createElement('div');
+        classDiv.className = 'class-option';
+        classDiv.innerHTML = `
+            <label>
+                <input type="checkbox" name="selectedClasses" value="${classInfo.name}" 
+                       onchange="handleClassSelection('${classInfo.name}', this.checked)">
+                ${classInfo.name}
+            </label>
+            <span class="class-fee">$${fee}</span>
+        `;
+        container.appendChild(classDiv);
+    });
+    
+    console.log('Classes populated successfully');
+}
+
+function handleClassSelection(className, isSelected) {
+    if (isSelected) {
+        selectedClasses.add(className);
+        createSledConfig(className);
+    } else {
+        selectedClasses.delete(className);
+        removeSledConfig(className);
+    }
+    
+    updateClassOptionStyles();
+    updatePaymentSummary();
+}
+
+function updateClassOptionStyles() {
+    document.querySelectorAll('.class-option').forEach(option => {
+        const checkbox = option.querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+}
+
+// Sponsor management functions
+function addSponsor() {
+    const input = document.getElementById('sponsorInput');
+    const sponsorName = input.value.trim();
+    
+    if (sponsorName && !sponsors.has(sponsorName)) {
+        sponsors.add(sponsorName);
+        renderSponsorTags();
+        input.value = '';
+        input.focus();
+    }
+}
+
+function removeSponsor(sponsorName) {
+    sponsors.delete(sponsorName);
+    renderSponsorTags();
+}
+
+function renderSponsorTags() {
+    const container = document.getElementById('sponsorTags');
+    container.innerHTML = '';
+    
+    sponsors.forEach(sponsor => {
+        const tag = document.createElement('div');
+        tag.className = 'sponsor-tag';
+        tag.innerHTML = `
+            <span>${sponsor}</span>
+            <span class="remove-icon" onclick="removeSponsor('${sponsor}')">&times;</span>
+        `;
+        container.appendChild(tag);
+    });
+}
+
+function createSledConfig(className) {
+    const container = document.getElementById('sledConfigContainer');
+    
+    const configDiv = document.createElement('div');
+    configDiv.className = 'sled-config';
+    configDiv.id = `sled-config-${className.replace(/\s+/g, '-')}`;
+    
+    configDiv.innerHTML = `
+        <h4>🏁 Sled Configuration for ${className}</h4>
+        <div class="sled-config-grid">
+            <div class="form-group">
+                <label class="form-label">Sled Make</label>
+                <input type="text" class="form-control" name="sled_${className}_make" 
+                       placeholder="e.g., Polaris, Ski-Doo, Arctic Cat">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sled Model</label>
+                <input type="text" class="form-control" name="sled_${className}_model" 
+                       placeholder="e.g., RMK, Summit, M8000">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sled Year</label>
+                <input type="number" class="form-control" name="sled_${className}_year" 
+                       min="1990" max="2025" placeholder="e.g., 2023">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Engine Size (cc)</label>
+                <input type="number" class="form-control" name="sled_${className}_engine" 
+                       placeholder="e.g., 800, 850, 900">
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(configDiv);
+}
+
+function removeSledConfig(className) {
+    const configDiv = document.getElementById(`sled-config-${className.replace(/\s+/g, '-')}`);
+    if (configDiv) {
+        configDiv.remove();
+    }
+}
+
+function updatePaymentSummary() {
+    const breakdownContainer = document.getElementById('paymentBreakdown');
+    const totalElement = document.getElementById('totalAmount');
+    
+    let total = 0;
+    let breakdownHTML = '';
+    
+    selectedClasses.forEach(className => {
+        const fee = classFees[className] || 50;
+        total += fee;
+        breakdownHTML += `
+            <div class="payment-item">
+                <span>${className}</span>
+                <span>$${fee.toFixed(2)}</span>
+            </div>
+        `;
+    });
+    
+    if (selectedClasses.size === 0) {
+        breakdownHTML = '<div class="payment-item"><span>No classes selected</span><span>$0.00</span></div>';
+    }
+    
+    breakdownContainer.innerHTML = breakdownHTML;
+    totalElement.textContent = total.toFixed(2);
+}
+
+function setupEventListeners() {
+    console.log('Setting up event listeners...');
+    const form = document.getElementById('participantRegistrationForm');
+    
+    if (!form) {
+        console.warn('Form not found for event listeners');
+        return;
+    }
+    
+    // Prevent duplicate event listeners
+    if (form.hasAttribute('data-listeners-attached')) {
+        console.log('Event listeners already attached, skipping...');
+        return;
+    }
+    
+    // Sponsor input event listener
+    const sponsorInput = document.getElementById('sponsorInput');
+    if (sponsorInput) {
+        sponsorInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSponsor();
+            }
+        });
+    }
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (selectedClasses.size === 0) {
+            alert('Please select at least one racing class.');
+            return;
+        }
+        
+        try {
+            const formData = new FormData(e.target);
+            
+            // Collect sled information for each selected class
+            const sledConfigurations = {};
+            selectedClasses.forEach(className => {
+                sledConfigurations[className] = {
+                    make: formData.get(`sled_${className}_make`) || '',
+                    model: formData.get(`sled_${className}_model`) || '',
+                    year: formData.get(`sled_${className}_year`) || '',
+                    engine: formData.get(`sled_${className}_engine`) || ''
+                };
+            });
+            
+            const participantData = {
+                name: formData.get('name'),
+                nickname: formData.get('nickname') || '',
+                racingNumber: formData.get('racingNumber') || null,
+                dob: formData.get('dob'),
+                contact: {
+                    email: formData.get('contact.email') || '',
+                    phone: formData.get('contact.phone') || '',
+                    emergency: formData.get('contact.emergency') || ''
+                },
+                sponsors: Array.from(sponsors),
+                selectedClasses: Array.from(selectedClasses),
+                sledConfigurations: sledConfigurations,
+                totalFee: Array.from(selectedClasses).reduce((sum, className) => 
+                    sum + (classFees[className] || 50), 0),
+                registrationDate: new Date().toISOString()
+            };
+
+            // Use the global registration handler if available
+            if (window.handleRegistrationData) {
+                await window.handleRegistrationData(participantData);
+            } else if (window.registrationManager) {
+                await window.registrationManager.registerParticipant(participantData);
+            } else {
+                // Store locally if no registration manager
+                console.log('Registration data:', participantData);
+            }
+            
+            // Show success message
+            alert(`Registration submitted successfully!\nTotal fee: $${participantData.totalFee.toFixed(2)}`);
+            
+            // Reset form
+            e.target.reset();
+            selectedClasses.clear();
+            sponsors.clear();
+            document.getElementById('sledConfigContainer').innerHTML = '';
+            document.getElementById('sponsorTags').innerHTML = '';
+            updatePaymentSummary();
+            updateClassOptionStyles();
+            
+        } catch (error) {
+            alert(`Registration failed: ${error.message}`);
+        }
+    });
+    
+    form.addEventListener('reset', () => {
+        selectedClasses.clear();
+        sponsors.clear();
+        document.getElementById('sledConfigContainer').innerHTML = '';
+        document.getElementById('sponsorTags').innerHTML = '';
+        updatePaymentSummary();
+        updateClassOptionStyles();
+    });
+    
+    // Mark that event listeners have been attached
+    form.setAttribute('data-listeners-attached', 'true');
+    console.log('✅ Event listeners attached to registration form');
+}
+
+// Initialize when the component is loaded
+// Check if DOM is already loaded, if so initialize immediately
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeRegistrationForm);
+} else {
+    // DOM is already loaded, initialize immediately
+    initializeRegistrationForm();
+}
+
+// Export functions for external use
+window.registrationFormUtils = {
+    setSeriesData: (seriesData) => {
+        console.log('Setting series data in form:', seriesData);
+        currentSeries = seriesData;
+        populateClasses();
+        updatePaymentSummary(); // Update payment summary with new data
+    },
+    getSelectedClasses: () => Array.from(selectedClasses),
+    getTotalFee: () => Array.from(selectedClasses).reduce((sum, className) => 
+        sum + (classFees[className] || 50), 0),
+    // Add a method to manually trigger initialization
+    initialize: () => {
+        console.log('Manually initializing registration form');
+        initializeRegistrationForm();
+    }
+};
+</script> 

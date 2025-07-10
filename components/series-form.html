@@ -1,0 +1,293 @@
+<template id="series-form">
+    <div class="series-form">
+        <div class="form-header">
+            <h2 id="formTitle">Create New Series</h2>
+            <button class="btn btn-close" id="closeForm">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="seriesForm">
+            <div class="form-group">
+                <label for="seriesName">Series Name *</label>
+                <input type="text" id="seriesName" name="name" required 
+                       placeholder="e.g., Winter Championship 2024"
+                       autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="seriesDescription">Description (Optional)</label>
+                <textarea id="seriesDescription" name="description" rows="3" 
+                          placeholder="Brief description of the series..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="saveBtn">Create Series</button>
+            </div>
+        </form>
+
+        <div class="form-note">
+            <p><strong>Note:</strong> After creating the series, you can add classes, set rules, and configure other settings.</p>
+        </div>
+    </div>
+
+    <style>
+        .series-form {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-header h2 {
+            margin: 0;
+            color: var(--accent-primary);
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+
+        .btn-close:hover {
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--text-secondary);
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-secondary);
+        }
+
+        .form-note {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .form-note p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .series-form {
+                padding: 1rem;
+                margin: 1rem;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+
+    <script>
+        class SeriesForm extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.shadowRoot.innerHTML = document.querySelector('#series-form').innerHTML;
+                this.seriesManager = null;
+                this.seriesId = null;
+            }
+
+            connectedCallback() {
+                this.seriesManager = new SeriesManager();
+                this.setupEventListeners();
+                this.initializePointsGrid();
+            }
+
+            setupEventListeners() {
+                const form = this.shadowRoot.querySelector('#seriesForm');
+                const closeBtn = this.shadowRoot.querySelector('#closeForm');
+                const cancelBtn = this.shadowRoot.querySelector('#cancelBtn');
+
+                form.addEventListener('submit', (e) => this.handleSubmit(e));
+                closeBtn.addEventListener('click', () => this.close());
+                cancelBtn.addEventListener('click', () => this.close());
+            }
+
+            initializePointsGrid() {
+                const pointsRows = this.shadowRoot.querySelector('#pointsRows');
+                pointsRows.innerHTML = '';
+
+                // Create 15 rows for positions 1-15
+                for (let i = 1; i <= 15; i++) {
+                    const row = document.createElement('div');
+                    row.className = 'points-row';
+                    row.innerHTML = `
+                        <span>${i}</span>
+                        <input type="number" name="points_${i}" value="${this.getDefaultPoints(i)}" min="0" required>
+                    `;
+                    pointsRows.appendChild(row);
+                }
+            }
+
+            getDefaultPoints(position) {
+                const defaultPoints = {
+                    1: 25, 2: 20, 3: 16, 4: 13, 5: 11,
+                    6: 10, 7: 9, 8: 8, 9: 7, 10: 6,
+                    11: 5, 12: 4, 13: 3, 14: 2, 15: 1
+                };
+                return defaultPoints[position] || 0;
+            }
+
+            async loadSeries(seriesId) {
+                this.seriesId = seriesId;
+                const series = this.seriesManager.getSeries(seriesId);
+                
+                if (series) {
+                    this.shadowRoot.querySelector('#formTitle').textContent = 'Edit Series';
+                    this.populateForm(series);
+                }
+            }
+
+            populateForm(series) {
+                const form = this.shadowRoot.querySelector('#seriesForm');
+                form.name.value = series.name;
+                form.description.value = series.description || '';
+                form.startDate.value = series.startDate;
+                form.endDate.value = series.endDate;
+                form.status.value = series.status;
+                form.rules.value = series.rules || '';
+
+                // Populate points system
+                if (series.pointsSystem) {
+                    Object.entries(series.pointsSystem).forEach(([position, points]) => {
+                        const input = form.querySelector(`input[name="points_${position}"]`);
+                        if (input) input.value = points;
+                    });
+                }
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const seriesData = {
+                    name: formData.get('name'),
+                    description: formData.get('description'),
+                    startDate: formData.get('startDate'),
+                    endDate: formData.get('endDate'),
+                    status: formData.get('status'),
+                    rules: formData.get('rules'),
+                    pointsSystem: {}
+                };
+
+                // Collect points system data
+                for (let i = 1; i <= 15; i++) {
+                    const points = formData.get(`points_${i}`);
+                    if (points) {
+                        seriesData.pointsSystem[i] = parseInt(points);
+                    }
+                }
+
+                try {
+                    if (this.seriesId) {
+                        // Update existing series
+                        await this.seriesManager.updateSeries(this.seriesId, seriesData);
+                    } else {
+                        // Create new series
+                        await this.seriesManager.createSeries(seriesData);
+                    }
+                    this.close();
+                } catch (error) {
+                    console.error('Error saving series:', error);
+                    // TODO: Show error message to user
+                }
+            }
+
+            close() {
+                this.dispatchEvent(new CustomEvent('close'));
+            }
+        }
+
+        customElements.define('series-form', SeriesForm);
+    </script>
+</template> 

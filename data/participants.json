@@ -1,0 +1,5673 @@
+[
+  {
+    "avgPosition": 1.6,
+    "bestStreak": 2,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-06T23:48:45.375Z",
+    "dob": "2025-07-05",
+    "eventId": "856db2a2-7efe-4ea1-9b8d-96ca36863103",
+    "eventsParticipated": 3,
+    "id": "589f2d7d-da2a-4f6c-b2d7-580f1f262d72",
+    "lanePerformance": {
+      "1": {
+        "total": 5,
+        "wins": 2,
+        "winRate": 40
+      },
+      "2": {
+        "total": 6,
+        "wins": 4,
+        "winRate": 66.7
+      },
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T05:51:21.332Z",
+    "name": "Driver 1",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-06T19:48:45.382270",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledClass": "1",
+    "sledClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 12,
+      "totalWins": 6,
+      "winRate": 50,
+      "avgPosition": 1.6,
+      "bestStreak": 2,
+      "eventsParticipated": 3,
+      "lanePerformance": {
+        "1": {
+          "total": 5,
+          "wins": 2,
+          "winRate": 40
+        },
+        "2": {
+          "total": 6,
+          "wins": 4,
+          "winRate": 66.7
+        },
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 40,
+      "lastUpdated": "2025-07-08T05:51:13.984Z",
+      "lastCalculated": 1751953873984,
+      "totalLosses": 6,
+      "bestPosition": 1,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "1",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751849204866-0826ne46m",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:46:44.866Z",
+          "opponents": "Driver 2, Driver 3"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "1",
+          "round": 2,
+          "heatId": "final-heat-1751849443968-a4qy6vueb",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:50:43.971Z",
+          "opponents": "Driver 4"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "1",
+          "round": "final",
+          "heatId": "final-heat-1751849490666-5hdysq13f",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:51:30.666Z",
+          "opponents": "Driver 2, Driver 4"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "2",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751849204868-zp6nbucqt",
+          "lane": 3,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:46:44.868Z",
+          "opponents": "Driver 2, Driver 1"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "2",
+          "round": 2,
+          "heatId": "final-heat-1751849443976-688wuvzoj",
+          "lane": 1,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:50:43.976Z",
+          "opponents": "Driver 2, Driver 3"
+        },
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "1",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751953499516-n58nw0mue",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:44:59.516Z",
+          "opponents": "Driver 11"
+        },
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "1",
+          "round": 2,
+          "heatId": "final-heat-1751953521255-opvd3ow8s",
+          "lane": 1,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:45:21.255Z",
+          "opponents": "Driver 12"
+        },
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "1",
+          "round": "final",
+          "heatId": "final-heat-1751953579657-rjq2g08ze",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:46:19.657Z",
+          "opponents": "Driver 12, Driver 11"
+        },
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "2",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751953499517-cxanb9k7d",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:44:59.517Z",
+          "opponents": "Driver 12"
+        },
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "2",
+          "round": 2,
+          "heatId": "final-heat-1751953521256-41gu6581r",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:45:21.256Z",
+          "opponents": "Driver 11"
+        },
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "2",
+          "round": "final",
+          "heatId": "final-heat-1751953579658-l0h3ipvqj",
+          "lane": 1,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:46:19.658Z",
+          "opponents": "Driver 11, Driver 12"
+        },
+        {
+          "eventId": "856db2a2-7efe-4ea1-9b8d-96ca36863103",
+          "className": "1",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751953768150-dm3rwxbom",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:49:28.150Z",
+          "opponents": "Driver 2"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 140,
+    "totalRaces": 12,
+    "totalWins": 6,
+    "updatedAt": "2025-07-08T01:51:23.851631",
+    "winRate": 50
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 1,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-06T23:54:13.987Z",
+    "dob": "2025-07-04",
+    "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+    "eventsParticipated": 2,
+    "id": "62daed11-a926-4705-ac35-bc77365bca88",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      },
+      "2": {
+        "total": 3,
+        "wins": 1,
+        "winRate": 33.3
+      },
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T05:46:21.283Z",
+    "name": "Driver 1",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-06T19:54:13.991615",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledClass": "1",
+    "sledClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 6,
+      "totalWins": 2,
+      "winRate": 33.3,
+      "avgPosition": 2,
+      "bestStreak": 1,
+      "eventsParticipated": 2,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        },
+        "2": {
+          "total": 3,
+          "wins": 1,
+          "winRate": 33.3
+        },
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 33.3,
+      "lastUpdated": "2025-07-08T05:45:16.094Z",
+      "lastCalculated": 1751953516094,
+      "totalLosses": 4,
+      "bestPosition": 1,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "1",
+          "round": 1,
+          "heatId": "final-heat-1751849204866-9bdj37v9k",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:46:44.866Z",
+          "opponents": "Driver 4"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "1",
+          "round": 2,
+          "heatId": "final-heat-1751849443970-sqgk4u0jt",
+          "lane": 3,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:50:43.971Z",
+          "opponents": "Driver 3, Driver 2"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "2",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751849204868-zp6nbucqt",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:46:44.868Z",
+          "opponents": "Driver 2, Driver 1"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "2",
+          "round": 2,
+          "heatId": "final-heat-1751849443975-pxa8uspvn",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:50:43.976Z",
+          "opponents": "Driver 4"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "2",
+          "round": "final",
+          "heatId": "final-heat-1751849490669-4iyxovwpi",
+          "lane": 1,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:51:30.669Z",
+          "opponents": "Driver 2, Driver 4"
+        },
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "1",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751953499516-jgy8xovre",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:44:59.516Z",
+          "opponents": "Driver 12"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 70,
+    "totalRaces": 6,
+    "totalWins": 2,
+    "updatedAt": "2025-07-08T01:46:26.483246",
+    "winRate": 33.3
+  },
+  {
+    "avgPosition": 1.9,
+    "bestStreak": 2,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-06T23:54:23.347Z",
+    "dob": "2025-07-04",
+    "eventId": "856db2a2-7efe-4ea1-9b8d-96ca36863103",
+    "eventsParticipated": 2,
+    "id": "57050520-0e0c-4ded-97f2-3407ed89af04",
+    "lanePerformance": {
+      "1": {
+        "total": 4,
+        "wins": 1,
+        "winRate": 25
+      },
+      "2": {
+        "total": 3,
+        "wins": 3,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-08T05:52:57.461Z",
+    "name": "Driver 2",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-06T19:54:23.350714",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledClass": "1",
+    "sledClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 7,
+      "totalWins": 4,
+      "winRate": 57.1,
+      "avgPosition": 1.9,
+      "bestStreak": 2,
+      "eventsParticipated": 2,
+      "lanePerformance": {
+        "1": {
+          "total": 4,
+          "wins": 1,
+          "winRate": 25
+        },
+        "2": {
+          "total": 3,
+          "wins": 3,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 57.1,
+      "lastUpdated": "2025-07-08T05:51:13.626Z",
+      "lastCalculated": 1751953873626,
+      "totalLosses": 3,
+      "bestPosition": 1,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "1",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751849204866-0826ne46m",
+          "lane": 1,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:46:44.866Z",
+          "opponents": "Driver 1, Driver 3"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "1",
+          "round": 2,
+          "heatId": "final-heat-1751849443970-sqgk4u0jt",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:50:43.971Z",
+          "opponents": "Driver 3, Driver 1"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "1",
+          "round": "final",
+          "heatId": "final-heat-1751849490666-5hdysq13f",
+          "lane": 1,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:51:30.666Z",
+          "opponents": "Driver 1, Driver 4"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "2",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751849204868-zp6nbucqt",
+          "lane": 1,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:46:44.868Z",
+          "opponents": "Driver 1, Driver 1"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "2",
+          "round": 2,
+          "heatId": "final-heat-1751849443976-688wuvzoj",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:50:43.976Z",
+          "opponents": "Driver 1, Driver 3"
+        },
+        {
+          "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+          "className": "2",
+          "round": "final",
+          "heatId": "final-heat-1751849490669-4iyxovwpi",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-07T00:51:30.669Z",
+          "opponents": "Driver 1, Driver 4"
+        },
+        {
+          "eventId": "856db2a2-7efe-4ea1-9b8d-96ca36863103",
+          "className": "1",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751953768150-dm3rwxbom",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:49:28.150Z",
+          "opponents": "Driver 1"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 105,
+    "totalRaces": 7,
+    "totalWins": 4,
+    "updatedAt": "2025-07-08T01:52:57.780503",
+    "winRate": 57.1
+  },
+  {
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-06T23:54:31.680Z",
+    "dob": "2025-07-04",
+    "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+    "eventsParticipated": 0,
+    "id": "3fc188ab-1249-4941-afc3-88535afbf046",
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-07T00:47:02.272Z",
+    "name": "Driver 3",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-06T19:54:31.684524",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-07T00:47:02.272Z",
+      "totalLosses": 0,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
+    },
+    "status": "active",
+    "totalFee": 35,
+    "totalRaces": 0,
+    "totalWins": 0,
+    "updatedAt": "2025-07-06T20:47:02.281182",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-06T23:54:39.511Z",
+    "dob": "2025-07-04",
+    "eventId": "c879ec51-5fb8-42cd-8682-ff39182a02c1",
+    "eventsParticipated": 0,
+    "id": "a5396e4f-0afc-497b-b5e9-cf9c24e1d67b",
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-07T00:47:02.258Z",
+    "name": "Driver 4",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-06T19:54:39.515021",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-07T00:47:02.258Z",
+      "totalLosses": 0,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
+    },
+    "status": "active",
+    "totalFee": 35,
+    "totalRaces": 0,
+    "totalWins": 0,
+    "updatedAt": "2025-07-06T20:47:02.267026",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 1.5,
+    "bestStreak": 1,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-07T01:55:40.640Z",
+    "dob": "2025-07-04",
+    "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+    "eventsParticipated": 1,
+    "id": "116fa64a-c20d-466c-9831-cfd53bd74572",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      }
+    },
+    "lastRaceDate": "2025-07-08T05:46:14.192Z",
+    "name": "Driver 11",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-06T21:55:40.645260",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-08T05:45:25.086Z",
+      "lastCalculated": 1751953525086,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "1",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751953499516-n58nw0mue",
+          "lane": 1,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:44:59.516Z",
+          "opponents": "Driver 1"
+        },
+        {
+          "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+          "className": "2",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751953499517-tfpnmyolv",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T05:44:59.517Z",
+          "opponents": "Driver 1"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 35,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T01:46:14.558525",
+    "winRate": 50
+  },
+  {
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-07T01:55:50.779Z",
+    "dob": "2025-07-04",
+    "eventId": "0d63b15d-5790-4635-aefd-ddfd74aa65bf",
+    "eventsParticipated": 0,
+    "id": "c7ad59d3-3259-4684-848d-e9534a53438d",
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-08T05:46:17.132Z",
+    "name": "Driver 12",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-06T21:55:50.785477",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T05:46:17.132Z",
+      "totalLosses": 0,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
+    },
+    "status": "active",
+    "totalFee": 35,
+    "totalRaces": 0,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T01:46:20.067772",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-08T05:48:56.572Z",
+    "dob": "2025-07-04",
+    "eventId": "856db2a2-7efe-4ea1-9b8d-96ca36863103",
+    "eventsParticipated": 1,
+    "id": "0faa3980-1137-4b83-805d-b33c95fbf8d8",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T05:52:51.877Z",
+    "name": "Driver 21",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T01:48:56.587226",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T05:51:35.122Z",
+      "lastCalculated": 1751953895122,
+      "totalLosses": 1,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": [
+        {
+          "eventId": "856db2a2-7efe-4ea1-9b8d-96ca36863103",
+          "className": "2",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751953768151-hjab1f5ic",
+          "lane": 1,
+          "position": "DSQ",
+          "result": "disqualified",
+          "timestamp": "2025-07-08T05:49:28.151Z",
+          "opponents": "Driver 22"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 35,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T01:52:54.583640",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-08T05:49:04.826Z",
+    "dob": "2025-07-04",
+    "eventId": "856db2a2-7efe-4ea1-9b8d-96ca36863103",
+    "eventsParticipated": 1,
+    "id": "87516df0-4243-4baa-8852-66549eecbacc",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T05:52:57.786Z",
+    "name": "Driver 22",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T01:49:04.830659",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1",
+      "2"
+    ],
+    "sledConfigurations": {
+      "1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T05:51:34.745Z",
+      "lastCalculated": 1751953894745,
+      "totalLosses": 1,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": [
+        {
+          "eventId": "856db2a2-7efe-4ea1-9b8d-96ca36863103",
+          "className": "1",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751953768150-4gt81ytub",
+          "lane": 2,
+          "position": "FS",
+          "result": "false_start",
+          "timestamp": "2025-07-08T05:49:28.150Z",
+          "opponents": "Driver 21"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 35,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T01:52:57.793621",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2.3,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:05:26.771Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "f0cad8c8-3ffd-4227-9a14-6f9a2b270091",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "4": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.875Z",
+    "name": "Abdullahi Hoffman",
+    "nickname": "abdu",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:05:26.788268",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock",
+      "800 Stock",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "600",
+        "make": "Polaris",
+        "model": "summit",
+        "year": "2022"
+      },
+      "600 Stock": {
+        "engine": "600",
+        "make": "Polaris",
+        "model": "summit",
+        "year": "2022"
+      },
+      "800 Stock": {
+        "engine": "600",
+        "make": "Polaris",
+        "model": "summit",
+        "year": "2022"
+      }
+    },
+    "sponsors": [
+      "Pepsi"
+    ],
+    "statistics": {
+      "totalRaces": 3,
+      "totalWins": 1,
+      "winRate": 33.3,
+      "avgPosition": 2.3,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "4": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        }
+      },
+      "recentWinRate": 33.3,
+      "lastUpdated": "2025-07-08T13:33:37.821Z",
+      "lastCalculated": 1751981617821,
+      "totalLosses": 2,
+      "bestPosition": 1,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355732-d4ltpy4aq",
+          "lane": 4,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.732Z",
+          "opponents": "Dylan Graves, Jak Cline, Karl Curry, Elias Walter"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "final-heat-1751981355730-qsryee0kg",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Steve Arroyo"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355731-z35iq7kk6",
+          "lane": 4,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Elias Walter, Flynn Benton, Herman Sosa, Muhammed Rosales"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 200,
+    "totalRaces": 3,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:19.882942",
+    "winRate": 33.3
+  },
+  {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:05:51.811Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "932af4a8-c26e-4139-bca5-f36a6e0b77f7",
+    "lanePerformance": {
+      "4": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.436Z",
+    "name": "Cassius Franklin",
+    "nickname": "cass",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:05:51.814682",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve",
+      "800 Improve",
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 1,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "4": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-08T13:32:09.475Z",
+      "lastCalculated": 1751981529475,
+      "totalLosses": 0,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355734-0brnoc29e",
+          "lane": 4,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Leonard Cisneros, Arran Shepard, Markus David, Moses Young"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 350,
+    "totalRaces": 1,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:19.442841",
+    "winRate": 100
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:06:12.153Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "dd5b5a71-08c3-43ea-8531-e38ab821c4f8",
+    "lanePerformance": {
+      "4": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:18.403Z",
+    "name": "Virginia Davidson",
+    "nickname": "vir",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:06:12.156164",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps"
+    ],
+    "sledConfigurations": {
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "4": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:06.165Z",
+      "lastCalculated": 1751981586166,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "4 temps",
+          "round": 1,
+          "heatId": "final-heat-1751981355735-xgyp2zkgh",
+          "lane": 4,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Hugo Lewis, Matteo Hampton, Lyndon Walsh"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 250,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:18.410001",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:06:31.795Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "fbbc5b64-3d57-4385-bed4-67bcdb527263",
+    "lanePerformance": {
+      "4": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.124Z",
+    "name": "Micheal Coleman",
+    "nickname": "mich",
+    "paymentStatus": "pending",
+    "racingNumber": "2",
+    "registrationDate": "2025-07-08T09:06:31.797952",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [
+      "Coke"
+    ],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "4": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.203Z",
+      "lastCalculated": 1751981618203,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Outlaw",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355735-kf3zdxu5i",
+          "lane": 4,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Niall Petty, Howard Murray, Charley Abbott, Ioan Daniels"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 1000,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.130780",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:06:59.798Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "338fbd7a-900e-46fa-81f1-3bda85460f96",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.627Z",
+    "name": "Miles Mcdowell",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:06:59.801976",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Stock",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [
+      "mom"
+    ],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 1,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-08T13:32:22.096Z",
+      "lastCalculated": 1751981542096,
+      "totalLosses": 0,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Stock",
+          "round": 1,
+          "heatId": "final-heat-1751981355732-mnla9wk03",
+          "lane": 3,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.732Z",
+          "opponents": "Flynn Benton, Rafael Small, Shawn Dale"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 150,
+    "totalRaces": 1,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:19.633925",
+    "winRate": 100
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:07:17.824Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "47609740-c30d-457d-8e1a-24e9d5a8fbc8",
+    "lanePerformance": {
+      "4": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.290Z",
+    "name": "Huw Bates",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:07:17.827147",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [
+      "me"
+    ],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "4": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.450Z",
+      "lastCalculated": 1751981618450,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Pro-Max",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355736-9sbwjgk0p",
+          "lane": 4,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.736Z",
+          "opponents": "Ioan Daniels, Leighton Meza, Charley Abbott, Anika Lin"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 500,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.297699",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:07:36.327Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "e4cb415e-f995-4c5c-a830-37da91b1bf9e",
+    "lanePerformance": {
+      "5": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.690Z",
+    "name": "Moses Young",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:07:36.330091",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps",
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "5": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:12.446Z",
+      "lastCalculated": 1751981532446,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355734-0brnoc29e",
+          "lane": 5,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Leonard Cisneros, Arran Shepard, Markus David, Cassius Franklin"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 400,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.698551",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:07:47.174Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "10bce82a-b74d-4db4-b9c8-aee24a1c9746",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:20.081Z",
+    "name": "Chad Allison",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:07:47.178563",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 1,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-08T13:33:38.499Z",
+      "lastCalculated": 1751981618499,
+      "totalLosses": 0,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Pro-Max",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355736-0z6tzl5hs",
+          "lane": 3,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.736Z",
+          "opponents": "Kobe Valdez, Jessie Mccarthy, Hugo Lewis, Leonard Cisneros"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 500,
+    "totalRaces": 1,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:20.087990",
+    "winRate": 100
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:08:01.689Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "10fbd6ae-626a-4ccd-a640-25a80f6b740d",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.840Z",
+    "name": "Brendon Parks",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:08:01.692135",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve",
+      "800 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:03.187Z",
+      "lastCalculated": 1751981523187,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355734-zdrfiv7ik",
+          "lane": 3,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Ioan Daniels, Matteo Hampton, Mattie Chan, Edmund Jacobs"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 250,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.849613",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 5,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:08:18.787Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "0e7f9c67-f06d-4321-951b-9b047272548f",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:20.064Z",
+    "name": "Ioan Daniels",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:08:18.790184",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Outlaw",
+      "1000 Improve",
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 5,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:03.267Z",
+      "lastCalculated": 1751981523267,
+      "totalLosses": 1,
+      "bestPosition": 5,
+      "worstPosition": 5,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355734-zdrfiv7ik",
+          "lane": 1,
+          "position": 5,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Matteo Hampton, Brendon Parks, Mattie Chan, Edmund Jacobs"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 1650,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:20.073857",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:08:35.253Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "ae8df656-02e5-44b5-b342-92f8989a3127",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.013Z",
+    "name": "Flynn Benton",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:08:35.256459",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Stock",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:25.109Z",
+      "lastCalculated": 1751981545109,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Stock",
+          "round": 1,
+          "heatId": "final-heat-1751981355732-mnla9wk03",
+          "lane": 1,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.732Z",
+          "opponents": "Rafael Small, Miles Mcdowell, Shawn Dale"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 150,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.022153",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 5,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:11:29.124Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "d6456c2f-70dd-4e58-8639-7f53a6951303",
+    "lanePerformance": {
+      "5": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.269Z",
+    "name": "Anika Lin",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:11:29.127639",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 5,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "5": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.467Z",
+      "lastCalculated": 1751981618467,
+      "totalLosses": 1,
+      "bestPosition": 5,
+      "worstPosition": 5,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Pro-Max",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355736-9sbwjgk0p",
+          "lane": 5,
+          "position": 5,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.736Z",
+          "opponents": "Ioan Daniels, Leighton Meza, Charley Abbott, Huw Bates"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 500,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.280485",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:11:49.481Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "3c872fbb-7e47-4957-9fe9-9f16ef9d715a",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:20.043Z",
+    "name": "Leonard Cisneros",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:11:49.485461",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Outlaw",
+      "1000 Improve",
+      "Pro-Max",
+      "4 temps",
+      "800 Improve",
+      "600 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:15.412Z",
+      "lastCalculated": 1751981535412,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355734-0brnoc29e",
+          "lane": 1,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Arran Shepard, Markus David, Cassius Franklin, Moses Young"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 2100,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:20.052305",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2.5,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:12:07.584Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "7d3d6236-280a-4e0d-9371-b8e9e7a459ac",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.810Z",
+    "name": "Jak Cline",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:12:07.588002",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock",
+      "800 Stock",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 2.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-08T13:33:10.742Z",
+      "lastCalculated": 1751981590742,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355730-rb1berj61",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Jorge Bell, Dylan Graves, Elias Walter"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355731-qcfi6mle6",
+          "lane": 3,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Rafael Small, Miles Mcdowell, Jorge Bell, Dylan Graves"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 200,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:19.817700",
+    "winRate": 50
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:14:31.113Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "452b6adb-3a04-4f99-9f67-25ac3cf6d883",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:18.665Z",
+    "name": "Ted Leon",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:14:31.117000",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Improve"
+    ],
+    "sledConfigurations": {
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:37.852Z",
+      "lastCalculated": 1751981617852,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355733-fq8c7tohm",
+          "lane": 3,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.733Z",
+          "opponents": "Brendon Parks, Arran Shepard, Cassius Franklin"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 100,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:18.677312",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:14:42.699Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "8f7f572b-647c-41c0-9f96-b3117d3c24db",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.313Z",
+    "name": "Leighton Meza",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:14:42.702048",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.417Z",
+      "lastCalculated": 1751981618417,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Pro-Max",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355736-9sbwjgk0p",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.736Z",
+          "opponents": "Ioan Daniels, Charley Abbott, Huw Bates, Anika Lin"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 500,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.321200",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:14:54.553Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "b7145cf5-a536-4fad-8c28-f332dba70ffb",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:34:40.877Z",
+    "name": "Mohsin Hudson",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:14:54.556979",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:15.512Z",
+      "lastCalculated": 1751981535512,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "final-heat-1751981355734-4uapl1scx",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Lyndon Walsh"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 150,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:34:48.144118",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:15:07.546Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "3639a954-a8b1-4600-b8cf-ef2e246ceaf1",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:18.883Z",
+    "name": "Herman Sosa",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:15:07.549936",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Stock"
+    ],
+    "sledConfigurations": {
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.042Z",
+      "lastCalculated": 1751981618042,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355731-z35iq7kk6",
+          "lane": 3,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Elias Walter, Flynn Benton, Abdullahi Hoffman, Muhammed Rosales"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 50,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:18.890157",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 4.5,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:15:26.016Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "ebb019ab-5eda-4c2e-a45b-bfc6c36597d3",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "4": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "5": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.770Z",
+    "name": "Elias Walter",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:15:26.019641",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock",
+      "800 Stock",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 3,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4.5,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "4": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "5": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:37.790Z",
+      "lastCalculated": 1751981617790,
+      "totalLosses": 3,
+      "bestPosition": 4,
+      "worstPosition": 5,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355732-d4ltpy4aq",
+          "lane": 5,
+          "position": "DSQ",
+          "result": "disqualified",
+          "timestamp": "2025-07-08T13:29:15.732Z",
+          "opponents": "Dylan Graves, Jak Cline, Karl Curry, Abdullahi Hoffman"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355730-rb1berj61",
+          "lane": 4,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Jorge Bell, Jak Cline, Dylan Graves"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355731-z35iq7kk6",
+          "lane": 1,
+          "position": 5,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Flynn Benton, Herman Sosa, Abdullahi Hoffman, Muhammed Rosales"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 200,
+    "totalRaces": 3,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.778145",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:15:40.626Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "12ed2e2e-9a84-4ea1-9591-aea72306da71",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.889Z",
+    "name": "Mikolaj Burton",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:15:40.629857",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Stock"
+    ],
+    "sledConfigurations": {
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 1,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-08T13:33:38.132Z",
+      "lastCalculated": 1751981618132,
+      "totalLosses": 0,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Stock",
+          "round": 1,
+          "heatId": "final-heat-1751981355731-0ymj3zktw",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Steve Arroyo"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 50,
+    "totalRaces": 1,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:19.896437",
+    "winRate": 100
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:15:53.400Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "29ce6ad3-aeee-404d-a4c6-978ac957ac4d",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.594Z",
+    "name": "Karl Curry",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:15:53.403437",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.699Z",
+      "lastCalculated": 1751981618699,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355732-d4ltpy4aq",
+          "lane": 3,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.732Z",
+          "opponents": "Dylan Graves, Jak Cline, Abdullahi Hoffman, Elias Walter"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 100,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.603516",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:16:04.809Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "8dc7977a-4b2b-41ca-8fc0-4cb25e64948a",
+    "lanePerformance": {
+      "4": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:35:08.773Z",
+    "name": "Mattie Chan",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:16:04.812755",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "4": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:03.227Z",
+      "lastCalculated": 1751981523227,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355734-zdrfiv7ik",
+          "lane": 4,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Ioan Daniels, Matteo Hampton, Brendon Parks, Edmund Jacobs"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 150,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:35:45.988265",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:16:18.991Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "8b566a2a-1b3d-406d-b5bf-1957fb6961ba",
+    "lanePerformance": {
+      "4": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.170Z",
+    "name": "Howard Murray",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:16:18.995022",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps",
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "4": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:35.044Z",
+      "lastCalculated": 1751981555044,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "4 temps",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355735-shemvjfiu",
+          "lane": 4,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Moses Young, Leonard Cisneros, Maximillian Potter, Dylan Graves"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 1250,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.182024",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 3,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:16:31.374Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "81ef16b9-b215-4d46-ba9d-ed8ab4855cce",
+    "lanePerformance": {
+      "3": {
+        "total": 2,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.416Z",
+    "name": "Charley Abbott",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:16:31.376459",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max",
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 2,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 3,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 2,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.222Z",
+      "lastCalculated": 1751981618222,
+      "totalLosses": 2,
+      "bestPosition": 3,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Outlaw",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355735-kf3zdxu5i",
+          "lane": 3,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Niall Petty, Howard Murray, Micheal Coleman, Ioan Daniels"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Pro-Max",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355736-9sbwjgk0p",
+          "lane": 3,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.736Z",
+          "opponents": "Ioan Daniels, Leighton Meza, Huw Bates, Anika Lin"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 1500,
+    "totalRaces": 2,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.424843",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 3,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:16:43.301Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "487ac88b-c809-402c-91e1-dd09311c64ec",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:18.434Z",
+    "name": "Maximillian Potter",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:16:43.303631",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps"
+    ],
+    "sledConfigurations": {
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 3,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:31.638Z",
+      "lastCalculated": 1751981551638,
+      "totalLosses": 1,
+      "bestPosition": 3,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "4 temps",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355735-shemvjfiu",
+          "lane": 3,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Moses Young, Leonard Cisneros, Howard Murray, Dylan Graves"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 250,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:18.442414",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 3,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:16:54.693Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "8c945205-90ba-4228-971b-4213e77a7acf",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.929Z",
+    "name": "Rafael Small",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:16:54.695641",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Stock",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 3,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:25.087Z",
+      "lastCalculated": 1751981545087,
+      "totalLosses": 1,
+      "bestPosition": 3,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Stock",
+          "round": 1,
+          "heatId": "final-heat-1751981355732-mnla9wk03",
+          "lane": 2,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.732Z",
+          "opponents": "Flynn Benton, Miles Mcdowell, Shawn Dale"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 150,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.936642",
+    "winRate": 0
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:17:05.609Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "4a23aa28-d845-4c93-84e7-1d9421234f98",
+    "name": "Sam Chambers",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:17:05.612765",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve"
+    ],
+    "sledConfigurations": {
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 100,
+    "updatedAt": "2025-07-08T09:33:38.646702",
+    "totalRaces": 1,
+    "totalWins": 0,
+    "winRate": 0,
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "eventsParticipated": 1,
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:33:38.636Z",
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.636Z",
+      "lastCalculated": 1751981618636,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "600 Improve",
+          "round": "final",
+          "heatId": "final-heat-1751981355733-l2o7ama4c",
+          "lane": 3,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.733Z",
+          "opponents": "Cassius Franklin, Leonard Cisneros"
+        }
+      ]
+    }
+  },
+  {
+    "avgPosition": 3,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:17:19.275Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "2c3eceeb-48d3-42c8-bbed-53e41659ad80",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:18.692Z",
+    "name": "Arran Shepard",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:17:19.277737",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve",
+      "800 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 3,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:12.779Z",
+      "lastCalculated": 1751981532779,
+      "totalLosses": 1,
+      "bestPosition": 3,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355734-0brnoc29e",
+          "lane": 2,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Leonard Cisneros, Markus David, Cassius Franklin, Moses Young"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 250,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:18.712314",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2.5,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:17:31.002Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "689b32d1-7682-4e55-bade-4feda0232680",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "4": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:18.991Z",
+    "name": "Jorge Bell",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:17:31.007969",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock",
+      "800 Stock"
+    ],
+    "sledConfigurations": {
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 2,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2.5,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "4": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:35.192Z",
+      "lastCalculated": 1751981615192,
+      "totalLosses": 2,
+      "bestPosition": 2,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355730-rb1berj61",
+          "lane": 1,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Jak Cline, Dylan Graves, Elias Walter"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355731-qcfi6mle6",
+          "lane": 4,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Rafael Small, Miles Mcdowell, Jak Cline, Dylan Graves"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 100,
+    "totalRaces": 2,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:18.998364",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:17:41.715Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "6b381e9a-8f17-4aa0-ba76-0a96fc8eb76b",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.744Z",
+    "name": "Lyndon Walsh",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:17:41.718783",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve",
+      "4 temps"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 1,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-08T13:32:15.492Z",
+      "lastCalculated": 1751981535492,
+      "totalLosses": 0,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "final-heat-1751981355734-4uapl1scx",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Mohsin Hudson"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 400,
+    "totalRaces": 1,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:19.754203",
+    "winRate": 100
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:17:57.925Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "8e799f65-df28-4f4a-9f56-765c00648d39",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.140Z",
+    "name": "Niall Petty",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:17:57.928767",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.258Z",
+      "lastCalculated": 1751981618258,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Outlaw",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355735-kf3zdxu5i",
+          "lane": 1,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Howard Murray, Charley Abbott, Micheal Coleman, Ioan Daniels"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 1000,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.146780",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:18:17.048Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "dc6235eb-3525-4528-98ed-73141ba947ab",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "5": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.859Z",
+    "name": "Dylan Graves",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:18:17.051727",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Stock",
+      "4 temps",
+      "800 Stock",
+      "600 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 2,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "5": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:38.262Z",
+      "lastCalculated": 1751981558262,
+      "totalLosses": 2,
+      "bestPosition": 3,
+      "worstPosition": 5,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "4 temps",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355735-shemvjfiu",
+          "lane": 5,
+          "position": 5,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Moses Young, Leonard Cisneros, Maximillian Potter, Howard Murray"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355730-rb1berj61",
+          "lane": 3,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Jorge Bell, Jak Cline, Elias Walter"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 450,
+    "totalRaces": 2,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.866614",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:18:31.795Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "e9d94d55-c342-4c0d-ba59-ba8c6f82eb59",
+    "lanePerformance": {
+      "4": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:18.332Z",
+    "name": "Shawn Dale",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:18:31.797859",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "4": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:22.426Z",
+      "lastCalculated": 1751981542426,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Stock",
+          "round": 1,
+          "heatId": "final-heat-1751981355732-mnla9wk03",
+          "lane": 4,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.732Z",
+          "opponents": "Flynn Benton, Rafael Small, Miles Mcdowell"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 100,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:18.340695",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 1.5,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:18:45.065Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "e959d62e-ea15-4633-b38b-63e25c240161",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.791Z",
+    "name": "Steve Arroyo",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:18:45.068033",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock",
+      "800 Stock"
+    ],
+    "sledConfigurations": {
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-08T13:33:37.806Z",
+      "lastCalculated": 1751981617806,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "final-heat-1751981355730-qsryee0kg",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Abdullahi Hoffman"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Stock",
+          "round": 1,
+          "heatId": "final-heat-1751981355731-0ymj3zktw",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Mikolaj Burton"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 100,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:19.797582",
+    "winRate": 50
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:19:01.163Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "5cce6a12-9ce3-481e-8ab3-21c9abbecb13",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.335Z",
+    "name": "Kobe Valdez",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:19:01.167605",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.527Z",
+      "lastCalculated": 1751981618527,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Pro-Max",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355736-0z6tzl5hs",
+          "lane": 1,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.736Z",
+          "opponents": "Jessie Mccarthy, Chad Allison, Hugo Lewis, Leonard Cisneros"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 500,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.342611",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 4,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:19:17.607Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "5dd100ed-d6f0-412e-af4c-20037c2ac5ac",
+    "lanePerformance": {
+      "5": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.905Z",
+    "name": "Muhammed Rosales",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:19:17.610708",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Stock"
+    ],
+    "sledConfigurations": {
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "5": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:33:38.093Z",
+      "lastCalculated": 1751981618093,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "800 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355731-z35iq7kk6",
+          "lane": 5,
+          "position": 4,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.731Z",
+          "opponents": "Elias Walter, Flynn Benton, Herman Sosa, Abdullahi Hoffman"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 50,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.918640",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 3,
+    "bestStreak": 1,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:19:30.013Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "1d66c4b4-7385-46d5-8477-26c7e96cdf0b",
+    "lanePerformance": {
+      "2": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:20.107Z",
+    "name": "Jessie Mccarthy",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:19:30.016744",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max",
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 3,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-08T13:33:38.294Z",
+      "lastCalculated": 1751981618294,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 5,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Outlaw",
+          "round": 1,
+          "heatId": "final-heat-1751981355735-lu3f5ld5x",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Leonard Cisneros, Hugo Lewis"
+        },
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "Pro-Max",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355736-0z6tzl5hs",
+          "lane": 2,
+          "position": 5,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.736Z",
+          "opponents": "Kobe Valdez, Chad Allison, Hugo Lewis, Leonard Cisneros"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 1500,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-08T09:36:20.113839",
+    "winRate": 50
+  },
+  {
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:19:41.132Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 0,
+    "id": "9c947f87-1598-4806-b9a0-3c55d85ba5f4",
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-08T13:36:19.553Z",
+    "name": "Edmund Jacobs",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:19:41.135736",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:36:19.553Z",
+      "totalLosses": 0,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
+    },
+    "status": "active",
+    "totalFee": 150,
+    "totalRaces": 0,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.567327",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 3,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:19:55.205Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "842eaae1-e767-4b7a-b35e-5da8186af627",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.577Z",
+    "name": "Matteo Hampton",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:19:55.208918",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps",
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 3,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:03.204Z",
+      "lastCalculated": 1751981523204,
+      "totalLosses": 1,
+      "bestPosition": 3,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h1-1751981355734-zdrfiv7ik",
+          "lane": 2,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Ioan Daniels, Brendon Parks, Mattie Chan, Edmund Jacobs"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 400,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.584158",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:20:11.945Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "8f10586a-1fc2-4e46-9a3c-08f2ce453ab0",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:18.757Z",
+    "name": "Markus David",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:20:11.948738",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Improve",
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:15.449Z",
+      "lastCalculated": 1751981535449,
+      "totalLosses": 1,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h2-1751981355734-0brnoc29e",
+          "lane": 3,
+          "position": "FS",
+          "result": "false_start",
+          "timestamp": "2025-07-08T13:29:15.734Z",
+          "opponents": "Leonard Cisneros, Arran Shepard, Cassius Franklin, Moses Young"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 250,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:18.763821",
+    "winRate": 0
+  },
+  {
+    "avgPosition": 3,
+    "bestStreak": 0,
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:20:53.485Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "eventsParticipated": 1,
+    "id": "50a9ea7a-b8cf-4d78-9f94-c0b0cd98dc7f",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-08T13:36:19.969Z",
+    "name": "Hugo Lewis",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:20:53.488669",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps",
+      "Pro-Max",
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 3,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-08T13:32:53.989Z",
+      "lastCalculated": 1751981573989,
+      "totalLosses": 1,
+      "bestPosition": 3,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "4 temps",
+          "round": 1,
+          "heatId": "final-heat-1751981355735-xgyp2zkgh",
+          "lane": 1,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-08T13:29:15.735Z",
+          "opponents": "Matteo Hampton, Lyndon Walsh, Virginia Davidson"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 1750,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-08T09:36:19.977476",
+    "winRate": 0
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:21:06.501Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "02961e3a-9b95-45b7-a662-fc2f7e7dd2f5",
+    "name": "Fergus Massey",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:21:06.504721",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock"
+    ],
+    "sledConfigurations": {
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 50,
+    "updatedAt": "2025-07-08T09:21:06.546242"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:21:15.861Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "e9dc61e1-08d2-4f81-9342-c4d0f2107ef2",
+    "name": "Mackenzie Morrow",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:21:15.863585",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve"
+    ],
+    "sledConfigurations": {
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 100,
+    "updatedAt": "2025-07-08T09:21:15.905827"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:21:26.555Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "97df0ad0-76fc-4a89-bd42-060ecc84a5c5",
+    "name": "Ibraheem Perkins",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:21:26.559578",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve"
+    ],
+    "sledConfigurations": {
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 100,
+    "updatedAt": "2025-07-08T09:21:26.601750"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:21:36.695Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "8b85fe68-ced8-4169-bcbd-442abbfa4c56",
+    "name": "Kade Whitaker",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:21:36.697801",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Stock"
+    ],
+    "sledConfigurations": {
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 50,
+    "updatedAt": "2025-07-08T09:21:36.737985"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:21:46.393Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "4556031d-52e8-4777-9d7f-265060fca208",
+    "name": "Ismail Harrison",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:21:46.396599",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Improve"
+    ],
+    "sledConfigurations": {
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 100,
+    "updatedAt": "2025-07-08T09:21:46.432232"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:21:56.041Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "31d4d752-a962-4507-b1d6-4a1cef44df4b",
+    "name": "Duncan Spencer",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:21:56.043852",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Improve"
+    ],
+    "sledConfigurations": {
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 100,
+    "updatedAt": "2025-07-08T09:21:56.080609"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:22:05.988Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "7cfec5a2-242d-4397-a54e-a719e2ce389b",
+    "name": "Cory Decker",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:22:05.991667",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 100,
+    "updatedAt": "2025-07-08T09:22:06.034651"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:22:15.322Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "8bd9bc37-eaa1-4fa7-92d8-aee703bbd603",
+    "name": "Ashley Hamilton",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:22:15.325835",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 150,
+    "updatedAt": "2025-07-08T09:22:15.363944"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:22:25.444Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "220f563e-8616-4905-964f-8c74623ce96b",
+    "name": "Mohamed Landry",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:22:25.447822",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 150,
+    "updatedAt": "2025-07-08T09:22:25.488852"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:22:34.973Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "d6e06930-5c5a-454b-9e73-38757ddace2c",
+    "name": "Ammar James",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:22:34.975986",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps"
+    ],
+    "sledConfigurations": {
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 250,
+    "updatedAt": "2025-07-08T09:22:35.017540"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:22:45.511Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "52b302f8-8058-4400-abc7-dc38475069d8",
+    "name": "Zach Marquez",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:22:45.513864",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 500,
+    "updatedAt": "2025-07-08T09:22:45.558404"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:22:56.883Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "2aa72165-b546-4539-a590-556e41780bba",
+    "name": "Bryan Castillo",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:22:56.887261",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 1000,
+    "updatedAt": "2025-07-08T09:22:56.924455"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:23:24.939Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "9733d775-08d5-4f6f-9c33-d0987d35e634",
+    "name": "Alvin Silva",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:23:24.942071",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock",
+      "800 Stock",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 200,
+    "updatedAt": "2025-07-08T09:23:24.979686"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:23:37.031Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "6808651c-bf05-4043-8f76-d1ac4bde3f47",
+    "name": "Laurie Crawford",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:23:37.034843",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve",
+      "800 Improve",
+      "1000 Improve"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 350,
+    "updatedAt": "2025-07-08T09:23:37.077042"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:23:48.571Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "4947a580-a8ed-4a9b-876f-e4481231a3c2",
+    "name": "Harrison Barr",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:23:48.574621",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max",
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 1500,
+    "updatedAt": "2025-07-08T09:23:48.595853"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:24:56.888Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "a4d01e94-35ca-4db6-9d7c-b8c2f9f1ac2c",
+    "name": "Bartosz Reeves",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:24:56.892041",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps"
+    ],
+    "sledConfigurations": {
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 250,
+    "updatedAt": "2025-07-08T09:24:56.917072"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:25:09.322Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "e8a1998f-084e-41be-a024-b31032b2808d",
+    "name": "Oskar Poole",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:25:09.325694",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock"
+    ],
+    "sledConfigurations": {
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 50,
+    "updatedAt": "2025-07-08T09:25:09.370724"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:25:19.904Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "b0353877-4d5c-47f0-bf87-4453f884a825",
+    "name": "Archie Mahoney",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:25:19.906501",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve"
+    ],
+    "sledConfigurations": {
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 100,
+    "updatedAt": "2025-07-08T09:25:19.945043"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:25:33.493Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "2f72dd42-101a-4fc8-8b59-4436c857068b",
+    "name": "Leyton Carver",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:25:33.495884",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Stock",
+      "800 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 150,
+    "updatedAt": "2025-07-08T09:25:33.540499"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:25:44.384Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "3c14c9e0-2f2a-4135-ba1d-54b66603b510",
+    "name": "Ryan Jennings",
+    "nickname": "abdu",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:25:44.386993",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Stock",
+      "4 temps"
+    ],
+    "sledConfigurations": {
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 350,
+    "updatedAt": "2025-07-08T09:25:44.433727"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:25:53.556Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "25e086e3-42b1-49b8-9f6a-f7df6fb81a45",
+    "name": "Jordan Orozco",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:25:53.559789",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 1000,
+    "updatedAt": "2025-07-08T09:25:53.606214"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:26:04.704Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "d5d5e8e9-8292-456f-b734-e8afb2684d65",
+    "name": "Maxim Woodard",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:26:04.707053",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 500,
+    "updatedAt": "2025-07-08T09:26:04.746324"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:26:39.785Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "635b1364-39dd-4cbb-ac8f-17e1271d06b7",
+    "name": "William Alexander",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:26:39.788059",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve",
+      "Pro-Max"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 650,
+    "updatedAt": "2025-07-08T09:26:39.822713"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:26:51.319Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "01b3841d-62e2-4b7a-bf29-b571c1290f80",
+    "name": "Otis Odonnell",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:26:51.322332",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve",
+      "800 Improve"
+    ],
+    "sledConfigurations": {
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 200,
+    "updatedAt": "2025-07-08T09:26:51.357942"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:27:03.426Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "2279f1b2-7ef9-48f3-9381-aa513c2319d2",
+    "name": "Lara Williams",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:27:03.429137",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve",
+      "Outlaw"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 1150,
+    "updatedAt": "2025-07-08T09:27:03.459229"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:27:13.898Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "2cc9f58b-cc46-4c3a-83b6-216c696ee0cb",
+    "name": "Phillip Harvey",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:27:13.900864",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve",
+      "800 Improve"
+    ],
+    "sledConfigurations": {
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 200,
+    "updatedAt": "2025-07-08T09:27:13.941183"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:27:34.230Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "0a994909-37da-46a6-8b59-2a9a6c569c6f",
+    "name": "Tomasz Dalton",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:27:34.232125",
+    "registrationType": "event",
+    "selectedClasses": [
+      "4 temps"
+    ],
+    "sledConfigurations": {
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 250,
+    "updatedAt": "2025-07-08T09:27:34.272186"
+  },
+  {
+    "contact": {
+      "email": "driver1@1.1",
+      "emergency": "",
+      "phone": "1234567654"
+    },
+    "createdAt": "2025-07-08T13:28:43.648Z",
+    "dob": "2025-07-07",
+    "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+    "id": "8ffcf7a2-b2e1-438c-a05e-f411bda05137",
+    "name": "Yasir Ford",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-08T09:28:43.650623",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Stock"
+    ],
+    "sledConfigurations": {
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 50,
+    "updatedAt": "2025-07-08T09:28:43.672319"
+  }
+]

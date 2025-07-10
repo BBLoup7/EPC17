@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Series Management (Project 17)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .modal-wrapper {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+            margin: 2rem auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .modal-header h2 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .modal-body {
+            padding: 2rem;
+        }
+        
+        /* Series form styles */
+        .series-form {
+            background: none;
+            padding: 0;
+            box-shadow: none;
+        }
+        
+        .series-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .series-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .series-form input[type="text"],
+        .series-form input[type="date"],
+        .series-form select,
+        .series-form textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--text-secondary);
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: border-color 0.2s;
+        }
+        
+        .series-form input:focus,
+        .series-form select:focus,
+        .series-form textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        
+        .series-form textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .series-form .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .series-form .form-row .form-group {
+            flex: 1;
+        }
+        
+        .series-form .form-group button {
+            margin-top: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .modal-wrapper {
+                margin: 1rem;
+                width: calc(100% - 2rem);
+            }
+            
+            .modal-header {
+                padding: 1rem;
+            }
+            
+            .modal-body {
+                padding: 1rem;
+            }
+            
+            .series-form .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+    
+    <style>
+        /* Season Management Styles */
+        .seasons-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .season-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary, #2d2d2d);
+            border-radius: 8px;
+            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+        }
+        
+        .season-inputs {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 1rem;
+            flex: 1;
+        }
+        
+        .season-name-input,
+        .season-start-input,
+        .season-end-input,
+        .season-status-input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+            border-radius: 4px;
+            background: var(--bg-primary, #1a1a1a);
+            color: var(--text-primary, #ffffff);
+        }
+        
+        .seasons-empty,
+        .classes-empty {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary, #b3b3b3);
+            font-style: italic;
+            background: var(--bg-secondary, #2d2d2d);
+            border-radius: 8px;
+            border: 1px dashed var(--border-color, rgba(255,255,255,0.1));
+        }
+        
+        /* Class Management Styles */
+        .classes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .class-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary, #2d2d2d);
+            border-radius: 8px;
+            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+        }
+        
+        .class-inputs {
+            display: grid;
+            grid-template-columns: 2fr 1fr 2fr;
+            gap: 1rem;
+            flex: 1;
+        }
+        
+        .class-name-input,
+        .class-fee-input,
+        .class-description-input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+            border-radius: 4px;
+            background: var(--bg-primary, #1a1a1a);
+            color: var(--text-primary, #ffffff);
+        }
+        
+        /* Season Badge Styles */
+        .season-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--accent-secondary, #6c757d);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .season-badge.active {
+            background: var(--accent-success, #28a745);
+        }
+        
+        .season-badge.upcoming {
+            background: var(--accent-warning, #ffc107);
+            color: #000;
+        }
+        
+        .season-badge.completed {
+            background: var(--accent-info, #17a2b8);
+        }
+        
+        .seasons-preview {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));
+        }
+        
+        .seasons-preview h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary, #b3b3b3);
+        }
+        
+        .seasons-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .season-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--accent-secondary, #6c757d);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .season-tag.active {
+            background: var(--accent-success, #28a745);
+        }
+        
+        .season-tag.upcoming {
+            background: var(--accent-warning, #ffc107);
+            color: #000;
+        }
+        
+        .season-tag.completed {
+            background: var(--accent-info, #17a2b8);
+        }
+        
+        .season-tag.more {
+            background: var(--bg-secondary, #2d2d2d);
+            color: var(--text-secondary, #b3b3b3);
+            border: 1px dashed var(--border-color, rgba(255,255,255,0.1));
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .season-inputs,
+            .class-inputs {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .season-row,
+            .class-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .btn-remove-season,
+            .btn-remove-class {
+                align-self: flex-end;
+            }
+        }
+        
+        /* Series Details Modal Styles */
+        .series-details-modal {
+            background: var(--bg-secondary, #2d2d2d);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .series-info h3 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary, #ffffff);
+            font-size: 1.5rem;
+        }
+        
+        .series-info p {
+            color: var(--text-secondary, #b3b3b3);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        
+        .series-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-primary, #1a1a1a);
+            border-radius: 6px;
+            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+        }
+        
+        .stat-label {
+            color: var(--text-secondary, #b3b3b3);
+            font-size: 0.9rem;
+        }
+        
+        .stat-value {
+            color: var(--text-primary, #ffffff);
+            font-weight: 500;
+        }
+        
+        .seasons-section,
+        .classes-section {
+            margin-bottom: 2rem;
+        }
+        
+        .seasons-section h4,
+        .classes-section h4 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary, #ffffff);
+            font-size: 1.1rem;
+        }
+        
+        .seasons-list,
+        .classes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .season-item,
+        .class-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-primary, #1a1a1a);
+            border-radius: 6px;
+            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+        }
+        
+        .season-name,
+        .class-name {
+            font-weight: 500;
+            color: var(--text-primary, #ffffff);
+            flex: 1;
+        }
+        
+        .season-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .season-status.active {
+            background: var(--accent-success, #28a745);
+            color: white;
+        }
+        
+        .season-status.upcoming {
+            background: var(--accent-warning, #ffc107);
+            color: #000;
+        }
+        
+        .season-status.completed {
+            background: var(--accent-info, #17a2b8);
+            color: white;
+        }
+        
+        .season-date {
+            color: var(--text-secondary, #b3b3b3);
+            font-size: 0.85rem;
+        }
+        
+        .class-fee {
+            color: var(--accent-primary, #4a90e2);
+            font-weight: 500;
+        }
+        
+        .class-description {
+            color: var(--text-secondary, #b3b3b3);
+            font-size: 0.85rem;
+            flex: 2;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));
+        }
+        
+        .modal-actions .btn {
+            padding: 0.75rem 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .series-details-modal {
+                padding: 1rem;
+            }
+            
+            .series-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .season-item,
+            .class-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <div class="brand-icon">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div class="brand-text">
+                <span class="brand-main">EPC TECHNOLOGY</span>
+                <span class="brand-sub">PROJECT 17</span>
+            </div>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="registration.html">Registr.</a></li>
+            <li class="active"><a href="series.html">Series</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="races.html">Races</a></li>
+            <li><a href="driver-profile.html">Drivers</a></li>
+            <li><a href="analytics.html">Analytics</a></li>
+        </ul>
+        
+        <!-- Mobile Hamburger Menu -->
+        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav-menu">
+            <div class="mobile-nav-header">
+                <div class="mobile-nav-brand">
+                    <div class="brand-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-main">EPC TECHNOLOGY</span>
+                        <span class="brand-sub">PROJECT 17</span>
+                    </div>
+                </div>
+                <button class="mobile-nav-close" aria-label="Close navigation menu">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <ul class="mobile-nav-links">
+                <li><a href="index.html">🏠 Home</a></li>
+                <li><a href="registration.html">📝 Registration</a></li>
+                <li><a href="series.html" class="active">🏆 Series</a></li>
+                <li><a href="events.html">📅 Events</a></li>
+                <li><a href="races.html">🏁 Races</a></li>
+                <li><a href="driver-profile.html">👥 Drivers</a></li>
+                <li><a href="analytics.html">📊 Analytics</a></li>
+            </ul>
+            <div class="mobile-nav-footer">
+                <div class="mobile-nav-version">v1.0.0</div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Overlay -->
+        <div class="mobile-nav-overlay"></div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Series Management</h1>
+                <p class="subtitle">Create and manage racing series and championships</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="createSeriesBtn">
+                    <i class="fas fa-plus"></i> Create Series
+                </button>
+                <div class="utility-actions">
+                    <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
+                        <i class="fas fa-trash-alt"></i> Clear All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="listView" class="tab-content active">
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>Total Series</h3>
+                    <div class="stat-value" id="totalSeries">0</div>
+                </div>
+                <div class="card">
+                    <h3>Active Series</h3>
+                    <div class="stat-value" id="activeSeries">0</div>
+                </div>
+                <div class="card">
+                    <h3>Total Events</h3>
+                    <div class="stat-value" id="totalEvents">0</div>
+                </div>
+            </div>
+
+            <div id="seriesListContainer">
+                <!-- Series list will be loaded here -->
+            </div>
+        </div>
+
+        <div id="seriesFormContainer" style="display: none;">
+            <!-- Series form will be loaded here -->  
+        </div>
+
+        <div id="seriesDetailsContainer" style="display: none;">
+            <!-- Series details will be loaded here -->
+        </div>
+    </main>
+
+    <!-- Modal for forms -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-wrapper">
+            <div class="modal-header">
+                <h2 id="modal-title">Modal Title</h2>
+                <button class="modal-close" onclick="Helpers.hideModal()">&times;</button>
+            </div>
+            <div id="modal-content" class="modal-body">
+                <!-- Modal content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Load helper utilities first -->
+    <script src="utils/helpers.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
+    <script src="utils/event-bus.js"></script>
+    <script src="modules/statistics-manager.js"></script>
+    <script src="utils/data-manager.js"></script>
+    <!-- Load series module -->
+    <script src="modules/series.js"></script>
+    <!-- Mobile Navigation -->
+    <script src="js/mobile-nav.js"></script>
+
+    <script>
+        let seriesManager;
+
+        // Tab switching functionality
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tab + 'View').classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+        };
+
+        // Container references
+        const listContainer = document.getElementById('seriesListContainer');
+        const formContainer = document.getElementById('seriesFormContainer');
+        const detailsContainer = document.getElementById('seriesDetailsContainer');
+
+        // Load components
+        async function loadComponent(name, container) {
+            try {
+                const response = await fetch(`components/${name}.html`);
+                const html = await response.text();
+                
+                // Create a temporary container to parse the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Check if it's a template-based component
+                const template = tempDiv.querySelector('template');
+                if (template) {
+                    // Clone the template content
+                    const clone = template.content.cloneNode(true);
+                    container.innerHTML = '';
+                    container.appendChild(clone);
+                    
+                    // Add any styles from the template
+                    const styles = tempDiv.querySelectorAll('style');
+                    styles.forEach(style => {
+                        document.head.appendChild(style.cloneNode(true));
+                    });
+                } else {
+                    // Regular HTML content
+                    container.innerHTML = html;
+                }
+                
+                console.log(`Successfully loaded component: ${name}`);
+            } catch (error) {
+                console.error(`Error loading component ${name}:`, error);
+                container.innerHTML = `<div class="card"><p>Error loading ${name} component</p></div>`;
+            }
+        }
+
+        // Load series statistics
+        async function loadSeriesStats() {
+            try {
+                const stats = seriesManager.getSeriesStats();
+                document.getElementById('totalSeries').textContent = stats.total || 0;
+                document.getElementById('activeSeries').textContent = stats.active || 0;
+                document.getElementById('totalEvents').textContent = stats.totalEvents || 0;
+            } catch (error) {
+                console.error('Error loading series stats:', error);
+            }
+        }
+
+        // Load series list
+        function loadSeriesList() {
+            console.log('Loading series list...');
+            seriesManager.loadSeriesContent();
+            loadSeriesStats();
+        }
+
+        // Show series creation form - use SeriesManager's method
+        function showCreateForm() {
+            console.log('Create Series button clicked!');
+            if (!seriesManager) {
+                console.error('SeriesManager not initialized yet');
+                return;
+            }
+            seriesManager.showSeriesForm();
+        }
+
+        // Make showSeriesList available globally for the success buttons
+        window.showSeriesList = showSeriesList;
+
+        // Show series list
+        function showSeriesList() {
+            document.getElementById('listView').style.display = 'block';
+            formContainer.style.display = 'none';
+            detailsContainer.style.display = 'none';
+            
+            // Refresh the series list using SeriesManager
+            loadSeriesList();
+        }
+
+        // Configure series
+        window.configureSeries = function(seriesId) {
+            const series = seriesManager.getSeries(seriesId);
+            if (!series) {
+                alert('Series not found');
+                return;
+            }
+            
+            // Hide the series list and show the config form
+            document.getElementById('listView').style.display = 'none';
+            formContainer.style.display = 'block';
+            detailsContainer.style.display = 'none';
+            
+            const configHtml = `
+                <div class="series-config">
+                    <h3>Configure Series: ${series.name}</h3>
+                    
+                    <form id="configForm" class="config-form">
+                        <div class="config-section">
+                            <h4>Season Management</h4>
+                            <p class="config-help">Create seasons to organize events and track performance over time periods.</p>
+                            
+                            <div id="configSeasonsContainer">
+                                ${generateConfigSeasonsListHtml(series.seasons || [])}
+                            </div>
+                            
+                            <button type="button" class="btn btn-secondary" onclick="addConfigSeasonRow()">
+                                <i class="fas fa-plus"></i> Add Season
+                            </button>
+                        </div>
+                        
+                        <div class="config-section">
+                            <h4>Sled Classes</h4>
+                            <p class="config-help">Configure racing classes for this series. Default fees can be customized for each event.</p>
+                            <div class="classes-management">
+                                <div class="classes-list" id="configClassesList">
+                                    ${generateClassesListHtml(series.sledClasses || [])}
+                                </div>
+                                
+                                <div class="add-class-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <input type="text" id="newClassName" placeholder="Class name (e.g., Pro, Sport)">
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="number" id="newClassFee" placeholder="Default entry fee ($)" min="0" step="0.01">
+                                        </div>
+                                        <button type="button" class="btn btn-secondary" onclick="addClassToConfig()">
+                                            Add Class
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+
+                        
+                        <div class="config-section">
+                            <h4>Rules & Regulations</h4>
+                            <div class="form-group">
+                                <label for="rules">Series Rules</label>
+                                <textarea id="rules" name="rules" rows="4" 
+                                          placeholder="Enter series rules and regulations...">${series.rules || ''}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="cancelConfig()">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <style>
+                    .series-config {
+                        background: var(--bg-secondary);
+                        border-radius: 8px;
+                        padding: 2rem;
+                        max-width: 800px;
+                        margin: 2rem auto;
+                    }
+                    
+                    .series-config h3 {
+                        color: var(--accent-primary);
+                        margin-bottom: 2rem;
+                        text-align: center;
+                    }
+                    
+                    .config-section {
+                        background: var(--bg-primary);
+                        border-radius: 6px;
+                        padding: 1.5rem;
+                        margin-bottom: 1.5rem;
+                    }
+                    
+                    .config-section h4 {
+                        color: var(--text-primary);
+                        margin-bottom: 1rem;
+                        padding-bottom: 0.5rem;
+                        border-bottom: 2px solid var(--accent-primary);
+                    }
+                    
+                    .config-help {
+                        color: var(--text-secondary);
+                        font-size: 0.9rem;
+                        margin-bottom: 1rem;
+                        font-style: italic;
+                    }
+                    
+                    .classes-management {
+                        margin-top: 1rem;
+                    }
+                    
+                    .classes-list {
+                        margin-bottom: 1rem;
+                    }
+                    
+                    .class-item {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        background: var(--bg-secondary);
+                        padding: 0.75rem;
+                        border-radius: 4px;
+                        margin-bottom: 0.5rem;
+                    }
+                    
+                    .class-info {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                    }
+                    
+                    .class-name {
+                        font-weight: 600;
+                        color: var(--text-primary);
+                    }
+                    
+                    .class-fee {
+                        color: var(--text-secondary);
+                        font-size: 0.9rem;
+                    }
+                    
+                    .class-actions {
+                        display: flex;
+                        gap: 0.5rem;
+                    }
+                    
+                    .class-actions button {
+                        padding: 0.25rem 0.5rem;
+                        font-size: 0.8rem;
+                    }
+                    
+                    .add-class-section {
+                        background: var(--bg-secondary);
+                        padding: 1rem;
+                        border-radius: 4px;
+                        border: 2px dashed var(--border-color);
+                    }
+                    
+                    .form-actions {
+                        display: flex;
+                        gap: 1rem;
+                        justify-content: center;
+                        margin-top: 2rem;
+                        padding-top: 1rem;
+                        border-top: 1px solid var(--border-color);
+                    }
+                    
+                    .form-actions .btn {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                    
+                    /* Season Management Styles for Config */
+                    .config-seasons-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 1rem;
+                        margin-bottom: 1rem;
+                    }
+                    
+                    .config-season-row {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        padding: 1rem;
+                        background: var(--bg-primary);
+                        border-radius: 8px;
+                        border: 1px solid var(--border-color);
+                    }
+                    
+                    .config-season-inputs {
+                        display: grid;
+                        grid-template-columns: 2fr 1fr 1fr 1fr;
+                        gap: 1rem;
+                        flex: 1;
+                    }
+                    
+                    .config-season-name-input,
+                    .config-season-start-input,
+                    .config-season-end-input,
+                    .config-season-status-input {
+                        padding: 0.5rem;
+                        border: 1px solid var(--border-color);
+                        border-radius: 4px;
+                        background: var(--bg-secondary);
+                        color: var(--text-primary);
+                    }
+                    
+                    .config-seasons-empty {
+                        text-align: center;
+                        padding: 2rem;
+                        color: var(--text-secondary);
+                        font-style: italic;
+                        background: var(--bg-primary);
+                        border-radius: 8px;
+                        border: 2px dashed var(--border-color);
+                    }
+                </style>
+            `;
+            
+            // Hide the series list and show the config form
+            document.getElementById('listView').style.display = 'none';
+            formContainer.style.display = 'block';
+            detailsContainer.style.display = 'none';
+            
+            formContainer.innerHTML = configHtml;
+            
+            // Set up form submission
+            const form = document.getElementById('configForm');
+            form.addEventListener('submit', (e) => saveSeriesConfig(e, seriesId));
+        };
+        
+        // Generate classes list HTML
+        function generateClassesListHtml(classes) {
+            if (!classes || classes.length === 0) {
+                return '<p class="no-classes">No classes configured yet. Add your first class below.</p>';
+            }
+            
+            return classes.map((cls, index) => `
+                <div class="class-item" data-index="${index}" data-class-id="${cls.id || ''}" data-class-name="${cls.name}" data-class-fee="${cls.fee || cls.defaultFee || 0}">
+                    <div class="class-info">
+                        <span class="class-name">${cls.name}</span>
+                        <span class="class-fee">$${cls.fee || cls.defaultFee || '0.00'}</span>
+                    </div>
+                    <div class="class-actions">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="editClass(${index})">
+                            Edit
+                        </button>
+                        <button type="button" class="btn-delete-subtle" onclick="removeClass(${index})">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Add class to configuration
+        window.addClassToConfig = function() {
+            const nameInput = document.getElementById('newClassName');
+            const feeInput = document.getElementById('newClassFee');
+            
+            const name = nameInput.value.trim();
+            const fee = parseFloat(feeInput.value) || 0;
+            
+            if (!name) {
+                alert('Please enter a class name');
+                return;
+            }
+            
+            // Get current classes
+            const currentClasses = getCurrentClasses();
+            
+            // Check if class already exists
+            if (currentClasses.some(cls => cls.name.toLowerCase() === name.toLowerCase())) {
+                alert('A class with this name already exists');
+                return;
+            }
+            
+            // Add new class with proper ID
+            const newClass = { 
+                id: `class_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                name: name, 
+                fee: fee 
+            };
+            currentClasses.push(newClass);
+            
+            // Update display
+            updateClassesList(currentClasses);
+            
+            // Clear inputs
+            nameInput.value = '';
+            feeInput.value = '';
+        };
+        
+        // Get current classes from the form
+        function getCurrentClasses() {
+            const classItems = document.querySelectorAll('.class-item');
+            const classes = [];
+            
+            classItems.forEach((item, index) => {
+                const name = item.querySelector('.class-name').textContent;
+                const feeText = item.querySelector('.class-fee').textContent;
+                const fee = parseFloat(feeText.replace('$', '')) || 0;
+                
+                // Get class ID from data attribute (for existing classes) or generate new one
+                const classId = item.dataset.classId || `class_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${index}`;
+                
+                classes.push({ 
+                    id: classId,
+                    name: name, 
+                    fee: fee 
+                });
+            });
+            
+            return classes;
+        }
+        
+        // Update classes list display
+        function updateClassesList(classes) {
+            const container = document.getElementById('configClassesList');
+            container.innerHTML = generateClassesListHtml(classes);
+        }
+        
+        // Edit class
+        window.editClass = function(index) {
+            const classes = getCurrentClasses();
+            const cls = classes[index];
+            
+            const newName = prompt('Enter new class name:', cls.name);
+            if (newName && newName.trim() !== cls.name) {
+                const trimmedName = newName.trim();
+                
+                // Check if new name already exists
+                if (classes.some((c, i) => i !== index && c.name.toLowerCase() === trimmedName.toLowerCase())) {
+                    alert('A class with this name already exists');
+                    return;
+                }
+                
+                cls.name = trimmedName;
+            }
+            
+            const newFee = prompt('Enter entry fee ($):', cls.fee);
+            if (newFee !== null) {
+                const fee = parseFloat(newFee) || 0;
+                cls.fee = fee;
+            }
+            
+            updateClassesList(classes);
+        };
+        
+        // Remove class
+        window.removeClass = function(index) {
+            const classes = getCurrentClasses();
+            const cls = classes[index];
+            
+            if (confirm(`Are you sure you want to remove the "${cls.name}" class?`)) {
+                classes.splice(index, 1);
+                updateClassesList(classes);
+                alert(`Class "${cls.name}" removed successfully`);
+            }
+        };
+        
+        // Save series configuration
+        async function saveSeriesConfig(event, seriesId) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const classes = getCurrentClasses();
+            
+            // Format classes with proper structure for DataManager
+            const sledClasses = classes.map(cls => ({
+                id: cls.id || `class_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                name: cls.name,
+                defaultFee: cls.fee || 0,
+                description: cls.description || `${cls.name} class racing`
+            }));
+            
+            // Collect seasons data from configuration form
+            const seasons = [];
+            const seasonNames = formData.getAll('configSeasonName[]');
+            const seasonStartDates = formData.getAll('configSeasonStartDate[]');
+            const seasonEndDates = formData.getAll('configSeasonEndDate[]');
+            const seasonStatuses = formData.getAll('configSeasonStatus[]');
+            
+            for (let i = 0; i < seasonNames.length; i++) {
+                if (seasonNames[i].trim()) {
+                    seasons.push({
+                        id: `season_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        name: seasonNames[i].trim(),
+                        startDate: seasonStartDates[i] || null,
+                        endDate: seasonEndDates[i] || null,
+                        status: seasonStatuses[i] || 'upcoming',
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            }
+            
+            const configData = {
+                rules: formData.get('rules') || '',
+                sledClasses: sledClasses,
+                seasons: seasons
+            };
+            
+            // Validate season dates
+            for (const season of seasons) {
+                if (season.startDate && season.endDate) {
+                    if (new Date(season.endDate) <= new Date(season.startDate)) {
+                        alert(`End date must be after start date for season "${season.name}"`);
+                        return;
+                    }
+                }
+            }
+            
+            try {
+                console.log('💾 Saving series configuration:', configData);
+                
+                // Update using DataManager for proper persistence
+                if (window.dataManager) {
+                    const success = await window.dataManager.updateSeries(seriesId, configData);
+                    
+                    if (success) {
+                        // Also update SeriesManager cache
+                        const series = seriesManager.getSeries(seriesId);
+                        if (series) {
+                            Object.assign(series, configData);
+                        }
+                        
+                        console.log('✅ Series configuration saved successfully via DataManager');
+                        alert('Series configuration saved successfully!');
+                        showSeriesList();
+                    } else {
+                        throw new Error('Failed to update series via DataManager');
+                    }
+                } else {
+                    // Fallback to SeriesManager
+                    console.warn('⚠️ DataManager not available, using SeriesManager fallback');
+                    const series = seriesManager.getSeries(seriesId);
+                    Object.assign(series, configData);
+                    seriesManager.saveToStorage();
+                    
+                    alert('Series configuration saved successfully!');
+                    showSeriesList();
+                }
+                
+            } catch (error) {
+                console.error('❌ Error saving series configuration:', error);
+                alert('Error saving configuration: ' + error.message);
+            }
+        }
+        
+        // Cancel configuration
+        window.cancelConfig = function() {
+            showSeriesList();
+        };
+
+        // Season management functions
+        window.addSeasonRow = function() {
+            const seasonsContainer = document.getElementById('seasonsContainer');
+            const seasonsList = seasonsContainer.querySelector('.seasons-list') || seasonsContainer;
+            
+            if (seasonsContainer.querySelector('.seasons-empty')) {
+                seasonsContainer.innerHTML = '<div class="seasons-list"></div>';
+            }
+            
+            const seasonRow = document.createElement('div');
+            seasonRow.className = 'season-row';
+            seasonRow.innerHTML = `
+                <div class="season-inputs">
+                    <input type="text" name="seasonName[]" placeholder="Season name" class="season-name-input">
+                    <input type="date" name="seasonStartDate[]" class="season-start-input">
+                    <input type="date" name="seasonEndDate[]" class="season-end-input">
+                    <select name="seasonStatus[]" class="season-status-input">
+                        <option value="upcoming">Upcoming</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-danger btn-remove-season" onclick="removeSeasonRow(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            seasonsContainer.querySelector('.seasons-list').appendChild(seasonRow);
+        };
+
+        window.removeSeasonRow = function(element) {
+            if (typeof element === 'number') {
+                // Called with index
+                const seasonRow = document.querySelector(`[data-season-index="${element}"]`);
+                if (seasonRow) {
+                    seasonRow.remove();
+                }
+            } else {
+                // Called with element
+                element.closest('.season-row').remove();
+            }
+            
+            // Check if no seasons left
+            const seasonsList = document.querySelector('.seasons-list');
+            if (seasonsList && seasonsList.children.length === 0) {
+                const seasonsContainer = document.getElementById('seasonsContainer');
+                seasonsContainer.innerHTML = `
+                    <div class="seasons-empty">
+                        <p>No seasons created yet. Add your first season to get started.</p>
+                    </div>
+                `;
+            }
+        };
+
+        // Configuration season management functions
+        window.generateConfigSeasonsListHtml = function(seasons) {
+            if (seasons.length === 0) {
+                return `
+                    <div class="config-seasons-empty">
+                        <p>No seasons created yet. Add your first season to get started.</p>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="config-seasons-list">
+                    ${seasons.map((season, index) => `
+                        <div class="config-season-row" data-config-season-index="${index}">
+                            <div class="config-season-inputs">
+                                <input type="text" name="configSeasonName[]" value="${season.name}" 
+                                       placeholder="Season name" class="config-season-name-input">
+                                <input type="date" name="configSeasonStartDate[]" value="${season.startDate || ''}" 
+                                       class="config-season-start-input">
+                                <input type="date" name="configSeasonEndDate[]" value="${season.endDate || ''}" 
+                                       class="config-season-end-input">
+                                <select name="configSeasonStatus[]" class="config-season-status-input">
+                                    <option value="upcoming" ${season.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+                                    <option value="active" ${season.status === 'active' ? 'selected' : ''}>Active</option>
+                                    <option value="completed" ${season.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-remove-config-season" 
+                                    onclick="removeConfigSeasonRow(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        };
+
+        window.addConfigSeasonRow = function() {
+            const seasonsContainer = document.getElementById('configSeasonsContainer');
+            const seasonsList = seasonsContainer.querySelector('.config-seasons-list') || seasonsContainer;
+            
+            if (seasonsContainer.querySelector('.config-seasons-empty')) {
+                seasonsContainer.innerHTML = '<div class="config-seasons-list"></div>';
+            }
+            
+            const seasonRow = document.createElement('div');
+            seasonRow.className = 'config-season-row';
+            seasonRow.innerHTML = `
+                <div class="config-season-inputs">
+                    <input type="text" name="configSeasonName[]" placeholder="Season name" class="config-season-name-input">
+                    <input type="date" name="configSeasonStartDate[]" class="config-season-start-input">
+                    <input type="date" name="configSeasonEndDate[]" class="config-season-end-input">
+                    <select name="configSeasonStatus[]" class="config-season-status-input">
+                        <option value="upcoming">Upcoming</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-danger btn-remove-config-season" onclick="removeConfigSeasonRow(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            seasonsContainer.querySelector('.config-seasons-list').appendChild(seasonRow);
+        };
+
+        window.removeConfigSeasonRow = function(element) {
+            if (typeof element === 'number') {
+                // Called with index
+                const seasonRow = document.querySelector(`[data-config-season-index="${element}"]`);
+                if (seasonRow) {
+                    seasonRow.remove();
+                }
+            } else {
+                // Called with element
+                element.closest('.config-season-row').remove();
+            }
+            
+            // Check if no seasons left
+            const seasonsList = document.querySelector('.config-seasons-list');
+            if (seasonsList && seasonsList.children.length === 0) {
+                const seasonsContainer = document.getElementById('configSeasonsContainer');
+                seasonsContainer.innerHTML = `
+                    <div class="config-seasons-empty">
+                        <p>No seasons created yet. Add your first season to get started.</p>
+                    </div>
+                `;
+            }
+        };
+
+        window.addClassRow = function() {
+            const classesContainer = document.getElementById('classesContainer');
+            const classesList = classesContainer.querySelector('.classes-list') || classesContainer;
+            
+            if (classesContainer.querySelector('.classes-empty')) {
+                classesContainer.innerHTML = '<div class="classes-list"></div>';
+            }
+            
+            const classRow = document.createElement('div');
+            classRow.className = 'class-row';
+            classRow.innerHTML = `
+                <div class="class-inputs">
+                    <input type="text" name="className[]" placeholder="Class name" class="class-name-input">
+                    <input type="number" name="classFee[]" min="0" step="0.01" value="0" class="class-fee-input">
+                    <input type="text" name="classDescription[]" placeholder="Class description" class="class-description-input">
+                </div>
+                <button type="button" class="btn btn-danger btn-remove-class" onclick="removeClassRow(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            classesContainer.querySelector('.classes-list').appendChild(classRow);
+        };
+
+        window.removeClassRow = function(element) {
+            if (typeof element === 'number') {
+                // Called with index
+                const classRow = document.querySelector(`[data-class-index="${element}"]`);
+                if (classRow) {
+                    classRow.remove();
+                }
+            } else {
+                // Called with element
+                element.closest('.class-row').remove();
+            }
+            
+            // Check if no classes left
+            const classesList = document.querySelector('.classes-list');
+            if (classesList && classesList.children.length === 0) {
+                const classesContainer = document.getElementById('classesContainer');
+                classesContainer.innerHTML = `
+                    <div class="classes-empty">
+                        <p>No racing classes defined yet. Add classes to organize participants.</p>
+                    </div>
+                `;
+            }
+        };
+
+        window.cancelSeriesForm = function() {
+            showSeriesList();
+        };
+
+        // Close series details view
+        window.closeSeriesDetails = function() {
+            showSeriesList();
+        };
+
+        // Initialize page
+        async function init() {
+            console.log('Initializing series page...');
+            
+            try {
+                // Initialize DataManager first
+                if (!window.dataManager) {
+                    console.log('Initializing DataManager...');
+                    window.dataManager = new DataManager();
+                    await window.dataManager.loadFromStorage();
+                    console.log('DataManager initialized');
+                }
+                
+                // Initialize SeriesManager
+                seriesManager = new SeriesManager();
+                
+                // Sync series data between managers
+                const seriesFromDataManager = window.dataManager.getAllSeries();
+                const seriesFromSeriesManager = seriesManager.getAllSeries();
+                
+                // If DataManager has more recent data, update SeriesManager
+                if (seriesFromDataManager.length > 0 && seriesFromSeriesManager.length === 0) {
+                    console.log('🔄 Syncing series data from DataManager to SeriesManager');
+                    seriesFromDataManager.forEach(series => {
+                        seriesManager.series.set(series.id, series);
+                    });
+                    seriesManager.saveToStorage();
+                }
+                // If SeriesManager has more recent data, update DataManager
+                else if (seriesFromSeriesManager.length > 0 && seriesFromDataManager.length === 0) {
+                    console.log('🔄 Syncing series data from SeriesManager to DataManager');
+                    for (const series of seriesFromSeriesManager) {
+                        await window.dataManager.addSeries(series);
+                    }
+                }
+                
+                // Make seriesManager globally available for components
+                window.seriesManager = seriesManager;
+                
+                // Set up the create series button now that seriesManager is ready
+                const createBtn = document.getElementById('createSeriesBtn');
+                if (createBtn) {
+                    createBtn.addEventListener('click', showCreateForm);
+                    console.log('Create Series button event listener attached');
+                } else {
+                    console.error('Create Series button not found!');
+                }
+                
+                // Don't load series-list component - let SeriesManager handle it
+                // await loadComponent('series-list', listContainer);
+                await loadComponent('series-form', formContainer);
+                await loadComponent('series-details', detailsContainer);
+                
+                // Load initial series list
+                loadSeriesList();
+
+                console.log('Components loaded successfully');
+                
+                // Set up event listeners for loaded components
+                setupComponentEventListeners();
+                
+            } catch (error) {
+                console.error('Error during initialization:', error);
+            }
+        }
+
+        function setupComponentEventListeners() {
+            // Component event listeners can be added here
+        }
+
+        // Clear all data function
+        window.clearAllData = async function() {
+            if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+                try {
+                    // Initialize dataManager if not already done
+                    if (!window.dataManager) {
+                        const { DataManager } = await import('./utils/data-manager.js');
+                        window.dataManager = new DataManager();
+                    }
+                    
+                    await window.dataManager.clearAllData();
+                    
+                    // Refresh displays
+                    if (seriesManager) {
+                        seriesManager = new SeriesManager();
+                        window.seriesManager = seriesManager;
+                        loadSeriesList();
+                    }
+                    
+                    alert('All data has been cleared successfully');
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    alert('Error clearing data. Please try again.');
+                }
+            }
+        };
+
+        // Wait for DOM to be ready, then initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing...');
+            init();
+        });
+
+        // Fix navigation click issues
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-links li');
+            
+            navLinks.forEach(li => {
+                li.addEventListener('click', function(e) {
+                    // Don't navigate if clicking on the active page
+                    if (this.classList.contains('active')) {
+                        return;
+                    }
+                    
+                    // Get the href from the anchor tag inside
+                    const link = this.querySelector('a');
+                    if (link && link.href) {
+                        window.location.href = link.href;
+                    }
+                });
+            });
+        });
+    </script>
+    
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</body>
+</html>

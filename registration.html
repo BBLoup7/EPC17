@@ -1,0 +1,2512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Registration (Project 17)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .participant-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .participant-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .participant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .participant-header h4 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-actions .btn {
+            padding: 0.25rem 0.5rem;
+            min-width: auto;
+        }
+        
+        .participant-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+        
+
+        
+        .status-inactive {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+        
+        .participant-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+        }
+        
+        .detail-row .label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .detail-row .value {
+            color: var(--text-primary);
+            font-weight: 400;
+            font-size: 0.9rem;
+            text-align: right;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 2px dashed var(--border-color);
+            margin: 2rem 0;
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--danger);
+            color: white;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .error-message h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .header-actions select {
+            min-width: 200px;
+        }
+        
+        /* Registration warning and error styles */
+        .registration-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #856404;
+        }
+        
+        .registration-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #721c24;
+        }
+        
+        .registration-warning p,
+        .registration-error p {
+            margin: 0.5rem 0;
+        }
+        
+        .registration-warning p:first-child,
+        .registration-error p:first-child {
+            margin-top: 0;
+        }
+        
+        .registration-warning p:last-child,
+        .registration-error p:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Add Existing Driver Styles */
+        .add-existing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+        }
+
+        .add-existing-step {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .step-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .step-header h3 {
+            color: var(--primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-header h3:before {
+            content: "✓";
+            background: var(--primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .existing-drivers-section {
+            margin-top: 2rem;
+        }
+
+        .existing-drivers-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .driver-search {
+            margin-bottom: 1rem;
+        }
+
+        .existing-drivers-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .driver-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .driver-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary);
+        }
+
+        .driver-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .driver-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .driver-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .driver-status {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            background: var(--success);
+            color: white;
+        }
+
+        .driver-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .driver-classes {
+            margin-top: 0.5rem;
+        }
+
+        .class-tag {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .event-registration-form {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 2rem;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .selected-driver-info {
+            background: var(--primary-light);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .class-selection {
+            margin-bottom: 1.5rem;
+        }
+
+        .class-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .class-option {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .class-option:hover {
+            border-color: var(--primary);
+        }
+
+        .class-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* Duplicate Detection Styles */
+        .duplicate-warning {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        .duplicate-warning h4 {
+            color: #e65100;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .duplicate-warning h4:before {
+            content: "⚠️";
+            margin-right: 0.5rem;
+        }
+
+        .potential-duplicates {
+            margin-top: 1rem;
+        }
+
+        .potential-duplicate-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .potential-duplicate-item:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .potential-duplicate-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .duplicate-match-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .duplicate-driver-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .duplicate-match-reasons {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .match-reason {
+            display: inline-block;
+            background: var(--warning);
+            color: white;
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            margin-right: 0.25rem;
+            font-size: 0.7rem;
+        }
+
+        .use-existing-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .use-existing-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Additional class option selected state */
+        .class-option.selected {
+            border-color: var(--primary) !important;
+            background: var(--primary-light) !important;
+        }
+
+        .class-option.selected h5 {
+            color: var(--primary);
+        }
+
+        .class-option input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+
+        .class-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .class-price {
+            color: var(--success);
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+
+        .pricing-summary {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .pricing-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-total {
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .driver-event-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-section {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .summary-section h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-section p {
+            margin: 0.25rem 0;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .participant-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .detail-row {
+                justify-content: space-between;
+            }
+            
+            .detail-row .value {
+                text-align: left;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header-actions select {
+                min-width: auto;
+            }
+
+            .existing-drivers-list {
+                grid-template-columns: 1fr;
+            }
+
+            .class-options {
+                grid-template-columns: 1fr;
+            }
+
+            .add-existing-container {
+                padding: 1rem;
+            }
+
+            .driver-event-summary {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        /* Registration Status Styles */
+        .registration-status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-weight: 500;
+            display: none;
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        .registration-status.loading {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            color: #1976d2;
+        }
+
+        .registration-status.loading::before {
+            content: "⏳ ";
+            animation: pulse 1.5s infinite;
+        }
+
+        .registration-status.success {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+        }
+
+        .registration-status.success::before {
+            content: "✅ ";
+        }
+
+        .registration-status.warning {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            color: #ef6c00;
+        }
+
+        .registration-status.warning::before {
+            content: "⚠️ ";
+        }
+
+        .registration-status.error {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+
+        .registration-status.error::before {
+            content: "❌ ";
+        }
+
+        .registration-warnings,
+        .registration-errors {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        .registration-warnings {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+        }
+
+        .registration-errors {
+            background: #ffebee;
+            border: 1px solid #f44336;
+        }
+
+        .validation-warnings h4,
+        .validation-errors h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+        }
+
+        .validation-warnings ul,
+        .validation-errors ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .validation-warnings li,
+        .validation-errors li {
+            margin-bottom: 0.25rem;
+        }
+
+        .validation-warnings small,
+        .validation-errors small {
+            color: #666;
+            font-style: italic;
+        }
+
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* New UI elements for better UX */
+        .no-event-selected,
+        .event-error,
+        .no-classes-configured {
+            text-align: center;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+            color: #6c757d;
+            margin: 1rem 0;
+        }
+
+        .instruction-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .no-event-selected h4,
+        .event-error h4,
+        .no-classes-configured h4 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .no-event-selected p,
+        .event-error p,
+        .no-classes-configured p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <div class="brand-icon">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div class="brand-text">
+                <span class="brand-main">EPC TECHNOLOGY</span>
+                <span class="brand-sub">PROJECT 17</span>
+            </div>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="registration.html">Registr.</a></li>
+            <li><a href="series.html">Series</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="races.html">Races</a></li>
+            <li><a href="driver-profile.html">Drivers</a></li>
+            <li><a href="analytics.html">Analytics</a></li>
+        </ul>
+        
+        <!-- Mobile Hamburger Menu -->
+        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav-menu">
+            <div class="mobile-nav-header">
+                <div class="mobile-nav-brand">
+                    <div class="brand-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-main">EPC TECHNOLOGY</span>
+                        <span class="brand-sub">PROJECT 17</span>
+                    </div>
+                </div>
+                <button class="mobile-nav-close" aria-label="Close navigation menu">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <ul class="mobile-nav-links">
+                <li><a href="index.html">🏠 Home</a></li>
+                <li><a href="registration.html" class="active">📝 Registration</a></li>
+                <li><a href="series.html">🏆 Series</a></li>
+                <li><a href="events.html">📅 Events</a></li>
+                <li><a href="races.html">🏁 Races</a></li>
+                <li><a href="driver-profile.html">👥 Drivers</a></li>
+                <li><a href="analytics.html">📊 Analytics</a></li>
+            </ul>
+            <div class="mobile-nav-footer">
+                <div class="mobile-nav-version">v1.0.0</div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Overlay -->
+        <div class="mobile-nav-overlay"></div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Event Registration</h1>
+                <p class="subtitle">Register drivers for specific racing events</p>
+            </div>
+            <div class="header-actions">
+                <div id="eventSelectContainer">
+                    <!-- Event combo box will be created here -->
+                </div>
+                <div class="utility-actions">
+                    <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
+                        <i class="fas fa-trash-alt"></i> Clear All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('form')">Registration Form</button>
+            <button class="tab-btn" onclick="switchTab('list')">Participants</button>
+            <button class="tab-btn" onclick="switchTab('addExisting')">Add Existing Driver</button>
+        </div>
+
+        <div id="formView" class="tab-content active">
+            <!-- Registration form will be loaded here -->
+        </div>
+
+        <div id="listView" class="tab-content">
+            <!-- Participant list will be loaded here -->
+        </div>
+
+        <div id="addExistingView" class="tab-content">
+            <!-- Add existing driver interface -->
+            <div class="add-existing-container">
+                <div class="section-header">
+                    <h2>Add Existing Driver to Event</h2>
+                    <p>Select a driver who is already registered and add them to a new event</p>
+                </div>
+
+                <!-- Step 1: Event Selection -->
+                <div class="add-existing-step" id="eventSelectionStep">
+                    <div class="step-header">
+                        <h3>Step 1: Select Event</h3>
+                    </div>
+                    <div class="form-group">
+                        <label for="targetEvent">Choose the event to add driver to:</label>
+                        <div id="targetEventContainer">
+                            <!-- Combo box will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Driver Selection -->
+                <div class="add-existing-step" id="driverSelectionStep" style="display: none;">
+                    <div class="step-header">
+                        <h3>Step 2: Select Driver</h3>
+                        <div class="driver-search">
+                            <input type="text" class="form-control" id="driverSearch" placeholder="Search drivers by name...">
+                        </div>
+                    </div>
+                    <div id="existingDriversList" class="existing-drivers-list">
+                        <!-- Drivers will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Step 3: Class Selection & Registration -->
+                <div class="add-existing-step" id="registrationStep" style="display: none;">
+                    <div class="step-header">
+                        <h3>Step 3: Complete Registration</h3>
+                    </div>
+                    
+                    <div class="selected-driver-info" id="selectedDriverInfo">
+                        <!-- Selected driver info will appear here -->
+                    </div>
+                    
+                    <div class="class-selection">
+                        <h4>Select Racing Classes</h4>
+                        <div id="classOptions" class="class-options">
+                            <!-- Class options will appear here -->
+                        </div>
+                    </div>
+                    
+                    <div class="pricing-summary" id="pricingSummary">
+                        <h4>Registration Summary</h4>
+                        <div id="pricingBreakdown">
+                            <!-- Pricing breakdown will appear here -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="resetAddExisting()">Start Over</button>
+                        <button type="button" class="btn btn-primary" onclick="completeAddExisting()" id="completeBtn" disabled>
+                            Complete Registration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Load helper utilities first -->
+    <script src="utils/performance-monitor.js"></script>
+    <script src="utils/helpers.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
+    <script src="utils/event-bus.js"></script>
+    <script src="modules/statistics-manager.js"></script>
+    <script src="utils/data-manager.js"></script>
+    <!-- Load modules -->
+    <script src="modules/registration.js"></script>
+    <script src="modules/series.js"></script>
+    <!-- Mobile Navigation -->
+    <script src="js/mobile-nav.js"></script>
+
+    <script>
+        let registrationManager;
+        let seriesManager;
+        let dataManager;
+
+        // Initialize managers
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize data manager and load data
+            dataManager = new DataManager();
+            await dataManager.loadFromStorage();
+            
+            registrationManager = new RegistrationManager();
+            seriesManager = new SeriesManager();
+            
+            // Make globally available
+            window.registrationManager = registrationManager;
+            window.seriesManager = seriesManager;
+            window.dataManager = dataManager;
+            
+            // Load events automatically
+            await loadEvents();
+            
+            await loadComponents();
+        });
+
+        // Load all components
+        async function loadComponents() {
+            await loadRegistrationForm();
+            await loadParticipantList();
+        }
+
+        // Tab switching
+        window.switchTab = async function(tab) {
+            // Clean up previous tab state
+            if (typeof window.cleanupParticipantList === 'function') {
+                window.cleanupParticipantList();
+            }
+            window.participantListLoading = false;
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tab + 'View').classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            if (tab === 'list') {
+                // Prevent multiple rapid tab switches
+                if (window.participantListLoading) {
+                    console.log('🚫 Participant list already loading, skipping');
+                    return;
+                }
+                
+                window.participantListLoading = true;
+                
+                // Ensure DataManager has latest data before loading component
+                if (window.dataManager && typeof window.dataManager.loadFromStorage === 'function') {
+                    console.log('🔄 Refreshing DataManager before loading participant list...');
+                    await window.dataManager.loadFromStorage();
+                }
+                
+                loadParticipantList().then(() => {
+                    // Component is already initialized by loadParticipantList
+                    window.participantListLoading = false;
+                }).catch(error => {
+                    console.error('Error loading participant list:', error);
+                    window.participantListLoading = false;
+                });
+            } else if (tab === 'addExisting') {
+                await loadAddExistingView();
+            }
+        };
+
+        // Load events for event registration
+        async function loadEvents() {
+            try {
+                const eventsResult = dataManager ? await dataManager.getEvents() : { events: [] };
+                const events = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
+                const eventSelectContainer = document.getElementById('eventSelectContainer');
+                
+                console.log('Loading events for registration:', events);
+                
+                if (events.length === 0) {
+                    eventSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No events available - Create events first" disabled></div>';
+                } else {
+                    // Group events by series and season for better organization
+                    const series = dataManager.getAllSeries();
+                    const groupedEvents = [];
+                    
+                    events.forEach(event => {
+                        const eventSeries = series.find(s => s.id === event.seriesId);
+                        const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
+                        const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
+                        const seasonName = season ? season.name : 'General';
+                        
+                        groupedEvents.push({
+                            value: event.id,
+                            label: `${event.name} - ${seriesName} (${seasonName}) - ${new Date(event.date).toLocaleDateString()}`
+                        });
+                    });
+                    
+                    eventSelectContainer.innerHTML = UIComponents.createComboBox(
+                        'eventSelect',
+                        groupedEvents,
+                        'Select Event',
+                        'onEventSelect',
+                        ''
+                    );
+                    
+                    // Initialize the combo box
+                    UIComponents.initComboBox('eventSelect');
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                document.getElementById('eventSelectContainer').innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Error loading events" disabled></div>';
+            }
+        }
+
+        // Event selection callback
+        function onEventSelect(eventId, eventLabel) {
+            console.log('Event selected:', eventId, eventLabel);
+            if (eventId) {
+                // Update the registration manager with the selected event
+                registrationManager.currentEventId = eventId;
+                // Update the form with classes from the selected event's series
+                updateFormWithEventClasses(eventId);
+            }
+        }
+
+        // Target event selection callback for add existing driver
+        function onTargetEventSelect(eventId, eventLabel) {
+            console.log('Target event selected:', eventId, eventLabel);
+            if (eventId) {
+                document.getElementById('driverSelectionStep').style.display = 'block';
+                loadExistingDrivers(); // Refresh drivers list
+                resetRegistrationStep();
+            } else {
+                document.getElementById('driverSelectionStep').style.display = 'none';
+                resetRegistrationStep();
+            }
+        }
+
+        // Load registration form component
+        async function loadRegistrationForm() {
+            try {
+                const formView = document.getElementById('formView');
+                const response = await fetch('components/registration-form.html');
+                const html = await response.text();
+                
+                // Create a temporary container to parse the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Check if it's a template-based component
+                const template = tempDiv.querySelector('template');
+                if (template) {
+                    // Clone the template content
+                    const clone = template.content.cloneNode(true);
+                    formView.innerHTML = '';
+                    formView.appendChild(clone);
+                    
+                    // Add any styles from the template
+                    const styles = tempDiv.querySelectorAll('style');
+                    styles.forEach(style => {
+                        document.head.appendChild(style.cloneNode(true));
+                    });
+                    
+                    // Add the script content from the template
+                    const scripts = tempDiv.querySelectorAll('script');
+                    scripts.forEach(script => {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = script.textContent;
+                        document.head.appendChild(newScript);
+                    });
+                    
+                    // Set up form event listener with a delay to ensure scripts are loaded
+                    setTimeout(() => {
+                        setupRegistrationForm();
+                        // Also set up duplicate detection directly
+                        setupDuplicateDetection();
+                    }, 100);
+                } else {
+                    // Regular HTML content
+                    formView.innerHTML = html;
+                }
+                
+                console.log('Registration form loaded successfully');
+            } catch (error) {
+                console.error('Error loading registration form:', error);
+                document.getElementById('formView').innerHTML = `
+                    <div class="error-message">
+                        <h3>Error Loading Registration Form</h3>
+                        <p>There was an error loading the registration form. Please refresh the page.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Set up registration form event handling
+        function setupRegistrationForm() {
+            const form = document.getElementById('participantRegistrationForm');
+            if (form) {
+                console.log('Setting up registration form...');
+                
+                // The form now handles its own submission
+                // Just need to provide series data to the form
+                updateSeriesDataForForm();
+                
+                // Trigger form initialization if the utilities are available
+                if (window.registrationFormUtils) {
+                    console.log('Form utilities found, updating series data');
+                    const seriesData = window.currentSeries;
+                    if (seriesData) {
+                        window.registrationFormUtils.setSeriesData(seriesData);
+                    }
+                    // Also trigger manual initialization to be sure
+                    window.registrationFormUtils.initialize();
+                } else {
+                    console.log('Form utilities not found, will retry...');
+                    // Retry after a short delay if utilities aren't ready
+                    setTimeout(() => {
+                        if (window.registrationFormUtils && window.currentSeries) {
+                            console.log('Retrying form utilities setup');
+                            window.registrationFormUtils.setSeriesData(window.currentSeries);
+                            window.registrationFormUtils.initialize();
+                            setupDuplicateDetection(); // Also set up duplicate detection
+                        } else {
+                            console.log('Still no form utilities, trying one more time...');
+                            // One more attempt after a longer delay
+                            setTimeout(() => {
+                                if (window.registrationFormUtils && window.currentSeries) {
+                                    console.log('Final retry of form utilities setup');
+                                    window.registrationFormUtils.setSeriesData(window.currentSeries);
+                                    window.registrationFormUtils.initialize();
+                                }
+                                setupDuplicateDetection(); // Set up duplicate detection regardless
+                            }, 1000);
+                        }
+                    }, 500);
+                }
+            } else {
+                console.warn('Registration form not found');
+            }
+        }
+
+        // Provide series data to the registration form
+        function updateSeriesDataForForm() {
+            try {
+                console.log('Updating series data for form...');
+                
+                // Use event-specific classes if available, otherwise don't set any default classes
+                if (window.currentSeries && window.currentSeries.classes) {
+                    console.log('Using event-specific series data:', window.currentSeries);
+                } else {
+                    console.log('No event selected, no default classes will be provided');
+                    window.currentSeries = {
+                        name: 'No Event Selected',
+                        classes: []
+                    };
+                }
+                
+                // If the form utilities are available, update them
+                if (window.registrationFormUtils && typeof window.registrationFormUtils.setSeriesData === 'function') {
+                    console.log('Updating form utilities with series data');
+                    window.registrationFormUtils.setSeriesData(window.currentSeries);
+                    
+                    // Only call initialize if it exists
+                    if (typeof window.registrationFormUtils.initialize === 'function') {
+                        window.registrationFormUtils.initialize();
+                    }
+                    
+                    // Set up duplicate detection
+                    setupDuplicateDetection();
+                } else {
+                    console.log('Form utilities not available yet or missing required methods');
+                }
+                
+            } catch (error) {
+                console.error('Error updating series data for form:', error);
+            }
+        }
+
+        // Update form with classes from selected event (prioritizes event-specific classes)
+        function updateFormWithEventClasses(eventId) {
+            try {
+                const event = dataManager.getEvent(eventId);
+                if (!event) {
+                    console.warn('Event not found:', eventId);
+                    return;
+                }
+
+                let classes = [];
+                let seriesName = 'Event';
+
+                // First check if event has specific class settings configured
+                if (event.classSettings && event.classSettings.length > 0) {
+                    console.log('Using event-specific class settings for form:', event.classSettings);
+                    classes = event.classSettings.map(cls => ({
+                        name: cls.className || cls.name,
+                        fee: cls.fee
+                    }));
+                    
+                    // Get series name for display
+                    if (event.seriesId) {
+                        const series = dataManager.getSeries(event.seriesId);
+                        if (series) {
+                            seriesName = series.name;
+                        }
+                    }
+                }
+                // Fallback to series classes if no event-specific settings
+                else if (event.seriesId) {
+                    console.log('No event-specific classes, using series classes for form');
+                    const series = dataManager.getSeries(event.seriesId);
+                    if (series && series.sledClasses) {
+                        seriesName = series.name;
+                        classes = series.sledClasses.map(cls => ({
+                            name: cls.name,
+                            fee: cls.defaultFee || 50
+                        }));
+                    }
+                }
+
+                // Update global series data for the form
+                window.currentSeries = {
+                    name: seriesName,
+                    classes: classes
+                };
+
+                console.log('Updated series data for event:', window.currentSeries);
+
+                // Refresh the form if it's loaded
+                refreshRegistrationForm();
+
+            } catch (error) {
+                console.error('Error updating form with event classes:', error);
+            }
+        }
+
+        // Refresh registration form with new data
+        function refreshRegistrationForm() {
+            try {
+                console.log('Refreshing registration form...');
+                
+                // Update series data
+                updateSeriesDataForForm();
+                
+                // If form utilities are available, trigger a refresh
+                if (window.registrationFormUtils && 
+                    window.currentSeries && 
+                    typeof window.registrationFormUtils.setSeriesData === 'function') {
+                    
+                    console.log('Refreshing form with series data:', window.currentSeries);
+                    // setSeriesData already refreshes classes internally
+                    window.registrationFormUtils.setSeriesData(window.currentSeries);
+                } else {
+                    console.log('Cannot refresh form - utilities or series data not available');
+                }
+                
+                // Set up duplicate detection after refresh
+                setTimeout(() => {
+                    setupDuplicateDetection();
+                }, 200);
+            } catch (error) {
+                console.error('Error refreshing registration form:', error);
+            }
+        }
+
+        // Registration submission with unified storage and validation
+        window.handleRegistrationData = async function(participantData) {
+            try {
+                // Get registration type - if registrationType element doesn't exist, determine based on event selection
+                const registrationTypeElement = document.getElementById('registrationType');
+                const eventInput = document.getElementById('eventSelect-input');
+                
+                const selectedEvent = eventInput ? eventInput.getAttribute('data-selected-value') : null;
+                const registrationType = registrationTypeElement ? 
+                    registrationTypeElement.value : 
+                    (selectedEvent ? 'event' : 'season'); // Auto-determine based on event selection
+                
+                // Add additional data
+                const fullParticipantData = {
+                    ...participantData,
+                    registrationType: registrationType || 'season', // Default to season if undefined
+                    eventId: selectedEvent || null,
+                    status: 'active'
+                };
+
+                // Real-time validation using data schema
+                if (window.validateData) {
+                    const validation = window.validateData('participant', fullParticipantData);
+                    if (!validation.valid) {
+                        const errorMessage = `Registration validation failed:\n${validation.errors.join('\n')}`;
+                        console.error('Validation errors:', validation.errors);
+                        alert(errorMessage);
+                        return null;
+                    }
+                    
+                    if (validation.warnings.length > 0) {
+                        console.warn('Validation warnings:', validation.warnings);
+                        showRegistrationWarnings(validation.warnings);
+                    }
+                }
+
+                // Show saving status
+                showRegistrationStatus('Saving registration...', 'loading');
+                
+                // Save participant using DataManager (with unified storage)
+                const createdParticipant = await dataManager.addParticipant(fullParticipantData);
+                console.log('Participant registered:', createdParticipant);
+                
+                // Debug: Check if participant was actually saved
+                const savedParticipant = dataManager.getParticipant(createdParticipant.id);
+                console.log('🔍 DEBUG - Participant verification:', {
+                    created: !!createdParticipant,
+                    saved: !!savedParticipant,
+                    participantId: createdParticipant.id,
+                    selectedEvent
+                });
+                
+                // Show sync status
+                if (window.getSyncStatus) {
+                    const syncStatus = window.getSyncStatus('participant', createdParticipant.id);
+                    console.log('Registration sync status:', syncStatus);
+                    showRegistrationStatus(`Registration saved (${syncStatus.status})`, 'success');
+                } else {
+                    showRegistrationStatus('Registration saved successfully', 'success');
+                }
+                
+                // Reset form after successful registration
+                if (window.registrationFormUtils && typeof window.registrationFormUtils.resetForm === 'function') {
+                    window.registrationFormUtils.resetForm();
+                }
+                
+                // If this is event registration, also register for the specific event
+                if (registrationType === 'event' && selectedEvent) {
+                    showRegistrationStatus('Registering for event...', 'loading');
+                    
+                    const success = await dataManager.registerParticipantForEvent(selectedEvent, createdParticipant.id);
+                    if (success) {
+                        console.log('Participant registered for event:', selectedEvent);
+                        
+                        // Debug: Verify event registration
+                        const eventAfterRegistration = dataManager.getEvent(selectedEvent);
+                        console.log('🔍 DEBUG - Event after registration:', {
+                            eventId: selectedEvent,
+                            participantCount: eventAfterRegistration?.participants?.length || 0,
+                            participants: eventAfterRegistration?.participants || [],
+                            newParticipantId: createdParticipant.id,
+                            isParticipantInEvent: eventAfterRegistration?.participants?.includes(createdParticipant.id)
+                        });
+                        
+                        showRegistrationStatus('Event registration complete', 'success');
+                    } else {
+                        console.warn('Failed to register participant for event - event may be full or closed');
+                        showRegistrationStatus('Warning: Registration saved but could not register for event', 'warning');
+                    }
+                }
+                
+                // Refresh participant list if it's visible
+                if (document.getElementById('listView').classList.contains('active')) {
+                    loadParticipantList();
+                }
+
+                // Broadcast registration event for real-time updates
+                if (dataManager.eventBus) {
+                    dataManager.eventBus.emit('participant-registered', {
+                        participant: createdParticipant,
+                        registrationType,
+                        eventId: selectedEvent,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                return createdParticipant;
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                console.error('Full error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    participantData: participantData
+                });
+                
+                // More detailed error message for debugging
+                let errorMessage = error.message;
+                if (error.message.includes('Cannot read properties of null')) {
+                    errorMessage = 'Missing form element. Please ensure all required form fields are present.';
+                }
+                
+                showRegistrationStatus(`Registration failed: ${errorMessage}`, 'error');
+                
+                // Show validation errors if available
+                if (error.validationErrors) {
+                    showRegistrationValidationErrors(error.validationErrors);
+                }
+                
+                throw error;
+            }
+        };
+
+        // Show registration status with visual feedback
+        function showRegistrationStatus(message, type) {
+            const statusDiv = document.getElementById('registrationStatus') || createRegistrationStatusDiv();
+            statusDiv.className = `registration-status ${type}`;
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            
+            // Auto-hide success/info messages after 5 seconds
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Show validation warnings
+        function showRegistrationWarnings(warnings) {
+            const warningsDiv = document.getElementById('registrationWarnings') || createRegistrationWarningsDiv();
+            warningsDiv.innerHTML = `
+                <div class="validation-warnings">
+                    <h4>⚠️ Registration Warnings</h4>
+                    <ul>
+                        ${warnings.map(warning => `<li>${warning}</li>`).join('')}
+                    </ul>
+                    <p><small>Registration will proceed, but please review the warnings above.</small></p>
+                </div>
+            `;
+            warningsDiv.style.display = 'block';
+            
+            // Auto-hide after 8 seconds
+            setTimeout(() => {
+                warningsDiv.style.display = 'none';
+            }, 8000);
+        }
+
+        // Show validation errors
+        function showRegistrationValidationErrors(errors) {
+            const errorsDiv = document.getElementById('registrationErrors') || createRegistrationErrorsDiv();
+            errorsDiv.innerHTML = `
+                <div class="validation-errors">
+                    <h4>❌ Registration Errors</h4>
+                    <ul>
+                        ${errors.map(error => `<li>${error}</li>`).join('')}
+                    </ul>
+                    <p><small>Please fix the errors above and try again.</small></p>
+                </div>
+            `;
+            errorsDiv.style.display = 'block';
+        }
+
+        // Create status divs if they don't exist
+        function createRegistrationStatusDiv() {
+            const div = document.createElement('div');
+            div.id = 'registrationStatus';
+            div.className = 'registration-status';
+            div.style.display = 'none';
+            
+            // Insert after the registration form
+            const form = document.querySelector('.registration-form') || document.querySelector('form');
+            if (form) {
+                form.parentNode.insertBefore(div, form.nextSibling);
+            } else {
+                document.body.appendChild(div);
+            }
+            
+            return div;
+        }
+
+        function createRegistrationWarningsDiv() {
+            const div = document.createElement('div');
+            div.id = 'registrationWarnings';
+            div.className = 'registration-warnings';
+            div.style.display = 'none';
+            
+            const statusDiv = document.getElementById('registrationStatus');
+            if (statusDiv) {
+                statusDiv.parentNode.insertBefore(div, statusDiv.nextSibling);
+            } else {
+                document.body.appendChild(div);
+            }
+            
+            return div;
+        }
+
+        function createRegistrationErrorsDiv() {
+            const div = document.createElement('div');
+            div.id = 'registrationErrors';
+            div.className = 'registration-errors';
+            div.style.display = 'none';
+            
+            const warningsDiv = document.getElementById('registrationWarnings');
+            if (warningsDiv) {
+                warningsDiv.parentNode.insertBefore(div, warningsDiv.nextSibling);
+            } else {
+                document.body.appendChild(div);
+            }
+            
+            return div;
+        }
+
+        // Load participant list component
+        async function loadParticipantList() {
+            try {
+                const listView = document.getElementById('listView');
+                const response = await fetch('components/participant-list.html');
+                const html = await response.text();
+                
+                console.log('🔄 Loading participant list component...');
+                
+                // Create a temporary container to parse the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Extract and load the HTML content (without scripts)
+                const htmlContent = tempDiv.querySelector('div') || tempDiv;
+                if (htmlContent) {
+                    listView.innerHTML = htmlContent.outerHTML;
+                } else {
+                    // Fallback: load all HTML but filter out script tags
+                    const htmlWithoutScript = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+                    listView.innerHTML = htmlWithoutScript;
+                }
+                
+                console.log('✅ HTML content loaded');
+                
+                // Add any styles from the component
+                const styles = tempDiv.querySelectorAll('style');
+                styles.forEach(style => {
+                    if (!document.querySelector(`style[data-component="participant-list"]`)) {
+                        const newStyle = style.cloneNode(true);
+                        newStyle.setAttribute('data-component', 'participant-list');
+                        document.head.appendChild(newStyle);
+                    }
+                });
+                
+                console.log('✅ Styles added');
+                
+                // Extract and execute scripts
+                const scripts = tempDiv.querySelectorAll('script');
+                console.log(`🔧 Found ${scripts.length} script(s) to execute`);
+                
+                scripts.forEach((script, index) => {
+                    const newScript = document.createElement('script');
+                    newScript.textContent = script.textContent;
+                    newScript.setAttribute('data-component', 'participant-list');
+                    document.head.appendChild(newScript);
+                    console.log(`✅ Script ${index + 1} executed`);
+                });
+                
+                // Wait a moment for scripts to initialize, then check for functions
+                setTimeout(() => {
+                    console.log('🔍 Checking for participant list functions...');
+                    console.log('   - window.initializeParticipantList:', typeof window.initializeParticipantList);
+                    console.log('   - initializeParticipantList:', typeof initializeParticipantList);
+                    
+                    if (typeof window.initializeParticipantList === 'function') {
+                        console.log('✅ Calling window.initializeParticipantList()');
+                        window.initializeParticipantList();
+                    } else if (typeof initializeParticipantList === 'function') {
+                        console.log('✅ Calling initializeParticipantList()');
+                        initializeParticipantList();
+                    } else {
+                        console.error('❌ No initialization function found!');
+                    }
+                }, 500);
+                
+                console.log('✅ Participant list component loaded successfully');
+            } catch (error) {
+                console.error('❌ Error loading participant list:', error);
+                document.getElementById('listView').innerHTML = `
+                    <div class="error-message">
+                        <h3>Error Loading Participant List</h3>
+                        <p>There was an error loading the participant list. Please refresh the page.</p>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // OLD Load participant data into the list - DISABLED to prevent conflicts with new component
+        async function loadParticipantData() {
+            console.log('🚫 Old loadParticipantData() called - skipping to prevent conflicts with new component');
+            
+            // Check if the new component is available, if so, use it instead
+            if (typeof window.initializeParticipantList === 'function') {
+                console.log('✅ Using new participant list component instead');
+                window.initializeParticipantList();
+                return;
+            }
+            
+            // Only run old code if new component is not available
+            try {
+                const participantsResult = dataManager ? await dataManager.getParticipants() : { participants: [] };
+                const participants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
+                const container = document.querySelector('.participant-list');
+                
+                // Don't interfere if the new component's container exists
+                if (container && container.querySelector('#participantSearch')) {
+                    console.log('🚫 New component detected - not overwriting');
+                    return;
+                }
+                
+                const fallbackContainer = document.getElementById('participantListContainer');
+                if (!fallbackContainer) {
+                    console.warn('No suitable container found for old participant display');
+                    return;
+                }
+                
+                if (participants.length === 0) {
+                    fallbackContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👥</div>
+                            <h3>No Participants Registered</h3>
+                            <p>No one has registered yet. Participants will appear here after they complete the registration form.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Generate participant list HTML
+                const participantHtml = participants.map(participant => {
+                    // Handle different data structures for racing classes
+                    const racingClasses = participant.selectedClasses || participant.sledClasses || [participant.sledClass].filter(Boolean);
+                    const classesText = Array.isArray(racingClasses) ? 
+                        racingClasses.map(c => typeof c === 'string' ? c.charAt(0).toUpperCase() + c.slice(1) : c).join(', ') : 
+                        (racingClasses || 'N/A');
+                    
+                    // Handle sled configurations for each class
+                    let sledInfo = '';
+                    if (participant.sledConfigurations) {
+                        const sledDetails = Object.entries(participant.sledConfigurations)
+                            .map(([className, config]) => {
+                                const parts = [config.year, config.make, config.model].filter(Boolean);
+                                return `${className}: ${parts.join(' ') || 'Not specified'}`;
+                            }).join('<br>');
+                        sledInfo = sledDetails;
+                    } else if (participant.sledMake || participant.sledModel || participant.sledYear) {
+                        sledInfo = [participant.sledYear, participant.sledMake, participant.sledModel].filter(Boolean).join(' ');
+                    }
+                    
+                    return `
+                        <div class="participant-card">
+                            <div class="participant-header">
+                                <h4>${participant.name}${participant.nickname ? ` (${participant.nickname})` : ''}</h4>
+                                <div class="header-actions">
+                                    <span class="participant-status status-${participant.status || 'active'}">${participant.status || 'active'}</span>
+                                    <button class="btn-delete-subtle" onclick="deleteParticipant('${participant.id}')" title="Delete Participant">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="participant-details">
+                                <div class="detail-row">
+                                    <span class="label">Racing Classes:</span>
+                                    <span class="value">${classesText}</span>
+                                </div>
+                                ${participant.racingNumber ? `
+                                    <div class="detail-row">
+                                        <span class="label">Racing Number:</span>
+                                        <span class="value">#${participant.racingNumber}</span>
+                                    </div>
+                                ` : ''}
+                                ${sledInfo ? `
+                                    <div class="detail-row">
+                                        <span class="label">Sled Info:</span>
+                                        <span class="value">${sledInfo}</span>
+                                    </div>
+                                ` : ''}
+                                ${participant.totalFee ? `
+                                    <div class="detail-row">
+                                        <span class="label">Total Fee:</span>
+                                        <span class="value">$${participant.totalFee.toFixed(2)}</span>
+                                    </div>
+                                ` : ''}
+                                <div class="detail-row">
+                                    <span class="label">Registration:</span>
+                                    <span class="value">${participant.registrationType === 'season' ? 'Season' : 'Event'}</span>
+                                </div>
+                                ${participant.contact?.email || participant.contactEmail ? `
+                                    <div class="detail-row">
+                                        <span class="label">Contact:</span>
+                                        <span class="value">${participant.contact?.email || participant.contactEmail}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                fallbackContainer.innerHTML = participantHtml;
+                
+            } catch (error) {
+                console.error('Error loading old participant data:', error);
+            }
+        }
+
+        // Load add existing driver view
+        async function loadAddExistingView() {
+            await loadAvailableEvents();
+            await loadExistingDrivers();
+            setupAddExistingEvents();
+        }
+
+        // Setup event handlers for add existing functionality
+        function setupAddExistingEvents() {
+            const driverSearch = document.getElementById('driverSearch');
+            
+            // Driver search handler
+            if (driverSearch) {
+                driverSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    filterDriversList(searchTerm);
+                });
+            }
+        }
+
+        // Filter drivers list based on search term
+        function filterDriversList(searchTerm) {
+            const driverCards = document.querySelectorAll('.driver-card');
+            driverCards.forEach(card => {
+                const driverName = card.querySelector('.driver-name').textContent.toLowerCase();
+                const driverDetails = card.querySelector('.driver-details').textContent.toLowerCase();
+                
+                if (driverName.includes(searchTerm) || driverDetails.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Select a driver for registration
+        window.selectDriver = function(driverId) {
+            try {
+                const targetEventInput = document.getElementById('targetEvent-input');
+                const targetEventId = targetEventInput ? targetEventInput.getAttribute('data-selected-value') : '';
+                if (!targetEventId) {
+                    alert('Please select an event first');
+                    return;
+                }
+
+                const driver = dataManager.getParticipant(driverId);
+                if (!driver) {
+                    alert('Driver not found');
+                    return;
+                }
+
+                // Check if driver is already registered for this event
+                const event = dataManager.getEvent(targetEventId);
+                if (event && event.participants && event.participants.includes(driverId)) {
+                    alert(`${driver.name} is already registered for this event.`);
+                    return;
+                }
+
+                // Update UI
+                document.querySelectorAll('.driver-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+                document.querySelector(`[onclick="selectDriver('${driverId}')"]`).classList.add('selected');
+
+                // Show registration step
+                showRegistrationStep(driver, targetEventId);
+                
+            } catch (error) {
+                console.error('Error selecting driver:', error);
+                alert('Error selecting driver. Please try again.');
+            }
+        };
+
+        // Show registration step with driver and event info
+        function showRegistrationStep(driver, eventId) {
+            const registrationStep = document.getElementById('registrationStep');
+            const selectedDriverInfo = document.getElementById('selectedDriverInfo');
+            const classOptions = document.getElementById('classOptions');
+            
+            // Show selected driver info
+            selectedDriverInfo.innerHTML = `
+                <h4>Selected Driver: ${driver.name}${driver.nickname ? ` (${driver.nickname})` : ''}</h4>
+                <div class="driver-summary">
+                    <div><strong>Email:</strong> ${driver.contact?.email || driver.contactEmail || 'N/A'}</div>
+                    <div><strong>Phone:</strong> ${driver.contact?.phone || driver.contactPhone || 'N/A'}</div>
+                    ${driver.racingNumber ? `<div><strong>Racing Number:</strong> #${driver.racingNumber}</div>` : ''}
+                </div>
+            `;
+            
+            // Load available classes for the event
+            loadClassOptionsForEvent(eventId, classOptions);
+            
+            registrationStep.style.display = 'block';
+            window.selectedDriverId = driver.id;
+            window.selectedEventId = eventId;
+        }
+
+        // Load class options for the selected event
+        function loadClassOptionsForEvent(eventId, container) {
+            try {
+                // If no event selected, clear the classes and show instruction
+                if (!eventId) {
+                    container.innerHTML = `
+                        <div class="no-event-selected">
+                            <div class="instruction-icon">📅</div>
+                            <h4>Select an Event First</h4>
+                            <p>Please select an event above to see available racing classes.</p>
+                        </div>
+                    `;
+                    window.selectedClasses = [];
+                    updatePricingSummary();
+                    return;
+                }
+
+                const event = dataManager.getEvent(eventId);
+                if (!event) {
+                    container.innerHTML = `
+                        <div class="event-error">
+                            <div class="instruction-icon">❌</div>
+                            <h4>Event Not Found</h4>
+                            <p>The selected event could not be found.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let classes = [];
+
+                // First check if event has specific class settings configured
+                if (event.classSettings && event.classSettings.length > 0) {
+                    console.log('Using event-specific class settings:', event.classSettings);
+                    classes = event.classSettings.map(cls => ({
+                        name: cls.className || cls.name,
+                        fee: cls.fee || 50,
+                        description: cls.description || 'Racing class'
+                    }));
+                }
+                // Fallback to series classes if no event-specific settings
+                else if (event.seriesId) {
+                    console.log('No event-specific classes, falling back to series classes');
+                    const series = dataManager.getSeries(event.seriesId);
+                    if (series && series.sledClasses) {
+                        classes = series.sledClasses.map(cls => ({
+                            name: cls.name,
+                            fee: cls.defaultFee || 50,
+                            description: cls.description || 'Racing class'
+                        }));
+                    }
+                }
+
+                // If still no classes found, show error instead of defaults
+                if (classes.length === 0) {
+                    console.log('No classes configured for this event');
+                    container.innerHTML = `
+                        <div class="no-classes-configured">
+                            <div class="instruction-icon">⚙️</div>
+                            <h4>No Classes Configured</h4>
+                            <p>This event has no racing classes configured. Please contact the administrator or configure classes for this event.</p>
+                        </div>
+                    `;
+                    window.selectedClasses = [];
+                    updatePricingSummary();
+                    return;
+                }
+
+                const classOptionsHtml = classes.map(cls => `
+                    <div class="class-option" onclick="toggleClassSelection('${cls.name}', ${cls.fee})">
+                        <h5>${cls.name}</h5>
+                        <div class="class-fee">$${cls.fee.toFixed(2)}</div>
+                        <div class="class-description">${cls.description || ''}</div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = classOptionsHtml;
+                window.selectedClasses = [];
+                updatePricingSummary();
+                
+            } catch (error) {
+                console.error('Error loading class options:', error);
+                container.innerHTML = '<p>Error loading classes. Using default options.</p>';
+            }
+        }
+
+        // Toggle class selection
+        window.toggleClassSelection = function(className, fee) {
+            const classOption = event.target.closest('.class-option');
+            if (!classOption) return;
+
+            if (!window.selectedClasses) window.selectedClasses = [];
+
+            const existingIndex = window.selectedClasses.findIndex(c => c.name === className);
+            
+            if (existingIndex >= 0) {
+                // Remove class
+                window.selectedClasses.splice(existingIndex, 1);
+                classOption.classList.remove('selected');
+            } else {
+                // Add class
+                window.selectedClasses.push({ name: className, fee: fee });
+                classOption.classList.add('selected');
+            }
+            
+            updatePricingSummary();
+        };
+
+        // Update pricing summary
+        function updatePricingSummary() {
+            const pricingSummary = document.getElementById('pricingSummary');
+            const completeBtn = document.getElementById('completeBtn');
+            
+            if (!window.selectedClasses || window.selectedClasses.length === 0) {
+                pricingSummary.innerHTML = `
+                    <h4>Registration Summary</h4>
+                    <p>Select at least one racing class to continue.</p>
+                `;
+                completeBtn.disabled = true;
+                return;
+            }
+            
+            const total = window.selectedClasses.reduce((sum, cls) => sum + cls.fee, 0);
+            const breakdown = window.selectedClasses.map(cls => 
+                `<div class="pricing-line">${cls.name}: $${cls.fee.toFixed(2)}</div>`
+            ).join('');
+
+            pricingSummary.innerHTML = `
+                <h4>Registration Summary</h4>
+                <div class="pricing-breakdown">
+                    ${breakdown}
+                    <div class="pricing-total"><strong>Total: $${total.toFixed(2)}</strong></div>
+                    </div>
+                `;
+            
+            completeBtn.disabled = false;
+        }
+
+        // Complete the registration
+        window.completeAddExisting = async function() {
+            try {
+                if (!window.selectedDriverId || !window.selectedEventId || !window.selectedClasses || window.selectedClasses.length === 0) {
+                    alert('Please complete all steps before registering.');
+                    return;
+                }
+                
+                const driver = dataManager.getParticipant(window.selectedDriverId);
+                const event = dataManager.getEvent(window.selectedEventId);
+                
+                if (!driver || !event) {
+                    alert('Error: Driver or event not found.');
+                    return;
+                }
+                
+                // 🔧 FIXED: Update the participant's class information AND register for event with classes
+                const selectedClassNames = window.selectedClasses.map(c => c.name);
+                const totalNewFee = window.selectedClasses.reduce((sum, cls) => sum + cls.fee, 0);
+                
+                const updatedDriver = {
+                    ...driver,
+                    selectedClasses: selectedClassNames,
+                    totalFee: (driver.totalFee || 0) + totalNewFee,
+                    // Make sure to update both old and new class field names for compatibility
+                    sledClasses: selectedClassNames,
+                    sledClass: selectedClassNames.length > 0 ? selectedClassNames[0] : null
+                };
+                
+                console.log(`🔧 Updating driver ${driver.name} classes from [${(driver.selectedClasses || driver.sledClasses || []).join(', ')}] to [${selectedClassNames.join(', ')}] for event ${event.name}`);
+                console.log('🔧 Updated driver data:', updatedDriver);
+                
+                // Update participant in data manager FIRST
+                const updateSuccess = await dataManager.updateParticipant(window.selectedDriverId, updatedDriver);
+                if (!updateSuccess) {
+                    alert('Failed to update participant class information.');
+                    return;
+                }
+                
+                console.log('✅ Participant classes updated successfully');
+                
+                // Register participant for the event (classes already updated in participant data)
+                const success = await dataManager.registerParticipantForEvent(window.selectedEventId, window.selectedDriverId);
+                
+                if (success) {
+                    alert(`Successfully registered ${driver.name} for ${event.name}!\nClasses: ${updatedDriver.selectedClasses.join(', ')}`);
+                    await resetAddExisting();
+                    // Refresh data
+                    await loadAvailableEvents();
+                    await loadExistingDrivers();
+                    
+                    // Refresh participant list if it's visible
+                    if (document.getElementById('listView').classList.contains('active')) {
+                        if (typeof window.loadParticipantData === 'function') {
+                            window.loadParticipantData();
+                        }
+                    }
+                } else {
+                    alert('Registration failed. Please try again.');
+                }
+                
+            } catch (error) {
+                console.error('Error completing registration:', error);
+                alert('Error completing registration. Please try again.');
+            }
+        };
+
+        // Reset the add existing form
+        window.resetAddExisting = async function() {
+            const targetEventInput = document.getElementById('targetEvent-input');
+            if (targetEventInput) {
+                targetEventInput.value = '';
+                targetEventInput.setAttribute('data-selected-value', '');
+            }
+            document.getElementById('driverSearch').value = '';
+            document.getElementById('driverSelectionStep').style.display = 'none';
+            resetRegistrationStep();
+            await loadExistingDrivers();
+        };
+
+        // Reset registration step
+        function resetRegistrationStep() {
+            document.getElementById('registrationStep').style.display = 'none';
+            window.selectedDriverId = null;
+            window.selectedEventId = null;
+            window.selectedClasses = [];
+            
+            // Clear selections
+            document.querySelectorAll('.driver-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+        }
+
+        // Load available events for add existing
+        async function loadAvailableEvents() {
+            try {
+                const eventsResult = dataManager ? await dataManager.getEvents() : { events: [] };
+                const events = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
+                const targetEventContainer = document.getElementById('targetEventContainer');
+                
+                // Show ALL events - no filtering by status or date
+                if (events.length === 0) {
+                    targetEventContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No events available" disabled></div>';
+                } else {
+                    const eventOptions = events.map(event => ({
+                        value: event.id,
+                        label: `${event.name} - ${new Date(event.date).toLocaleDateString()}`
+                    }));
+                    
+                    targetEventContainer.innerHTML = UIComponents.createComboBox(
+                        'targetEvent',
+                        eventOptions,
+                        'Select an event...',
+                        'onTargetEventSelect',
+                        ''
+                    );
+                    
+                    // Initialize the combo box
+                    UIComponents.initComboBox('targetEvent');
+                }
+            } catch (error) {
+                console.error('Error loading events for add existing:', error);
+                document.getElementById('targetEventContainer').innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Error loading events" disabled></div>';
+            }
+        }
+
+        // Load existing drivers
+        async function loadExistingDrivers() {
+            try {
+                const participantsResult = dataManager ? await dataManager.getParticipants() : { participants: [] };
+                const participants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
+                const driversList = document.getElementById('existingDriversList');
+                
+                if (participants.length === 0) {
+                    driversList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👤</div>
+                            <h3>No Drivers Found</h3>
+                            <p>No drivers are registered yet. Create some drivers first in the Registration Form tab.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const driversHtml = participants.map(driver => {
+                    const classes = driver.selectedClasses || driver.sledClasses || [driver.sledClass].filter(Boolean);
+                    const classesText = Array.isArray(classes) ? classes.join(', ') : (classes || 'N/A');
+                    
+                    return `
+                        <div class="driver-card" onclick="selectDriver('${driver.id}')">
+                            <div class="driver-card-header">
+                                <div class="driver-name">${driver.name}${driver.nickname ? ` (${driver.nickname})` : ''}</div>
+                                <div class="driver-status">${driver.status || 'Active'}</div>
+                            </div>
+                            <div class="driver-details">
+                                <div><strong>Email:</strong> ${driver.contact?.email || driver.contactEmail || 'N/A'}</div>
+                                <div><strong>Registration:</strong> ${driver.registrationType === 'season' ? 'Season' : 'Event'}</div>
+                                ${driver.racingNumber ? `<div><strong>Number:</strong> #${driver.racingNumber}</div>` : ''}
+                            </div>
+                            <div class="driver-classes">
+                                <strong>Classes:</strong> ${classesText}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                driversList.innerHTML = driversHtml;
+                
+            } catch (error) {
+                console.error('Error loading existing drivers:', error);
+            }
+        }
+
+        // Delete participant function
+        window.deleteParticipant = async function(participantId) {
+            try {
+                const participant = dataManager.getParticipant(participantId);
+                if (!participant) {
+                    alert('Participant not found');
+                    return;
+                }
+
+                if (confirm(`Are you sure you want to delete ${participant.name}? This action cannot be undone.`)) {
+                        await dataManager.deleteParticipant(participantId);
+                        
+                        // Refresh the participant list
+                    if (typeof loadParticipantData === 'function') {
+                        await loadParticipantData();
+                    }
+                    
+                    // Also try the new component's reload function
+                    if (typeof initializeParticipantList === 'function') {
+                        initializeParticipantList();
+                    }
+                    
+                    alert(`${participant.name} has been deleted successfully`);
+                }
+            } catch (error) {
+                console.error('Error deleting participant:', error);
+                alert('Error deleting participant. Please try again.');
+            }
+        };
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+                color: white;
+                border-radius: 4px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Duplicate Detection Functions
+        async function checkForDuplicateDrivers(formData) {
+            if (!dataManager) return [];
+            
+            const participantsResult = await dataManager.getParticipants();
+            const existingParticipants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
+            const potentialDuplicates = [];
+            
+            existingParticipants.forEach(participant => {
+                const matchReasons = [];
+                
+                // Check name similarity (exact match or very similar)
+                if (formData.name && participant.name) {
+                    const nameSimilarity = calculateStringSimilarity(
+                        formData.name.toLowerCase().trim(), 
+                        participant.name.toLowerCase().trim()
+                    );
+                    if (nameSimilarity > 0.8) {
+                        matchReasons.push('Name');
+                    }
+                }
+                
+                // Check email match
+                const formEmail = formData.email || formData.contactEmail;
+                const participantEmail = participant.contact?.email || participant.contactEmail;
+                if (formEmail && participantEmail && 
+                    formEmail.toLowerCase().trim() === participantEmail.toLowerCase().trim()) {
+                    matchReasons.push('Email');
+                }
+                
+                // Check phone match
+                const formPhone = formData.phone || formData.contactPhone;
+                const participantPhone = participant.contact?.phone || participant.contactPhone;
+                if (formPhone && participantPhone) {
+                    const cleanFormPhone = cleanPhoneNumber(formPhone);
+                    const cleanParticipantPhone = cleanPhoneNumber(participantPhone);
+                    if (cleanFormPhone === cleanParticipantPhone) {
+                        matchReasons.push('Phone');
+                    }
+                }
+                
+                // Check date of birth match
+                if (formData.dateOfBirth && participant.dateOfBirth && 
+                    formData.dateOfBirth === participant.dateOfBirth) {
+                    matchReasons.push('Date of Birth');
+                }
+                
+                // If any matches found, add to potential duplicates
+                if (matchReasons.length > 0) {
+                    potentialDuplicates.push({
+                        participant: participant,
+                        matchReasons: matchReasons,
+                        confidence: matchReasons.length / 4 // 4 total possible matches
+                    });
+                }
+            });
+            
+            // Sort by confidence (highest first)
+            return potentialDuplicates.sort((a, b) => b.confidence - a.confidence);
+        }
+        
+        // Calculate string similarity (simple Levenshtein-based approach)
+        function calculateStringSimilarity(str1, str2) {
+            const len1 = str1.length;
+            const len2 = str2.length;
+            
+            if (len1 === 0) return len2 === 0 ? 1 : 0;
+            if (len2 === 0) return 0;
+            
+            const matrix = Array(len2 + 1).fill().map(() => Array(len1 + 1).fill(0));
+            
+            for (let i = 0; i <= len1; i++) matrix[0][i] = i;
+            for (let j = 0; j <= len2; j++) matrix[j][0] = j;
+            
+            for (let j = 1; j <= len2; j++) {
+                for (let i = 1; i <= len1; i++) {
+                    const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                    matrix[j][i] = Math.min(
+                        matrix[j][i - 1] + 1,        // deletion
+                        matrix[j - 1][i] + 1,        // insertion
+                        matrix[j - 1][i - 1] + indicator // substitution
+                    );
+                }
+            }
+            
+            const distance = matrix[len2][len1];
+            const maxLen = Math.max(len1, len2);
+            return (maxLen - distance) / maxLen;
+        }
+        
+        // Clean phone number for comparison
+        function cleanPhoneNumber(phone) {
+            return phone.replace(/\D/g, ''); // Remove all non-digits
+        }
+        
+        // Display duplicate warning
+        function showDuplicateWarning(potentialDuplicates, targetContainerId = 'formView') {
+            // Remove existing warnings first
+            removeDuplicateWarnings();
+            
+            if (potentialDuplicates.length === 0) return;
+            
+            const container = document.getElementById(targetContainerId);
+            if (!container) return;
+            
+            const warningHtml = `
+                <div class="duplicate-warning" id="duplicateWarning">
+                    <h4>Potential Duplicate Drivers Found</h4>
+                    <p>The information you entered matches existing drivers. Please review before continuing:</p>
+                    <div class="potential-duplicates">
+                        ${potentialDuplicates.map(duplicate => {
+                            const participant = duplicate.participant;
+                            const reasons = duplicate.matchReasons;
+                            return `
+                                <div class="potential-duplicate-item" onclick="selectExistingDriver('${participant.id}')">
+                                    <div class="duplicate-match-info">
+                                        <div>
+                                            <div class="duplicate-driver-name">${participant.name}${participant.nickname ? ` (${participant.nickname})` : ''}</div>
+                                            <div class="duplicate-match-reasons">
+                                                ${reasons.map(reason => `<span class="match-reason">${reason}</span>`).join('')}
+                                            </div>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                                Email: ${participant.contact?.email || participant.contactEmail || 'N/A'} | 
+                                                Phone: ${participant.contact?.phone || participant.contactPhone || 'N/A'}
+                                            </div>
+                                        </div>
+                                        <button class="use-existing-btn" onclick="event.stopPropagation(); selectExistingDriver('${participant.id}')">
+                                            Use This Driver
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd; font-size: 0.9rem; color: var(--text-secondary);">
+                        <strong>Continue anyway?</strong> If you're sure this is a new driver, you can continue with the registration.
+                        <button onclick="removeDuplicateWarnings()" style="margin-left: 1rem; padding: 0.25rem 0.5rem; background: var(--secondary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Continue as New Driver
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Insert warning at the top of the form
+            container.insertAdjacentHTML('afterbegin', warningHtml);
+        }
+        
+        // Remove duplicate warnings
+        function removeDuplicateWarnings() {
+            const existingWarning = document.getElementById('duplicateWarning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+        }
+        
+        // Select existing driver (for duplicate resolution)
+        window.selectExistingDriver = function(driverId) {
+            const participant = dataManager.getParticipant(driverId);
+            if (!participant) {
+                alert('Driver not found.');
+                return;
+            }
+            
+            // Switch to "Add Existing Driver" tab
+            switchTab('addExisting');
+            
+            // Set up the form with this driver
+            setTimeout(() => {
+                // Pre-select the current event if one is selected
+                const eventInput = document.getElementById('eventSelect-input');
+                const targetEventInput = document.getElementById('targetEvent-input');
+                
+                if (eventInput && eventInput.getAttribute('data-selected-value') && targetEventInput) {
+                    const selectedEventId = eventInput.getAttribute('data-selected-value');
+                    const selectedEventLabel = eventInput.value;
+                    
+                    // Set the combo box value
+                    targetEventInput.value = selectedEventLabel;
+                    targetEventInput.setAttribute('data-selected-value', selectedEventId);
+                    
+                    // Trigger the selection callback
+                    onTargetEventSelect(selectedEventId, selectedEventLabel);
+                    
+                    // Wait for drivers to load, then select this driver
+                    setTimeout(() => {
+                        selectDriver(driverId);
+                    }, 500);
+                }
+                
+                showToast(`Switched to existing driver: ${participant.name}`, 'info');
+            }, 200);
+            
+            removeDuplicateWarnings();
+        };
+        
+        // Set up form monitoring for duplicate detection
+        function setupDuplicateDetection() {
+            // This will be called when the registration form is loaded
+            // We'll monitor key fields for changes
+            const monitorFields = [
+                { name: 'name', selector: 'input[name="name"]' },
+                { name: 'email', selector: 'input[name="contact.email"]' },
+                { name: 'phone', selector: 'input[name="contact.phone"]' },
+                { name: 'dob', selector: 'input[name="dob"]' }
+            ];
+            
+            monitorFields.forEach(field => {
+                const element = document.querySelector(field.selector);
+                if (element) {
+                    element.addEventListener('blur', function() {
+                        checkFormForDuplicates();
+                    });
+                    console.log(`✅ Set up duplicate detection for ${field.name} field`);
+                } else {
+                    console.log(`⚠️ Field not found for duplicate detection: ${field.selector}`);
+                }
+            });
+        }
+        
+        // Check current form data for duplicates
+        function checkFormForDuplicates() {
+            try {
+                const formData = gatherCurrentFormData();
+                console.log('🔍 Checking for duplicates with form data:', formData);
+                
+                // Only check if we have enough data to make a meaningful comparison
+                if (!formData.name && !formData.email) {
+                    console.log('🔍 Not enough data for duplicate check');
+                    removeDuplicateWarnings();
+                    return;
+                }
+                
+                const potentialDuplicates = checkForDuplicateDrivers(formData);
+                console.log('🔍 Found potential duplicates:', potentialDuplicates);
+                
+                if (potentialDuplicates.length > 0) {
+                    showDuplicateWarning(potentialDuplicates);
+                } else {
+                    removeDuplicateWarnings();
+                }
+                
+            } catch (error) {
+                console.error('Error checking for duplicates:', error);
+            }
+        }
+        
+        // Gather current form data
+        function gatherCurrentFormData() {
+            const formData = {};
+            
+            // Get data from the registration form fields
+            const nameField = document.querySelector('input[name="name"]');
+            const emailField = document.querySelector('input[name="contact.email"]');
+            const phoneField = document.querySelector('input[name="contact.phone"]');
+            const dobField = document.querySelector('input[name="dob"]');
+            
+            if (nameField && nameField.value) {
+                formData.name = nameField.value.trim();
+            }
+            if (emailField && emailField.value) {
+                formData.email = emailField.value.trim();
+            }
+            if (phoneField && phoneField.value) {
+                formData.phone = phoneField.value.trim();
+            }
+            if (dobField && dobField.value) {
+                formData.dateOfBirth = dobField.value.trim();
+            }
+            
+            return formData;
+        }
+
+        // Override the global deleteParticipant to ensure proper data refresh
+        const originalDeleteParticipant = window.deleteParticipant;
+        window.deleteParticipant = async function(participantId) {
+            if (originalDeleteParticipant) {
+                await originalDeleteParticipant(participantId);
+            } else {
+                // Fallback implementation
+                if (confirm('Are you sure you want to delete this participant? This action cannot be undone.')) {
+                    try {
+                        if (window.dataManager) {
+                            await window.dataManager.deleteParticipant(participantId);
+                            
+                            // Refresh the participant list
+                            if (typeof window.initializeParticipantList === 'function') {
+                                window.initializeParticipantList();
+                            } else if (typeof loadParticipantData === 'function') {
+                                await loadParticipantData();
+                            }
+                            
+                            alert('Participant deleted successfully!');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting participant:', error);
+                        alert('Error deleting participant. Please try again.');
+                    }
+                }
+            }
+        };
+
+        // Debug function to check class assignments
+        window.debugClassAssignments = async function() {
+            console.log('🔍 DEBUG: Checking class assignments...');
+            
+            const participantsResult = await dataManager.getParticipants();
+            const participants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
+            const eventsResult = await dataManager.getEvents();
+            const events = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
+            
+            console.log('📋 All Participants:');
+            participants.forEach(participant => {
+                console.log(`  👤 ${participant.name}:`);
+                console.log(`    - selectedClasses: [${(participant.selectedClasses || []).join(', ')}]`);
+                console.log(`    - sledClasses: [${(participant.sledClasses || []).join(', ')}]`);
+                console.log(`    - sledClass: ${participant.sledClass || 'N/A'}`);
+                console.log(`    - events: [${(participant.events || []).join(', ')}]`);
+            });
+            
+            console.log('📅 All Events:');
+            events.forEach(event => {
+                console.log(`  🏁 ${event.name}:`);
+                console.log(`    - participants: [${(event.participants || []).join(', ')}]`);
+                console.log(`    - classSettings: [${(event.classSettings || []).map(c => c.className || c.name).join(', ')}]`);
+            });
+            
+            return { participants, events };
+        };
+
+    </script>
+    
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+
+    <script>
+        // Fix navigation click issues
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-links li');
+            
+            navLinks.forEach(li => {
+                li.addEventListener('click', function(e) {
+                    // Don't navigate if clicking on the active page
+                    if (this.classList.contains('active')) {
+                        return;
+                    }
+                    
+                    // Get the href from the anchor tag inside
+                    const link = this.querySelector('a');
+                    if (link && link.href) {
+                        window.location.href = link.href;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

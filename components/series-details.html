@@ -1,0 +1,508 @@
+<template id="series-details">
+    <div class="series-details">
+        <div class="series-header">
+            <div class="header-content">
+                <h2 id="seriesName">Series Name</h2>
+                <div class="series-meta">
+                    <span class="status-badge" id="seriesStatus">Status</span>
+                    <span class="date-range" id="dateRange">Date Range</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="editBtn">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-primary" id="addEventBtn">
+                    <i class="fas fa-plus"></i> Add Event
+                </button>
+            </div>
+        </div>
+
+        <div class="series-content">
+            <div class="content-section">
+                <h3>Description</h3>
+                <p id="seriesDescription">No description available.</p>
+            </div>
+
+            <div class="content-section">
+                <h3>Rules & Regulations</h3>
+                <div id="seriesRules" class="rules-content">
+                    No rules specified.
+                </div>
+            </div>
+
+            <div class="content-section">
+                <h3>Points System</h3>
+                <div class="points-table" id="pointsTable">
+                    <!-- Points table will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="section-header">
+                    <h3>Events</h3>
+                    <div class="event-filters">
+                        <select id="eventStatus">
+                            <option value="all">All Events</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="active">Active</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="events-list" id="eventsList">
+                    <!-- Events will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="section-header">
+                    <h3>Standings</h3>
+                    <button class="btn btn-secondary" id="exportStandingsBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+                <div class="standings-table" id="standingsTable">
+                    <!-- Standings table will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .series-details {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .series-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+
+        .header-content h2 {
+            margin: 0 0 10px;
+            color: #333;
+        }
+
+        .series-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-badge.upcoming {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-badge.active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-badge.completed {
+            background: #f5f5f5;
+            color: #616161;
+        }
+
+        .date-range {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .content-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .content-section h3 {
+            margin: 0 0 15px;
+            color: #333;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rules-content {
+            white-space: pre-line;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .points-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .point-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .point-position {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .point-value {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .events-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .event-card {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event-info h4 {
+            margin: 0 0 5px;
+            color: #333;
+        }
+
+        .event-meta {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .standings-table th,
+        .standings-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .standings-table th {
+            background: #f8f9fa;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .standings-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .position-cell {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .points-cell {
+            font-weight: 500;
+            color: #007bff;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .series-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .header-actions .btn {
+                flex: 1;
+            }
+
+            .points-table {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .event-card {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .event-actions {
+                width: 100%;
+            }
+
+            .event-actions .btn {
+                flex: 1;
+            }
+        }
+    </style>
+
+    <script>
+        class SeriesDetails extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.shadowRoot.innerHTML = document.querySelector('#series-details').innerHTML;
+                this.seriesManager = null;
+                this.seriesId = null;
+            }
+
+            connectedCallback() {
+                this.seriesManager = new SeriesManager();
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                const editBtn = this.shadowRoot.querySelector('#editBtn');
+                const addEventBtn = this.shadowRoot.querySelector('#addEventBtn');
+                const eventStatus = this.shadowRoot.querySelector('#eventStatus');
+                const exportBtn = this.shadowRoot.querySelector('#exportStandingsBtn');
+
+                editBtn.addEventListener('click', () => this.editSeries());
+                addEventBtn.addEventListener('click', () => this.addEvent());
+                eventStatus.addEventListener('change', () => this.filterEvents());
+                exportBtn.addEventListener('click', () => this.exportStandings());
+            }
+
+            async loadSeries(seriesId) {
+                this.seriesId = seriesId;
+                const series = this.seriesManager.getSeries(seriesId);
+                
+                if (series) {
+                    this.seriesManager.initSeries(seriesId, series);
+                    this.updateSeriesInfo(series);
+                    this.updatePointsTable(series.pointsSystem);
+                    this.loadEvents();
+                    this.loadStandings();
+                }
+            }
+
+            updateSeriesInfo(series) {
+                this.shadowRoot.querySelector('#seriesName').textContent = series.name;
+                this.shadowRoot.querySelector('#seriesStatus').textContent = series.status;
+                this.shadowRoot.querySelector('#seriesStatus').className = `status-badge ${series.status}`;
+                this.shadowRoot.querySelector('#dateRange').textContent = 
+                    `${new Date(series.startDate).toLocaleDateString()} - ${new Date(series.endDate).toLocaleDateString()}`;
+                
+                const description = this.shadowRoot.querySelector('#seriesDescription');
+                description.textContent = series.description || 'No description available.';
+
+                const rules = this.shadowRoot.querySelector('#seriesRules');
+                rules.textContent = series.rules || 'No rules specified.';
+            }
+
+            updatePointsTable(pointsSystem) {
+                const table = this.shadowRoot.querySelector('#pointsTable');
+                table.innerHTML = '';
+
+                Object.entries(pointsSystem).forEach(([position, points]) => {
+                    const item = document.createElement('div');
+                    item.className = 'point-item';
+                    item.innerHTML = `
+                        <div class="point-position">${position}</div>
+                        <div class="point-value">${points} points</div>
+                    `;
+                    table.appendChild(item);
+                });
+            }
+
+            async loadEvents() {
+                const events = Array.from(this.seriesManager.currentSeries.events.values());
+                this.renderEvents(events);
+            }
+
+            renderEvents(events) {
+                const list = this.shadowRoot.querySelector('#eventsList');
+                list.innerHTML = '';
+
+                events.forEach(event => {
+                    const card = document.createElement('div');
+                    card.className = 'event-card';
+                    card.innerHTML = `
+                        <div class="event-info">
+                            <h4>${event.name}</h4>
+                            <div class="event-meta">
+                                <span>${new Date(event.date).toLocaleDateString()}</span>
+                                <span class="status-badge ${event.status}">${event.status}</span>
+                            </div>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn btn-secondary" data-id="${event.id}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-primary" data-id="${event.id}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </div>
+                    `;
+
+                    // Add event listeners
+                    card.querySelector('.btn-secondary').addEventListener('click', (e) => {
+                        this.viewEvent(e.target.dataset.id);
+                    });
+
+                    card.querySelector('.btn-primary').addEventListener('click', (e) => {
+                        this.editEvent(e.target.dataset.id);
+                    });
+
+                    list.appendChild(card);
+                });
+            }
+
+            filterEvents() {
+                const status = this.shadowRoot.querySelector('#eventStatus').value;
+                const events = Array.from(this.seriesManager.currentSeries.events.values())
+                    .filter(event => status === 'all' || event.status === status);
+                this.renderEvents(events);
+            }
+
+            async loadStandings() {
+                const standings = this.seriesManager.getStandings();
+                this.renderStandings(standings);
+            }
+
+            renderStandings(standings) {
+                const table = this.shadowRoot.querySelector('#standingsTable');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Participant</th>
+                            <th>Points</th>
+                            <th>Events</th>
+                            <th>Wins</th>
+                            <th>Podiums</th>
+                            <th>Top 10</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${standings.map(standing => `
+                            <tr>
+                                <td class="position-cell">${standing.position}</td>
+                                <td>${standing.participant.name}</td>
+                                <td class="points-cell">${standing.points}</td>
+                                <td>${standing.events}</td>
+                                <td>${standing.wins}</td>
+                                <td>${standing.podiums}</td>
+                                <td>${standing.top10}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+            }
+
+            editSeries() {
+                this.dispatchEvent(new CustomEvent('edit', {
+                    detail: { seriesId: this.seriesId }
+                }));
+            }
+
+            addEvent() {
+                this.dispatchEvent(new CustomEvent('addEvent', {
+                    detail: { seriesId: this.seriesId }
+                }));
+            }
+
+            viewEvent(eventId) {
+                this.dispatchEvent(new CustomEvent('viewEvent', {
+                    detail: { eventId }
+                }));
+            }
+
+            editEvent(eventId) {
+                this.dispatchEvent(new CustomEvent('editEvent', {
+                    detail: { eventId }
+                }));
+            }
+
+            exportStandings() {
+                const standings = this.seriesManager.getStandings();
+                const csv = this.convertToCSV(standings);
+                this.downloadCSV(csv, `${this.seriesManager.currentSeries.name}_standings.csv`);
+            }
+
+            convertToCSV(standings) {
+                const headers = ['Position', 'Participant', 'Points', 'Events', 'Wins', 'Podiums', 'Top 10'];
+                const rows = standings.map(s => [
+                    s.position,
+                    s.participant.name,
+                    s.points,
+                    s.events,
+                    s.wins,
+                    s.podiums,
+                    s.top10
+                ]);
+                return [headers, ...rows].map(row => row.join(',')).join('\n');
+            }
+
+            downloadCSV(csv, filename) {
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        }
+
+        customElements.define('series-details', SeriesDetails);
+    </script>
+</template> 

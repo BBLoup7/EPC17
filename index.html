@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Home (Project 17)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <div class="brand-icon">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div class="brand-text">
+                <span class="brand-main">EPC TECHNOLOGY</span>
+                <span class="brand-sub">PROJECT 17</span>
+            </div>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="registration.html">Registr.</a></li>
+            <li><a href="series.html">Series</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="races.html">Races</a></li>
+            <li><a href="driver-profile.html">Drivers</a></li>
+            <li><a href="analytics.html">Analytics</a></li>
+        </ul>
+        
+        <!-- Mobile Hamburger Menu -->
+        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav-menu">
+            <div class="mobile-nav-header">
+                <div class="mobile-nav-brand">
+                    <div class="brand-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-main">EPC TECHNOLOGY</span>
+                        <span class="brand-sub">PROJECT 17</span>
+                    </div>
+                </div>
+                <button class="mobile-nav-close" aria-label="Close navigation menu">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <ul class="mobile-nav-links">
+                <li><a href="index.html" class="active">🏠 Home</a></li>
+                <li><a href="registration.html">📝 Registration</a></li>
+                <li><a href="series.html">🏆 Series</a></li>
+                <li><a href="events.html">📅 Events</a></li>
+                <li><a href="races.html">🏁 Races</a></li>
+                <li><a href="driver-profile.html">👥 Drivers</a></li>
+                <li><a href="analytics.html">📊 Analytics</a></li>
+            </ul>
+            <div class="mobile-nav-footer">
+                <div class="mobile-nav-version">v1.0.0</div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Overlay -->
+        <div class="mobile-nav-overlay"></div>
+    </nav>
+
+    <main class="main-content">
+        <div class="hero-section">
+            <h1>Welcome to EPC TECHNOLOGY</h1>
+            <p class="hero-subtitle">PROJECT 17 - Advanced Drag Racing Tournament Management System</p>
+            <div class="hero-actions">
+                <a href="registration.html" class="btn btn-primary">Register Now</a>
+                <a href="series.html" class="btn btn-secondary">View Series</a>
+            </div>
+        </div>
+
+        <!-- Completed Features Section -->
+        <div class="features-section completed-features">
+            <h2>✅ Recently Completed Features</h2>
+            <div class="features-grid">
+                <div class="feature-card completed">
+                    <div class="feature-icon">🔧</div>
+                    <h3>Race Generation Fixed</h3>
+                    <p>Fixed the racegen error and bracket initialization issues.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">📋</div>
+                    <h3>Class Order Management</h3>
+                    <p>Support for creating, grouping, and reordering of racing categories.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Smart Lane Assignment</h3>
+                    <p>Fixed lane assignment logic to ensure racers use lanes they've used least.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">⚖️</div>
+                    <h3>Fair Bracket Logic</h3>
+                    <p>Prevent repeat matchups and overused lanes with intelligent pairing.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">🚫</div>
+                    <h3>DSQ & False Start Logic</h3>
+                    <p>Support for disqualifications and false start handling.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Driver Swap Functionality</h3>
+                    <p>Reorganize drivers within the same race using swap buttons.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Early Next Round Generation</h3>
+                    <p>Optimize round pacing by generating next rounds when possible.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">📊</div>
+                    <h3>Enhanced Analytics</h3>
+                    <p>Renamed "Statistics" to "Analytics" with improved race/time tracking.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Improved Search</h3>
+                    <p>Enhanced driver profile search with actual search functionality.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">✏️</div>
+                    <h3>Direct Editing</h3>
+                    <p>Support editing participants directly in Registration tab.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">📝</div>
+                    <h3>Registration Form</h3>
+                    <p>Complete registration form with all needed fields including sponsor information.</p>
+                </div>
+
+                <div class="feature-card completed">
+                    <div class="feature-icon">📅</div>
+                    <h3>Season System</h3>
+                    <p>Create "Season" system under Series with proper event linking.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Features Section -->
+        <div class="features-section upcoming-features">
+            <h2>🚀 Upcoming Features & Updates</h2>
+            
+            <!-- High Priority -->
+            <div class="priority-section">
+                <h3>🔥 High Priority</h3>
+                <div class="features-grid">
+                    <div class="feature-card upcoming high-priority">
+                        <div class="feature-icon">👥</div>
+                        <h3>Fix Event Registration</h3>
+                        <p>Add existing drivers to events - currently drivers are counted but don't show up when initializing brackets.</p>
+                    </div>
+
+                    <div class="feature-card upcoming high-priority">
+                        <div class="feature-icon">🏁</div>
+                        <h3>False Start Ranking Fix</h3>
+                        <p>Fix false start logic to give last place in race but not affect total standings.</p>
+                    </div>
+
+                    <div class="feature-card upcoming high-priority">
+                        <div class="feature-icon">⚖️</div>
+                        <h3>Race Balancing</h3>
+                        <p>Balance the last 2 races when free run is disabled - ensure fair distribution of drivers.</p>
+                    </div>
+
+                    <div class="feature-card upcoming high-priority">
+                        <div class="feature-icon">🚫</div>
+                        <h3>False Start Disqualification</h3>
+                        <p>Implement proper false start disqualification logic.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Features -->
+            <div class="priority-section">
+                <h3>⚙️ Core Features</h3>
+                <div class="features-grid">
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">🖥️</div>
+                        <h3>Big Screen Display</h3>
+                        <p>Create display page for showing races or brackets on TVs/projectors during events.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Security Improvements</h3>
+                        <p>Secure "Clear All Data" button with confirmation and protect all delete operations.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">🔄</div>
+                        <h3>Race Reorganization</h3>
+                        <p>Fix race reorganization within the same race - changing drivers of lanes around.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">📊</div>
+                        <h3>Event Count Fix</h3>
+                        <p>Fix event/participant count subtitle under Series management.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Experience -->
+            <div class="priority-section">
+                <h3>🎨 User Experience</h3>
+                <div class="features-grid">
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">🏆</div>
+                        <h3>Achievement System</h3>
+                        <p>Fix and implement the achievement system for driver recognition.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">📄</div>
+                        <h3>Export Functionality</h3>
+                        <p>Add Extract button to convert stats and results to PDF files.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">🔗</div>
+                        <h3>Tie-Breaker Logic</h3>
+                        <p>Test and implement tie-breaker race logic for bracket and round ties.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">📋</div>
+                        <h3>Draft Status Removal</h3>
+                        <p>Remove "Draft" status in Series management page.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Features -->
+            <div class="priority-section">
+                <h3>🚀 Advanced Features</h3>
+                <div class="features-grid">
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">💰</div>
+                        <h3>Purse Calculator</h3>
+                        <p>Create automatic payout calculator based on % payback and sponsors.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">⏱️</div>
+                        <h3>Smart Race Spacing</h3>
+                        <p>Add logic to avoid back-to-back races for multi-class drivers.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">🌳</div>
+                        <h3>Visual Tournament Brackets</h3>
+                        <p>Build proper upper/lower tracking system for double & single elimination.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">🎲</div>
+                        <h3>Random Double Elimination</h3>
+                        <p>Add full random double elimination logic with manual fallback.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tournament System -->
+            <div class="priority-section">
+                <h3>🏆 Tournament System</h3>
+                <div class="features-grid">
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">📋</div>
+                        <h3>Report System</h3>
+                        <p>Create printable driver information reports with auto-print crash-proof system.</p>
+                    </div>
+
+                    <div class="feature-card upcoming">
+                        <div class="feature-icon">💾</div>
+                        <h3>Back-up System</h3>
+                        <p>Implement comprehensive data backup and recovery system.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Future Ideas -->
+            <div class="priority-section">
+                <h3>💡 Future Ideas</h3>
+                <div class="features-grid">
+                    <div class="feature-card upcoming idea">
+                        <div class="feature-icon">📧</div>
+                        <h3>Email Stats PDF</h3>
+                        <p>Automatic PDF of full driver profile after event completion.</p>
+                    </div>
+
+                    <div class="feature-card upcoming idea">
+                        <div class="feature-icon">📱</div>
+                        <h3>SMS Alerts</h3>
+                        <p>"You race in 5 heats" message to driver phones.</p>
+                    </div>
+
+                    <div class="feature-card upcoming idea">
+                        <div class="feature-icon">📺</div>
+                        <h3>Live Results Page</h3>
+                        <p>Auto-refreshing viewer mode for fans on mobile devices.</p>
+                    </div>
+
+                    <div class="feature-card upcoming idea">
+                        <div class="feature-icon">🔧</div>
+                        <h3>Tech Inspection Page</h3>
+                        <p>Dedicated page for vehicle inspections and compliance checks.</p>
+                    </div>
+
+                    <div class="feature-card upcoming idea">
+                        <div class="feature-icon">🤖</div>
+                        <h3>AI Announcer</h3>
+                        <p>AI-powered announcer to replace or assist real announcers.</p>
+                    </div>
+
+                    <div class="feature-card upcoming idea">
+                        <div class="feature-icon">🌍</div>
+                        <h3>Translation Support</h3>
+                        <p>Multi-language support for international events.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+                <a href="registration.html" class="action-card">
+                    <div class="action-icon">📝</div>
+                    <h3>Register Driver</h3>
+                    <p>Add new participants to the system</p>
+                </a>
+                <a href="series.html" class="action-card">
+                    <div class="action-icon">🏆</div>
+                    <h3>Manage Series</h3>
+                    <p>Create and configure racing series</p>
+                </a>
+                <a href="events.html" class="action-card">
+                    <div class="action-icon">📅</div>
+                    <h3>Create Event</h3>
+                    <p>Set up new racing events</p>
+                </a>
+                <a href="races.html" class="action-card">
+                    <div class="action-icon">🏁</div>
+                    <h3>Manage Races</h3>
+                    <p>Generate brackets and manage race flow</p>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <style>
+        .features-section {
+            margin: 2rem 0;
+            padding: 2rem 0;
+        }
+
+        .completed-features {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .upcoming-features {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .priority-section {
+            margin: 2rem 0;
+        }
+
+        .priority-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .feature-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-card.completed {
+            border-left: 4px solid var(--success);
+        }
+
+        .feature-card.upcoming {
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .feature-card.high-priority {
+            border-left: 4px solid var(--error);
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+        }
+
+        .feature-card.idea {
+            border-left: 4px solid var(--warning);
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .quick-actions {
+            margin: 3rem 0;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .action-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border-color);
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .action-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .action-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script src="utils/performance-monitor.js"></script>
+    <script src="js/mobile-nav.js"></script>
+    
+    <!-- Performance Dashboard -->
+    <div id="performance-dashboard-container"></div>
+    
+    <script>
+        // Load performance dashboard
+        fetch('components/performance-dashboard.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('performance-dashboard-container').innerHTML = html;
+            })
+            .catch(error => console.error('Failed to load performance dashboard:', error));
+        
+        // Fix desktop navigation click issues
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-links li');
+            
+            navLinks.forEach(li => {
+                li.addEventListener('click', function(e) {
+                    // Don't navigate if clicking on the active page
+                    if (this.classList.contains('active')) {
+                        return;
+                    }
+                    
+                    // Get the href from the anchor tag inside
+                    const link = this.querySelector('a');
+                    if (link && link.href) {
+                        window.location.href = link.href;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

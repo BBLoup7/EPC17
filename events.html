@@ -1,0 +1,3021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Events Management (Project 17)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .event-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .event-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .event-header h3 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .event-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-upcoming {
+            background: var(--warning);
+            color: var(--bg-primary);
+        }
+        
+        .status-active {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+        
+        .status-completed {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+        
+        .event-details {
+            margin-bottom: 1.5rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+        
+        .event-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .event-actions .btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 2px dashed var(--border-color);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .error-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--danger);
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .error-state h3 {
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .events-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .event-actions {
+                flex-direction: column;
+            }
+            
+            .event-actions .btn {
+                flex: none;
+            }
+        }
+
+        /* Class Configuration Styles */
+        .class-config-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .class-config-item:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .class-config-item.selected {
+            border-color: var(--accent-primary);
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .class-info {
+            flex: 1;
+        }
+
+        .class-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .class-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .class-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .class-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-primary);
+        }
+
+        /* Form help styling */
+        .form-help {
+            margin-top: 0.5rem;
+        }
+
+        .help-text {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .help-text strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .class-price-input {
+            width: 100px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .class-price-input:disabled {
+            opacity: 0.5;
+            background: var(--bg-primary);
+        }
+
+        .price-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+        }
+
+        .no-classes-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        /* Class Ordering Styles */
+        .class-ordering-section {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            background: rgba(74, 144, 226, 0.05);
+        }
+
+        .class-ordering-section .form-label {
+            color: var(--accent-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .class-order-list {
+            min-height: 100px;
+            background: var(--bg-primary);
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+
+        .class-order-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: move;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .class-order-item:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
+        }
+
+        .class-order-item.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .class-order-item.drag-over {
+            border-color: var(--accent-primary);
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .class-order-info {
+            flex: 1;
+        }
+
+        .class-order-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .class-order-fee {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+
+
+        .drag-handle {
+            color: white;
+            cursor: grab;
+            padding: 0.75rem;
+            font-size: 2rem;
+            line-height: 1;
+            user-select: none;
+            background: var(--accent-primary);
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            min-width: 60px;
+            text-align: center;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .drag-handle:hover {
+            background: #1565c0;
+            border-color: #1565c0;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .order-number {
+            background: var(--accent-primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Unified Class Interface Styles */
+        .unified-class-item.selected {
+            background: #e8f5e8;
+            border-color: #28a745;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+        }
+
+        .unified-class-item.dragging {
+            opacity: 0.5;
+            transform: rotate(3deg);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .unified-class-item.drag-over {
+            border-color: #007bff;
+            background: rgba(0, 123, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .drag-handle-placeholder {
+            width: 40px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 16px;
+            color: #ccc;
+            background: #f8f9fa;
+            border: 1px dashed #dee2e6;
+            border-radius: 4px;
+            cursor: default;
+        }
+
+        .unified-class-item .drag-handle {
+            width: 40px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 16px;
+            color: white;
+            background: #007bff;
+            border: 1px solid #0056b3;
+            border-radius: 4px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            padding: 0;
+            min-width: unset;
+            font-weight: normal;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .unified-class-item .drag-handle:hover {
+            background: #0056b3;
+            transform: scale(1.1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .unified-class-item .drag-handle:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .class-separator {
+            margin: 1rem 0;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 1000px;
+            margin: 2rem auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-height: calc(100vh - 4rem);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .modal-header h2 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .modal-body {
+            padding: 0;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 1rem;
+                width: calc(100% - 2rem);
+            }
+            
+            .modal-header {
+                padding: 1rem;
+            }
+        }
+
+        /* New Event Modal Styles (overlay class) */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .overlay .modal {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 1000px;
+            margin: 2rem auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            max-height: calc(100vh - 4rem);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .overlay .modal .form {
+            padding: 2rem;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .overlay .modal .modal-header {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .overlay .modal {
+                margin: 1rem;
+                width: calc(100% - 2rem);
+            }
+            
+            .overlay .modal .form {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <div class="brand-icon">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div class="brand-text">
+                <span class="brand-main">EPC TECHNOLOGY</span>
+                <span class="brand-sub">PROJECT 17</span>
+            </div>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="registration.html">Registr.</a></li>
+            <li><a href="series.html">Series</a></li>
+            <li class="active"><a href="events.html">Events</a></li>
+            <li><a href="races.html">Races</a></li>
+            <li><a href="driver-profile.html">Drivers</a></li>
+            <li><a href="analytics.html">Analytics</a></li>
+        </ul>
+        
+        <!-- Mobile Hamburger Menu -->
+        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav-menu">
+            <div class="mobile-nav-header">
+                <div class="mobile-nav-brand">
+                    <div class="brand-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-main">EPC TECHNOLOGY</span>
+                        <span class="brand-sub">PROJECT 17</span>
+                    </div>
+                </div>
+                <button class="mobile-nav-close" aria-label="Close navigation menu">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <ul class="mobile-nav-links">
+                <li><a href="index.html">🏠 Home</a></li>
+                <li><a href="registration.html">📝 Registration</a></li>
+                <li><a href="series.html">🏆 Series</a></li>
+                <li><a href="events.html" class="active">📅 Events</a></li>
+                <li><a href="races.html">🏁 Races</a></li>
+                <li><a href="driver-profile.html">👥 Drivers</a></li>
+                <li><a href="analytics.html">📊 Analytics</a></li>
+            </ul>
+            <div class="mobile-nav-footer">
+                <div class="mobile-nav-version">v1.0.0</div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Overlay -->
+        <div class="mobile-nav-overlay"></div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Events Management</h1>
+                <p class="subtitle">Create and manage racing events</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="showNewEventModal()">
+                    New Event
+                </button>
+                <button class="btn btn-secondary" onclick="reloadData()">
+                    <i class="fas fa-sync"></i>
+                    Reload Data
+                </button>
+                <div class="utility-actions">
+                    <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
+                        <i class="fas fa-trash-alt"></i> Clear All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="events-grid" id="eventsGrid">
+            <!-- Events cards will be dynamically populated -->
+        </div>
+        
+        <!-- Skeleton loading -->
+        <div id="eventsSkeleton" class="skeleton-loading" style="display: none;">
+            <!-- Skeleton cards will be populated by JavaScript -->
+        </div>
+        
+        <!-- Pagination -->
+        <div id="eventsPagination"></div>
+    </main>
+
+    <!-- New Event Modal -->
+    <div class="overlay" id="newEventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Create New Event</h2>
+                <button class="modal-close" onclick="hideNewEventModal()">&times;</button>
+            </div>
+            <form id="newEventForm" class="form">
+                <div class="form-group">
+                    <label class="form-label">Event Name</label>
+                    <input type="text" class="form-control" name="eventName" required>
+                </div>
+                <div class="form-group">
+                    <label for="seriesId">Series *</label>
+                    <div id="seriesSelectContainer">
+                        <div class="combo-box-container">
+                            <input type="text" class="combo-box-input" placeholder="Loading series..." disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="seasonId">Season</label>
+                    <div id="seasonSelectContainer">
+                        <div class="combo-box-container">
+                            <input type="text" class="combo-box-input" placeholder="Select series first" disabled>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="classConfigSection" style="display: none;">
+                    <label class="form-label">Event Classes & Pricing</label>
+                    <div id="availableClasses">
+                        <!-- Classes will be populated when series is selected -->
+                    </div>
+                    
+                    <div class="form-help">
+                        <p class="help-text">
+                            <strong>💡 How to set class racing order:</strong><br>
+                            1. Check the classes you want in this event<br>
+                            2. Selected classes will move to the top and show <span style="font-family: monospace; background: #007bff; color: white; padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> drag handles<br>
+                            3. Drag the handles to reorder classes<br>
+                                                        4. This order determines how classes appear in races!
+                        </p>
+                </div>
+                </div>
+                
+
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-control" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input type="text" class="form-control" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Number of Tracks/Lanes</label>
+                    <input type="number" class="form-control" name="numberOfTracks" min="1" max="8" value="3" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Elimination Type</label>
+                    <select class="form-control" name="eliminationType" required>
+                        <option value="single">Single Elimination</option>
+                        <option value="double">Double Elimination</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Driver Meeting Time</label>
+                    <input type="time" class="form-control" name="driverMeetingTime" value="08:00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Participants</label>
+                    <input type="number" class="form-control" name="maxParticipants" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Free Run Mode</label>
+                    <select class="form-control" name="freeRunEnabled" required>
+                        <option value="false">Disabled - Balance last races (fairer)</option>
+                        <option value="true">Enabled - Fill races to capacity (faster)</option>
+                    </select>
+                    <div class="form-help">
+                        <small class="help-text">
+                            <strong>Free Run Enabled:</strong> Fill races to maximum capacity first, creating fewer total races.<br>
+                            <strong>Free Run Disabled:</strong> Balance the last races so no one gets a "bye" or free pass.
+                        </small>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button type="submit" class="btn btn-primary">Create Event</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideNewEventModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="utils/performance-monitor.js"></script>
+    <script src="utils/helpers.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
+    <script src="utils/event-bus.js"></script>
+    <script src="modules/statistics-manager.js"></script>
+    <script src="utils/data-manager.js"></script>
+    <script src="modules/series.js"></script>
+    <!-- Mobile Navigation -->
+    <script src="js/mobile-nav.js"></script>
+    
+    <script>
+        let seriesManager;
+        let dataManager;
+        let selectedSeriesId = '';
+        let selectedSeasonId = '';
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize data manager and load data
+            dataManager = new DataManager();
+            await dataManager.loadFromStorage();
+            
+            // Initialize series manager and ensure it uses DataManager's data
+            seriesManager = new SeriesManager();
+            
+            // Sync series data between managers
+            const seriesFromDataManager = dataManager.getAllSeries();
+            const seriesFromSeriesManager = seriesManager.getAllSeries();
+            
+            // If DataManager has more recent data, update SeriesManager
+            if (seriesFromDataManager.length > 0 && seriesFromSeriesManager.length === 0) {
+                console.log('🔄 Syncing series data from DataManager to SeriesManager');
+                seriesFromDataManager.forEach(series => {
+                    seriesManager.series.set(series.id, series);
+                });
+                seriesManager.saveToStorage();
+            }
+            // If SeriesManager has more recent data, update DataManager
+            else if (seriesFromSeriesManager.length > 0 && seriesFromDataManager.length === 0) {
+                console.log('🔄 Syncing series data from SeriesManager to DataManager');
+                for (const series of seriesFromSeriesManager) {
+                    await dataManager.addSeries(series);
+                }
+            }
+            
+            // Initialize the events page with real-time updates
+            await initializeEventsPage();
+            await loadSeries(); // Load series for event creation
+        });
+
+        // Class Configuration Functions
+        async function loadSeriesClasses(seriesId) {
+            const classConfigSection = document.getElementById('classConfigSection');
+            const availableClassesDiv = document.getElementById('availableClasses');
+            
+            console.log('🔍 loadSeriesClasses called with seriesId:', seriesId);
+            
+            if (!seriesId) {
+                classConfigSection.style.display = 'none';
+                return;
+            }
+            
+            // Use DataManager directly to get the latest series data
+            const series = dataManager.getSeries(seriesId);
+            
+            console.log('🔍 Found series:', series);
+            if (!series || !series.sledClasses || series.sledClasses.length === 0) {
+                classConfigSection.style.display = 'none';
+                return;
+            }
+            
+            classConfigSection.style.display = 'block';
+            
+            const classesHtml = series.sledClasses.map((cls, index) => `
+                <div class="class-config-item unified-class-item" id="class-${cls.id}" data-class-id="${cls.id}" draggable="false">
+                    <div class="drag-handle-placeholder" style="width: 40px; opacity: 0.3;">
+                        ⋮⋮
+                    </div>
+                    <div class="class-info">
+                        <div class="class-name">${cls.name}</div>
+                        <div class="class-description">${cls.description || 'No description'}</div>
+                    </div>
+                    <div class="class-controls">
+                        <span class="price-label">$</span>
+                        <input type="number" 
+                               class="class-price-input" 
+                               id="price-${cls.id}"
+                               placeholder="${cls.defaultFee || '0'}"
+                               value="${cls.defaultFee || ''}"
+                               min="0" 
+                               step="0.01"
+                               disabled>
+                        <input type="checkbox" 
+                               class="class-checkbox" 
+                               id="checkbox-${cls.id}"
+                               onchange="toggleClassSelection('${cls.id}')">
+                    </div>
+                </div>
+            `).join('');
+            
+            availableClassesDiv.innerHTML = classesHtml || '<div class="no-classes-message">No classes available in this series</div>';
+        }
+        
+        async function loadSeriesClassesEdit(seriesId, eventId) {
+            const availableClassesDiv = document.getElementById('editAvailableClasses');
+            
+            console.log('🔍 loadSeriesClassesEdit called with:', { seriesId, eventId });
+            
+            if (!seriesId) {
+                availableClassesDiv.innerHTML = '<div class="no-classes-message">Select a series first</div>';
+                return;
+            }
+            
+            // Use DataManager directly to get the latest series data
+            const series = dataManager.getSeries(seriesId);
+            const event = dataManager.getEvent(eventId);
+            
+            console.log('🔍 Found series:', series);
+            console.log('🔍 Found event:', event);
+            
+            if (!series || !series.sledClasses || series.sledClasses.length === 0) {
+                availableClassesDiv.innerHTML = '<div class="no-classes-message">No classes available in this series</div>';
+                return;
+            }
+            
+            const eventClassSettings = event.classSettings || [];
+            
+            const classesHtml = series.sledClasses.map(cls => {
+                const existingClass = eventClassSettings.find(ec => ec.classId === cls.id);
+                const isSelected = !!existingClass;
+                const price = existingClass ? existingClass.fee : (cls.defaultFee || '');
+                
+                console.log('🔍 Rendering class:', cls.name, 'isSelected:', isSelected, 'price:', price);
+                
+                return `
+                    <div class="class-config-item unified-class-item ${isSelected ? 'selected' : ''}" 
+                         id="edit-class-${cls.id}" 
+                         data-class-id="${cls.id}" 
+                         draggable="${isSelected ? 'true' : 'false'}">
+                        <div class="${isSelected ? 'drag-handle' : 'drag-handle-placeholder'}" 
+                             style="opacity: ${isSelected ? '1' : '0.3'};" 
+                             title="${isSelected ? 'Drag to reorder' : ''}">
+                            ⋮⋮
+                        </div>
+                        <div class="class-info">
+                            <div class="class-name">${cls.name}</div>
+                            <div class="class-description">${cls.description || 'No description'}</div>
+                        </div>
+                        <div class="class-controls">
+                            <span class="price-label">$</span>
+                            <input type="number" 
+                                   class="class-price-input" 
+                                   id="edit-price-${cls.id}"
+                                   placeholder="${cls.defaultFee || '0'}"
+                                   value="${price}"
+                                   min="0" 
+                                   step="0.01"
+                                   ${isSelected ? '' : 'disabled'}
+                                   onchange="updateClassPriceEdit('${cls.id}', this.value)">
+                            <input type="checkbox" 
+                                   class="class-checkbox" 
+                                   id="edit-checkbox-${cls.id}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="console.log('🔍 Checkbox clicked for ${cls.id}'); toggleClassSelectionEdit('${cls.id}')">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            availableClassesDiv.innerHTML = classesHtml || '<div class="no-classes-message">No classes available in this series</div>';
+            
+            // Load existing class order for editing
+            loadExistingClassOrderForEdit(event);
+            
+            // Bind simple edit drag events
+            setTimeout(() => {
+                bindSimpleEditDragEvents();
+            }, 100);
+        }
+
+        // Load existing class order when editing an event
+        function loadExistingClassOrderForEdit(event) {
+            console.log('🔧 Loading existing class order for edit:', event);
+            
+            editClassOrder = [];
+            
+            if (event.classOrder && Array.isArray(event.classOrder) && event.classSettings) {
+                // Reconstruct editClassOrder from the existing classOrder and classSettings
+                event.classOrder.forEach(classId => {
+                    const classSetting = event.classSettings.find(cs => cs.classId === classId);
+                    if (classSetting) {
+                        editClassOrder.push({
+                            classId: classSetting.classId,
+                            className: classSetting.className,
+                            fee: classSetting.fee || 0,
+                            description: classSetting.description || ''
+                        });
+                    }
+                });
+                
+                console.log('🔧 Loaded existing edit class order:', editClassOrder);
+            } else if (event.classSettings) {
+                // Fallback: create order from classSettings (alphabetical)
+                editClassOrder = [...event.classSettings].sort((a, b) => a.className.localeCompare(b.className));
+                console.log('🔧 Created fallback edit class order from classSettings:', editClassOrder);
+            }
+        }
+        
+        function toggleClassSelection(classId) {
+            const checkbox = document.getElementById(`checkbox-${classId}`);
+            const priceInput = document.getElementById(`price-${classId}`);
+            const classItem = document.getElementById(`class-${classId}`);
+            const dragHandlePlaceholder = classItem.querySelector('.drag-handle-placeholder');
+            
+            if (checkbox.checked) {
+                priceInput.disabled = false;
+                classItem.classList.add('selected');
+                classItem.draggable = true;
+                
+                // Convert placeholder to active drag handle
+                dragHandlePlaceholder.className = 'drag-handle';
+                dragHandlePlaceholder.style.opacity = '1';
+                dragHandlePlaceholder.title = 'Drag to reorder';
+                
+                priceInput.focus();
+            } else {
+                priceInput.disabled = true;
+                classItem.classList.remove('selected');
+                classItem.draggable = false;
+                
+                // Convert back to placeholder
+                dragHandlePlaceholder.className = 'drag-handle-placeholder';
+                dragHandlePlaceholder.style.opacity = '0.3';
+                dragHandlePlaceholder.title = '';
+            }
+            
+            // Simple update - just bind drag events to container
+            bindSimpleDragEvents();
+        }
+        
+        function toggleClassSelectionEdit(classId) {
+            console.log('🔍 toggleClassSelectionEdit called with classId:', classId);
+            
+            const checkbox = document.getElementById(`edit-checkbox-${classId}`);
+            const priceInput = document.getElementById(`edit-price-${classId}`);
+            const classItem = document.getElementById(`edit-class-${classId}`);
+            const dragHandlePlaceholder = classItem.querySelector('.drag-handle-placeholder, .drag-handle');
+            
+            console.log('🔍 Found elements:', {
+                checkbox: checkbox ? 'YES' : 'NO',
+                priceInput: priceInput ? 'YES' : 'NO',
+                classItem: classItem ? 'YES' : 'NO',
+                dragHandlePlaceholder: dragHandlePlaceholder ? 'YES' : 'NO',
+                isChecked: checkbox ? checkbox.checked : 'N/A'
+            });
+            
+            if (checkbox && checkbox.checked) {
+                priceInput.disabled = false;
+                classItem.classList.add('selected');
+                classItem.draggable = true;
+                
+                // Convert placeholder to active drag handle
+                dragHandlePlaceholder.className = 'drag-handle';
+                dragHandlePlaceholder.style.opacity = '1';
+                dragHandlePlaceholder.title = 'Drag to reorder';
+                
+                priceInput.focus();
+                
+                // Add to editClassOrder if not already there
+                const existingIndex = editClassOrder.findIndex(cls => cls.classId === classId);
+                console.log('🔍 Existing index in editClassOrder:', existingIndex);
+                
+                if (existingIndex === -1) {
+                    // Get series class info - try multiple approaches
+                    let seriesSelect = document.querySelector('#editEventForm select[name="seriesId"]');
+                    if (!seriesSelect) {
+                        seriesSelect = document.querySelector('select[name="seriesId"]');
+                    }
+                    const seriesId = seriesSelect ? seriesSelect.value : null;
+                    console.log('🔍 Series selection:', {
+                        seriesSelect: seriesSelect ? 'FOUND' : 'NOT FOUND',
+                        seriesId: seriesId,
+                        seriesSelectHTML: seriesSelect ? seriesSelect.outerHTML : 'N/A',
+                        allSeriesSelects: document.querySelectorAll('select[name="seriesId"]').length,
+                        editFormSelect: document.querySelector('#editEventForm select[name="seriesId"]') ? 'FOUND' : 'NOT FOUND'
+                    });
+                    
+                    if (seriesId) {
+                        const series = dataManager.getSeries(seriesId);
+                        console.log('🔍 Series data:', series ? 'FOUND' : 'NOT FOUND');
+                        console.log('🔍 Series sledClasses:', series ? series.sledClasses : 'N/A');
+                        
+                        const seriesClass = series ? series.sledClasses.find(c => c.id === classId) : null;
+                        console.log('🔍 Found seriesClass for ID', classId, ':', seriesClass ? seriesClass.name : 'NOT FOUND');
+                        
+                        if (seriesClass) {
+                            const newClassData = {
+                                classId: classId,
+                                className: seriesClass.name,
+                                fee: parseFloat(priceInput.value) || 0,
+                                description: seriesClass.description
+                            };
+                            editClassOrder.push(newClassData);
+                            console.log('🔍 Added to editClassOrder:', newClassData);
+                        } else {
+                            console.log('🔍 ERROR: Could not find seriesClass for classId:', classId);
+                        }
+                    } else {
+                        console.log('🔍 ERROR: No seriesId found');
+                    }
+                }
+            } else {
+                priceInput.disabled = true;
+                classItem.classList.remove('selected');
+                classItem.draggable = false;
+                
+                // Convert back to placeholder
+                dragHandlePlaceholder.className = 'drag-handle-placeholder';
+                dragHandlePlaceholder.style.opacity = '0.3';
+                dragHandlePlaceholder.title = '';
+                
+                // Remove from editClassOrder
+                const existingIndex = editClassOrder.findIndex(cls => cls.classId === classId);
+                if (existingIndex !== -1) {
+                    editClassOrder.splice(existingIndex, 1);
+                    console.log('🔍 Removed from editClassOrder:', classId);
+                }
+            }
+            
+            console.log('🔍 Updated editClassOrder:', editClassOrder.map(c => c.className));
+            
+            // Simple update - just bind drag events to container
+            bindSimpleEditDragEvents();
+        }
+        
+        // Test function availability
+        console.log('🔍 toggleClassSelectionEdit function defined:', typeof toggleClassSelectionEdit);
+        
+        function updateClassPriceEdit(classId, newPrice) {
+            // Update the editClassOrder array with new price
+            const existingIndex = editClassOrder.findIndex(cls => cls.classId === classId);
+            if (existingIndex !== -1) {
+                editClassOrder[existingIndex].fee = parseFloat(newPrice) || 0;
+                console.log('🔍 Updated price for class', classId, 'to', newPrice);
+            }
+        }
+        
+        // Simple drag and drop functionality
+        let classOrder = [];
+        let draggedElement = null;
+
+        function bindSimpleDragEvents() {
+            const container = document.getElementById('availableClasses');
+            if (!container) return;
+
+            // Remove existing listeners
+            container.removeEventListener('dragstart', handleSimpleDragStart, true);
+            container.removeEventListener('dragover', handleSimpleDragOver, true);
+            container.removeEventListener('drop', handleSimpleDrop, true);
+            container.removeEventListener('dragend', handleSimpleDragEnd, true);
+
+            // Add new listeners
+            container.addEventListener('dragstart', handleSimpleDragStart, true);
+            container.addEventListener('dragover', handleSimpleDragOver, true);
+            container.addEventListener('drop', handleSimpleDrop, true);
+            container.addEventListener('dragend', handleSimpleDragEnd, true);
+
+            console.log('🔧 Simple drag events bound to container');
+        }
+
+        function handleSimpleDragStart(e) {
+            const classItem = e.target.closest('.unified-class-item');
+            if (!classItem || !classItem.draggable) return;
+
+            draggedElement = classItem;
+            classItem.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            console.log('🔧 Simple drag started:', classItem.dataset.classId);
+        }
+
+        function handleSimpleDragOver(e) {
+            e.preventDefault();
+            const classItem = e.target.closest('.unified-class-item');
+            if (classItem && classItem.draggable && classItem !== draggedElement) {
+                e.dataTransfer.dropEffect = 'move';
+                
+                // Clear previous highlights
+                document.querySelectorAll('.unified-class-item').forEach(item => {
+                    item.classList.remove('drag-over');
+                });
+                
+                // Highlight drop target
+                classItem.classList.add('drag-over');
+            }
+        }
+
+        function handleSimpleDrop(e) {
+            e.preventDefault();
+            const targetItem = e.target.closest('.unified-class-item');
+            
+            if (!targetItem || !draggedElement || targetItem === draggedElement) {
+                console.log('🔧 Invalid drop, ignoring');
+                return;
+            }
+
+            if (!targetItem.draggable || !draggedElement.draggable) {
+                console.log('🔧 Non-draggable items, ignoring');
+                return;
+            }
+
+            console.log('🔧 Swapping elements:', draggedElement.dataset.classId, 'with', targetItem.dataset.classId);
+
+            // Simple DOM swap
+            const draggedNext = draggedElement.nextSibling;
+            const targetNext = targetItem.nextSibling;
+            const draggedParent = draggedElement.parentNode;
+            const targetParent = targetItem.parentNode;
+
+            // Insert dragged element where target was
+            if (targetNext) {
+                targetParent.insertBefore(draggedElement, targetNext);
+            } else {
+                targetParent.appendChild(draggedElement);
+            }
+
+            // Insert target element where dragged was
+            if (draggedNext) {
+                draggedParent.insertBefore(targetItem, draggedNext);
+            } else {
+                draggedParent.appendChild(targetItem);
+            }
+
+            // Update class order array based on new DOM order
+            updateClassOrderFromDOM();
+            
+            console.log('🔧 Elements swapped successfully');
+        }
+
+        function handleSimpleDragEnd(e) {
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+            }
+            
+            // Clear all highlights
+            document.querySelectorAll('.unified-class-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            
+            draggedElement = null;
+            console.log('🔧 Drag ended');
+        }
+
+        function updateClassOrderFromDOM() {
+            const container = document.getElementById('availableClasses');
+            if (!container) return;
+
+            classOrder = [];
+            const classItems = container.querySelectorAll('.unified-class-item.selected');
+            
+            classItems.forEach(item => {
+                const classId = item.dataset.classId;
+                const checkbox = document.getElementById(`checkbox-${classId}`);
+                const priceInput = document.getElementById(`price-${classId}`);
+                
+                if (checkbox && checkbox.checked) {
+            const seriesSelect = document.querySelector('select[name="seriesId"]');
+            const seriesId = seriesSelect.value;
+                    const series = dataManager.getSeries(seriesId);
+                    const seriesClass = series ? series.sledClasses.find(c => c.id === classId) : null;
+                    
+                    if (seriesClass) {
+                        classOrder.push({
+                            classId: classId,
+                            className: seriesClass.name,
+                            fee: parseFloat(priceInput.value) || 0,
+                            description: seriesClass.description
+                        });
+                    }
+                }
+            });
+            
+            console.log('🔧 Updated classOrder from DOM:', classOrder.map(c => c.className));
+        }
+
+        function renderClassOrderList() {
+            const orderList = document.getElementById('classOrderList');
+            
+            if (classOrder.length === 0) {
+                orderList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">🎯</div>
+                        <p><strong>Select classes above to set their racing order.</strong></p>
+                        <p>Once selected, you'll see draggable items with <span style="font-family: monospace; background: var(--bg-secondary); padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> handles here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            orderList.innerHTML = classOrder.map((cls, index) => `
+                <div class="class-order-item" data-class-id="${cls.classId}" draggable="true">
+                    <div class="drag-handle">
+                        ⋮⋮
+                    </div>
+                    <div class="order-number">${index + 1}</div>
+                    <div class="class-order-info">
+                        <div class="class-order-name">${cls.className}</div>
+                        <div class="class-order-fee">Entry Fee: $${cls.fee}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Bind drag and drop events
+            bindDragAndDropEvents();
+        }
+
+        function bindDragAndDropEvents() {
+            const orderItems = document.querySelectorAll('.class-order-item');
+            
+            orderItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            e.target.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            
+            // Find the closest class-order-item (in case we drop on a child element)
+            const targetItem = e.target.closest('.class-order-item');
+            const draggedItem = draggedElement.closest('.class-order-item');
+            
+            // Remove drag-over from all items
+            document.querySelectorAll('.class-order-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            
+            if (draggedItem && targetItem && draggedItem !== targetItem) {
+                const draggedClassId = draggedItem.dataset.classId;
+                const targetClassId = targetItem.dataset.classId;
+                
+                // Find indices
+                const draggedIndex = classOrder.findIndex(cls => cls.classId === draggedClassId);
+                const targetIndex = classOrder.findIndex(cls => cls.classId === targetClassId);
+                
+                if (draggedIndex !== -1 && targetIndex !== -1) {
+                    // Reorder the array
+                    const draggedClass = classOrder.splice(draggedIndex, 1)[0];
+                    classOrder.splice(targetIndex, 0, draggedClass);
+                    
+                    // Re-render the list
+                    renderClassOrderList();
+                    
+                    console.log('🔧 Reordered classes:', classOrder.map(c => c.className));
+                }
+            }
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            // Remove drag-over class from all items
+            document.querySelectorAll('.class-order-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            draggedElement = null;
+        }
+
+        function getSelectedClasses() {
+            // Return classes in the configured order
+            return classOrder.length > 0 ? classOrder : [];
+        }
+
+        // Debug function to help troubleshoot class ordering
+        function debugClassOrdering() {
+            console.log('🔧 === CLASS ORDERING DEBUG ===');
+            
+            const seriesSelect = document.querySelector('select[name="seriesId"]');
+            const seriesId = seriesSelect ? seriesSelect.value : 'NOT_FOUND';
+            console.log('🔧 Series ID:', seriesId);
+            
+            const orderingSection = document.getElementById('classOrderingSection');
+            console.log('🔧 Ordering section:', orderingSection ? 'FOUND' : 'NOT_FOUND');
+            console.log('🔧 Ordering section display:', orderingSection ? orderingSection.style.display : 'N/A');
+            
+            if (typeof seriesManager !== 'undefined' && seriesManager) {
+                const allSeries = seriesManager.getAllSeries();
+                console.log('🔧 Available series:', allSeries.length);
+                
+                const series = allSeries.find(s => s.id === seriesId);
+                console.log('🔧 Selected series:', series ? series.name : 'NOT_FOUND');
+                
+                if (series && series.sledClasses) {
+                    console.log('🔧 Series classes:', series.sledClasses.length);
+            series.sledClasses.forEach(cls => {
+                const checkbox = document.getElementById(`checkbox-${cls.id}`);
+                const priceInput = document.getElementById(`price-${cls.id}`);
+                        console.log(`🔧 Class ${cls.name}:`, {
+                            checkbox: checkbox ? 'FOUND' : 'NOT_FOUND',
+                            checked: checkbox ? checkbox.checked : false,
+                            priceInput: priceInput ? 'FOUND' : 'NOT_FOUND'
+                        });
+                    });
+                }
+            } else {
+                console.log('🔧 SeriesManager:', typeof seriesManager);
+            }
+            
+            console.log('🔧 Current classOrder:', classOrder);
+            console.log('🔧 === END DEBUG ===');
+            
+            // Force update
+            updateClassOrderSection();
+        }
+
+        // Test function to show what class ordering looks like
+        function testClassOrdering() {
+            console.log('🎯 Showing test class ordering example');
+            const orderingSection = document.getElementById('classOrderingSection');
+            const orderList = document.getElementById('classOrderList');
+            
+            // Force show the section
+            orderingSection.style.display = 'block';
+            
+            // Show test classes
+            const testClasses = [
+                { classId: 'test1', className: 'Pro Class', fee: 100 },
+                { classId: 'test2', className: 'Sport Class', fee: 75 },
+                { classId: 'test3', className: 'Stock Class', fee: 50 }
+            ];
+            
+            orderList.innerHTML = testClasses.map((cls, index) => `
+                <div class="class-order-item" data-class-id="${cls.classId}" draggable="true" style="position: relative;">
+                    <div class="drag-handle" style="background: #ff6b6b; color: white; font-weight: bold;">
+                        ⋮⋮
+                    </div>
+                    <div class="order-number">${index + 1}</div>
+                    <div class="class-order-info">
+                        <div class="class-order-name">${cls.className}</div>
+                        <div class="class-order-fee">Entry Fee: $${cls.fee}</div>
+                    </div>
+                    <div style="position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; padding: 2px 4px; border-radius: 3px;">TEST</div>
+                </div>
+            `).join('');
+            
+            // Add a note
+            const note = document.createElement('div');
+            note.style.cssText = 'margin-top: 1rem; padding: 1rem; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404;';
+            note.innerHTML = `
+                <strong>⚠️ This is a TEST example!</strong><br>
+                This shows what the drag-and-drop interface will look like when you select real classes.<br>
+                Try dragging the ⋮⋮ handles to reorder the test classes above.
+            `;
+            orderList.appendChild(note);
+            
+            // Bind events for the test
+            bindDragAndDropEvents();
+            
+            alert('📋 Test example loaded! Scroll down to see the Class Racing Order section with draggable test classes.');
+        }
+
+
+        
+        // Edit class ordering functionality
+        let editClassOrder = [];
+        let editDraggedElement = null;
+
+        function updateEditClassOrderSection() {
+            console.log('🔧 updateEditClassOrderSection called');
+            const selectedClasses = [];
+            const seriesSelect = document.querySelector('select[name="seriesId"]');
+            const seriesId = seriesSelect ? seriesSelect.value : null;
+            const orderingSection = document.getElementById('editClassOrderingSection');
+            
+            console.log('🔧 Edit Series ID:', seriesId);
+            console.log('🔧 Edit Ordering section found:', !!orderingSection);
+            
+            if (!seriesId || !orderingSection) {
+                if (orderingSection) orderingSection.style.display = 'none';
+                return;
+            }
+            
+            const series = seriesManager ? seriesManager.getAllSeries().find(s => s.id === seriesId) : null;
+            console.log('🔧 Edit Series found:', !!series);
+            if (!series || !series.sledClasses) {
+                console.log('🔧 Edit No series or no classes, hiding ordering section');
+                orderingSection.style.display = 'none';
+                return;
+            }
+            
+            // Get currently selected classes
+            series.sledClasses.forEach(cls => {
+                const checkbox = document.getElementById(`edit-checkbox-${cls.id}`);
+                const priceInput = document.getElementById(`edit-price-${cls.id}`);
+                
+                console.log(`🔍 Checking class ${cls.name}: checkbox=${checkbox?.checked}, price=${priceInput?.value}`);
+                
+                if (checkbox && checkbox.checked) {
+                    selectedClasses.push({
+                        classId: cls.id,
+                        className: cls.name,
+                        fee: parseFloat(priceInput.value) || 0,
+                        description: cls.description
+                    });
+                }
+            });
+            
+            console.log('🔧 Edit Selected classes:', selectedClasses.length);
+            
+            if (selectedClasses.length === 0) {
+                console.log('🔧 Edit No classes selected, hiding ordering section');
+                orderingSection.style.display = 'none';
+                editClassOrder = [];
+                return;
+            }
+            
+            // Show ordering section
+            console.log('🔧 Edit Showing ordering section with', selectedClasses.length, 'classes');
+            orderingSection.style.display = 'block';
+            
+            // Update editClassOrder array with new selections
+            updateEditClassOrderArray(selectedClasses);
+            
+            // Render the class order list
+            renderEditClassOrderList();
+        }
+
+        function updateEditClassOrderArray(selectedClasses) {
+            const selectedIds = selectedClasses.map(cls => cls.classId);
+            
+            // Remove deselected classes from order
+            editClassOrder = editClassOrder.filter(orderedClass => selectedIds.includes(orderedClass.classId));
+            
+            // Add new classes to the end of the order
+            selectedClasses.forEach(cls => {
+                if (!editClassOrder.find(orderedClass => orderedClass.classId === cls.classId)) {
+                    editClassOrder.push(cls);
+                }
+            });
+            
+            // Update fees for existing classes
+            editClassOrder.forEach(orderedClass => {
+                const selectedClass = selectedClasses.find(cls => cls.classId === orderedClass.classId);
+                if (selectedClass) {
+                    orderedClass.fee = selectedClass.fee;
+                }
+            });
+        }
+
+        function renderEditClassOrderList() {
+            const orderList = document.getElementById('editClassOrderList');
+            
+            if (editClassOrder.length === 0) {
+                orderList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">🎯</div>
+                        <p><strong>Select classes above to set their racing order.</strong></p>
+                        <p>Once selected, you'll see draggable items with <span style="font-family: monospace; background: var(--bg-secondary); padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> handles here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            orderList.innerHTML = editClassOrder.map((cls, index) => `
+                <div class="class-order-item" data-class-id="${cls.classId}" draggable="true">
+                    <div class="drag-handle">
+                        ⋮⋮
+                    </div>
+                    <div class="order-number">${index + 1}</div>
+                    <div class="class-order-info">
+                        <div class="class-order-name">${cls.className}</div>
+                        <div class="class-order-fee">Entry Fee: $${cls.fee}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Bind drag and drop events for edit
+            bindEditDragAndDropEvents();
+        }
+
+        function bindEditDragAndDropEvents() {
+            const orderItems = document.querySelectorAll('#editClassOrderList .class-order-item');
+            
+            orderItems.forEach(item => {
+                item.addEventListener('dragstart', handleEditDragStart);
+                item.addEventListener('dragover', handleEditDragOver);
+                item.addEventListener('drop', handleEditDrop);
+                item.addEventListener('dragend', handleEditDragEnd);
+                item.addEventListener('dragenter', handleEditDragEnter);
+                item.addEventListener('dragleave', handleEditDragLeave);
+            });
+        }
+
+        function handleEditDragStart(e) {
+            editDraggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+        }
+
+        function handleEditDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleEditDragEnter(e) {
+            e.target.classList.add('drag-over');
+        }
+
+        function handleEditDragLeave(e) {
+            e.target.classList.remove('drag-over');
+        }
+
+        function handleEditDrop(e) {
+            e.preventDefault();
+            
+            // Find the closest class-order-item (in case we drop on a child element)
+            const targetItem = e.target.closest('.class-order-item');
+            const draggedItem = editDraggedElement.closest('.class-order-item');
+            
+            // Remove drag-over from all items
+            document.querySelectorAll('#editClassOrderList .class-order-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            
+            if (draggedItem && targetItem && draggedItem !== targetItem) {
+                const draggedClassId = draggedItem.dataset.classId;
+                const targetClassId = targetItem.dataset.classId;
+                
+                // Find indices
+                const draggedIndex = editClassOrder.findIndex(cls => cls.classId === draggedClassId);
+                const targetIndex = editClassOrder.findIndex(cls => cls.classId === targetClassId);
+                
+                if (draggedIndex !== -1 && targetIndex !== -1) {
+                    // Reorder the array
+                    const draggedClass = editClassOrder.splice(draggedIndex, 1)[0];
+                    editClassOrder.splice(targetIndex, 0, draggedClass);
+                    
+                    // Re-render the list
+                    renderEditClassOrderList();
+                    
+                    console.log('🔧 Reordered edit classes:', editClassOrder.map(c => c.className));
+                }
+            }
+        }
+
+        function handleEditDragEnd(e) {
+            e.target.classList.remove('dragging');
+            // Remove drag-over class from all items
+            document.querySelectorAll('#editClassOrderList .class-order-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            editDraggedElement = null;
+        }
+
+        // Debug functions for edit
+        function debugEditClassOrdering() {
+            console.log('🔧 === EDIT CLASS ORDERING DEBUG ===');
+            
+            const seriesSelect = document.querySelector('select[name="seriesId"]');
+            const seriesId = seriesSelect ? seriesSelect.value : 'NOT_FOUND';
+            console.log('🔧 Edit Series ID:', seriesId);
+            
+            const orderingSection = document.getElementById('editClassOrderingSection');
+            console.log('🔧 Edit Ordering section:', orderingSection ? 'FOUND' : 'NOT_FOUND');
+            console.log('🔧 Edit Ordering section display:', orderingSection ? orderingSection.style.display : 'N/A');
+            
+            console.log('🔧 Edit Current editClassOrder:', editClassOrder);
+            console.log('🔧 === END EDIT DEBUG ===');
+            
+            // Force update
+            updateEditClassOrderSection();
+        }
+
+        function testEditClassOrdering() {
+            console.log('🎯 Showing edit test class ordering example');
+            const orderingSection = document.getElementById('editClassOrderingSection');
+            const orderList = document.getElementById('editClassOrderList');
+            
+            // Force show the section
+            orderingSection.style.display = 'block';
+            
+            // Show test classes
+            const testClasses = [
+                { classId: 'edit-test1', className: 'Edit Pro Class', fee: 100 },
+                { classId: 'edit-test2', className: 'Edit Sport Class', fee: 75 },
+                { classId: 'edit-test3', className: 'Edit Stock Class', fee: 50 }
+            ];
+            
+            orderList.innerHTML = testClasses.map((cls, index) => `
+                <div class="class-order-item" data-class-id="${cls.classId}" draggable="true" style="position: relative;">
+                    <div class="drag-handle" style="background: #ff6b6b; color: white; font-weight: bold;">
+                        ⋮⋮
+                    </div>
+                    <div class="order-number">${index + 1}</div>
+                    <div class="class-order-info">
+                        <div class="class-order-name">${cls.className}</div>
+                        <div class="class-order-fee">Entry Fee: $${cls.fee}</div>
+                    </div>
+                    <div style="position: absolute; top: -5px; right: -5px; background: blue; color: white; font-size: 10px; padding: 2px 4px; border-radius: 3px;">EDIT TEST</div>
+                </div>
+            `).join('');
+            
+            // Bind events for the test
+            bindEditDragAndDropEvents();
+            
+            alert('📋 Edit test example loaded! Look for the class ordering section with draggable test classes.');
+        }
+
+
+        
+        function getSelectedClassesEdit() {
+            console.log('🔍 getSelectedClassesEdit called, editClassOrder:', editClassOrder);
+            
+            // Always read from DOM checkboxes to get current user selections
+            const selectedClasses = [];
+            let seriesSelect = document.querySelector('#editEventForm select[name="seriesId"]');
+            if (!seriesSelect) {
+                seriesSelect = document.querySelector('select[name="seriesId"]');
+            }
+            const seriesId = seriesSelect ? seriesSelect.value : null;
+            console.log('🔍 getSelectedClassesEdit - Series selection:', {
+                seriesSelect: seriesSelect ? 'FOUND' : 'NOT FOUND',
+                seriesId: seriesId,
+                editFormSelect: document.querySelector('#editEventForm select[name="seriesId"]') ? 'FOUND' : 'NOT FOUND'
+            });
+            
+            if (!seriesId) return selectedClasses;
+            
+            const series = dataManager.getSeries(seriesId);
+            if (!series || !series.sledClasses) return selectedClasses;
+            
+            // Build selected classes array from DOM checkboxes
+            const selectedClassesMap = new Map();
+            
+            series.sledClasses.forEach(cls => {
+                const checkbox = document.getElementById(`edit-checkbox-${cls.id}`);
+                const priceInput = document.getElementById(`edit-price-${cls.id}`);
+                
+                console.log(`🔍 Checking class ${cls.name}: checkbox=${checkbox?.checked}, price=${priceInput?.value}`);
+                
+                if (checkbox && checkbox.checked) {
+                    selectedClassesMap.set(cls.id, {
+                        classId: cls.id,
+                        className: cls.name,
+                        fee: parseFloat(priceInput.value) || 0,
+                        description: cls.description
+                    });
+                }
+            });
+            
+            // If we have an existing order and classes match, use that order
+            if (editClassOrder.length > 0) {
+                // First add classes in the existing order (if they're still selected)
+                editClassOrder.forEach(orderedClass => {
+                    if (selectedClassesMap.has(orderedClass.classId)) {
+                        selectedClasses.push(selectedClassesMap.get(orderedClass.classId));
+                        selectedClassesMap.delete(orderedClass.classId);
+                    }
+                });
+                
+                // Then add any newly selected classes that weren't in the order
+                selectedClassesMap.forEach(classData => {
+                    selectedClasses.push(classData);
+                });
+            } else {
+                // No existing order, just return classes in series order
+                selectedClassesMap.forEach(classData => {
+                    selectedClasses.push(classData);
+                });
+            }
+            
+            console.log('🔍 Returning selected classes:', selectedClasses);
+            return selectedClasses;
+        }
+
+        // Simple edit class ordering - just update the toggle function
+        function bindSimpleEditDragEvents() {
+            const container = document.getElementById('editAvailableClasses');
+            if (!container) return;
+
+            // Remove existing listeners
+            container.removeEventListener('dragstart', handleSimpleEditDragStart, true);
+            container.removeEventListener('dragover', handleSimpleEditDragOver, true);
+            container.removeEventListener('drop', handleSimpleEditDrop, true);
+            container.removeEventListener('dragend', handleSimpleEditDragEnd, true);
+
+            // Add new listeners
+            container.addEventListener('dragstart', handleSimpleEditDragStart, true);
+            container.addEventListener('dragover', handleSimpleEditDragOver, true);
+            container.addEventListener('drop', handleSimpleEditDrop, true);
+            container.addEventListener('dragend', handleSimpleEditDragEnd, true);
+
+            console.log('🔧 Simple edit drag events bound');
+        }
+
+        function handleSimpleEditDragStart(e) {
+            const classItem = e.target.closest('.unified-class-item');
+            if (!classItem || !classItem.draggable) return;
+
+            editDraggedElement = classItem;
+            classItem.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            console.log('🔧 Simple edit drag started:', classItem.dataset.classId);
+        }
+
+        function handleSimpleEditDragOver(e) {
+            e.preventDefault();
+            const classItem = e.target.closest('.unified-class-item');
+            if (classItem && classItem.draggable && classItem !== editDraggedElement) {
+                e.dataTransfer.dropEffect = 'move';
+                
+                // Clear previous highlights
+                document.querySelectorAll('#editAvailableClasses .unified-class-item').forEach(item => {
+                    item.classList.remove('drag-over');
+                });
+                
+                // Highlight drop target
+                classItem.classList.add('drag-over');
+            }
+        }
+
+        function handleSimpleEditDrop(e) {
+            e.preventDefault();
+            const targetItem = e.target.closest('.unified-class-item');
+            
+            if (!targetItem || !editDraggedElement || targetItem === editDraggedElement) {
+                return;
+            }
+
+            if (!targetItem.draggable || !editDraggedElement.draggable) {
+                return;
+            }
+
+            console.log('🔧 Edit swapping elements:', editDraggedElement.dataset.classId, 'with', targetItem.dataset.classId);
+
+            // Simple DOM swap
+            const draggedNext = editDraggedElement.nextSibling;
+            const targetNext = targetItem.nextSibling;
+            const draggedParent = editDraggedElement.parentNode;
+            const targetParent = targetItem.parentNode;
+
+            // Insert dragged element where target was
+            if (targetNext) {
+                targetParent.insertBefore(editDraggedElement, targetNext);
+            } else {
+                targetParent.appendChild(editDraggedElement);
+            }
+
+            // Insert target element where dragged was
+            if (draggedNext) {
+                draggedParent.insertBefore(targetItem, draggedNext);
+            } else {
+                draggedParent.appendChild(targetItem);
+            }
+
+            // Update edit class order array based on new DOM order
+            updateEditClassOrderFromDOM();
+        }
+
+        function handleSimpleEditDragEnd(e) {
+            if (editDraggedElement) {
+                editDraggedElement.classList.remove('dragging');
+            }
+            
+            // Clear all highlights
+            document.querySelectorAll('#editAvailableClasses .unified-class-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            
+            editDraggedElement = null;
+        }
+
+        function updateEditClassOrderFromDOM() {
+            const container = document.getElementById('editAvailableClasses');
+            if (!container) return;
+
+            editClassOrder = [];
+            const classItems = container.querySelectorAll('.unified-class-item.selected');
+            
+            classItems.forEach(item => {
+                const classId = item.dataset.classId;
+                const checkbox = document.getElementById(`edit-checkbox-${classId}`);
+                const priceInput = document.getElementById(`edit-price-${classId}`);
+                
+                console.log(`🔍 Checking class ${classId}: checkbox=${checkbox?.checked}, price=${priceInput?.value}`);
+                
+                if (checkbox && checkbox.checked) {
+                    const seriesSelect = document.querySelector('select[name="seriesId"]');
+                    const seriesId = seriesSelect ? seriesSelect.value : null;
+                    const series = dataManager.getSeries(seriesId);
+                    const seriesClass = series ? series.sledClasses.find(c => c.id === classId) : null;
+                    
+                    if (seriesClass) {
+                        editClassOrder.push({
+                            classId: classId,
+                            className: seriesClass.name,
+                            fee: parseFloat(priceInput.value) || 0,
+                            description: seriesClass.description
+                        });
+                    }
+                }
+            });
+            
+            console.log('🔧 Updated editClassOrder from DOM:', editClassOrder.map(c => c.className));
+        }
+
+        // Simple debug function (call from console)
+        function debugDragDrop() {
+            console.log('🔧 === SIMPLE DRAG DEBUG ===');
+            console.log('🔧 Draggable items:', document.querySelectorAll('.unified-class-item[draggable="true"]').length);
+            console.log('🔧 Current classOrder:', classOrder.map(c => c.className));
+            console.log('🔧 Current editClassOrder:', editClassOrder.map(c => c.className));
+        }
+        window.debugDragDrop = debugDragDrop;
+
+        async function showNewEventModal() {
+            document.getElementById('newEventModal').classList.add('active');
+            await loadSeriesOptions();
+        }
+
+        function hideNewEventModal() {
+            document.getElementById('newEventModal').classList.remove('active');
+            // Reset selected values
+            selectedSeriesId = '';
+            selectedSeasonId = '';
+            // Reset form
+            document.getElementById('newEventForm').reset();
+            // Clear class configuration
+            document.getElementById('classConfigSection').style.display = 'none';
+            document.getElementById('availableClasses').innerHTML = '';
+            // Reset series and season selectors
+            document.getElementById('seriesSelectContainer').innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Loading series..." disabled></div>';
+            document.getElementById('seasonSelectContainer').innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Select series first" disabled></div>';
+        }
+
+        // Load series options for the dropdown
+        async function loadSeriesOptions() {
+            try {
+                const series = dataManager.getAllSeries();
+                const seriesSelectContainer = document.getElementById('seriesSelectContainer');
+                
+                console.log('Loading series options:', series);
+                
+                if (series.length === 0) {
+                    seriesSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No series available - Create series first" disabled></div>';
+                } else {
+                    const seriesOptions = series.map(s => ({
+                        value: s.id,
+                        label: s.name
+                    }));
+                    
+                    seriesSelectContainer.innerHTML = UIComponents.createComboBox(
+                        'seriesSelect',
+                        seriesOptions,
+                        'Select Series',
+                        'onSeriesSelect',
+                        ''
+                    );
+                    
+                    // Initialize the combo box
+                    UIComponents.initComboBox('seriesSelect');
+                }
+            } catch (error) {
+                console.error('Error loading series:', error);
+                const seriesSelectContainer = document.getElementById('seriesSelectContainer');
+                seriesSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Error loading series" disabled></div>';
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('newEventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const eventData = Object.fromEntries(formData.entries());
+            
+            // Validate that a series is selected
+            if (!selectedSeriesId) {
+                alert('Please select a series for this event');
+                return;
+            }
+            
+            try {
+                // Get selected classes with pricing and ordering
+                const selectedClasses = getSelectedClasses();
+                
+                // Use DataManager to create event
+                const newEvent = {
+                    name: eventData.eventName,
+                    date: eventData.date,
+                    location: eventData.location,
+                    seriesId: selectedSeriesId,
+                    seasonId: selectedSeasonId || null,
+                    numberOfTracks: parseInt(eventData.numberOfTracks),
+                    eliminationType: eventData.eliminationType,
+                    classSettings: selectedClasses,
+                    classOrder: classOrder.map(cls => cls.classId), // Store class order
+                    registrationOpen: true,
+                    description: eventData.description || '',
+                    driverMeetingTime: eventData.driverMeetingTime,
+                    trackSurface: 'snow',
+                    weatherContingency: 'proceed',
+                    requiresClassSeparation: true,
+                    participants: [],
+                    maxParticipants: parseInt(eventData.maxParticipants),
+                    freeRunEnabled: eventData.freeRunEnabled === 'true'
+                };
+                
+                const createdEvent = await dataManager.addEvent(newEvent);
+                console.log('Event created:', createdEvent);
+                
+                hideNewEventModal();
+                await loadEvents();
+                
+                // Show success message
+                alert('Event created successfully!');
+                
+            } catch (error) {
+                console.error('Error creating event:', error);
+                alert('Error creating event: ' + error.message);
+            }
+        });
+
+        // All events are active - no automatic status calculation
+        function getEventStatus(event) {
+            return event.status || 'active';
+        }
+
+        // Pagination variables for events
+        let currentEventsPage = 1;
+        const eventsPerPage = 24; // 24 events per page as requested
+        
+        // Load events data
+        async function loadEvents() {
+            try {
+                // Show skeleton loading
+                showEventsSkeletonLoading();
+                
+                // Simulate loading delay for better UX
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const eventsResult = dataManager ? await dataManager.getEvents() : { events: [] };
+                const allEvents = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
+                const series = dataManager.getAllSeries();
+                
+                console.log('Loading events:', allEvents);
+                
+                const eventsGrid = document.getElementById('eventsGrid');
+                const skeleton = document.getElementById('eventsSkeleton');
+                const pagination = document.getElementById('eventsPagination');
+                
+                hideEventsSkeletonLoading();
+                
+                if (allEvents.length === 0) {
+                    eventsGrid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🏁</div>
+                            <h3>No Events Created</h3>
+                            <p>Create your first racing event to get started. Events are part of a racing series and can have multiple participants.</p>
+                            <button class="btn btn-primary" onclick="showNewEventModal()">
+                                Create First Event
+                            </button>
+                        </div>
+                    `;
+                    if (pagination) pagination.style.display = 'none';
+                    return;
+                }
+                
+                // Calculate pagination
+                const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+                const startIndex = (currentEventsPage - 1) * eventsPerPage;
+                const endIndex = startIndex + eventsPerPage;
+                const currentPageEvents = allEvents.slice(startIndex, endIndex);
+                
+                console.log(`📄 Events Page ${currentEventsPage} of ${totalPages} (showing ${currentPageEvents.length} of ${allEvents.length} events)`);
+                
+                eventsGrid.innerHTML = currentPageEvents.map(event => {
+                    // Find the series name and season
+                    const eventSeries = series.find(s => s.id === event.seriesId);
+                    const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
+                    const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
+                    
+                    const participantCount = event.participants ? event.participants.length : 0;
+                    const eventStatus = getEventStatus(event);
+                    
+                    return `
+                        <div class="card event-card ${eventStatus.toLowerCase()}">
+                            <div class="event-header">
+                                <h3>${event.name}</h3>
+                            </div>
+                            <div class="event-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Series:</span>
+                                    <span class="detail-value">${seriesName}</span>
+                                </div>
+                                ${season ? `
+                                    <div class="detail-item">
+                                        <span class="detail-label">Season:</span>
+                                        <span class="detail-value season-badge">${season.name}</span>
+                                    </div>
+                                ` : ''}
+                                <div class="detail-item">
+                                    <span class="detail-label">Date:</span>
+                                    <span class="detail-value">${new Date(event.date).toLocaleDateString()}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Location:</span>
+                                    <span class="detail-value">${event.location}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Participants:</span>
+                                    <span class="detail-value">${participantCount}/${event.maxParticipants || 'Unlimited'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Tracks:</span>
+                                    <span class="detail-value">${event.numberOfTracks} lanes</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Elimination:</span>
+                                    <span class="detail-value">${event.eliminationType}</span>
+                                </div>
+                                ${event.description ? `
+                                    <div class="detail-item">
+                                        <span class="detail-label">Description:</span>
+                                        <span class="detail-value">${event.description}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="event-actions">
+                                <button class="btn btn-primary" onclick="viewEvent('${event.id}')">View Details</button>
+                                <button class="btn btn-secondary" onclick="editEvent('${event.id}')">Edit</button>
+                                <button class="btn-delete-subtle" onclick="deleteEvent('${event.id}')">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Render pagination
+                if (pagination && totalPages > 1) {
+                    pagination.style.display = 'block';
+                    pagination.innerHTML = UIComponents.createPagination(
+                        currentEventsPage, 
+                        totalPages, 
+                        allEvents.length, 
+                        eventsPerPage, 
+                        'changeEventsPage'
+                    );
+                } else if (pagination) {
+                    pagination.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                hideEventsSkeletonLoading();
+                document.getElementById('eventsGrid').innerHTML = `
+                    <div class="error-state">
+                        <h3>Error Loading Events</h3>
+                        <p>There was an error loading the events. Please refresh the page.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Show events skeleton loading
+        function showEventsSkeletonLoading() {
+            const eventsGrid = document.getElementById('eventsGrid');
+            const skeleton = document.getElementById('eventsSkeleton');
+            const pagination = document.getElementById('eventsPagination');
+            
+            if (eventsGrid) eventsGrid.style.display = 'none';
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(8, 'card');
+                skeleton.style.display = 'block';
+            }
+            if (pagination) pagination.style.display = 'none';
+        }
+
+        // Hide events skeleton loading
+        function hideEventsSkeletonLoading() {
+            const eventsGrid = document.getElementById('eventsGrid');
+            const skeleton = document.getElementById('eventsSkeleton');
+            const pagination = document.getElementById('eventsPagination');
+            
+            if (eventsGrid) eventsGrid.style.display = 'grid';
+            if (skeleton) skeleton.style.display = 'none';
+            if (pagination) pagination.style.display = 'block';
+        }
+
+        // Change events page
+        function changeEventsPage(page) {
+            if (page < 1) return;
+            
+            const eventsResult = dataManager ? dataManager.getEvents() : { events: [] };
+            const allEvents = eventsResult.events || eventsResult;
+            const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+            if (page > totalPages) return;
+            
+            currentEventsPage = page;
+            loadEvents();
+            
+            // Scroll to top of events
+            const eventsSection = document.querySelector('.events-grid');
+            if (eventsSection) {
+                eventsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+        
+        // Event management functions
+        window.viewEvent = function(eventId) {
+            try {
+                const event = dataManager.getEvent(eventId);
+                
+                if (!event) {
+                    alert('Event not found');
+                    return;
+                }
+                
+                const series = dataManager.getAllSeries();
+                const eventSeries = series.find(s => s.id === event.seriesId);
+                const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
+                
+                // Get participants for this event - ensure we get fresh data
+                const eventParticipants = [];
+                if (event.participants && Array.isArray(event.participants)) {
+                    event.participants.forEach(pid => {
+                        const participant = dataManager.getParticipant(pid);
+                        if (participant) {
+                            eventParticipants.push(participant);
+                        }
+                    });
+                }
+                
+                // Also check for participants with this eventId (backup method)
+                const allParticipants = dataManager.getParticipantsArray();
+                const participantsByEventId = allParticipants.filter(p => p.eventId === eventId);
+                
+                // Combine both methods and remove duplicates
+                const allEventParticipants = [...eventParticipants];
+                participantsByEventId.forEach(p => {
+                    if (!allEventParticipants.find(ep => ep.id === p.id)) {
+                        allEventParticipants.push(p);
+                    }
+                });
+                
+                console.log(`📊 Event ${event.name} participants:`, {
+                    eventParticipants: eventParticipants.length,
+                    participantsByEventId: participantsByEventId.length,
+                    totalUnique: allEventParticipants.length,
+                    eventParticipantIds: event.participants || [],
+                    allParticipantsWithEventId: participantsByEventId.map(p => p.id)
+                });
+                
+                const detailsHtml = `
+                    <div class="event-details-modal">
+                        <div class="event-info">
+                            <h3>${event.eventName || event.name}</h3>
+                        </div>
+                        
+                        <div class="event-details-grid">
+                            <div class="detail-section">
+                                <h4>Event Information</h4>
+                                <div class="detail-item">
+                                    <span class="label">Series:</span>
+                                    <span class="value">${seriesName}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Date:</span>
+                                    <span class="value">${new Date(event.date).toLocaleDateString()}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Location:</span>
+                                    <span class="value">${event.location}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Max Participants:</span>
+                                    <span class="value">${event.maxParticipants}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Current Participants:</span>
+                                    <span class="value">${allEventParticipants.length}</span>
+                                </div>
+                                ${event.description ? `
+                                    <div class="detail-item">
+                                        <span class="label">Description:</span>
+                                        <span class="value">${event.description}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="detail-section">
+                                <h4>Registered Participants (${allEventParticipants.length})</h4>
+                                <div class="participants-list">
+                                    ${allEventParticipants.length > 0 ? 
+                                        allEventParticipants.map(p => {
+                                            // Handle different class formats
+                                            let classesText = 'N/A';
+                                            if (p.selectedClasses && Array.isArray(p.selectedClasses)) {
+                                                classesText = p.selectedClasses.join(', ');
+                                            } else if (p.sledClasses && Array.isArray(p.sledClasses)) {
+                                                classesText = p.sledClasses.join(', ');
+                                            } else if (p.sledClass) {
+                                                classesText = p.sledClass;
+                                            }
+                                            
+                                            return `
+                                                <div class="participant-item">
+                                                    <div class="participant-name">${p.name}</div>
+                                                    <div class="participant-classes">${classesText}</div>
+                                                    ${p.team ? `<div class="participant-team">${p.team}</div>` : ''}
+                                                    ${p.racingNumber ? `<div class="participant-number">#${p.racingNumber}</div>` : ''}
+                                                </div>
+                                            `;
+                                        }).join('') :
+                                        '<p class="no-participants">No participants registered yet.</p>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button class="btn btn-primary" onclick="editEvent('${eventId}'); hideEventModal();">
+                                Edit Event
+                            </button>
+                            <button class="btn btn-secondary" onclick="hideEventModal()">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <style>
+                        .event-details-modal {
+                            background: var(--bg-secondary);
+                            border-radius: 8px;
+                            padding: 2rem;
+                            max-width: 900px;
+                            margin: 2rem auto;
+                        }
+                        
+                        .event-info {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 2rem;
+                            padding-bottom: 1rem;
+                            border-bottom: 2px solid var(--accent-primary);
+                        }
+                        
+                        .event-info h3 {
+                            color: var(--text-primary);
+                            margin: 0;
+                            font-size: 1.5rem;
+                        }
+                        
+                        .event-details-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 2rem;
+                            margin-bottom: 2rem;
+                        }
+                        
+                        .detail-section {
+                            background: var(--bg-primary);
+                            border-radius: 6px;
+                            padding: 1.5rem;
+                        }
+                        
+                        .detail-section h4 {
+                            color: var(--accent-primary);
+                            margin-bottom: 1rem;
+                            font-size: 1.1rem;
+                        }
+                        
+                        .detail-item {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 0.75rem;
+                            padding: 0.5rem 0;
+                            border-bottom: 1px solid var(--border-color);
+                        }
+                        
+                        .detail-item .label {
+                            color: var(--text-secondary);
+                            font-weight: 500;
+                        }
+                        
+                        .detail-item .value {
+                            color: var(--text-primary);
+                            font-weight: 400;
+                        }
+                        
+                        .participants-list {
+                            max-height: 300px;
+                            overflow-y: auto;
+                        }
+                        
+                        .participant-item {
+                            background: var(--bg-secondary);
+                            padding: 0.75rem;
+                            border-radius: 4px;
+                            margin-bottom: 0.5rem;
+                            border-left: 3px solid var(--accent-primary);
+                        }
+                        
+                        .participant-name {
+                            font-weight: 600;
+                            color: var(--text-primary);
+                        }
+                        
+                        .participant-classes {
+                            color: var(--text-secondary);
+                            font-size: 0.9rem;
+                        }
+                        
+                        .participant-team {
+                            color: var(--text-secondary);
+                            font-size: 0.8rem;
+                            font-style: italic;
+                        }
+                        
+                        .participant-number {
+                            color: var(--accent-primary);
+                            font-size: 0.8rem;
+                            font-weight: 600;
+                        }
+                        
+                        .no-participants {
+                            color: var(--text-secondary);
+                            font-style: italic;
+                            text-align: center;
+                            padding: 2rem;
+                        }
+                        
+                        .modal-actions {
+                            display: flex;
+                            gap: 1rem;
+                            justify-content: center;
+                            padding-top: 1rem;
+                            border-top: 1px solid var(--border-color);
+                        }
+                        
+                        @media (max-width: 768px) {
+                            .event-details-modal {
+                                margin: 1rem;
+                                padding: 1rem;
+                            }
+                            
+                            .event-details-grid {
+                                grid-template-columns: 1fr;
+                                gap: 1rem;
+                            }
+                            
+                            .modal-actions {
+                                flex-direction: column;
+                            }
+                        }
+                    </style>
+                `;
+                
+                // Store the current event ID for potential refresh
+                window.currentEventModalId = eventId;
+                
+                // Show the modal
+                showEventModal('Event Details', detailsHtml);
+                
+                // Set up real-time refresh for this modal
+                if (dataManager.eventBus) {
+                    const refreshModal = () => {
+                        if (window.currentEventModalId === eventId) {
+                            console.log('🔄 Refreshing event details modal for real-time updates');
+                            viewEvent(eventId); // Refresh the modal
+                        }
+                    };
+                    
+                    // Listen for participant events
+                    dataManager.eventBus.on('participant-registered', refreshModal);
+                    dataManager.eventBus.on('participant-removed', refreshModal);
+                    
+                    // Clean up listeners when modal is closed
+                    const originalHideModal = window.hideEventModal;
+                    window.hideEventModal = function() {
+                        dataManager.eventBus.off('participant-registered', refreshModal);
+                        dataManager.eventBus.off('participant-removed', refreshModal);
+                        window.currentEventModalId = null;
+                        originalHideModal();
+                    };
+                }
+                
+            } catch (error) {
+                console.error('Error viewing event:', error);
+                alert('Error loading event details');
+            }
+        };
+        
+        window.editEvent = async function(eventId) {
+            try {
+                console.log('Editing event with ID:', eventId);
+                const event = dataManager.getEvent(eventId);
+                console.log('Found event:', event);
+                
+                if (!event) {
+                    alert('Event not found');
+                    return;
+                }
+                
+                const series = dataManager.getAllSeries();
+                
+                const editFormHtml = `
+                    <div class="event-edit-modal">
+                        <h3>Edit Event</h3>
+                        
+                        <form id="editEventForm" class="edit-form">
+                            <div class="form-group">
+                                <label class="form-label">Event Name</label>
+                                <input type="text" class="form-control" name="eventName" required 
+                                       value="${(event.eventName || event.name || '').replace(/"/g, '&quot;')}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Series</label>
+                                <select class="form-control" name="seriesId" required onchange="loadSeriesClassesEdit(this.value, '${eventId}').catch(console.error)">
+                                    ${series.length === 0 ? 
+                                        '<option value="">No series available</option>' :
+                                        series.map(s => 
+                                            `<option value="${s.id}" ${s.id === event.seriesId ? 'selected' : ''}>${s.name}</option>`
+                                        ).join('')
+                                    }
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" id="editClassConfigSection">
+                                <label class="form-label">Event Classes & Pricing</label>
+                                <div id="editAvailableClasses">
+                                    <!-- Classes will be populated -->
+                                </div>
+                                
+                                <div class="form-help">
+                                    <p class="help-text">
+                                        <strong>💡 How to reorder classes:</strong><br>
+                                        Selected classes will show <span style="font-family: monospace; background: #007bff; color: white; padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> drag handles. Drag to reorder!
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-control" name="date" required
+                                       value="${event.date ? (event.date.includes('T') ? event.date.split('T')[0] : event.date) : ''}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" name="location" required
+                                       value="${(event.location || '').replace(/"/g, '&quot;')}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="description" rows="3">${(event.description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Max Participants</label>
+                                <input type="number" class="form-control" name="maxParticipants" min="1" required
+                                       value="${event.maxParticipants}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Free Run Mode</label>
+                                <select class="form-control" name="freeRunEnabled" required>
+                                    <option value="false" ${event.freeRunEnabled === false || event.freeRunEnabled === 'false' ? 'selected' : ''}>Disabled - Balance last races (fairer)</option>
+                                    <option value="true" ${event.freeRunEnabled === true || event.freeRunEnabled === 'true' ? 'selected' : ''}>Enabled - Fill races to capacity (faster)</option>
+                                </select>
+                                <div class="form-help">
+                                    <small class="help-text">
+                                        <strong>Free Run Enabled:</strong> Fill races to maximum capacity first, creating fewer total races.<br>
+                                        <strong>Free Run Disabled:</strong> Balance the last races so no one gets a "bye" or free pass.
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Status field removed - all events are active by default -->
+                            <input type="hidden" name="status" value="active">
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                <button type="button" class="btn btn-secondary" onclick="hideEventModal()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <style>
+                        .event-edit-modal {
+                            background: var(--bg-secondary);
+                            border-radius: 8px;
+                            padding: 2rem;
+                            max-width: 600px;
+                            margin: 2rem auto;
+                        }
+                        
+                        .event-edit-modal h3 {
+                            color: var(--text-primary);
+                            margin-bottom: 2rem;
+                            text-align: center;
+                        }
+                        
+                        .edit-form .form-group {
+                            margin-bottom: 1.5rem;
+                        }
+                        
+                        .edit-form .form-label {
+                            display: block;
+                            color: var(--text-primary);
+                            font-weight: 500;
+                            margin-bottom: 0.5rem;
+                        }
+                        
+                        .edit-form .form-control {
+                            width: 100%;
+                            padding: 0.75rem;
+                            border: 1px solid var(--border-color);
+                            border-radius: 4px;
+                            background: var(--bg-primary);
+                            color: var(--text-primary);
+                            font-size: 1rem;
+                        }
+                        
+                        .edit-form textarea.form-control {
+                            resize: vertical;
+                            min-height: 80px;
+                        }
+                        
+                        .form-actions {
+                            display: flex;
+                            gap: 1rem;
+                            justify-content: center;
+                            margin-top: 2rem;
+                            padding-top: 1rem;
+                            border-top: 1px solid var(--border-color);
+                        }
+                        
+                        @media (max-width: 768px) {
+                            .event-edit-modal {
+                                margin: 1rem;
+                                padding: 1rem;
+                            }
+                            
+                            .form-actions {
+                                flex-direction: column;
+                            }
+                        }
+                    </style>
+                `;
+                
+                // Show edit modal
+                showEventModal('Edit Event', editFormHtml);
+                
+                // Set up form submission
+                const form = document.getElementById('editEventForm');
+                form.addEventListener('submit', async (e) => await saveEventChanges(e, eventId));
+                
+                // Load class configuration for the current series
+                if (event.seriesId) {
+                    await loadSeriesClassesEdit(event.seriesId, eventId);
+                }
+                
+            } catch (error) {
+                console.error('Error editing event:', error);
+                alert('Error loading event for editing');
+            }
+        };
+        
+        // Save event changes
+        async function saveEventChanges(e, eventId) {
+            e.preventDefault();
+            
+            try {
+                console.log('Saving event changes for ID:', eventId);
+                const formData = new FormData(e.target);
+                const existingEvent = dataManager.getEvent(eventId);
+                
+                console.log('Existing event:', existingEvent);
+                console.log('Form data:', Object.fromEntries(formData.entries()));
+                
+                if (!existingEvent) {
+                    alert('Event not found');
+                    return;
+                }
+                
+                // Get selected classes with pricing and ordering
+                const selectedClasses = getSelectedClassesEdit();
+                console.log('🔍 Selected classes from getSelectedClassesEdit:', selectedClasses);
+                
+                // Update event data
+                const updatedEventData = {
+                    eventName: formData.get('eventName'),
+                    name: formData.get('eventName'), // Support both name formats
+                    seriesId: formData.get('seriesId'),
+                    date: formData.get('date'),
+                    location: formData.get('location'),
+                    description: formData.get('description'),
+                    maxParticipants: parseInt(formData.get('maxParticipants')),
+                    status: formData.get('status'),
+                    classSettings: selectedClasses,
+                    classOrder: editClassOrder.map(cls => cls.classId), // Store edit class order
+                    freeRunEnabled: formData.get('freeRunEnabled') === 'true',
+                    updatedAt: new Date().toISOString()
+                };
+                
+                console.log('Updating event with data:', updatedEventData);
+                const success = await dataManager.updateEvent(eventId, updatedEventData);
+                
+                console.log('Update result:', success);
+                
+                if (success) {
+                    alert('Event updated successfully!');
+                    hideEventModal();
+                    await loadEvents(); // Refresh the events list
+                } else {
+                    alert('Failed to update event');
+                }
+                
+            } catch (error) {
+                console.error('Error saving event changes:', error);
+                alert('Error saving event changes: ' + error.message);
+            }
+        }
+        
+        // Show event modal
+        function showEventModal(title, content) {
+            // Create modal overlay if it doesn't exist
+            let overlay = document.getElementById('eventModalOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'eventModalOverlay';
+                overlay.className = 'modal-overlay';
+                overlay.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 id="modalTitle"></h2>
+                            <button class="modal-close" onclick="hideEventModal()">&times;</button>
+                        </div>
+                        <div class="modal-body" id="modalBody"></div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+            
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = content;
+            overlay.classList.add('active');
+        }
+        
+        // Hide event modal
+        window.hideEventModal = function() {
+            const overlay = document.getElementById('eventModalOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+        };
+
+        // Delete event function
+        window.deleteEvent = async function(eventId) {
+            console.log('🔥 DELETE EVENT CALLED:', eventId);
+            try {
+                const event = dataManager.getEvent(eventId);
+                console.log('🔍 Found event:', event);
+                if (!event) {
+                    showToast('Event not found', 'error');
+                    return;
+                }
+
+                console.log('🎯 Calling confirmDelete with:', event.name || event.eventName);
+                console.log('🔧 confirmDelete function exists:', typeof window.confirmDelete);
+                
+                window.confirmDelete(event.name || event.eventName, async () => {
+                    console.log('✅ User confirmed delete, proceeding...');
+                    try {
+                        const success = await dataManager.deleteEvent(eventId);
+                        if (success) {
+                            await loadEvents();
+                            showToast('Event deleted successfully!', 'success');
+                        } else {
+                            throw new Error('Failed to delete event');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting event:', error);
+                        showToast('Error deleting event. Please try again.', 'error');
+                        throw error; // Re-throw to show error in modal
+                    }
+                });
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                showToast('Error deleting event. Please try again.', 'error');
+            }
+        };
+        
+        // Reload data function
+        window.reloadData = async function() {
+            try {
+                console.log('Reloading data...');
+                
+                // Clear loaded data cache and reload from server
+                dataManager.loadedDataTypes.clear();
+                dataManager.loadingPromises.clear();
+                
+                const success = await dataManager.loadFromStorage();
+                if (success) {
+                    await loadEvents();
+                    showToast('Data reloaded successfully!', 'success');
+                } else {
+                    showToast('Failed to reload data', 'error');
+                }
+            } catch (error) {
+                console.error('Error reloading data:', error);
+                showToast('Error reloading data', 'error');
+            }
+        };
+
+        // Clear all data function
+        window.clearAllData = async function() {
+            window.confirmClearAllData(async () => {
+                try {
+                    await dataManager.clearAllData();
+                    
+                    // Refresh all data displays
+                    await loadEvents();
+                    
+                    showToast('All data has been cleared successfully', 'success');
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    showToast('Error clearing data. Please try again.', 'error');
+                    throw error; // Re-throw to show error in modal
+                }
+            });
+        };
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+                color: white;
+                border-radius: 4px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Make functions globally available
+        window.showNewEventModal = showNewEventModal;
+        window.hideNewEventModal = hideNewEventModal;
+        window.changeEventsPage = changeEventsPage;
+
+        // Fix navigation click issues
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-links li');
+            
+            navLinks.forEach(li => {
+                li.addEventListener('click', function(e) {
+                    // Don't navigate if clicking on the active page
+                    if (this.classList.contains('active')) {
+                        return;
+                    }
+                    
+                    // Get the href from the anchor tag inside
+                    const link = this.querySelector('a');
+                    if (link && link.href) {
+                        window.location.href = link.href;
+                    }
+                });
+            });
+        });
+
+        // Load series for event creation
+        async function loadSeries() {
+            try {
+                const series = dataManager.getAllSeries();
+                const seriesSelectContainer = document.getElementById('seriesSelectContainer');
+                
+                console.log('Loading series for event creation:', series);
+                
+                if (series.length === 0) {
+                    seriesSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No series available - Create series first" disabled></div>';
+                } else {
+                    const seriesOptions = series.map(s => ({
+                        value: s.id,
+                        label: s.name
+                    }));
+                    
+                    seriesSelectContainer.innerHTML = UIComponents.createComboBox(
+                        'seriesSelect',
+                        seriesOptions,
+                        'Select Series',
+                        'onSeriesSelect',
+                        ''
+                    );
+                    
+                    // Initialize the combo box
+                    UIComponents.initComboBox('seriesSelect');
+                }
+            } catch (error) {
+                console.error('Error loading series:', error);
+                document.getElementById('seriesSelectContainer').innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Error loading series" disabled></div>';
+            }
+        }
+
+        // Series selection callback
+        window.onSeriesSelect = function(seriesId) {
+            console.log('Series selected:', seriesId);
+            selectedSeriesId = seriesId;
+            loadSeasonsForSeries(seriesId);
+            loadSeriesClasses(seriesId);
+        };
+
+        // Load seasons for selected series
+        async function loadSeasonsForSeries(seriesId) {
+            try {
+                const series = dataManager.getSeries(seriesId);
+                const seasons = series?.seasons || [];
+                const seasonSelectContainer = document.getElementById('seasonSelectContainer');
+                
+                console.log('Loading seasons for series:', seriesId, seasons);
+                
+                if (seasons.length === 0) {
+                    seasonSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No seasons available for this series" disabled></div>';
+                } else {
+                    const seasonOptions = seasons.map(season => ({
+                        value: season.id,
+                        label: `${season.name} (${season.status})`
+                    }));
+                    
+                    // Add "No Season" option
+                    seasonOptions.unshift({
+                        value: '',
+                        label: 'No Season (General Event)'
+                    });
+                    
+                    seasonSelectContainer.innerHTML = UIComponents.createComboBox(
+                        'seasonSelect',
+                        seasonOptions,
+                        'Select Season (Optional)',
+                        'onSeasonSelect',
+                        ''
+                    );
+                    
+                    // Initialize the combo box
+                    UIComponents.initComboBox('seasonSelect');
+                }
+            } catch (error) {
+                console.error('Error loading seasons:', error);
+                document.getElementById('seasonSelectContainer').innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Error loading seasons" disabled></div>';
+            }
+        }
+
+        // Season selection callback
+        window.onSeasonSelect = function(seasonId) {
+            console.log('Season selected:', seasonId);
+            selectedSeasonId = seasonId;
+        };
+
+        // Initialize the events page
+        async function initializeEventsPage() {
+            try {
+                console.log('🚀 Initializing Events Page...');
+                
+                // Initialize data manager if not already done
+                if (!dataManager) {
+                    dataManager = new DataManager();
+                    await dataManager.loadFromStorage();
+                }
+                
+                // Set up event listeners for real-time updates
+                if (dataManager.eventBus) {
+                    dataManager.eventBus.on('participant-registered', (data) => {
+                        console.log('🔄 Participant registered, refreshing events list:', data);
+                        loadEvents(); // Refresh the events list
+                    });
+                    
+                    dataManager.eventBus.on('participant-removed', (data) => {
+                        console.log('🔄 Participant removed, refreshing events list:', data);
+                        loadEvents(); // Refresh the events list
+                    });
+                }
+                
+                // Load events
+                await loadEvents();
+                
+                console.log('✅ Events Page initialized successfully');
+            } catch (error) {
+                console.error('Error initializing events page:', error);
+            }
+        }
+    </script>
+    
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</body>
+</html> 

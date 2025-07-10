@@ -1,0 +1,397 @@
+<!-- Performance Dashboard Component -->
+<div id="performance-dashboard" class="performance-dashboard" style="display: none;">
+    <div class="dashboard-header">
+        <h3>📊 Performance Dashboard</h3>
+        <button onclick="togglePerformanceDashboard()" class="btn btn-secondary">Close</button>
+    </div>
+    
+    <div class="dashboard-content">
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Memory Usage</div>
+                <div class="metric-value" id="memory-usage">--</div>
+                <div class="metric-trend" id="memory-trend">--</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Uptime</div>
+                <div class="metric-value" id="uptime">--</div>
+                <div class="metric-trend">Running</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Operations</div>
+                <div class="metric-value" id="operation-count">--</div>
+                <div class="metric-trend">Tracked</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Cache Hit Rate</div>
+                <div class="metric-value" id="cache-hit-rate">--</div>
+                <div class="metric-trend" id="cache-trend">--</div>
+            </div>
+        </div>
+        
+        <div class="performance-sections">
+            <div class="section">
+                <h4>🔄 Recent Operations</h4>
+                <div id="recent-operations" class="operations-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h4>💡 Recommendations</h4>
+                <div id="performance-recommendations" class="recommendations-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h4>📈 Load Times</h4>
+                <div id="load-time-stats" class="load-time-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-actions">
+            <button onclick="clearPerformanceData()" class="btn btn-warning">Clear Data</button>
+            <button onclick="exportPerformanceReport()" class="btn btn-primary">Export Report</button>
+            <button onclick="refreshPerformanceDashboard()" class="btn btn-secondary">Refresh</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.performance-dashboard {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 100vh;
+    background: #1a1a1a;
+    border-left: 2px solid #404040;
+    z-index: 10000;
+    overflow-y: auto;
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #2d2d2d;
+    border-bottom: 1px solid #404040;
+}
+
+.dashboard-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.1rem;
+}
+
+.dashboard-content {
+    padding: 1rem;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: #2d2d2d;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #404040;
+}
+
+.metric-title {
+    font-size: 0.8rem;
+    color: #b3b3b3;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+}
+
+.metric-trend {
+    font-size: 0.7rem;
+    color: #10b981;
+}
+
+.metric-trend.warning {
+    color: #f59e0b;
+}
+
+.metric-trend.error {
+    color: #ef4444;
+}
+
+.performance-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.section h4 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.operations-list, .recommendations-list, .load-time-list {
+    background: #2d2d2d;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #404040;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.operation-item, .recommendation-item, .load-time-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #404040;
+    font-size: 0.8rem;
+}
+
+.operation-item:last-child, .recommendation-item:last-child, .load-time-item:last-child {
+    border-bottom: none;
+}
+
+.operation-name {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.operation-stats {
+    color: #b3b3b3;
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+}
+
+.recommendation-item {
+    color: #f59e0b;
+    padding-left: 1rem;
+    position: relative;
+}
+
+.recommendation-item::before {
+    content: "💡";
+    position: absolute;
+    left: 0;
+}
+
+.load-time-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.load-time-name {
+    color: #ffffff;
+}
+
+.load-time-value {
+    color: #10b981;
+    font-weight: 500;
+}
+
+.dashboard-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.dashboard-actions .btn {
+    flex: 1;
+    min-width: 100px;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+}
+
+.loading {
+    color: #b3b3b3;
+    text-align: center;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .performance-dashboard {
+        width: 100%;
+        height: 100vh;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+let dashboardUpdateInterval;
+
+function togglePerformanceDashboard() {
+    const dashboard = document.getElementById('performance-dashboard');
+    if (dashboard.style.display === 'none') {
+        dashboard.style.display = 'block';
+        refreshPerformanceDashboard();
+        startDashboardUpdates();
+    } else {
+        dashboard.style.display = 'none';
+        stopDashboardUpdates();
+    }
+}
+
+function startDashboardUpdates() {
+    dashboardUpdateInterval = setInterval(refreshPerformanceDashboard, 5000);
+}
+
+function stopDashboardUpdates() {
+    if (dashboardUpdateInterval) {
+        clearInterval(dashboardUpdateInterval);
+        dashboardUpdateInterval = null;
+    }
+}
+
+function refreshPerformanceDashboard() {
+    if (!window.performanceMonitor) {
+        console.warn('Performance monitor not available');
+        return;
+    }
+    
+    const report = window.performanceMonitor.getPerformanceReport();
+    if (!report) return;
+    
+    // Update metrics
+    document.getElementById('memory-usage').textContent = 
+        `${(report.memory.current / 1024 / 1024).toFixed(2)} MB`;
+    
+    document.getElementById('memory-trend').textContent = report.memory.trend;
+    document.getElementById('memory-trend').className = 
+        `metric-trend ${report.memory.trend === 'increasing' ? 'warning' : ''}`;
+    
+    document.getElementById('uptime').textContent = 
+        `${(report.uptime / 1000 / 60).toFixed(1)} min`;
+    
+    document.getElementById('operation-count').textContent = 
+        Object.keys(report.operations).length;
+    
+    // Update recent operations
+    updateRecentOperations(report.operations);
+    
+    // Update recommendations
+    updateRecommendations(report.recommendations);
+    
+    // Update load times
+    updateLoadTimes(report.loadTimes);
+}
+
+function updateRecentOperations(operations) {
+    const container = document.getElementById('recent-operations');
+    const operationEntries = Object.entries(operations);
+    
+    if (operationEntries.length === 0) {
+        container.innerHTML = '<div class="loading">No operations tracked</div>';
+        return;
+    }
+    
+    // Sort by average duration (slowest first)
+    const sortedOperations = operationEntries
+        .sort(([,a], [,b]) => b.avgDuration - a.avgDuration)
+        .slice(0, 10);
+    
+    container.innerHTML = sortedOperations.map(([name, stats]) => `
+        <div class="operation-item">
+            <div class="operation-name">${name}</div>
+            <div class="operation-stats">
+                Avg: ${stats.avgDuration.toFixed(2)}ms | 
+                Count: ${stats.count} | 
+                Max: ${stats.maxDuration.toFixed(2)}ms
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateRecommendations(recommendations) {
+    const container = document.getElementById('performance-recommendations');
+    
+    if (recommendations.length === 0) {
+        container.innerHTML = '<div class="loading">No recommendations</div>';
+        return;
+    }
+    
+    container.innerHTML = recommendations.map(rec => `
+        <div class="recommendation-item">
+            ${rec.suggestion}
+        </div>
+    `).join('');
+}
+
+function updateLoadTimes(loadTimes) {
+    const container = document.getElementById('load-time-stats');
+    const loadTimeEntries = Object.entries(loadTimes);
+    
+    if (loadTimeEntries.length === 0) {
+        container.innerHTML = '<div class="loading">No load time data</div>';
+        return;
+    }
+    
+    container.innerHTML = loadTimeEntries.map(([dataType, stats]) => `
+        <div class="load-time-item">
+            <div class="load-time-name">${dataType}</div>
+            <div class="load-time-value">
+                ${stats.avgDuration.toFixed(2)}ms (${stats.avgItemsPerLoad.toFixed(0)} items)
+            </div>
+        </div>
+    `).join('');
+}
+
+function clearPerformanceData() {
+    if (window.clearPerformanceData) {
+        window.clearPerformanceData();
+        refreshPerformanceDashboard();
+    }
+}
+
+function exportPerformanceReport() {
+    if (!window.performanceMonitor) return;
+    
+    const report = window.performanceMonitor.getPerformanceReport();
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `performance-report-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Add performance dashboard toggle button to navigation
+document.addEventListener('DOMContentLoaded', () => {
+    const nav = document.querySelector('.nav-links');
+    if (nav) {
+        const perfButton = document.createElement('a');
+        perfButton.href = '#';
+        perfButton.textContent = 'Performance';
+        perfButton.onclick = (e) => {
+            e.preventDefault();
+            togglePerformanceDashboard();
+        };
+        perfButton.style.cursor = 'pointer';
+        nav.appendChild(perfButton);
+    }
+});
+</script> 
