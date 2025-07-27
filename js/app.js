@@ -1,8 +1,21 @@
 // Initialize core systems first
 console.log('🏁 Initializing Snowmobile Racing Event Manager (SIMPLIFIED)...');
 
-// Initialize performance monitor first
-const performanceMonitor = window.performanceMonitor || new PerformanceMonitor();
+// Initialize performance monitor first (with fallback)
+let performanceMonitor;
+try {
+    performanceMonitor = window.performanceMonitor || new PerformanceMonitor();
+} catch (error) {
+    console.warn('⚠️ PerformanceMonitor not available, creating fallback:', error);
+    // Create a simple fallback performance monitor
+    performanceMonitor = {
+        trackOperation: (name, operation) => operation(),
+        startMonitoring: () => console.log('📊 Performance monitoring not available'),
+        stopMonitoring: () => console.log('📊 Performance monitoring not available'),
+        getPerformanceReport: () => ({ status: 'not available' }),
+        logPerformanceSummary: () => console.log('📊 Performance monitoring not available')
+    };
+}
 
 // Initialize managers with performance tracking
 const dataManager = new DataManager();
@@ -51,12 +64,12 @@ async function initializeApp() {
     try {
         // Track initialization performance
         await performanceMonitor.trackOperation('app_initialization', async () => {
-            // Load essential data first (series and events)
-            await dataManager.loadFromStorage(['series', 'events']);
+            // Load essential data first (series, events, participants, and race brackets)
+            await dataManager.loadFromStorage(['series', 'events', 'participants', 'race-brackets']);
             
             // Load other data types in background
             setTimeout(async () => {
-                await dataManager.loadFromStorage(['participant', 'race']);
+                await dataManager.loadFromStorage(['races']);
             }, 100);
         });
         

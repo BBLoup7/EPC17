@@ -28,6 +28,7 @@
             <li><a href="races.html">Races</a></li>
             <li><a href="driver-profile.html">Drivers</a></li>
             <li class="active"><a href="analytics.html">Analytics</a></li>
+            <li><a href="live-display.html">Live Display</a></li>
         </ul>
         
         <!-- Mobile Hamburger Menu -->
@@ -61,6 +62,7 @@
                 <li><a href="races.html">🏁 Races</a></li>
                 <li><a href="driver-profile.html">👥 Drivers</a></li>
                 <li><a href="analytics.html" class="active">📊 Analytics</a></li>
+                <li><a href="live-display.html">🖥️ Live Display</a></li>
             </ul>
             <div class="mobile-nav-footer">
                 <div class="mobile-nav-version">v1.0.0</div>
@@ -102,185 +104,153 @@
 
         <!-- Overall Analytics -->
         <div id="overallAnalytics" class="overall-analytics">
-            <!-- Event Filter -->
-            <div class="analytics-filter">
-                <div class="filter-label">
-                    <i class="fas fa-filter"></i>
-                    <span>Filter by Event:</span>
-                </div>
-                <div id="eventFilterContainer">
-                    <div class="combo-box-container">
-                        <input type="text" class="combo-box-input" placeholder="Loading events..." disabled>
-                    </div>
-                </div>
-                <div class="filter-info">
-                    <span id="analyticsFilterDescription">Showing overall performance across all events</span>
-                </div>
+            <div class="analytics-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading analytics data...</p>
             </div>
-            
-            <!-- Overall Statistics will be populated here -->
         </div>
 
         <!-- Series Analytics -->
-        <div id="seriesAnalytics" class="series-analytics">
-            <!-- Series selection and analytics will be populated here -->
+        <div id="seriesAnalytics" class="series-analytics" style="display: none;">
+            <div class="analytics-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading series analytics...</p>
+            </div>
         </div>
 
         <!-- Events Analytics -->
-        <div id="eventsAnalytics" class="events-analytics">
+        <div id="eventsAnalytics" class="events-analytics" style="display: none;">
             <!-- Event Selection Grid -->
             <div id="eventGrid" class="event-grid">
-                <!-- Event cards will be populated here -->
+                <div class="analytics-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading events...</p>
+                </div>
             </div>
 
-            <!-- Event Analytics -->
+            <!-- Event Analytics Detail -->
             <div id="eventAnalytics" class="event-analytics" style="display: none;">
-            <!-- Event Header -->
-            <div class="event-header">
-                <div class="event-info">
-                    <h2 id="eventName"></h2>
-                    <div class="event-meta">
-                        <span id="eventDate"></span>
-                        <span id="eventLocation"></span>
-                        <span id="eventSeries"></span>
+                <!-- Event Header -->
+                <div class="event-header">
+                    <div class="event-info">
+                        <h2 id="eventName"></h2>
+                        <div class="event-meta">
+                            <span id="eventDate"></span>
+                            <span id="eventLocation"></span>
+                            <span id="eventSeries"></span>
+                        </div>
+                    </div>
+                    <div class="event-actions">
+                        <button class="btn btn-secondary" onclick="clearEventSelection()">← Back to List</button>
                     </div>
                 </div>
-                <div class="event-actions">
-                    <button class="btn btn-secondary" onclick="clearEventSelection()">← Back to List</button>
-                </div>
-            </div>
 
-            <!-- Financial Stats -->
-            <div class="driver-stats">
-                <div class="stat-card revenue">
-                    <div class="stat-value" id="totalRevenue">$0</div>
-                    <div class="stat-label">Total Revenue</div>
-                </div>
-                <div class="stat-card registrations">
-                    <div class="stat-value" id="totalRegistrations">0</div>
-                    <div class="stat-label">Total Registrations</div>
-                </div>
-                <div class="stat-card drivers">
-                    <div class="stat-value" id="uniqueDrivers">0</div>
-                    <div class="stat-label">Unique Drivers</div>
-                </div>
-                <div class="stat-card races">
-                    <div class="stat-value" id="totalRaces">0</div>
-                    <div class="stat-label">Races Completed</div>
-                </div>
-                <div class="stat-card avgfee">
-                    <div class="stat-value" id="avgFeePerDriver">$0</div>
-                    <div class="stat-label">Avg Fee/Driver</div>
-                </div>
-                <div class="stat-card completion">
-                    <div class="stat-value" id="completionRate">0%</div>
-                    <div class="stat-label">Completion Rate</div>
-                </div>
-            </div>
-
-            <!-- Tabs -->
-            <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('registrations', event)">Registration Details</button>
-                <button class="tab-btn" onclick="showTab('tracks', event)">Track Performance</button>
-                <button class="tab-btn" onclick="showTab('classes', event)">Class Breakdown</button>
-                <button class="tab-btn" onclick="showTab('drivers', event)">Driver Stats</button>
-            </div>
-
-            <!-- Tab Contents -->
-            <div id="registrationsTab" class="tab-content active">
-                <h3>Registration Summary</h3>
-                <div class="registration-summary">
-                    <div class="class-breakdown" id="classBreakdown">
-                        <!-- Class breakdown will be populated here -->
+                <!-- Event Statistics Cards -->
+                <div class="event-stats">
+                    <div class="stat-card revenue">
+                        <div class="stat-value" id="eventRevenue">$0</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                    <div class="stat-card registrations">
+                        <div class="stat-value" id="eventRegistrations">0</div>
+                        <div class="stat-label">Registrations</div>
+                    </div>
+                    <div class="stat-card drivers">
+                        <div class="stat-value" id="eventDrivers">0</div>
+                        <div class="stat-label">Drivers</div>
+                    </div>
+                    <div class="stat-card races">
+                        <div class="stat-value" id="eventRaces">0</div>
+                        <div class="stat-label">Completed Races</div>
+                    </div>
+                    <div class="stat-card classes">
+                        <div class="stat-value" id="eventClasses">0</div>
+                        <div class="stat-label">Racing Classes</div>
+                    </div>
+                    <div class="stat-card completion">
+                        <div class="stat-value" id="eventCompletion">0%</div>
+                        <div class="stat-label">Completion Rate</div>
                     </div>
                 </div>
-                
-                <h4>Registered Drivers</h4>
-                <div class="table-container">
-                    <table class="data-table" id="driversTable">
-                        <thead>
-                            <tr>
-                                <th>Driver</th>
-                                <th>Classes</th>
-                                <th>Total Fee</th>
-                                <th>Races</th>
-                                <th>Wins</th>
-                                <th>Win Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
 
-            <div id="tracksTab" class="tab-content">
-                <h3>Track/Lane Performance</h3>
-                <div class="track-performance" id="trackPerformance">
-                    <!-- Track performance will be populated here -->
+                <!-- Event Details Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="showTab('summary')">Summary</button>
+                    <button class="tab-btn" onclick="showTab('drivers')">Driver Stats</button>
+                    <button class="tab-btn" onclick="showTab('classes')">Class Breakdown</button>
+                    <button class="tab-btn" onclick="showTab('races')">Race Results</button>
                 </div>
-                
-                <h4>Win Distribution by Track</h4>
-                <div class="table-container">
-                    <table class="data-table" id="trackWinsTable">
-                        <thead>
-                            <tr>
-                                <th>Track/Lane</th>
-                                <th>Total Races</th>
-                                <th>Different Winners</th>
-                                <th>Most Wins</th>
-                                <th>Win %</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
 
-            <div id="classesTab" class="tab-content">
-                <h3>Class Performance Analysis</h3>
-                <div class="table-container">
-                    <table class="data-table" id="classAnalysisTable">
-                        <thead>
-                            <tr>
-                                <th>Class</th>
-                                <th>Registrations</th>
-                                <th>Revenue</th>
-                                <th>Avg Fee</th>
-                                <th>Races</th>
-                                <th>Top Performer</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+                <!-- Tab Contents -->
+                <div id="summaryTab" class="tab-content active">
+                    <div class="summary-section">
+                        <h3>Event Summary</h3>
+                        <div id="eventSummaryContent">
+                            <!-- Summary content will be populated here -->
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div id="driversTab" class="tab-content">
-                <h3>Driver Performance Rankings</h3>
-                <div class="table-container">
-                    <table class="data-table" id="driverRankingsTable">
-                        <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Driver</th>
-                                <th>Classes</th>
-                                <th>Races</th>
-                                <th>Wins</th>
-                                <th>Podiums</th>
-                                <th>Win Rate</th>
-                                <th>Avg Position</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+                <div id="driversTab" class="tab-content">
+                    <div class="drivers-section">
+                        <h3>Driver Performance</h3>
+                        <div class="table-container">
+                            <table class="data-table" id="driversStatsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Driver</th>
+                                        <th>Classes</th>
+                                        <th>Races</th>
+                                        <th>Wins</th>
+                                        <th>Win Rate</th>
+                                        <th>Avg Position</th>
+                                        <th>Total Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Driver stats will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="classesTab" class="tab-content">
+                    <div class="classes-section">
+                        <h3>Class Breakdown</h3>
+                        <div id="classBreakdownGrid" class="class-breakdown-grid">
+                            <!-- Class breakdown will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="racesTab" class="tab-content">
+                    <div class="races-section">
+                        <h3>Race Results</h3>
+                        <div class="table-container">
+                            <table class="data-table" id="raceResultsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Class</th>
+                                        <th>Round</th>
+                                        <th>Winner</th>
+                                        <th>Participants</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Race results will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
     </main>
 
     <style>
-        /* Analytics Navigation */
+        /* Analytics Styles */
         .analytics-nav {
             display: flex;
             gap: 10px;
@@ -315,39 +285,6 @@
             transform: translateY(-2px);
         }
 
-        /* Analytics Filter Styles */
-        .analytics-filter {
-            background: var(--bg-secondary, #2d2d2d);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .filter-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-weight: 500;
-            color: var(--text-primary, #ffffff);
-        }
-
-        .filter-label i {
-            color: var(--accent-primary, #4a90e2);
-        }
-
-        .analytics-filter .combo-box-container {
-            width: 300px;
-            margin-bottom: 10px;
-        }
-
-        .filter-info {
-            font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
-            font-style: italic;
-        }
-
         .analytics-nav-btn.active {
             background: var(--accent-primary, #4a90e2);
             border-color: var(--accent-primary, #4a90e2);
@@ -359,15 +296,31 @@
             font-size: 18px;
         }
 
-        /* Overall Analytics Styles */
-        .overall-analytics {
-            display: block;
+        /* Loading State */
+        .analytics-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            background: var(--bg-secondary, #2d2d2d);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .series-analytics, .events-analytics {
-            display: none;
+        .analytics-loading i {
+            font-size: 48px;
+            color: var(--accent-primary, #4a90e2);
+            margin-bottom: 20px;
         }
 
+        .analytics-loading p {
+            color: var(--text-secondary, #b3b3b3);
+            font-size: 18px;
+            margin: 0;
+        }
+
+        /* Analytics Sections */
         .analytics-section {
             background: var(--bg-secondary, #2d2d2d);
             border-radius: 12px;
@@ -398,7 +351,7 @@
             font-size: 20px;
         }
 
-        /* Enhanced Statistics Cards */
+        /* Statistics Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -434,12 +387,6 @@
             border-radius: 12px 12px 0 0;
         }
 
-        .stat-icon {
-            font-size: 36px;
-            color: var(--accent-primary, #4a90e2);
-            margin-bottom: 15px;
-        }
-
         .stat-value {
             font-size: 42px;
             font-weight: 700;
@@ -452,81 +399,19 @@
             font-size: 16px;
             color: var(--text-secondary, #b3b3b3);
             font-weight: 500;
-            margin-bottom: 10px;
         }
 
-        .stat-trend {
-            font-size: 14px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 8px;
-        }
-
-        .trend-up {
-            background: rgba(39, 174, 96, 0.2);
-            color: #27ae60;
-        }
-
-        .trend-down {
-            background: rgba(231, 76, 60, 0.2);
-            color: #e74c3c;
-        }
-
-        .trend-neutral {
-            background: rgba(149, 165, 166, 0.2);
-            color: #95a5a6;
-        }
-
-        /* Time-based Analytics */
-        .time-analytics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 25px;
-        }
-
-        .time-card {
-            background: var(--bg-primary, #1a1a1a);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .time-value {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--accent-primary, #4a90e2);
-            margin-bottom: 8px;
-        }
-
-        .time-label {
-            font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        /* Toast animations */
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
+        /* Event Grid */
         .event-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
-            margin-top: 20px;
+            margin-bottom: 30px;
         }
 
         .event-card {
             background: var(--bg-secondary, #2d2d2d);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 20px;
             border: 1px solid rgba(255,255,255,0.1);
             cursor: pointer;
@@ -536,24 +421,28 @@
 
         .event-card:hover {
             transform: translateY(-2px);
-            border-color: var(--primary-color, #007bff);
+            border-color: var(--accent-primary, #4a90e2);
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
         .event-card h3 {
             margin: 0 0 10px 0;
             color: var(--text-primary, #ffffff);
+            font-size: 18px;
+            font-weight: 600;
         }
 
         .event-card .event-details {
             color: var(--text-secondary, #b3b3b3);
             font-size: 14px;
             line-height: 1.4;
+            margin-bottom: 15px;
         }
 
-        .event-card .event-stats {
-            display: flex;
-            justify-content: space-between;
+        .event-card .event-preview-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid rgba(255,255,255,0.1);
@@ -564,8 +453,10 @@
         }
 
         .event-card .stat-value {
+            font-size: 20px;
             font-weight: 600;
             color: var(--text-primary, #ffffff);
+            margin-bottom: 4px;
         }
 
         .event-card .stat-label {
@@ -573,10 +464,23 @@
             color: var(--text-secondary, #b3b3b3);
         }
 
-        .event-analytics {
-            margin-top: 20px;
+        /* Event Stats */
+        .event-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
         }
 
+        .event-stats .stat-card {
+            padding: 20px;
+        }
+
+        .event-stats .stat-value {
+            font-size: 32px;
+        }
+
+        /* Event Header */
         .event-header {
             display: flex;
             justify-content: space-between;
@@ -584,13 +488,14 @@
             margin-bottom: 30px;
             padding: 20px;
             background: var(--bg-secondary, #2d2d2d);
-            border-radius: 8px;
+            border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
         }
 
         .event-info h2 {
             margin: 0 0 10px 0;
             color: var(--text-primary, #ffffff);
+            font-size: 28px;
         }
 
         .event-meta {
@@ -602,113 +507,140 @@
         .event-meta span {
             color: var(--text-secondary, #b3b3b3);
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .driver-stats .stat-card.revenue {
-            border-left: 4px solid #28a745;
+        .event-meta i {
+            color: var(--accent-primary, #4a90e2);
         }
 
-        .driver-stats .stat-card.registrations {
-            border-left: 4px solid #007bff;
-        }
-
-        .driver-stats .stat-card.drivers {
-            border-left: 4px solid #ffc107;
-        }
-
-        .driver-stats .stat-card.races {
-            border-left: 4px solid #dc3545;
-        }
-
-        .driver-stats .stat-card.avgfee {
-            border-left: 4px solid #6f42c1;
-        }
-
-        .driver-stats .stat-card.completion {
-            border-left: 4px solid #20c997;
-        }
-
-        .registration-summary {
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
             margin-bottom: 30px;
-        }
-
-        .class-breakdown {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .class-card {
             background: var(--bg-secondary, #2d2d2d);
-            border-radius: 6px;
-            padding: 15px;
+            border-radius: 12px;
+            padding: 5px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary, #b3b3b3);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary, #ffffff);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-primary, #4a90e2);
+            color: white;
+            box-shadow: 0 2px 10px rgba(74, 144, 226, 0.3);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tables */
+        .table-container {
+            background: var(--bg-secondary, #2d2d2d);
+            border-radius: 12px;
+            overflow: hidden;
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .class-card h4 {
-            margin: 0 0 10px 0;
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            text-align: left;
             color: var(--text-primary, #ffffff);
-            font-size: 16px;
-        }
-
-        .class-card .class-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .class-card .drivers-count {
-            font-size: 24px;
             font-weight: 600;
-            color: var(--primary-color, #007bff);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .class-card .revenue-amount {
+        .data-table td {
+            padding: 12px 15px;
+            color: var(--text-secondary, #b3b3b3);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* Class Breakdown Grid */
+        .class-breakdown-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .class-breakdown-card {
+            background: var(--bg-secondary, #2d2d2d);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .class-breakdown-card h4 {
+            color: var(--accent-primary, #4a90e2);
+            margin: 0 0 15px 0;
             font-size: 18px;
             font-weight: 600;
-            color: #28a745;
         }
 
-        .track-performance {
+        .class-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
-            margin-bottom: 30px;
         }
 
-        .track-card {
-            background: var(--bg-secondary, #2d2d2d);
-            border-radius: 6px;
-            padding: 15px;
+        .class-stat {
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .track-card .track-name {
-            font-weight: 600;
-            color: var(--text-primary, #ffffff);
-            margin-bottom: 10px;
-        }
-
-        .track-card .win-rate {
+        .class-stat-value {
             font-size: 24px;
             font-weight: 700;
-            color: var(--primary-color, #007bff);
+            color: var(--text-primary, #ffffff);
+            margin-bottom: 4px;
         }
 
-        .track-card .race-count {
+        .class-stat-label {
             font-size: 12px;
             color: var(--text-secondary, #b3b3b3);
         }
 
+        /* Empty State */
         .empty-state {
-            grid-column: 1 / -1;
             text-align: center;
             padding: 60px 20px;
             background: var(--bg-secondary, #2d2d2d);
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -728,172 +660,198 @@
             margin-bottom: 30px;
         }
 
-        /* Class Cards */
-        .class-breakdown {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .class-card {
-            background: var(--bg-secondary, #2d2d2d);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-
-        .class-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-color: var(--accent-primary, #4a90e2);
-        }
-
-        .class-card h4 {
-            color: var(--accent-primary, #4a90e2);
-            margin: 0 0 15px 0;
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .class-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .drivers-count {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary, #ffffff);
-        }
-
-        .revenue-amount {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--success, #4CAF50);
-        }
-
-        /* Track Performance */
-        .track-performance {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .track-card {
-            background: var(--bg-secondary, #2d2d2d);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-
-        .track-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-color: var(--accent-primary, #4a90e2);
-        }
-
-        .track-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary, #ffffff);
-            margin-bottom: 10px;
-        }
-
-        .win-rate {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--accent-primary, #4a90e2);
-            margin-bottom: 5px;
-        }
-
-        .race-count {
-            font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        /* Registration Summary */
-        .registration-summary {
-            margin-bottom: 30px;
-        }
-
-        .registration-summary h3 {
-            color: var(--text-primary, #ffffff);
-            margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        /* Time Analytics */
-        .time-analytics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .time-card {
-            background: var(--bg-secondary, #2d2d2d);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-
-        .time-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-color: var(--accent-primary, #4a90e2);
-        }
-
-        .time-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--accent-primary, #4a90e2);
-            margin-bottom: 10px;
-        }
-
-        .time-label {
-            font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
-            font-weight: 500;
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .analytics-nav {
+                flex-direction: column;
+            }
+            
+            .event-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                min-width: 120px;
+            }
         }
     </style>
 
-    <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
+    <!-- Scripts -->
     <script src="utils/event-bus.js"></script>
     <script src="utils/ui-components.js"></script>
-    <script src="modules/statistics-manager.js"></script>
     <script src="utils/data-manager.js"></script>
-    <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
 
     <script>
         let dataManager;
         let currentEvent = null;
         let currentAnalyticsView = 'overall';
-        let selectedAnalyticsEventId = null;
+        let allEvents = [];
+        let allParticipants = [];
+        let allSeries = [];
+        let raceBrackets = [];
+
+        // Fix navigation issue - ensure links work properly
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers to navigation links to ensure they work
+            const navLinks = document.querySelectorAll('.nav-links a, .mobile-nav-links a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Let the browser handle the navigation normally
+                    if (this.href && this.href.includes('.html')) {
+                        // This will work normally via href
+                        return true;
+                    }
+                });
+            });
+            
+            // Ensure mobile navigation is properly initialized
+            try {
+                if (window.MobileNavigation && window.innerWidth <= 768) {
+                    console.log('📱 Initializing mobile navigation for analytics page');
+                    new window.MobileNavigation();
+                }
+            } catch (error) {
+                console.warn('Mobile navigation initialization failed:', error);
+            }
+        });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
             try {
                 dataManager = new DataManager();
                 await dataManager.loadFromStorage(['events', 'participants', 'series', 'race-brackets']);
-                await loadEventsForAnalytics(); // Load events for filtering
-                showAnalyticsView('overall'); // Start with overall analytics
+                
+                // Load data
+                await loadAllData();
+                
+                // Show initial view
+                showAnalyticsView('overall');
             } catch (error) {
                 console.error('Error initializing analytics:', error);
+                showError('Failed to load analytics data. Please refresh the page.');
             }
         });
+
+        // Load all data with proper participant count synchronization
+        async function loadAllData() {
+            try {
+                // Load events
+                const eventsResult = await dataManager.getEvents();
+                allEvents = Array.isArray(eventsResult) ? eventsResult : (eventsResult.events || []);
+                
+                // Load participants
+                const participantsResult = await dataManager.getParticipants();
+                allParticipants = Array.isArray(participantsResult) ? participantsResult : (participantsResult.participants || []);
+                
+                // Load series
+                allSeries = dataManager.getAllSeries() || [];
+                
+                // Load race brackets
+                raceBrackets = await loadRaceBrackets();
+                
+                // 🔧 FIX: Synchronize participant counts between events and participants
+                await synchronizeParticipantCounts();
+                
+                console.log('📊 Analytics data loaded:', {
+                    events: allEvents.length,
+                    participants: allParticipants.length,
+                    series: allSeries.length,
+                    raceBrackets: raceBrackets.length
+                });
+            } catch (error) {
+                console.error('Error loading analytics data:', error);
+                throw error;
+            }
+        }
+
+        // Synchronize participant counts to fix data inconsistency
+        async function synchronizeParticipantCounts() {
+            console.log('🔄 Synchronizing participant counts...');
+            
+            let needsUpdate = false;
+            const updatedEvents = [];
+            
+            for (const event of allEvents) {
+                // Count actual participants from participants.json
+                const actualParticipants = allParticipants.filter(p => p.eventId === event.id);
+                const actualCount = actualParticipants.length;
+                
+                // Check if there's a discrepancy
+                const originalCount = event.currentParticipants || 0;
+                const originalParticipants = event.participants || [];
+                
+                if (originalCount !== actualCount || originalParticipants.length !== actualCount) {
+                    console.warn(`⚠️ Participant count mismatch for event "${event.name}": Event shows ${originalCount}, participants.json shows ${actualCount}`);
+                    needsUpdate = true;
+                    
+                    // Update event data
+                    event.participants = actualParticipants.map(p => p.id);
+                    event.currentParticipants = actualCount;
+                    updatedEvents.push(event);
+                }
+                
+                console.log(`📊 Event "${event.name}": ${actualCount} participants`);
+            }
+            
+            // Save corrected counts back to server if needed
+            if (needsUpdate && updatedEvents.length > 0) {
+                console.log(`🔧 Updating ${updatedEvents.length} events with corrected participant counts...`);
+                try {
+                    for (const event of updatedEvents) {
+                        await updateEventParticipantCount(event);
+                    }
+                    console.log('✅ All participant counts synchronized successfully');
+                } catch (error) {
+                    console.error('❌ Error updating participant counts:', error);
+                }
+            }
+        }
+
+        // Update event participant count on server
+        async function updateEventParticipantCount(event) {
+            try {
+                const response = await fetch(`/api/events/${event.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        currentParticipants: event.currentParticipants,
+                        participants: event.participants
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to update event ${event.id}: ${response.statusText}`);
+                }
+                
+                console.log(`✅ Updated participant count for event "${event.name}": ${event.currentParticipants} participants`);
+            } catch (error) {
+                console.error(`❌ Error updating event ${event.id}:`, error);
+                throw error;
+            }
+        }
+
+        // Load race brackets from server
+        async function loadRaceBrackets() {
+            try {
+                const response = await fetch('/api/race-brackets');
+                if (response.ok) {
+                    const brackets = await response.json();
+                    return Array.isArray(brackets) ? brackets : [];
+                }
+                return [];
+            } catch (error) {
+                console.error('Error loading race brackets:', error);
+                return [];
+            }
+        }
 
         // Analytics Navigation
         function showAnalyticsView(view) {
@@ -924,32 +882,26 @@
             }
         }
 
-        // Calculate comprehensive overall statistics
+        // Load overall analytics
         async function loadOverallAnalytics() {
             const container = document.getElementById('overallAnalytics');
             
             try {
-                const allParticipants = dataManager.getParticipantsArray();
-                const allEvents = dataManager.getEventsArray();
-                const allSeries = dataManager.getAllSeries();
-                
-                // Get all races from all events
-                let allRaces = [];
-                for (const event of allEvents) {
-                    const eventRaces = await getEventRaces(event.id);
-                    allRaces = allRaces.concat(eventRaces);
-                }
-
                 // Calculate overall statistics
                 const totalRevenue = allParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
                 const totalDrivers = allParticipants.length;
                 const totalEvents = allEvents.length;
                 const totalSeries = allSeries.length;
-                const totalRaces = allRaces.length;
+                
+                // Calculate races from participants with race history
+                const totalRaces = allParticipants.reduce((sum, p) => {
+                    return sum + (p.statistics?.raceHistory?.length || 0);
+                }, 0);
+                
+                const totalWins = allParticipants.reduce((sum, p) => sum + (p.totalWins || 0), 0);
                 const avgRevenuePerEvent = totalEvents > 0 ? Math.round(totalRevenue / totalEvents) : 0;
-
-                // Time-based calculations
-                const timeStats = await calculateTimeBasedStats(allEvents, allRaces);
+                const avgRacesPerEvent = totalEvents > 0 ? Math.round(totalRaces / totalEvents) : 0;
+                const overallWinRate = totalRaces > 0 ? ((totalWins / totalRaces) * 100).toFixed(1) : 0;
 
                 container.innerHTML = `
                     <div class="analytics-section">
@@ -960,75 +912,69 @@
                         
                         <div class="stats-grid">
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
                                 <div class="stat-value">$${totalRevenue.toLocaleString()}</div>
                                 <div class="stat-label">Total Revenue</div>
-                                <div class="stat-trend trend-up">↗ All-time high</div>
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-users"></i></div>
                                 <div class="stat-value">${totalDrivers}</div>
-                                <div class="stat-label">Total Drivers</div>
-                                <div class="stat-trend trend-neutral">Across all events</div>
+                                <div class="stat-label">Total Driver Registrations</div>
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
                                 <div class="stat-value">${totalEvents}</div>
                                 <div class="stat-label">Events Hosted</div>
-                                <div class="stat-trend trend-up">Across ${totalSeries} series</div>
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-flag-checkered"></i></div>
                                 <div class="stat-value">${totalRaces}</div>
-                                <div class="stat-label">Total Races</div>
-                                <div class="stat-trend trend-neutral">Completed</div>
+                                <div class="stat-label">Total Races Completed</div>
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-chart-bar"></i></div>
-                                <div class="stat-value">$${avgRevenuePerEvent.toLocaleString()}</div>
-                                <div class="stat-label">Avg Revenue/Event</div>
-                                <div class="stat-trend trend-neutral">Per event</div>
-                            </div>
-                            
-                            <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-trophy"></i></div>
                                 <div class="stat-value">${totalSeries}</div>
                                 <div class="stat-label">Racing Series</div>
-                                <div class="stat-trend trend-up">Active</div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-value">$${avgRevenuePerEvent.toLocaleString()}</div>
+                                <div class="stat-label">Avg Revenue Per Event</div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-value">${avgRacesPerEvent}</div>
+                                <div class="stat-label">Avg Races Per Event</div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-value">${overallWinRate}%</div>
+                                <div class="stat-label">Overall Competition Rate</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="analytics-section">
                         <div class="section-header">
-                            <i class="fas fa-clock"></i>
-                            <h2>Time-Based Analytics</h2>
+                            <i class="fas fa-trophy"></i>
+                            <h2>Top Performers</h2>
                         </div>
                         
-                        <div class="time-analytics">
-                            <div class="time-card">
-                                <div class="time-value">${timeStats.raceFrequency}</div>
-                                <div class="time-label">Avg Race Frequency</div>
-                            </div>
-                            
-                            <div class="time-card">
-                                <div class="time-value">${timeStats.racesPerHour}</div>
-                                <div class="time-label">Races Per Hour</div>
-                            </div>
-                            
-                            <div class="time-card">
-                                <div class="time-value">${timeStats.avgTimeSaved}</div>
-                                <div class="time-label">Avg Time Saved</div>
-                            </div>
-                            
-                            <div class="time-card">
-                                <div class="time-value">${timeStats.avgEventDuration}</div>
-                                <div class="time-label">Avg Event Duration</div>
-                            </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Driver</th>
+                                        <th>Total Races</th>
+                                        <th>Wins</th>
+                                        <th>Win Rate</th>
+                                        <th>Events</th>
+                                        <th>Revenue Generated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${getTopPerformersRows()}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 `;
@@ -1047,174 +993,36 @@
             }
         }
 
-        // Calculate time-based statistics
-        async function calculateTimeBasedStats(events, races) {
-            if (events.length === 0) {
-                return {
-                    raceFrequency: 'N/A',
-                    racesPerHour: '0',
-                    avgTimeSaved: 'N/A',
-                    avgEventDuration: 'N/A'
-                };
-            }
+        // Get top performers rows
+        function getTopPerformersRows() {
+            const driversWithStats = allParticipants
+                .filter(p => p.totalRaces > 0)
+                .sort((a, b) => (b.winRate || 0) - (a.winRate || 0))
+                .slice(0, 10);
 
-            // Sort events by date
-            const sortedEvents = events.filter(e => e.date).sort((a, b) => new Date(a.date) - new Date(b.date));
-            
-            let raceFrequency = 'N/A';
-            let avgTimeSaved = 'N/A';
-            let racesPerHour = '0';
-            let avgEventDuration = 'N/A';
-
-            // Calculate race frequency: average time between races across all events
-            if (races.length > 0) {
-                let totalRaceFrequency = 0;
-                let eventCount = 0;
-                
-                // Group races by event
-                const racesByEvent = {};
-                races.forEach(race => {
-                    if (!racesByEvent[race.eventId]) {
-                        racesByEvent[race.eventId] = [];
-                    }
-                    racesByEvent[race.eventId].push(race);
-                });
-                
-                // Calculate race frequency for each event
-                for (const [eventId, eventRaces] of Object.entries(racesByEvent)) {
-                    if (eventRaces.length >= 2) {
-                        // Sort races by time (assuming they have timestamps)
-                        const sortedRaces = eventRaces.sort((a, b) => {
-                            const timeA = a.startTime || a.timestamp || new Date().getTime();
-                            const timeB = b.startTime || b.timestamp || new Date().getTime();
-                            return timeA - timeB;
-                        });
-                        
-                        const firstRaceTime = sortedRaces[0].startTime || sortedRaces[0].timestamp || new Date().getTime();
-                        const lastRaceTime = sortedRaces[sortedRaces.length - 1].startTime || sortedRaces[sortedRaces.length - 1].timestamp || new Date().getTime();
-                        
-                        if (lastRaceTime > firstRaceTime) {
-                            const eventDuration = lastRaceTime - firstRaceTime;
-                            const avgTimeBetweenRaces = eventDuration / (eventRaces.length - 1);
-                            totalRaceFrequency += avgTimeBetweenRaces;
-                            eventCount++;
-                        }
-                    }
-                }
-                
-                if (eventCount > 0) {
-                    const avgRaceFrequency = totalRaceFrequency / eventCount;
-                    // Convert to minutes for display
-                    const avgMinutes = Math.round(avgRaceFrequency / (1000 * 60));
-                    raceFrequency = avgMinutes < 60 ? `${avgMinutes}m` : `${Math.round(avgMinutes / 60)}h`;
-                }
-            }
-
-            // Calculate average time saved in hours (based on 7 races/hour baseline)
-            let totalTimeSaved = 0;
-            let timeSavedCount = 0;
-            
-            for (const event of events) {
-                const eventRaces = races.filter(r => r.eventId === event.id);
-                if (eventRaces.length >= 2) {
-                    const sortedRaces = eventRaces.sort((a, b) => {
-                        const timeA = a.startTime || a.timestamp || new Date().getTime();
-                        const timeB = b.startTime || b.timestamp || new Date().getTime();
-                        return timeA - timeB;
-                    });
-                    
-                    const firstRaceTime = sortedRaces[0].startTime || sortedRaces[0].timestamp || new Date().getTime();
-                    const lastRaceTime = sortedRaces[sortedRaces.length - 1].startTime || sortedRaces[sortedRaces.length - 1].timestamp || new Date().getTime();
-                    
-                    if (lastRaceTime > firstRaceTime) {
-                        const eventDurationHours = (lastRaceTime - firstRaceTime) / (1000 * 60 * 60);
-                        const actualRacesPerHour = eventRaces.length / eventDurationHours;
-                        
-                        // Calculate time saved compared to 7 races/hour baseline
-                        if (actualRacesPerHour > 7) {
-                            const baselineTime = eventRaces.length / 7; // hours it would take at baseline
-                            const timeSaved = baselineTime - eventDurationHours;
-                            if (timeSaved > 0) {
-                                totalTimeSaved += timeSaved;
-                                timeSavedCount++;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (timeSavedCount > 0) {
-                const avgTimeSavedHours = totalTimeSaved / timeSavedCount;
-                avgTimeSaved = `${avgTimeSavedHours.toFixed(1)}h`;
-            } else {
-                avgTimeSaved = '0h';
-            }
-
-            // Calculate average event duration in hours
-            let totalEventDuration = 0;
-            let durationCount = 0;
-            
-            for (const event of events) {
-                const eventRaces = races.filter(r => r.eventId === event.id);
-                if (eventRaces.length >= 2) {
-                    const sortedRaces = eventRaces.sort((a, b) => {
-                        const timeA = a.startTime || a.timestamp || new Date().getTime();
-                        const timeB = b.startTime || b.timestamp || new Date().getTime();
-                        return timeA - timeB;
-                    });
-                    
-                    const firstRaceTime = sortedRaces[0].startTime || sortedRaces[0].timestamp || new Date().getTime();
-                    const lastRaceTime = sortedRaces[sortedRaces.length - 1].startTime || sortedRaces[sortedRaces.length - 1].timestamp || new Date().getTime();
-                    
-                    if (lastRaceTime > firstRaceTime) {
-                        const duration = lastRaceTime - firstRaceTime;
-                        totalEventDuration += duration;
-                        durationCount++;
-                    }
-                }
-            }
-            
-            if (durationCount > 0) {
-                const avgDurationHours = totalEventDuration / (durationCount * 1000 * 60 * 60);
-                avgEventDuration = `${avgDurationHours.toFixed(1)}h`;
-            } else {
-                avgEventDuration = 'N/A';
-            }
-
-            // Calculate races per hour (overall average)
-            if (races.length > 0 && durationCount > 0) {
-                const totalHours = totalEventDuration / (1000 * 60 * 60);
-                racesPerHour = (races.length / totalHours).toFixed(1);
-            }
-
-            return {
-                raceFrequency,
-                racesPerHour,
-                avgTimeSaved,
-                avgEventDuration
-            };
+            return driversWithStats.map(driver => `
+                <tr>
+                    <td><strong>${driver.name}</strong></td>
+                    <td>${driver.totalRaces || 0}</td>
+                    <td>${driver.totalWins || 0}</td>
+                    <td>${(driver.winRate || 0).toFixed(1)}%</td>
+                    <td>${driver.eventsParticipated || 1}</td>
+                    <td>$${(driver.totalFee || 0).toLocaleString()}</td>
+                </tr>
+            `).join('');
         }
 
         // Load series analytics
         async function loadSeriesAnalytics() {
             const container = document.getElementById('seriesAnalytics');
-            const allSeries = dataManager.getAllSeries();
-            const allEvents = dataManager.getEventsArray();
-            const allParticipants = dataManager.getParticipantsArray();
-
+            
             if (allSeries.length === 0) {
                 container.innerHTML = `
-                    <div class="analytics-section">
-                        <div class="section-header">
-                            <i class="fas fa-trophy"></i>
-                            <h2>Series Analytics</h2>
-                        </div>
-                        <div class="empty-state">
-                            <div class="empty-icon"><i class="fas fa-trophy"></i></div>
-                            <h3>No Racing Series Found</h3>
-                            <p>Create racing series to view detailed series analytics.</p>
-                            <a href="series.html" class="btn btn-primary">Create Series</a>
-                        </div>
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-trophy"></i></div>
+                        <h3>No Racing Series Found</h3>
+                        <p>Create racing series to view detailed series analytics.</p>
+                        <a href="series.html" class="btn btn-primary">Create Series</a>
                     </div>
                 `;
                 return;
@@ -1227,12 +1035,9 @@
                     seriesEvents.some(e => e.id === p.eventId)
                 );
                 const seriesRevenue = seriesParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
-                
-                let totalRaces = 0;
-                for (const event of seriesEvents) {
-                    const eventRaces = await getEventRaces(event.id);
-                    totalRaces += eventRaces.length;
-                }
+                const totalRaces = seriesParticipants.reduce((sum, p) => {
+                    return sum + (p.statistics?.raceHistory?.length || 0);
+                }, 0);
 
                 seriesCards += `
                     <div class="analytics-section">
@@ -1243,27 +1048,23 @@
                         
                         <div class="stats-grid">
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
                                 <div class="stat-value">${seriesEvents.length}</div>
                                 <div class="stat-label">Events</div>
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-users"></i></div>
                                 <div class="stat-value">${seriesParticipants.length}</div>
                                 <div class="stat-label">Participants</div>
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
                                 <div class="stat-value">$${seriesRevenue.toLocaleString()}</div>
                                 <div class="stat-label">Revenue</div>
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-flag-checkered"></i></div>
                                 <div class="stat-value">${totalRaces}</div>
-                                <div class="stat-label">Races</div>
+                                <div class="stat-label">Total Races</div>
                             </div>
                         </div>
                     </div>
@@ -1273,62 +1074,11 @@
             container.innerHTML = seriesCards;
         }
 
-        // Refresh data function
-        async function refreshData() {
-            try {
-                // Reload data from server
-                await dataManager.loadFromStorage(['events', 'participants', 'series', 'race-brackets']);
-                
-                // Refresh current view
-                showAnalyticsView(currentAnalyticsView);
-                
-                // Show success message
-                showToast('Analytics data refreshed successfully!', 'success');
-            } catch (error) {
-                console.error('Error refreshing analytics data:', error);
-                showToast('Error refreshing data. Please try again.', 'error');
-            }
-        }
-
-        // Toast notification function
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem 1.5rem;
-                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
-                color: white;
-                border-radius: 4px;
-                z-index: 10000;
-                animation: slideIn 0.3s ease;
-            `;
-            toast.textContent = message;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        document.body.removeChild(toast);
-                    }
-                }, 300);
-            }, 3000);
-        }
-
-        // Load event selection grid
+        // Load event grid
         async function loadEventGrid() {
-            const events = dataManager.getEventsArray();
-            const participants = dataManager.getParticipantsArray();
             const container = document.getElementById('eventGrid');
             
-            console.log('🎯 Loading event grid - found events:', events.length);
-            console.log('Events:', events);
-            
-            if (events.length === 0) {
+            if (allEvents.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
@@ -1340,114 +1090,63 @@
                 return;
             }
 
-            container.innerHTML = '';
-            
-            // Process events sequentially to handle async operations
-            for (const event of events) {
-                const eventParticipants = participants.filter(p => p.eventId === event.id);
-                const eventRevenue = calculateEventRevenue(event, eventParticipants);
-                const races = await getEventRaces(event.id);
-                
-                const card = document.createElement('div');
-                card.className = 'event-card';
-                card.onclick = async () => await selectEvent(event.id);
-                
-                card.innerHTML = `
-                    <h3>${event.name}</h3>
-                    <div class="event-details">
-                        <div>${event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}</div>
-                        <div>${event.location || 'Location TBD'}</div>
-                        <div>${event.series || 'No Series'}</div>
-                    </div>
-                    <div class="event-stats">
-                        <div class="stat">
-                            <div class="stat-value">$${eventRevenue}</div>
-                            <div class="stat-label">Revenue</div>
+            // Sort events by date (newest first)
+            const sortedEvents = allEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const eventCards = sortedEvents.map(event => {
+                const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
+                const eventRevenue = eventParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
+                const eventRaces = eventParticipants.reduce((sum, p) => {
+                    return sum + (p.statistics?.raceHistory?.length || 0);
+                }, 0);
+
+                return `
+                    <div class="event-card" onclick="selectEvent('${event.id}')">
+                        <h3>${event.name}</h3>
+                        <div class="event-details">
+                            <div><i class="fas fa-calendar"></i> ${event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}</div>
+                            <div><i class="fas fa-map-marker-alt"></i> ${event.location || 'Location TBD'}</div>
+                            <div><i class="fas fa-users"></i> ${eventParticipants.length} drivers registered</div>
                         </div>
-                        <div class="stat">
-                            <div class="stat-value">${eventParticipants.length}</div>
-                            <div class="stat-label">Drivers</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value">${races.length}</div>
-                            <div class="stat-label">Races</div>
+                        <div class="event-preview-stats">
+                            <div class="stat">
+                                <div class="stat-value">$${eventRevenue}</div>
+                                <div class="stat-label">Revenue</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">${eventParticipants.length}</div>
+                                <div class="stat-label">Drivers</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">${eventRaces}</div>
+                                <div class="stat-label">Races</div>
+                            </div>
                         </div>
                     </div>
                 `;
-                
-                container.appendChild(card);
-            }
+            }).join('');
+
+            container.innerHTML = eventCards;
         }
 
-        // Populate event select dropdown
-        function populateEventSelect() {
-            const events = dataManager.getEventsArray();
-            const select = document.getElementById('eventSelect');
-            
-            console.log('🔍 Populating event select - found events:', events.length);
-            console.log('Events:', events);
-            
-            select.innerHTML = '<option value="">Select an Event</option>';
-            
-            events.forEach(event => {
-                const option = document.createElement('option');
-                option.value = event.id;
-                option.textContent = `${event.name} (${event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'})`;
-                select.appendChild(option);
-            });
-        }
-
-        // Select event from dropdown
-        async function loadEventAnalytics() {
-            const eventId = document.getElementById('eventSelect').value;
-            if (eventId) {
-                await selectEvent(eventId);
-            }
-        }
-
-        // Select and load event analytics
+        // Select event for detailed analytics
         async function selectEvent(eventId) {
-            const events = dataManager.getEventsArray();
-            currentEvent = events.find(e => e.id === eventId);
-            
+            currentEvent = allEvents.find(e => e.id === eventId);
             if (!currentEvent) return;
-            
-            // Update UI
+
+            // Show event analytics, hide grid
             document.getElementById('eventGrid').style.display = 'none';
             document.getElementById('eventAnalytics').style.display = 'block';
-            
-            // Only set eventSelect value if the element exists
-            const eventSelect = document.getElementById('eventSelect');
-            if (eventSelect) {
-                eventSelect.value = eventId;
-            }
-            
-            // Load analytics
-            loadEventHeader();
-            await loadEventStats();
-            await loadRegistrationsTab();
-            await loadTracksTab();
-            await loadClassesTab();
-            await loadDriversTab();
+
+            // Load event data
+            await loadEventAnalytics();
         }
 
-        // Clear event selection
-        function clearEventSelection() {
-            currentEvent = null;
-            document.getElementById('eventGrid').style.display = 'grid';
-            document.getElementById('eventAnalytics').style.display = 'none';
-            
-            // Only set eventSelect value if the element exists
-            const eventSelect = document.getElementById('eventSelect');
-            if (eventSelect) {
-                eventSelect.value = '';
-            }
-            
-            showTab('registrations');
-        }
+        // Load detailed event analytics
+        async function loadEventAnalytics() {
+            if (!currentEvent) return;
 
-        // Load event header info
-        function loadEventHeader() {
+            // Update header
             document.getElementById('eventName').textContent = currentEvent.name;
             
             const metaContainer = document.querySelector('.event-meta');
@@ -1464,569 +1163,216 @@
                 locationSpan.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${currentEvent.location}`;
                 metaContainer.appendChild(locationSpan);
             }
+
+            // Get event data
+            const eventParticipants = allParticipants.filter(p => p.eventId === currentEvent.id);
+            const eventRevenue = eventParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
+            const eventRaces = eventParticipants.reduce((sum, p) => {
+                return sum + (p.statistics?.raceHistory?.length || 0);
+            }, 0);
             
-            if (currentEvent.series) {
-                const seriesSpan = document.createElement('span');
-                seriesSpan.innerHTML = `<i class="fas fa-trophy"></i> ${currentEvent.series}`;
-                metaContainer.appendChild(seriesSpan);
-            }
+            // Get unique classes
+            const eventClasses = new Set();
+            eventParticipants.forEach(p => {
+                if (p.selectedClasses) {
+                    p.selectedClasses.forEach(c => eventClasses.add(c));
+                }
+            });
+
+            // Update stats
+            document.getElementById('eventRevenue').textContent = `$${eventRevenue.toLocaleString()}`;
+            document.getElementById('eventRegistrations').textContent = eventParticipants.length;
+            document.getElementById('eventDrivers').textContent = eventParticipants.length;
+            document.getElementById('eventRaces').textContent = eventRaces;
+            document.getElementById('eventClasses').textContent = eventClasses.size;
+            document.getElementById('eventCompletion').textContent = eventRaces > 0 ? '100%' : '0%';
+
+            // Load tabs
+            loadEventTabs();
         }
 
-        // Load main event statistics
-        async function loadEventStats() {
-            const participants = dataManager.getParticipantsArray().filter(p => p.eventId === currentEvent.id);
-            const races = await getEventRaces(currentEvent.id);
-            
-            // Calculate stats
-            const totalRevenue = calculateEventRevenue(currentEvent, participants);
-            const totalRegistrations = calculateTotalRegistrations(participants);
-            const uniqueDrivers = participants.length;
-            const totalRaces = races.length;
-            const avgFeePerDriver = uniqueDrivers > 0 ? (totalRevenue / uniqueDrivers).toFixed(0) : 0;
-            const completionRate = races.length > 0 ? '100%' : '0%';
-            
-            // Update UI
-            document.getElementById('totalRevenue').textContent = `$${totalRevenue}`;
-            document.getElementById('totalRegistrations').textContent = totalRegistrations;
-            document.getElementById('uniqueDrivers').textContent = uniqueDrivers;
-            document.getElementById('totalRaces').textContent = totalRaces;
-            document.getElementById('avgFeePerDriver').textContent = `$${avgFeePerDriver}`;
-            document.getElementById('completionRate').textContent = completionRate;
+        // Load event tabs
+        function loadEventTabs() {
+            loadSummaryTab();
+            loadDriversTab();
+            loadClassesTab();
+            loadRacesTab();
         }
 
-        // Load registrations tab
-        async function loadRegistrationsTab() {
-            const participants = dataManager.getParticipantsArray().filter(p => p.eventId === currentEvent.id);
+        // Load summary tab
+        function loadSummaryTab() {
+            const container = document.getElementById('eventSummaryContent');
+            const eventParticipants = allParticipants.filter(p => p.eventId === currentEvent.id);
             
-            // Load class breakdown
-            loadClassBreakdown(participants);
-            
-            // Load drivers table
-            await loadDriversTable(participants);
-        }
-
-        // Load class breakdown
-        function loadClassBreakdown(participants) {
-            const container = document.getElementById('classBreakdown');
-            const classStats = {};
-            
-            // Calculate class statistics from participant data
-            participants.forEach(participant => {
-                if (participant.selectedClasses) {
-                    participant.selectedClasses.forEach(className => {
-                        if (!classStats[className]) {
-                            classStats[className] = {
-                                participants: 0,
-                                revenue: 0
-                            };
+            // Group by class
+            const classSummary = {};
+            eventParticipants.forEach(p => {
+                if (p.selectedClasses) {
+                    p.selectedClasses.forEach(className => {
+                        if (!classSummary[className]) {
+                            classSummary[className] = { count: 0, revenue: 0 };
                         }
-                        classStats[className].participants++;
-                        classStats[className].revenue += participant.totalFee || 0;
+                        classSummary[className].count++;
+                        classSummary[className].revenue += p.totalFee || 0;
                     });
                 }
             });
+
+            const summaryHtml = `
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <h4>Event Status</h4>
+                        <p><strong>Status:</strong> ${currentEvent.status || 'Active'}</p>
+                        <p><strong>Registration:</strong> ${currentEvent.registrationOpen ? 'Open' : 'Closed'}</p>
+                        <p><strong>Elimination Type:</strong> ${currentEvent.eliminationType || 'Single'}</p>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <h4>Participation</h4>
+                        <p><strong>Registered:</strong> ${eventParticipants.length} drivers</p>
+                        <p><strong>Max Capacity:</strong> ${currentEvent.maxParticipants || 'Unlimited'}</p>
+                        <p><strong>Classes:</strong> ${Object.keys(classSummary).length}</p>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <h4>Financial</h4>
+                        <p><strong>Total Revenue:</strong> $${eventParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0).toLocaleString()}</p>
+                        <p><strong>Avg per Driver:</strong> $${eventParticipants.length > 0 ? Math.round(eventParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0) / eventParticipants.length) : 0}</p>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = summaryHtml;
+        }
+
+        // Load drivers tab
+        function loadDriversTab() {
+            const tbody = document.querySelector('#driversStatsTable tbody');
+            const eventParticipants = allParticipants.filter(p => p.eventId === currentEvent.id);
             
-            container.innerHTML = '';
+            const driverRows = eventParticipants.map(participant => {
+                const classes = participant.selectedClasses ? participant.selectedClasses.join(', ') : 'Unknown';
+                const races = participant.totalRaces || 0;
+                const wins = participant.totalWins || 0;
+                const winRate = races > 0 ? ((wins / races) * 100).toFixed(1) : '0.0';
+                const avgPosition = participant.avgPosition || 0;
+                
+                return `
+                    <tr>
+                        <td><strong>${participant.name}</strong></td>
+                        <td>${classes}</td>
+                        <td>${races}</td>
+                        <td>${wins}</td>
+                        <td>${winRate}%</td>
+                        <td>${avgPosition > 0 ? avgPosition.toFixed(1) : 'N/A'}</td>
+                        <td>$${(participant.totalFee || 0).toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = driverRows;
+        }
+
+        // Load classes tab
+        function loadClassesTab() {
+            const container = document.getElementById('classBreakdownGrid');
+            const eventParticipants = allParticipants.filter(p => p.eventId === currentEvent.id);
             
-            Object.entries(classStats).forEach(([className, stats]) => {
-                const avgFee = stats.participants > 0 ? Math.round(stats.revenue / stats.participants) : 0;
-                const card = document.createElement('div');
-                card.className = 'class-card';
-                card.innerHTML = `
+            // Group by class
+            const classData = {};
+            eventParticipants.forEach(p => {
+                if (p.selectedClasses) {
+                    p.selectedClasses.forEach(className => {
+                        if (!classData[className]) {
+                            classData[className] = { participants: [], revenue: 0, races: 0, wins: 0 };
+                        }
+                        classData[className].participants.push(p);
+                        classData[className].revenue += p.totalFee || 0;
+                        if (p.statistics?.raceHistory) {
+                            const classRaces = p.statistics.raceHistory.filter(r => r.className === className);
+                            classData[className].races += classRaces.length;
+                            classData[className].wins += classRaces.filter(r => r.position === 1).length;
+                        }
+                    });
+                }
+            });
+
+            const classCards = Object.entries(classData).map(([className, data]) => `
+                <div class="class-breakdown-card">
                     <h4>${className}</h4>
                     <div class="class-stats">
-                        <div>
-                            <div class="drivers-count">${stats.participants}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">drivers</div>
+                        <div class="class-stat">
+                            <div class="class-stat-value">${data.participants.length}</div>
+                            <div class="class-stat-label">Drivers</div>
                         </div>
-                        <div>
-                            <div class="revenue-amount">$${stats.revenue}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">@$${avgFee}</div>
+                        <div class="class-stat">
+                            <div class="class-stat-value">$${data.revenue}</div>
+                            <div class="class-stat-label">Revenue</div>
+                        </div>
+                        <div class="class-stat">
+                            <div class="class-stat-value">${data.races}</div>
+                            <div class="class-stat-label">Races</div>
+                        </div>
+                        <div class="class-stat">
+                            <div class="class-stat-value">${data.wins}</div>
+                            <div class="class-stat-label">Wins</div>
                         </div>
                     </div>
-                `;
-                container.appendChild(card);
-            });
+                </div>
+            `).join('');
+
+            container.innerHTML = classCards;
         }
 
-        // Load drivers table
-        async function loadDriversTable(participants) {
-            const tbody = document.querySelector('#driversTable tbody');
-            const races = await getEventRaces(currentEvent.id);
+        // Load races tab
+        function loadRacesTab() {
+            const tbody = document.querySelector('#raceResultsTable tbody');
+            const eventParticipants = allParticipants.filter(p => p.eventId === currentEvent.id);
             
-            tbody.innerHTML = '';
-            
-            participants.forEach(participant => {
-                const participantRaces = races.filter(race => 
-                    race.results && race.results.some(r => r.participantId === participant.id)
-                );
-                
-                const wins = participantRaces.filter(race => 
-                    race.results.some(r => r.participantId === participant.id && r.position === 1)
-                ).length;
-                
-                const winRate = participantRaces.length > 0 ? ((wins / participantRaces.length) * 100).toFixed(1) : '0.0';
-                
-                const classes = participant.selectedClasses ? 
-                    participant.selectedClasses.join(', ') : 
-                    'Unknown';
-                
-                const totalFee = calculateParticipantFee(participant);
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${participant.name}</td>
-                    <td>${classes}</td>
-                    <td>$${totalFee}</td>
-                    <td>${participantRaces.length}</td>
-                    <td>${wins}</td>
-                    <td>${winRate}%</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Helper functions
-        function calculateEventRevenue(event, participants) {
-            let revenue = 0;
-            // Use the totalFee from participants since events may not have classSettings configured
-            participants.forEach(participant => {
-                revenue += participant.totalFee || 0;
-            });
-            return revenue;
-        }
-
-        function calculateTotalRegistrations(participants) {
-            return participants.reduce((total, participant) => {
-                return total + (participant.selectedClasses ? participant.selectedClasses.length : 1);
-            }, 0);
-        }
-
-        function calculateParticipantFee(participant) {
-            // Use the pre-calculated totalFee from the participant data
-            return participant.totalFee || 0;
-        }
-
-        async function getEventRaces(eventId) {
+            // Collect all races from participants
             const races = [];
-            
-            try {
-                console.log(`🏁 Loading races for event: ${eventId}`);
-                
-                // First, try to get race bracket data from DataManager
-                const bracket = dataManager.getRaceBracket ? dataManager.getRaceBracket(eventId) : null;
-                
-                if (bracket) {
-                    console.log('🏁 Found race bracket for event:', eventId);
-                    console.log('🔍 Bracket structure:', bracket);
-                    
-                    // Check if it's an array (from race_brackets.json)
-                    if (Array.isArray(bracket)) {
-                        bracket.forEach(bracketItem => {
-                            if (bracketItem.eventId === eventId) {
-                                console.log('📋 Processing bracket item:', bracketItem);
-                                extractRacesFromBracket(bracketItem, races, eventId);
-                            }
-                        });
-                    } else if (bracket.eventId === eventId || !bracket.eventId) {
-                        console.log('📋 Processing single bracket:', bracket);
-                        extractRacesFromBracket(bracket, races, eventId);
-                    }
-                } else {
-                    console.log('⚠️ No race bracket found in cache for event:', eventId);
-                    
-                    // Fallback: try to access race brackets directly from data
-                    const allBrackets = dataManager.data && dataManager.data.raceBrackets;
-                    if (allBrackets && Object.keys(allBrackets).length > 0) {
-                        console.log('🔍 Checking all brackets:', Object.keys(allBrackets));
-                        Object.values(allBrackets).forEach(bracketData => {
-                            if (bracketData && bracketData.eventId === eventId) {
-                                console.log('📋 Found bracket in data:', bracketData);
-                                extractRacesFromBracket(bracketData, races, eventId);
-                            }
-                        });
-                    }
-                    
-                    // Additional fallback: Try to access raw server data
-                    console.log('🔍 Trying direct server data access...');
-                    await fetchRaceBracketsDirectly(eventId, races);
-                }
-                
-                // If still no races found, try to create races from participant data
-                if (races.length === 0) {
-                    console.log('🔍 No races found in brackets, checking participant data...');
-                    await createRacesFromParticipants(eventId, races);
-                }
-                
-            } catch (error) {
-                console.error('Error loading race data:', error);
-            }
-            
-            console.log(`🏁 Found ${races.length} completed races for event ${eventId}`);
-            return races;
-        }
-
-        async function fetchRaceBracketsDirectly(eventId, races) {
-            try {
-                const response = await fetch('/api/race-brackets');
-                if (response.ok) {
-                    const brackets = await response.json();
-                    console.log('🔍 Direct server brackets:', brackets);
-                    
-                    if (Array.isArray(brackets)) {
-                        brackets.forEach(bracket => {
-                            if (bracket.eventId === eventId) {
-                                console.log('📋 Found matching bracket from server:', bracket);
-                                extractRacesFromBracket(bracket, races, eventId);
-                            }
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to fetch brackets directly:', error);
-            }
-        }
-
-        async function createRacesFromParticipants(eventId, races) {
-            try {
-                const participantsResult = await dataManager.getParticipants();
-                const participants = participantsResult.participants.filter(p => p.eventId === eventId);
-                
-                if (participants.length === 0) {
-                    console.log('⚠️ No participants found for event:', eventId);
-                    return;
-                }
-                
-                console.log(`🔍 Creating races from ${participants.length} participants for event ${eventId}`);
-                
-                // Group participants by class
-                const classGroups = {};
-                participants.forEach(participant => {
-                    if (participant.selectedClasses) {
-                        participant.selectedClasses.forEach(className => {
-                            if (!classGroups[className]) {
-                                classGroups[className] = [];
-                            }
-                            classGroups[className].push(participant);
-                        });
-                    }
-                });
-                
-                                        // Create races for each class
-                        Object.entries(classGroups).forEach(([className, classParticipants]) => {
-                            if (classParticipants.length >= 2) {
-                                // Create a simple race with all participants
-                                const baseTime = new Date().getTime();
-                                const race = {
-                                    eventId: eventId,
-                                    className: className,
-                                    round: 'Main Event',
-                                    startTime: baseTime,
-                                    timestamp: baseTime,
-                                    participants: classParticipants.map(p => ({
-                                        participantId: p.id,
-                                        name: p.name
-                                    })),
-                                    results: classParticipants.map((p, index) => ({
-                                        participantId: p.id,
-                                        position: index + 1,
-                                        lane: (index % 2) + 1, // Simple lane assignment
-                                        time: null,
-                                        reactionTime: null
-                                    }))
-                                };
-                                
-                                races.push(race);
-                                console.log(`✅ Created race for class ${className} with ${classParticipants.length} participants`);
-                            }
-                        });
-                
-            } catch (error) {
-                console.error('Error creating races from participants:', error);
-            }
-        }
-
-        function extractRacesFromBracket(bracket, races, eventId) {
-            try {
-                // Handle different possible structures
-                if (bracket.classes) {
-                    // Structure with classes containing race data
-                    Object.entries(bracket.classes).forEach(([className, classData]) => {
-                        console.log(`🎯 Processing class ${className}:`, classData);
+            eventParticipants.forEach(p => {
+                if (p.statistics?.raceHistory) {
+                    p.statistics.raceHistory.forEach(race => {
+                        const existing = races.find(r => 
+                            r.className === race.className && 
+                            r.round === race.round && 
+                            r.heatId === race.heatId
+                        );
                         
-                        if (classData.brackets) {
-                            // Look for completed races in upper/lower brackets
-                            ['upper', 'lower'].forEach(bracketType => {
-                                const bracketData = classData.brackets[bracketType];
-                                if (bracketData && bracketData.rounds) {
-                                    console.log(`🏆 Processing ${bracketType} bracket for ${className}`);
-                                    bracketData.rounds.forEach((round, roundIndex) => {
-                                        if (round.matches) {
-                                            round.matches.forEach((match, matchIndex) => {
-                                                if (match.results && match.results.length > 0) {
-                                                    console.log(`✅ Found race result in ${className} ${bracketType} round ${roundIndex} match ${matchIndex}`);
-                                                    races.push({
-                                                        eventId: eventId,
-                                                        className: className,
-                                                        bracket: bracketType,
-                                                        round: round.name || `Round ${roundIndex + 1}`,
-                                                        startTime: match.startTime || new Date().getTime(),
-                                                        timestamp: match.timestamp || new Date().getTime(),
-                                                        participants: match.participants,
-                                                        results: match.results
-                                                    });
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
+                        if (!existing) {
+                            races.push({
+                                className: race.className,
+                                round: race.round,
+                                heatId: race.heatId,
+                                participants: [p.name],
+                                winner: race.position === 1 ? p.name : null
                             });
-                        }
-                        
-                        // Also check if there are direct rounds in the class
-                        if (classData.rounds) {
-                            console.log(`🎯 Processing direct rounds for ${className}`);
-                            classData.rounds.forEach((round, roundIndex) => {
-                                if (round.matches) {
-                                    round.matches.forEach((match, matchIndex) => {
-                                        if (match.results && match.results.length > 0) {
-                                            console.log(`✅ Found race result in ${className} round ${roundIndex} match ${matchIndex}`);
-                                                                                                races.push({
-                                                        eventId: eventId,
-                                                        className: className,
-                                                        round: round.name || `Round ${roundIndex + 1}`,
-                                                        startTime: match.startTime || new Date().getTime(),
-                                                        timestamp: match.timestamp || new Date().getTime(),
-                                                        participants: match.participants,
-                                                        results: match.results
-                                                    });
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                } else if (bracket.rounds) {
-                    // Direct rounds structure
-                    console.log('🎯 Processing direct rounds structure');
-                    bracket.rounds.forEach((round, roundIndex) => {
-                        if (round.matches) {
-                            round.matches.forEach((match, matchIndex) => {
-                                if (match.results && match.results.length > 0) {
-                                    console.log(`✅ Found race result in round ${roundIndex} match ${matchIndex}`);
-                                    races.push({
-                                        eventId: eventId,
-                                        round: round.name || `Round ${roundIndex + 1}`,
-                                        startTime: match.startTime || new Date().getTime(),
-                                        timestamp: match.timestamp || new Date().getTime(),
-                                        participants: match.participants,
-                                        results: match.results
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error('Error extracting races from bracket:', error);
-            }
-        }
-
-        // Load remaining tab functions...
-        async function loadTracksTab() {
-            const races = await getEventRaces(currentEvent.id);
-            loadTrackPerformance(races);
-            await loadTrackWinsTable(races);
-        }
-
-        function loadTrackPerformance(races) {
-            const container = document.getElementById('trackPerformance');
-            const trackStats = {};
-            
-            races.forEach(race => {
-                if (race.results) {
-                    race.results.forEach(result => {
-                        const track = result.lane || result.track || 'Unknown';
-                        if (!trackStats[track]) {
-                            trackStats[track] = { races: 0, wins: 0 };
-                        }
-                        trackStats[track].races++;
-                        if (result.position === 1) {
-                            trackStats[track].wins++;
+                        } else {
+                            existing.participants.push(p.name);
+                            if (race.position === 1) {
+                                existing.winner = p.name;
+                            }
                         }
                     });
                 }
             });
-            
-            container.innerHTML = '';
-            
-            Object.entries(trackStats)
-                .sort(([,a], [,b]) => b.races - a.races)
-                .forEach(([track, stats]) => {
-                    const winRate = stats.races > 0 ? ((stats.wins / stats.races) * 100).toFixed(1) : '0.0';
-                    
-                    const card = document.createElement('div');
-                    card.className = 'track-card';
-                    card.innerHTML = `
-                        <div class="track-name">Track ${track}</div>
-                        <div class="win-rate">${winRate}%</div>
-                        <div class="race-count">${stats.races} races</div>
-                    `;
-                    container.appendChild(card);
-                });
-        }
 
-        async function loadTrackWinsTable(races) {
-            const tbody = document.querySelector('#trackWinsTable tbody');
-            const participantsResult = await dataManager.getParticipants();
-            const participants = participantsResult.participants;
-            const trackStats = {};
-            
-            races.forEach(race => {
-                if (race.results) {
-                    race.results.forEach(result => {
-                        const track = result.lane || result.track || 'Unknown';
-                        if (!trackStats[track]) {
-                            trackStats[track] = { 
-                                races: 0, 
-                                winners: new Set(),
-                                winCounts: {}
-                            };
-                        }
-                        trackStats[track].races++;
-                        
-                        if (result.position === 1) {
-                            trackStats[track].winners.add(result.participantId);
-                            trackStats[track].winCounts[result.participantId] = 
-                                (trackStats[track].winCounts[result.participantId] || 0) + 1;
-                        }
-                    });
-                }
-            });
-            
-            tbody.innerHTML = '';
-            
-            Object.entries(trackStats).forEach(([track, stats]) => {
-                const totalWins = Object.values(stats.winCounts).reduce((sum, count) => sum + count, 0);
-                const topWinner = Object.entries(stats.winCounts)
-                    .sort(([,a], [,b]) => b - a)[0];
-                
-                const topWinnerName = topWinner ? 
-                    participants.find(p => p.id === topWinner[0])?.name || 'Unknown' : 
-                    'None';
-                
-                const winPercentage = stats.races > 0 ? ((totalWins / stats.races) * 100).toFixed(1) : '0.0';
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>Track ${track}</td>
-                    <td>${stats.races}</td>
-                    <td>${stats.winners.size}</td>
-                    <td>${topWinnerName} (${topWinner ? topWinner[1] : 0})</td>
-                    <td>${winPercentage}%</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
+            const raceRows = races.map(race => `
+                <tr>
+                    <td><strong>${race.className}</strong></td>
+                    <td>Round ${race.round}</td>
+                    <td>${race.winner || 'TBD'}</td>
+                    <td>${race.participants.length}</td>
+                    <td><span class="status-completed">Completed</span></td>
+                </tr>
+            `).join('');
 
-        async function loadClassesTab() {
-            const participantsResult = await dataManager.getParticipants();
-            const participants = participantsResult.participants.filter(p => p.eventId === currentEvent.id);
-            const races = await getEventRaces(currentEvent.id);
-            const tbody = document.querySelector('#classAnalysisTable tbody');
-            const classStats = {};
-            
-            // Build class statistics from participant data
-            participants.forEach(participant => {
-                if (participant.selectedClasses) {
-                    participant.selectedClasses.forEach(className => {
-                        if (!classStats[className]) {
-                            classStats[className] = {
-                                participants: 0,
-                                revenue: 0
-                            };
-                        }
-                        classStats[className].participants++;
-                        classStats[className].revenue += participant.totalFee || 0;
-                    });
-                }
-            });
-            
-            tbody.innerHTML = '';
-            
-            Object.entries(classStats).forEach(([className, stats]) => {
-                const avgFee = stats.participants > 0 ? Math.round(stats.revenue / stats.participants) : 0;
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${className}</td>
-                    <td>${stats.participants}</td>
-                    <td>$${stats.revenue}</td>
-                    <td>$${avgFee}</td>
-                    <td>${races.length}</td>
-                    <td>TBD</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        async function loadDriversTab() {
-            const participantsResult = await dataManager.getParticipants();
-            const participants = participantsResult.participants.filter(p => p.eventId === currentEvent.id);
-            const races = await getEventRaces(currentEvent.id);
-            const tbody = document.querySelector('#driverRankingsTable tbody');
-            
-            const driverStats = participants.map((participant, index) => {
-                const participantRaces = races.filter(race => 
-                    race.results && race.results.some(r => r.participantId === participant.id)
-                );
-                
-                const wins = participantRaces.filter(race => 
-                    race.results.some(r => r.participantId === participant.id && r.position === 1)
-                ).length;
-                
-                const podiums = participantRaces.filter(race => 
-                    race.results.some(r => r.participantId === participant.id && r.position <= 3)
-                ).length;
-                
-                const winRate = participantRaces.length > 0 ? ((wins / participantRaces.length) * 100).toFixed(1) : '0.0';
-                
-                const classes = participant.selectedClasses ? 
-                    participant.selectedClasses.join(', ') : 
-                    'Unknown';
-                
-                return {
-                    name: participant.name,
-                    classes,
-                    races: participantRaces.length,
-                    wins,
-                    podiums,
-                    winRate: parseFloat(winRate)
-                };
-            });
-            
-            driverStats.sort((a, b) => b.winRate - a.winRate || b.wins - a.wins);
-            
-            tbody.innerHTML = '';
-            
-            driverStats.forEach((driver, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${driver.name}</td>
-                    <td>${driver.classes}</td>
-                    <td>${driver.races}</td>
-                    <td>${driver.wins}</td>
-                    <td>${driver.podiums}</td>
-                    <td>${driver.winRate}%</td>
-                    <td>--</td>
-                `;
-                tbody.appendChild(row);
-            });
+            tbody.innerHTML = raceRows;
         }
 
         // Tab management
-        function showTab(tabName, event) {
+        function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
@@ -2036,129 +1382,132 @@
             });
             
             document.getElementById(tabName + 'Tab').classList.add('active');
-            
-            if (event && event.target) {
-                event.target.classList.add('active');
-            }
+            event.target.classList.add('active');
+        }
+
+        // Clear event selection
+        function clearEventSelection() {
+            currentEvent = null;
+            document.getElementById('eventGrid').style.display = 'grid';
+            document.getElementById('eventAnalytics').style.display = 'none';
         }
 
         // Refresh data
-        function refreshData() {
-            dataManager.loadFromStorage().then(async () => {
-                if (currentEvent) {
-                    await selectEvent(currentEvent.id);
-                } else {
-                    loadEventGrid();
-                    populateEventSelect();
-                }
-            });
-        }
-
-        // Fix navigation click issues
-        document.addEventListener('DOMContentLoaded', function() {
-            const navLinks = document.querySelectorAll('.nav-links li');
-            
-            navLinks.forEach(li => {
-                li.addEventListener('click', function(e) {
-                    // Don't navigate if clicking on the active page
-                    if (this.classList.contains('active')) {
-                        return;
-                    }
-                    
-                    // Get the href from the anchor tag inside
-                    const link = this.querySelector('a');
-                    if (link && link.href) {
-                        window.location.href = link.href;
-                    }
-                });
-            });
-        });
-
-        // Load events for analytics filtering
-        async function loadEventsForAnalytics() {
+        async function refreshData() {
             try {
-                const eventsResult = dataManager ? await dataManager.getEvents() : { events: [] };
-                const events = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
-                const eventFilterContainer = document.getElementById('eventFilterContainer');
-                
-                console.log('Loading events for analytics:', events);
-                
-                if (events.length === 0) {
-                    eventFilterContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No events available" disabled></div>';
-                } else {
-                    // Group events by series and season for better organization
-                    const series = dataManager.getAllSeries();
-                    const groupedEvents = [];
-                    
-                    // Add "All Events" option
-                    groupedEvents.push({
-                        value: '',
-                        label: 'All Events (All Seasons)'
-                    });
-                    
-                    events.forEach(event => {
-                        const eventSeries = series.find(s => s.id === event.seriesId);
-                        const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
-                        const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
-                        const seasonName = season ? season.name : 'General';
-                        
-                        groupedEvents.push({
-                            value: event.id,
-                            label: `${event.name} - ${seriesName} (${seasonName}) - ${new Date(event.date).toLocaleDateString()}`
-                        });
-                    });
-                    
-                    eventFilterContainer.innerHTML = UIComponents.createComboBox(
-                        'analyticsEventFilter',
-                        groupedEvents,
-                        'Filter by Event',
-                        'onAnalyticsEventSelect',
-                        ''
-                    );
-                    
-                    // Initialize the combo box
-                    UIComponents.initComboBox('analyticsEventFilter');
+                // Show loading states
+                if (currentAnalyticsView === 'overall') {
+                    document.getElementById('overallAnalytics').innerHTML = '<div class="analytics-loading"><i class="fas fa-spinner fa-spin"></i><p>Refreshing data...</p></div>';
                 }
+
+                // Reload data
+                await dataManager.loadFromStorage(['events', 'participants', 'series', 'race-brackets']);
+                await loadAllData();
+                
+                // Refresh current view
+                showAnalyticsView(currentAnalyticsView);
+                
+                showToast('Analytics data refreshed successfully!', 'success');
             } catch (error) {
-                console.error('Error loading events for analytics:', error);
-                document.getElementById('eventFilterContainer').innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Error loading events" disabled></div>';
+                console.error('Error refreshing analytics data:', error);
+                showToast('Error refreshing data. Please try again.', 'error');
             }
         }
 
-        // Analytics event selection callback
-        window.onAnalyticsEventSelect = function(eventId) {
-            console.log('Analytics event selected:', eventId);
-            selectedAnalyticsEventId = eventId;
-            updateAnalytics();
-        };
-
-        // Update analytics based on selected event
-        async function updateAnalytics() {
-            const filterDescription = document.getElementById('analyticsFilterDescription');
-            
-            if (selectedAnalyticsEventId) {
-                const selectedEvent = dataManager.getEvent(selectedAnalyticsEventId);
-                const eventName = selectedEvent ? selectedEvent.name : 'Unknown Event';
-                const eventDate = selectedEvent ? new Date(selectedEvent.date).toLocaleDateString() : 'Unknown Date';
-                filterDescription.textContent = `Showing performance for ${eventName} (${eventDate})`;
-            } else {
-                filterDescription.textContent = 'Showing overall performance across all events';
-            }
-            
-            // Reload analytics based on current view
-            switch(currentAnalyticsView) {
-                case 'overall':
-                    await loadOverallAnalytics();
-                    break;
-                case 'series':
-                    await loadSeriesAnalytics();
-                    break;
-                case 'events':
-                    await loadEventGrid();
-                    break;
-            }
+        // Show error message
+        function showError(message) {
+            document.getElementById('overallAnalytics').innerHTML = `
+                <div class="analytics-section">
+                    <div class="section-header">
+                        <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
+                        <h2>Error</h2>
+                    </div>
+                    <p style="color: var(--text-secondary);">${message}</p>
+                    <button class="btn btn-primary" onclick="refreshData()">Try Again</button>
+                </div>
+            `;
         }
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+                color: white;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Additional styles for summary grid
+        const additionalStyles = document.createElement('style');
+        additionalStyles.textContent = `
+            .summary-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            
+            .summary-item {
+                background: var(--bg-secondary, #2d2d2d);
+                padding: 20px;
+                border-radius: 12px;
+                border: 1px solid rgba(255,255,255,0.1);
+            }
+            
+            .summary-item h4 {
+                color: var(--accent-primary, #4a90e2);
+                margin: 0 0 15px 0;
+                font-size: 16px;
+                font-weight: 600;
+            }
+            
+            .summary-item p {
+                margin: 8px 0;
+                color: var(--text-secondary, #b3b3b3);
+                font-size: 14px;
+            }
+            
+            .summary-item strong {
+                color: var(--text-primary, #ffffff);
+            }
+            
+            .status-completed {
+                background: rgba(76, 175, 80, 0.2);
+                color: #4CAF50;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+        `;
+        document.head.appendChild(additionalStyles);
     </script>
 </body>
-</html> 
-</html> 
+</html>

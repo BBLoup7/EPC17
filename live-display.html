@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Live Display</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Live Display Specific Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #030217 0%, #0a0a2e 50%, #1a1a3a 100%);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            color: var(--text-primary);
+        }
+
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            overflow-x: hidden;
+        }
+
+        .live-display-container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            width: 100vw;
+            gap: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Compact Header */
+        .header-section {
+            background: rgba(10, 10, 46, 0.95);
+            border-bottom: 2px solid var(--accent-primary);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 50px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .event-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .event-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .event-subtitle {
+            font-size: 0.8rem;
+            color: var(--accent-primary);
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            animation: pulse 2s infinite;
+        }
+
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Main Content - 3 Column Layout (FULL WIDTH) */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            height: 100%;
+            width: 100vw;
+            gap: 1px;
+            background: var(--border-color);
+            margin: 0 auto;
+            padding: 0;
+            max-width: 1800px;
+            justify-content: center;
+        }
+
+        .content-section {
+            background: rgba(3, 2, 23, 0.95);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        /* Upcoming Races Section */
+        .upcoming-section .section-icon {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+        }
+
+        /* Recent Results Section */
+        .results-section .section-icon {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+
+        /* Stats Section */
+        .stats-section .section-icon {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        /* Driver Profile Section */
+        .profile-section .section-icon {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+        }
+
+        /* Race Cards - WIDE Horizontal Layout */
+        .races-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
+
+        .races-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.3rem;
+            padding: 0.25rem;
+        }
+
+        .race-card {
+            background: rgba(26, 26, 58, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.4rem 0.4rem 0.6rem 0.4rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 70px;
+            max-height: 80px;
+        }
+
+        .race-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .race-card.completed::before {
+            background: linear-gradient(90deg, var(--success), #059669);
+        }
+
+        .race-card.upcoming::before {
+            background: linear-gradient(90deg, var(--warning), #d97706);
+        }
+
+        .race-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.3rem;
+        }
+
+        .race-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            flex: 1;
+        }
+        
+        .race-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+        }
+
+        .race-status {
+            padding: 0.15rem 0.4rem;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .race-status.completed {
+            background: var(--success);
+            color: white;
+        }
+
+        .race-status.upcoming {
+            background: var(--warning);
+            color: white;
+        }
+
+        .race-info {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.6rem;
+        }
+
+        .race-class {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .race-bracket {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .race-participants {
+            display: flex;
+            flex-direction: row;
+            gap: 0.3rem;
+            margin-top: 0.3rem;
+            flex-wrap: nowrap;
+        }
+
+        .participant {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.2rem 0.3rem 0.3rem 0.3rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            font-size: 0.65rem;
+            min-width: 100px;
+            flex: 1;
+        }
+
+        .participant-info {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex: 1;
+        }
+
+        .participant-lane {
+            background: var(--accent-primary);
+            color: white;
+            padding: 0.1rem 0.3rem;
+            border-radius: 2px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+
+        .participant-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            font-size: 0.78rem;
+        }
+
+        .participant-position {
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-size: 0.8rem;
+        }
+
+        .participant.winner .participant-position {
+            color: var(--success);
+        }
+
+        .participant.winner .participant-lane {
+            background: var(--success);
+        }
+
+        .participant.winner {
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .participant.winner .participant-name {
+            font-weight: 700;
+            color: #d4af37;
+        }
+        .participant.winner .winner-badge {
+            margin-left: 0.3em;
+            color: #d4af37;
+            font-size: 0.9em;
+            vertical-align: middle;
+        }
+
+        /* Race Groups */
+        .race-group {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .group-header {
+            background: rgba(26, 26, 58, 0.9);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .group-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .group-count {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+        }
+
+        .group-races {
+            padding: 0.5rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.3rem;
+        }
+
+        /* Stats Panel */
+        .stats-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .stat-box {
+            background: rgba(26, 26, 58, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box.active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+        }
+
+        .stat-title {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--accent-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-description {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+
+        /* Driver Profile */
+        .driver-profile {
+            background: rgba(26, 26, 58, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+            margin-top: 1rem;
+            position: sticky;
+            top: 0;
+        }
+
+        .driver-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-size: 1rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        .driver-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .driver-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .driver-stat {
+            text-align: center;
+        }
+
+        .driver-stat-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .driver-stat-label {
+            font-size: 0.55rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* No data message */
+        .no-data-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            height: 100%;
+        }
+
+        .no-data-message i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        .no-data-message h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .no-data-message p {
+            font-size: 0.75rem;
+            margin: 0;
+        }
+
+        /* Scrollbar styling */
+        .races-container::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .races-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .races-container::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 1920px) {
+            .event-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .race-title {
+                font-size: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* Animation for stat transitions */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-box {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* Add subtle color separation for group headers */
+        .group-header {
+            background: rgba(26, 26, 58, 0.92);
+            padding: 0.5rem 0.7rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            border-radius: 6px 6px 0 0;
+            margin-top: 0.55rem;
+            margin-bottom: 0.2rem;
+            border-left: 4px solid var(--accent-primary);
+        }
+        
+        /* Visual differences for bracket types */
+        .group-header[data-bracket="upper"] {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+        
+        .group-header[data-bracket="lower"] {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        
+        .group-header[data-bracket="final"] {
+            border-left-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.15);
+            color: #e74c3c;
+        }
+        
+        /* Visual separation between classes - only show when class changes */
+        .group-header[data-class="1"]:not(.same-class-as-previous) {
+            border-top: 3px solid rgba(59, 130, 246, 0.8);
+            margin-top: 1rem;
+        }
+        
+        .group-header[data-class="2"]:not(.same-class-as-previous) {
+            border-top: 3px solid rgba(239, 68, 68, 0.8);
+            margin-top: 1rem;
+        }
+        
+        .group-header[data-class="3"]:not(.same-class-as-previous) {
+            border-top: 3px solid rgba(245, 158, 11, 0.8);
+            margin-top: 1rem;
+        }
+        
+        .group-header[data-class="4"]:not(.same-class-as-previous) {
+            border-top: 3px solid rgba(147, 51, 234, 0.8);
+            margin-top: 1rem;
+        }
+        
+        .group-header[data-class="5"]:not(.same-class-as-previous) {
+            border-top: 3px solid rgba(34, 197, 94, 0.8);
+            margin-top: 1rem;
+        }
+        
+        .group-separator {
+            height: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="live-display-container">
+        <!-- Compact Header -->
+        <div class="header-section">
+            <div class="header-left">
+                <div class="event-info">
+                    <h1 class="event-title" id="event-title">Loading Event...</h1>
+                    <p class="event-subtitle" id="event-subtitle">Live Display</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="live-indicator">
+                    <i class="fas fa-circle"></i>
+                    LIVE
+                </div>
+                <div class="refresh-indicator">
+                    <i class="fas fa-sync-alt"></i>
+                    <span id="refresh-timer">10</span>s
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content - 3 Column Layout (FULL WIDTH) -->
+        <div class="main-content">
+            <!-- Upcoming Races -->
+            <div class="content-section upcoming-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-flag-checkered"></i>
+                    </div>
+                    <h2 class="section-title">Upcoming Races</h2>
+                </div>
+                <div class="races-container" id="upcoming-races">
+                    <div class="races-grid" id="upcoming-races-grid">
+                        <!-- Upcoming races will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Results -->
+            <div class="content-section results-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h2 class="section-title">Recent Results</h2>
+                </div>
+                <div class="races-container" id="recent-results">
+                    <div class="races-grid" id="recent-results-grid">
+                        <!-- Recent race results will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats & Profile -->
+            <div class="content-section stats-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h2 class="section-title">Stats & Profile</h2>
+                </div>
+                <div class="stats-container" id="stats-container">
+                    <!-- Statistics will be populated here -->
+                </div>
+                <div class="driver-profile" id="driver-profile">
+                    <!-- Driver profile will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils/performance-monitor.js"></script>
+    <script src="utils/data-manager.js"></script>
+    <script src="utils/event-bus.js"></script>
+    <script src="modules/achievement-manager.js"></script>
+    <script src="modules/event.js"></script>
+    <script src="modules/pairing-engine.js"></script>
+    <script src="modules/race.js"></script>
+    <script src="js/race-ui.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        class LiveDisplay {
+            constructor() {
+                this.refreshInterval = 8000; // 8 seconds for faster updates
+                this.statsRotationInterval = 4000; // 4 seconds
+                this.currentStatIndex = 0;
+                this.refreshTimer = 8;
+                this.currentEvent = null;
+                this.races = [];
+                this.participants = [];
+                this.events = [];
+                
+                this.init();
+            }
+
+            async init() {
+                await this.loadData();
+                this.setupRefreshTimer();
+                this.setupStatsRotation();
+                this.setupEventBusListeners();
+                this.renderDisplay();
+            }
+
+            async loadData() {
+                try {
+                    console.log('📡 Loading data for Live Display...');
+                    
+                    // Load events data
+                    const eventsResult = await window.dataManager.getEvents();
+                    this.events = eventsResult.events || eventsResult;
+                    console.log('📅 Events loaded:', this.events?.length || 0, 'events');
+                    
+                    // Find the last event that has race results (completed races)
+                    this.currentEvent = this.findEventWithRaceResults();
+                    if (!this.currentEvent && this.events.length > 0) {
+                        // If no event with results, use the most recent event
+                        this.currentEvent = this.events.sort((a, b) => 
+                            new Date(b.createdAt) - new Date(a.createdAt)
+                        )[0];
+                    }
+                    console.log('🎯 Current event:', this.currentEvent?.name || 'None');
+                    
+                    // Load races data
+                    this.races = window.dataManager.getRacesArray();
+                    console.log('🏁 Races loaded:', this.races?.length || 0, 'races');
+                    console.log('🏁 Sample race data:', this.races[0]);
+                    
+                    // Check for races with results
+                    const racesWithResults = this.races.filter(race => race.results && Object.keys(race.results).length > 0);
+                    console.log('🏁 Races with results:', racesWithResults.length);
+                    if (racesWithResults.length > 0) {
+                        console.log('🏁 Sample race with results:', racesWithResults[0]);
+                    }
+                    
+                    // Ensure race brackets are loaded
+                    if (!window.dataManager.loadedDataTypes.has('race-brackets')) {
+                        console.log('🏁 Loading race brackets...');
+                        await window.dataManager.loadFromStorage(['race-brackets']);
+                    }
+                    
+                    // Get race brackets for current event
+                    const raceBrackets = window.dataManager.getRaceBracket(this.currentEvent?.id);
+                    console.log('🏁 Race brackets for current event:', raceBrackets);
+                    
+                    // If no races in the races array, try to extract them from race brackets
+                    if ((!this.races || this.races.length === 0) && raceBrackets) {
+                        this.races = this.extractRacesFromBrackets(raceBrackets);
+                        console.log('🏁 Extracted races from brackets:', this.races?.length || 0, 'races');
+                    }
+                    
+                    // Load participants data
+                    const participantsResult = await window.dataManager.getParticipants();
+                    this.participants = participantsResult.participants || participantsResult;
+                    console.log('👥 Participants loaded:', this.participants?.length || 0, 'participants');
+                    
+                } catch (error) {
+                    console.error('❌ Error loading data:', error);
+                    this.events = [];
+                    this.races = [];
+                    this.participants = [];
+                    this.currentEvent = null;
+                }
+            }
+
+            setupRefreshTimer() {
+                setInterval(() => {
+                    this.refreshTimer--;
+                    const timerElement = document.getElementById('refresh-timer');
+                    if (timerElement) {
+                        timerElement.textContent = this.refreshTimer;
+                    }
+                    
+                    if (this.refreshTimer <= 0) {
+                        this.refreshData();
+                        this.refreshTimer = 8;
+                    }
+                }, 1000);
+            }
+
+            setupEventBusListeners() {
+                if (window.eventBus && typeof window.eventBus.on === 'function') {
+                    window.eventBus.on('race-result-recorded', () => {
+                        console.log('🏁 Race result recorded - refreshing live display');
+                        this.refreshData();
+                        this.refreshTimer = 8;
+                    });
+
+                    window.eventBus.on('event-updated', () => {
+                        console.log('📅 Event updated - refreshing live display');
+                        this.refreshData();
+                        this.refreshTimer = 8;
+                    });
+
+                    window.eventBus.on('race-bracket-saved', () => {
+                        console.log('🏁 Race bracket saved - refreshing live display');
+                        this.refreshData();
+                        this.refreshTimer = 8;
+                    });
+                    
+                    console.log('✅ Event bus listeners registered for real-time updates');
+                } else {
+                    console.warn('⚠️ Event bus not available for real-time updates');
+                }
+            }
+
+            async refreshData() {
+                // Store the currently selected event ID before refresh
+                const currentEventId = this.currentEvent?.id;
+                
+                // Only refresh the data, don't re-run event selection
+                await this.refreshEventData();
+                
+                // Restore the selected event if it was different from the default
+                if (currentEventId && this.currentEvent?.id !== currentEventId) {
+                    this.currentEvent = this.events.find(event => event.id === currentEventId);
+                    if (this.currentEvent) {
+                        console.log('🔄 Restored selected event:', this.currentEvent.name);
+                    }
+                }
+                
+                this.renderDisplay();
+            }
+
+            async refreshEventData() {
+                // Refresh only the data files without re-running event selection logic
+                try {
+                    const [eventsData, racesData, participantsData, bracketsData] = await Promise.all([
+                        dataManager.getEvents(),
+                        dataManager.getRaces(),
+                        dataManager.getParticipants(),
+                        dataManager.getRaceBrackets()
+                    ]);
+                    
+                    this.events = eventsData || [];
+                    this.races = racesData || [];
+                    this.participants = participantsData || [];
+                    this.raceBrackets = bracketsData || [];
+                    
+                    console.log('🔄 Data refreshed - Events:', this.events.length, 'Races:', this.races.length);
+                } catch (error) {
+                    console.error('Error refreshing data:', error);
+                }
+            }
+
+            setupStatsRotation() {
+                setInterval(() => {
+                    this.rotateStats();
+                }, this.statsRotationInterval);
+            }
+
+            rotateStats() {
+                const statBoxes = document.querySelectorAll('.stat-box');
+                statBoxes.forEach((box, index) => {
+                    if (index === this.currentStatIndex) {
+                        box.classList.add('active');
+                    } else {
+                        box.classList.remove('active');
+                    }
+                });
+                
+                this.currentStatIndex = (this.currentStatIndex + 1) % statBoxes.length;
+            }
+
+            renderDisplay() {
+                this.updateEventHeader();
+                this.renderUpcomingRaces();
+                this.renderRecentResults();
+                this.renderStatistics();
+                this.renderDriverProfile();
+            }
+
+            updateEventHeader() {
+                const titleElement = document.getElementById('event-title');
+                const subtitleElement = document.getElementById('event-subtitle');
+
+                if (!this.currentEvent) {
+                    if (titleElement) {
+                        titleElement.textContent = 'No Active Event';
+                    }
+                    if (subtitleElement) {
+                        subtitleElement.textContent = 'Live Display';
+                    }
+                    return;
+                }
+
+                if (titleElement) {
+                    titleElement.textContent = this.currentEvent.name;
+                }
+
+                if (subtitleElement) {
+                    const status = this.currentEvent.status;
+                    const location = this.currentEvent.location;
+                    subtitleElement.textContent = `${location} • ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+                }
+            }
+
+            createRaceCard(race, type) {
+                // Get participants from lanes if available, otherwise use participants array
+                let participants = [];
+                if (race.lanes && Array.isArray(race.lanes)) {
+                    participants = race.lanes.map((lane, index) => ({
+                        id: lane.participant ? lane.participant.id : null,
+                        name: lane.participant ? lane.participant.name : `Empty`,
+                        lane: lane.lane || (index + 1),
+                        position: race.results && lane.participant ? race.results[lane.participant.id] : null,
+                        isEmpty: !lane.participant
+                    })).filter(p => !p.isEmpty);
+                } else if (race.participants && Array.isArray(race.participants)) {
+                    participants = race.participants.map((participantId, index) => {
+                        const participant = this.participants.find(p => p.id === participantId);
+                        return {
+                            id: participantId,
+                            name: participant ? participant.name : `Driver ${participantId.slice(-4)}`,
+                            lane: index + 1,
+                            position: race.results ? race.results[participantId] : null,
+                            isEmpty: false
+                        };
+                    });
+                }
+                
+                // For completed races, sort participants by position
+                if (type === 'completed' && participants.length > 0) {
+                    console.log('🏁 Race results for race', race.id, ':', race.results);
+                    console.log('🏁 Race data structure:', race);
+                    
+                    // Try different ways to get results
+                    let results = race.results || race.raceResults || race.finishOrder || {};
+                    console.log('🏁 Extracted results:', results);
+                    
+                    // Update participant positions with actual results
+                    participants.forEach(p => {
+                        // Try different ways to find the result
+                        let position = results[p.id] || results[p.name] || null;
+                        
+                        // If no direct match, try to find by participant ID in results
+                        if (!position && results.finishOrder) {
+                            const finishIndex = results.finishOrder.indexOf(p.id);
+                            if (finishIndex !== -1) {
+                                position = finishIndex + 1;
+                            }
+                        }
+                        
+                        // If still no position, try to find in results array
+                        if (!position && Array.isArray(results)) {
+                            const resultIndex = results.findIndex(r => r.participantId === p.id || r.participant === p.id);
+                            if (resultIndex !== -1) {
+                                position = results[resultIndex].position || resultIndex + 1;
+                            }
+                        }
+                        
+                        p.position = position;
+                        console.log('🏁 Participant', p.name, 'position:', p.position, 'from results:', results);
+                    });
+                    
+                    participants.sort((a, b) => {
+                        const posA = a.position || 999;
+                        const posB = b.position || 999;
+                        return posA - posB;
+                    });
+                }
+                
+                const className = race.className || race.class || 'Unknown';
+                const raceNumber = race.raceNumber || 'TBD';
+                const bracketType = race.bracketType || 'upper';
+                
+                const statusDisplay = type === 'completed' ? 'Completed' : 
+                                    race.status === 'in_progress' ? 'In Progress' : 
+                                    'Upcoming';
+                
+                const statusClass = type === 'completed' ? 'completed' : 
+                                  race.status === 'in_progress' ? 'in_progress' : 
+                                  'upcoming';
+                
+                // Color coding based on class and bracket
+                const classColors = {
+                    '1': '#4a90e2', // Blue
+                    '2': '#e74c3c', // Red
+                    '3': '#f39c12', // Orange
+                    '4': '#9b59b6', // Purple
+                    '5': '#2ecc71', // Green
+                    'Unknown': '#95a5a6' // Gray
+                };
+                
+                const bracketColors = {
+                    'upper': '#3498db',
+                    'lower': '#e67e22',
+                    'final': '#e74c3c'
+                };
+                
+                const classColor = classColors[className] || classColors['Unknown'];
+                const bracketColor = bracketColors[bracketType] || bracketColors['upper'];
+                
+                // Format race time (only for completed races)
+                const formatRaceTime = (timestamp) => {
+                    if (!timestamp) return '';
+                    const date = new Date(timestamp);
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                };
+                
+                // Only show time for completed races
+                const raceTime = type === 'completed' ? formatRaceTime(race.completedAt || race.updatedAt || race.createdAt) : '';
+                
+                return `
+                    <div class="race-card ${statusClass}" style="border-left: 3px solid ${classColor};">
+                        <div class="race-header">
+                            <div class="race-title">Race #${raceNumber}</div>
+                            ${raceTime ? `<div class="race-time">${raceTime}</div>` : ''}
+                        </div>
+                        <div class="race-participants">
+                            ${participants.length > 0 ? participants.map(participant => `
+                                <div class="participant ${participant.position === 1 ? 'winner' : ''}">
+                                    <div class="participant-info">
+                                        <div class="participant-lane">L${participant.lane}</div>
+                                        <div class="participant-name">${participant.name}
+                                            ${participant.position === 1 ? '<span class="winner-badge" title="Winner">🏆</span>' : ''}
+                                        </div>
+                                    </div>
+                                    ${type === 'completed' ? `<div class="participant-position">${this.formatOrdinal(participant.position)}</div>` : ''}
+                                </div>
+                            `).join('') : '<div class="participant"><span class="participant-name">No participants</span></div>'}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderStatistics() {
+                const container = document.getElementById('stats-container');
+                const stats = this.calculateStats();
+                
+                container.innerHTML = `
+                    <div class="stat-box active">
+                        <div class="stat-title">Total Participants</div>
+                        <div class="stat-value">${stats.totalParticipants}</div>
+                        <div class="stat-description">Registered drivers</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-title">Races Completed</div>
+                        <div class="stat-value">${stats.completedRaces}</div>
+                        <div class="stat-description">${stats.completionPercentage}% of total</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-title">Active Classes</div>
+                        <div class="stat-value">${stats.activeClasses}</div>
+                        <div class="stat-description">Classes with participants</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-title">Avg Race Time</div>
+                        <div class="stat-value">${stats.avgRaceTime}m</div>
+                        <div class="stat-description">Minutes per race</div>
+                    </div>
+                `;
+            }
+
+            renderDriverProfile() {
+                const container = document.getElementById('driver-profile');
+                const topDriver = this.getTopDriver();
+                
+                container.innerHTML = `
+                    <div class="driver-avatar">
+                        ${topDriver.name.charAt(0)}
+                    </div>
+                    <div class="driver-name">${topDriver.name}</div>
+                    <div class="driver-stats">
+                        <div class="driver-stat">
+                            <div class="driver-stat-value">${topDriver.wins}</div>
+                            <div class="driver-stat-label">Wins</div>
+                        </div>
+                        <div class="driver-stat">
+                            <div class="driver-stat-value">${topDriver.winRate}%</div>
+                            <div class="driver-stat-label">Win Rate</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            calculateStats() {
+                const eventParticipants = this.currentEvent?.participants || [];
+                const totalParticipants = eventParticipants.length;
+                
+                const eventRaces = this.races.filter(r => !r.eventId || r.eventId === this.currentEvent?.id);
+                const completedRaces = eventRaces.filter(r => r.status === 'completed').length;
+                const totalRaces = eventRaces.length;
+                const completionPercentage = totalRaces > 0 ? Math.round((completedRaces / totalRaces) * 100) : 0;
+                
+                const activeClasses = this.currentEvent?.classSettings?.length || 0;
+                const avgRaceTime = Math.round(Math.random() * 10 + 5); // Mock data
+
+                return {
+                    totalParticipants,
+                    completedRaces,
+                    completionPercentage,
+                    activeClasses,
+                    avgRaceTime
+                };
+            }
+
+            getTopDriver() {
+                if (!Array.isArray(this.participants)) {
+                    return { name: 'No Participants', wins: 0, winRate: 0 };
+                }
+                
+                const eventParticipantIds = this.currentEvent?.participants || [];
+                const eventParticipants = this.participants.filter(p => eventParticipantIds.includes(p.id));
+                
+                if (eventParticipants.length === 0) {
+                    return { name: 'No Participants', wins: 0, winRate: 0 };
+                }
+                
+                const driverStats = eventParticipants.map(p => ({
+                    name: p.name,
+                    wins: p.totalWins || 0,
+                    winRate: p.winRate || 0
+                })).sort((a, b) => b.wins - a.wins);
+                
+                return driverStats[0] || { name: eventParticipants[0]?.name || 'No Data', wins: 0, winRate: 0 };
+            }
+
+            extractRacesFromBrackets(brackets) {
+                const races = [];
+                
+                if (!brackets) {
+                    return races;
+                }
+                
+                if (brackets.classes) {
+                    Object.entries(brackets.classes).forEach(([className, classData]) => {
+                        if (classData.rounds && Array.isArray(classData.rounds)) {
+                            classData.rounds.forEach((round, roundIndex) => {
+                                // Debug log for bracketType
+                                console.log('🔎 Round extraction:', { roundIndex, round, bracketType: round.bracketType });
+                                let bracketType = round.bracketType;
+                                // Try to infer bracketType if missing
+                                if (!bracketType) {
+                                    if (round.name && typeof round.name === 'string') {
+                                        if (round.name.toLowerCase().includes('lower')) bracketType = 'lower';
+                                        else if (round.name.toLowerCase().includes('final')) bracketType = 'final';
+                                        else if (round.name.toLowerCase().includes('upper')) bracketType = 'upper';
+                                    }
+                                    if (!bracketType && round.type && typeof round.type === 'string') {
+                                        bracketType = round.type.toLowerCase();
+                                    }
+                                }
+                                if (!bracketType && round.heats && round.heats.length > 0) {
+                                    // Try to infer from heat data
+                                    const heatBracket = round.heats[0].bracketType || round.heats[0].bracket;
+                                    if (heatBracket) bracketType = heatBracket;
+                                }
+                                if (!bracketType) bracketType = 'unknown';
+                                if (round.heats && Array.isArray(round.heats)) {
+                                    round.heats.forEach((heat, heatIndex) => {
+                                        console.log('🏁 Extracting heat:', heat);
+                                        console.log('🏁 Heat bracketType:', heat.bracketType);
+                                        console.log('🏁 Round bracketType:', round.bracketType);
+                                        console.log('🏁 Heat results:', heat.results);
+                                        
+                                        // Use heat's bracketType first, then round's bracketType, then inferred
+                                        let finalBracketType = heat.bracketType || round.bracketType || bracketType;
+                                        
+                                        const race = {
+                                            id: heat.id || `heat_${className}_${roundIndex}_${heatIndex}`,
+                                            className: className,
+                                            round: roundIndex + 1,
+                                            heatNumber: heat.heatNumber || (heatIndex + 1),
+                                            raceNumber: heat.raceNumber || null,
+                                            numberOfLanes: heat.numberOfLanes || classData.numberOfLanes || 4,
+                                            status: heat.status === 'completed' ? 'completed' : 
+                                                   heat.status === 'in_progress' ? 'in_progress' : 'scheduled',
+                                            participants: heat.participants || [],
+                                            lanes: heat.lanes || [],
+                                            results: heat.results || heat.finishOrder || {},
+                                            scheduledTime: heat.scheduledTime || heat.startTime,
+                                            completedAt: heat.completedAt || heat.endTime,
+                                            createdAt: heat.createdAt || new Date().toISOString(),
+                                            eliminationType: classData.eliminationType || 'single',
+                                            bracketType: finalBracketType,
+                                            isComplete: heat.status === 'completed' || false
+                                        };
+                                        races.push(race);
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                return races;
+            }
+
+            findEventWithRaceResults() {
+                // Get all races with results
+                const racesWithResults = this.races.filter(race => 
+                    race.status === 'completed' && race.results && Object.keys(race.results).length > 0
+                );
+                
+                if (racesWithResults.length === 0) {
+                    console.log('🏁 No races with results found');
+                    return null;
+                }
+                
+                console.log('🏁 Found races with results:', racesWithResults.length);
+                
+                // Group races by event ID
+                const eventRaceCounts = {};
+                racesWithResults.forEach(race => {
+                    // Try to find eventId from race data
+                    let eventId = race.eventId;
+                    
+                    // If no eventId, try to match by event name or other properties
+                    if (!eventId && this.events.length > 0) {
+                        // For now, if no eventId, assume it belongs to the most recent event
+                        eventId = this.events[0].id;
+                    }
+                    
+                    if (eventId) {
+                        eventRaceCounts[eventId] = (eventRaceCounts[eventId] || 0) + 1;
+                    }
+                });
+                
+                console.log('🏁 Events with race results:', eventRaceCounts);
+                
+                // Find the event with the most completed races
+                let bestEvent = null;
+                let maxRaces = 0;
+                
+                this.events.forEach(event => {
+                    const raceCount = eventRaceCounts[event.id] || 0;
+                    console.log(`🏁 Event ${event.name}: ${raceCount} completed races`);
+                    if (raceCount > maxRaces) {
+                        maxRaces = raceCount;
+                        bestEvent = event;
+                    }
+                });
+                
+                if (bestEvent) {
+                    console.log(`🏁 Selected event with most results: ${bestEvent.name} (${maxRaces} completed races)`);
+                } else {
+                    console.log('🏁 No event found with race results, will use most recent event');
+                }
+                
+                return bestEvent;
+            }
+
+            // Helper to get group key and label
+            getRaceGroupKey(race) {
+                const className = race.className || race.class || 'Unknown';
+                const bracket = race.bracketType || race.bracket || '';
+                const round = race.round || race.roundNumber || '';
+                
+                // Check if this is a final
+                if (bracket.toLowerCase().includes('final') || bracket.toLowerCase() === 'final') {
+                    return `final-${className}`;
+                }
+                
+                // Each bracket should be its own group
+                return `${className}-${bracket}-${round}`;
+            }
+            
+            getRaceGroupLabel(race) {
+                const className = race.className || race.class || 'Unknown';
+                let bracket = (race.bracketType || race.bracket || '').toLowerCase();
+                const round = race.round || race.roundNumber || '';
+                
+                // Only show bracket if it's upper, lower, or final
+                let bracketLabel = '';
+                if (bracket === 'upper') bracketLabel = 'Upper';
+                else if (bracket === 'lower') bracketLabel = 'Lower';
+                else if (bracket === 'final') bracketLabel = 'Final';
+                
+                // Check if this is a final
+                if (bracket === 'final') {
+                    return `Final Round${className !== 'Unknown' ? ' – Class ' + className : ''}`;
+                }
+                
+                let label = '';
+                if (className !== 'Unknown') label += `Class ${className}`;
+                if (bracketLabel && bracketLabel !== 'Final') label += (label ? ' – ' : '') + bracketLabel;
+                if (round) label += (label ? ' – ' : '') + `Round ${round}`;
+                return label || 'Other';
+            }
+            capitalize(str) {
+                if (!str) return '';
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+            
+            getBracketType(race) {
+                const bracket = (race.bracketType || race.bracket || '').toLowerCase();
+                if (bracket === 'upper') return 'upper';
+                if (bracket === 'lower') return 'lower';
+                if (bracket === 'final' || bracket.includes('final')) return 'final';
+                return 'unknown';
+            }
+
+            // Render grouped races (for both recent and upcoming)
+            renderGroupedRacesSorted(races, type) {
+                if (!races || races.length === 0) return '';
+                let html = '';
+                let lastGroupKey = null;
+                let lastClassName = null;
+                races.forEach((race, idx) => {
+                    const groupKey = this.getRaceGroupKey(race);
+                    if (groupKey !== lastGroupKey) {
+                        // New group header
+                        if (idx !== 0) {
+                            html += '<div class="group-separator"></div>';
+                        }
+                        const bracketType = this.getBracketType(race);
+                        const className = race.className || race.class || 'Unknown';
+                        
+                        // Check if this is a different class from the previous one
+                        const sameClassAsPrevious = className === lastClassName;
+                        const classSeparatorClass = sameClassAsPrevious ? 'same-class-as-previous' : '';
+                        
+                        html += `<div class="group-header ${classSeparatorClass}" data-bracket="${bracketType}" data-class="${className}">${this.getRaceGroupLabel(race)}</div>`;
+                        lastGroupKey = groupKey;
+                        lastClassName = className;
+                    }
+                    html += this.createRaceCard(race, type);
+                });
+                return html;
+            }
+
+            // Update renderRecentResults
+            renderRecentResults() {
+                const container = document.getElementById('recent-results-grid');
+                // Filter races for current event and completed status
+                const recentRaces = (this.races || [])
+                    .filter(race => {
+                        const eventMatch = !race.eventId || race.eventId === this.currentEvent?.id;
+                        return eventMatch && race.status === 'completed';
+                    })
+                    .sort((a, b) => {
+                        // Sort by completion time (latest first)
+                        const timeA = a.completedAt || a.updatedAt || a.createdAt || 0;
+                        const timeB = b.completedAt || b.updatedAt || b.createdAt || 0;
+                        return new Date(timeB) - new Date(timeA);
+                    });
+                if (recentRaces.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-data-message">
+                            <i class="fas fa-trophy"></i>
+                            <h3>No Recent Results</h3>
+                            <p>No races completed yet</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = this.renderGroupedRacesSorted(recentRaces, 'completed');
+                }
+            }
+
+            // Update renderUpcomingRaces
+            renderUpcomingRaces() {
+                const container = document.getElementById('upcoming-races-grid');
+                // Filter races for current event and upcoming status
+                const upcomingRaces = (this.races || [])
+                    .filter(race => {
+                        const eventMatch = !race.eventId || race.eventId === this.currentEvent?.id;
+                        const statusMatch = race.status === 'scheduled' || race.status === 'in_progress' || race.status === 'pending';
+                        return eventMatch && statusMatch;
+                    })
+                    .sort((a, b) => {
+                        // Sort by scheduled time (latest first)
+                        const timeA = a.scheduledTime || a.createdAt || 0;
+                        const timeB = b.scheduledTime || b.createdAt || 0;
+                        return new Date(timeB) - new Date(timeA);
+                    });
+                if (upcomingRaces.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-data-message">
+                            <i class="fas fa-flag-checkered"></i>
+                            <h3>No Upcoming Races</h3>
+                            <p>All races completed or none scheduled</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = this.renderGroupedRacesSorted(upcomingRaces, 'upcoming');
+                }
+            }
+
+            formatOrdinal(num) {
+                if (!num || num === 0) return '';
+                
+                // Don't add ordinal suffix for DSQ or FS
+                if (typeof num === 'string' && (num.toUpperCase() === 'DSQ' || num.toUpperCase() === 'FS')) {
+                    return num;
+                }
+                
+                const j = num % 10;
+                const k = num % 100;
+                if (j === 1 && k !== 11) {
+                    return num + "st";
+                }
+                if (j === 2 && k !== 12) {
+                    return num + "nd";
+                }
+                if (j === 3 && k !== 13) {
+                    return num + "rd";
+                }
+                return num + "th";
+            }
+
+            formatTime(timestamp) {
+                if (!timestamp) return 'TBD';
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
+            }
+        }
+
+        // Initialize the live display when app is ready
+        function initializeLiveDisplay() {
+            try {
+                console.log('🏁 Initializing Live Display...');
+                new LiveDisplay();
+            } catch (error) {
+                console.error('❌ Failed to initialize Live Display:', error);
+                const titleElement = document.getElementById('event-title');
+                if (titleElement) titleElement.textContent = 'Error Loading Display';
+            }
+        }
+
+        // Wait for app initialization to complete
+        function waitForAppInitialization() {
+            if (window.dataManager && window.eventBus) {
+                console.log('✅ App initialization complete, starting Live Display');
+                initializeLiveDisplay();
+            } else {
+                console.log('⏳ Waiting for app initialization...');
+                setTimeout(waitForAppInitialization, 100);
+            }
+        }
+
+        // Start waiting for app initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📄 DOM loaded, waiting for app initialization...');
+            waitForAppInitialization();
+        });
+    </script>
+</body>
+</html> 

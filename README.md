@@ -1,20 +1,7 @@
-# 🏁 Arctic Drag Race Event Manager
-
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+# 🏁 Snowmobile Drag Racing Event Manager (EPC17)
 
 ## Overview
-Professional event management system for snowmobile drag racing events with network-accessible server architecture for multi-computer access. Built for Arctic racing communities with advanced pairing algorithms and real-time standings.
-
-## 🌟 Features
-
-- 🏁 **Advanced Pairing Engine** - Avoids rematches until all drivers have raced each other
-- 🏔️ **Track Optimization** - Assigns tracks based on driver usage history
-- 📊 **Real-time Standings** - Live calculation of series points and rankings
-- 🌐 **Network Ready** - Multi-computer access for race day operations
-- 📱 **Responsive Design** - Works on desktop, tablet, and mobile devices
-- 🔄 **Auto Backup** - Thread-safe data operations with automatic backups
+Professional event management system for snowmobile drag racing events with network-accessible server architecture for multi-computer access.
 
 ## 🚀 Quick Start
 
@@ -102,12 +89,12 @@ GET      /api/health         - Server health check
 - ✅ Health monitoring
 
 ### Racing Functionality  
-- ✅ Participant registration with payment tracking
-- ✅ Series and event management
-- ✅ Advanced pairing logic (avoid rematches)
+- ✅ Participant registration with payment helper (Do not support the payments itself)
+- ✅ Series, seasons and events management
+- ✅ Advanced pairing logic (avoid rematches, avoid returning lane logic)
 - ✅ Track assignment optimization
-- ✅ Real-time standings calculation
-- ✅ Bracket generation and management
+- ✅ Instant Result of the event
+- ✅ Bracket generation and management (single elimination and double elimination with winner/loser(up/low) brackets)
 
 ### User Experience
 - ✅ Clean, modern UI
@@ -173,26 +160,4 @@ EPC17/
 ---
 
 **Server Status**: Check `/api/health` endpoint for real-time status
-**Data Backup**: Automatic `.backup` files created on every save
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built for the Arctic racing community
-- Inspired by real snowmobile drag racing events
-- Special thanks to all the racers and organizers who provided feedback
-
----
-
-**Made with ❄️ for the Arctic racing community** 
+**Data Backup**: Automatic `.backup` files created on every save 

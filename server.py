@@ -136,7 +136,10 @@ def handle_participants():
     class_filter = request.args.get('class')
     
     if event_id:
-        participants = [p for p in participants if event_id in p.get('events', [])]
+        print(f"🔍 DEBUG - Filtering participants by eventId: {event_id}")
+        filtered_participants = [p for p in participants if p.get('eventId') == event_id]
+        print(f"🔍 DEBUG - Found {len(filtered_participants)} participants for event {event_id}")
+        participants = filtered_participants
     if series_id:
         participants = [p for p in participants if series_id in p.get('series', [])]
     if search:

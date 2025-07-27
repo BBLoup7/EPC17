@@ -28,6 +28,7 @@
             <li><a href="races.html">Races</a></li>
             <li class="active"><a href="driver-profile.html">Drivers</a></li>
             <li><a href="analytics.html">Analytics</a></li>
+                            <li><a href="live-display.html">Live Display</a></li>
         </ul>
         
         <!-- Mobile Hamburger Menu -->
@@ -61,6 +62,7 @@
                 <li><a href="races.html">🏁 Races</a></li>
                 <li><a href="driver-profile.html" class="active">👥 Drivers</a></li>
                 <li><a href="analytics.html">📊 Analytics</a></li>
+                <li><a href="live-display.html">🖥️ Live Display</a></li>
             </ul>
             <div class="mobile-nav-footer">
                 <div class="mobile-nav-version">v1.0.0</div>
@@ -81,8 +83,11 @@
                 <div id="driverSelectContainer">
                     <!-- Combo box will be populated by JavaScript -->
                 </div>
-                <button class="btn btn-secondary btn-sm" onclick="refreshData()" title="Refresh Data">
+                <button class="btn btn-secondary btn-sm" onclick="refreshData()" title="Refresh All Data">
                     <i class="fas fa-sync"></i>
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="refreshParticipantsData()" title="Refresh Participants">
+                    <i class="fas fa-users"></i>
                 </button>
                 <div class="utility-actions">
                     <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
@@ -1294,6 +1299,27 @@
                 rarity: 'rare'
             }
         };
+
+        // Force refresh participants data
+        async function refreshParticipantsData() {
+            if (dataManager) {
+                // Clear the cache for participants
+                dataManager.loadedDataTypes.delete('participants');
+                
+                // Reload participants
+                await dataManager.loadFromStorage(['participants']);
+                
+                // Update local data
+                allData.participants = dataManager.getParticipantsArray();
+                
+                // Refresh UI
+                displayDriverGrid();
+                populateDriverSelect();
+                
+                showToast(`Participants refreshed: ${allData.participants.length} drivers`, 'success');
+                console.log('✅ Participants data refreshed:', allData.participants.length);
+            }
+        }
 
         // Load all data using DataManager
         async function loadAllData() {

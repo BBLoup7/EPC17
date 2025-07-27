@@ -174,5 +174,93 @@
     "trackSurface": "snow",
     "updatedAt": "2025-07-08T09:29:15.730652",
     "weatherContingency": "proceed"
+  },
+  {
+    "classOrder": [
+      "class_1751979436251_1pqtyjd1z",
+      "class_1751979436251_0hywr2ry0",
+      "class_1751979436251_jeqw190kf"
+    ],
+    "classSettings": [
+      {
+        "classId": "class_1751979436251_1pqtyjd1z",
+        "className": "Outlaw",
+        "description": "Outlaw class racing",
+        "fee": 1000
+      },
+      {
+        "classId": "class_1751979436251_0hywr2ry0",
+        "className": "Pro-Max",
+        "description": "Pro-Max class racing",
+        "fee": 500
+      },
+      {
+        "classId": "class_1751979436251_jeqw190kf",
+        "className": "4 temps",
+        "description": "4 temps class racing",
+        "fee": 250
+      }
+    ],
+    "createdAt": "2025-07-11T09:44:07.681Z",
+    "createdDate": "2025-07-11T05:44:07.686357",
+    "currentParticipants": 8,
+    "date": "2025-07-11",
+    "description": "",
+    "driverMeetingTime": "08:00",
+    "eliminationType": "double",
+    "eventName": "Drag Beauceville",
+    "freeRunEnabled": false,
+    "id": "1bc842ac-1a2d-4858-b83e-589a645f491b",
+    "location": "Bcvele",
+    "maxParticipants": 125,
+    "name": "Drag Beauceville",
+    "numberOfTracks": 3,
+    "participants": [
+      "ad9069e3-a4f3-450b-a928-8fe83a432008",
+      "c5e31914-aca4-403d-850b-e44e9df778ec",
+      "13117256-8305-425e-a1b9-7983d4e8c70e",
+      "7e6db154-03f5-4887-8af3-720a20c38c74",
+      "052b56c5-eef6-46d5-858b-c399317f700d",
+      "9aaafe44-2ffb-4184-8d16-24ce4f5b4858",
+      "1e38fd54-b1b7-4985-a58c-0beb8bafc399",
+      "aec5509d-1174-4e15-8c63-aa5ba694c35c"
+    ],
+    "registrationOpen": true,
+    "requiresClassSeparation": true,
+    "seasonId": "season_1751979436251_rwx2b5v5a",
+    "seriesId": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
+    "status": "active",
+    "trackSurface": "snow",
+    "updatedAt": "2025-07-26T04:26:09.618406",
+    "weatherContingency": "proceed"
+  },
+  {
+    "classOrder": [],
+    "classSettings": [],
+    "createdAt": "2025-07-26T08:48:17.606Z",
+    "createdDate": "2025-07-26T04:48:17.611899",
+    "currentParticipants": 2,
+    "date": "2025-07-26",
+    "description": "",
+    "driverMeetingTime": "08:00",
+    "eliminationType": "double",
+    "freeRunEnabled": false,
+    "id": "3e8a8e28-9e34-4408-9d75-71811f2e73d7",
+    "location": "aaa",
+    "maxParticipants": 2222,
+    "name": "aaa1",
+    "numberOfTracks": 3,
+    "participants": [
+      "2b72f234-6712-4c91-b40d-6044c10b14b6",
+      "83e9eae6-9547-4e71-a9ef-e083b1b7e394"
+    ],
+    "registrationOpen": true,
+    "requiresClassSeparation": true,
+    "seasonId": "season_1751979436251_rwx2b5v5a",
+    "seriesId": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
+    "status": "upcoming",
+    "trackSurface": "snow",
+    "updatedAt": "2025-07-26T18:23:54.684423",
+    "weatherContingency": "proceed"
   }
 ]

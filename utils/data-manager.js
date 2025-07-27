@@ -71,13 +71,14 @@ class DataManager {
         
         // If no specific types requested, load essential data first
         if (!dataTypes) {
-            dataTypes = ['series', 'events', 'race-brackets']; // Load core data first including race brackets
+            dataTypes = ['series', 'events', 'participants', 'race-brackets']; // Load core data first including participants
         }
         
         try {
             // Load requested data types in parallel, but only if not already loaded
+            // Always refresh participants data to ensure real-time updates
             const loadPromises = dataTypes
-                .filter(type => !this.loadedDataTypes.has(type))
+                .filter(type => type === 'participants' || !this.loadedDataTypes.has(type))
                 .map(async (type) => {
                     if (this.loadingPromises.has(type)) {
                         return this.loadingPromises.get(type);
@@ -141,6 +142,7 @@ class DataManager {
      */
     async fetchFromServer(endpoint) {
         const url = `${this.baseUrl}/${endpoint}`;
+        console.log(`🔍 DEBUG - Fetching from server: ${url}`);
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -434,11 +436,42 @@ class DataManager {
     }
 
     /**
+     * Load participants for a specific event
+     */
+    async loadParticipantsForEvent(eventId) {
+        console.log(`🔍 DEBUG - Loading participants for event: ${eventId}`);
+        const url = `${this.baseUrl}/participants?eventId=${eventId}`;
+        console.log(`🔍 DEBUG - Fetching from server: ${url}`);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`🔍 DEBUG - Server response:`, data);
+        
+        // Handle paginated response
+        const participants = data.participants || data;
+        console.log(`🔍 DEBUG - Extracted participants:`, participants);
+        
+        return participants;
+    }
+
+    /**
      * Get all events as a simple array (synchronous)
      * For component compatibility - returns array directly
      */
     getEventsArray() {
         return this.data.events || [];
+    }
+
+    /**
+     * Get all races as a simple array (synchronous)
+     * For component compatibility - returns array directly
+     */
+    getRacesArray() {
+        return this.data.races || [];
     }
 
     /**
