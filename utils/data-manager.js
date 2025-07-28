@@ -603,7 +603,8 @@ class DataManager {
                 brackets.forEach(bracket => {
                     if (bracket.eventId) {
                         bracketMap[bracket.eventId] = bracket;
-                        console.log(`   📋 Loaded bracket for event ${bracket.eventId}: ID ${bracket.id}`);
+                        // Reduced logging to prevent console spam during live display refresh
+                        // console.log(`   📋 Loaded bracket for event ${bracket.eventId}: ID ${bracket.id}`);
                     } else {
                         console.warn('   ⚠️ Bracket missing eventId:', bracket);
                     }

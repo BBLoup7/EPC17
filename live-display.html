@@ -671,6 +671,10 @@
                     <h2 class="section-title">Upcoming Races</h2>
                 </div>
                 <div class="races-container" id="upcoming-races">
+                    <!-- Skeleton loading for upcoming races -->
+                    <div id="upcomingRacesSkeleton" class="skeleton-loading" style="display: none;">
+                        <!-- Skeleton cards will be populated by JavaScript -->
+                    </div>
                     <div class="races-grid" id="upcoming-races-grid">
                         <!-- Upcoming races will be populated here -->
                     </div>
@@ -686,6 +690,10 @@
                     <h2 class="section-title">Recent Results</h2>
                 </div>
                 <div class="races-container" id="recent-results">
+                    <!-- Skeleton loading for recent results -->
+                    <div id="recentResultsSkeleton" class="skeleton-loading" style="display: none;">
+                        <!-- Skeleton cards will be populated by JavaScript -->
+                    </div>
                     <div class="races-grid" id="recent-results-grid">
                         <!-- Recent race results will be populated here -->
                     </div>
@@ -711,6 +719,7 @@
     </div>
 
     <script src="utils/performance-monitor.js"></script>
+    <script src="utils/ui-components.js"></script>
     <script src="utils/data-manager.js"></script>
     <script src="utils/event-bus.js"></script>
     <script src="modules/achievement-manager.js"></script>
@@ -855,7 +864,8 @@
                 if (currentEventId && this.currentEvent?.id !== currentEventId) {
                     this.currentEvent = this.events.find(event => event.id === currentEventId);
                     if (this.currentEvent) {
-                        console.log('🔄 Restored selected event:', this.currentEvent.name);
+                        // Reduced logging to prevent console spam during frequent refreshes
+                        // console.log('🔄 Restored selected event:', this.currentEvent.name);
                     }
                 }
                 
@@ -877,7 +887,17 @@
                     this.participants = participantsData || [];
                     this.raceBrackets = bracketsData || [];
                     
-                    console.log('🔄 Data refreshed - Events:', this.events.length, 'Races:', this.races.length);
+                    // If no races from server, extract them from race brackets (same logic as initial load)
+                    if ((!this.races || this.races.length === 0) && this.currentEvent) {
+                        const raceBrackets = window.dataManager.getRaceBracket(this.currentEvent.id);
+                        if (raceBrackets) {
+                            this.races = this.extractRacesFromBrackets(raceBrackets);
+                            console.log('🔄 Extracted races from brackets during refresh:', this.races?.length || 0, 'races');
+                        }
+                    }
+                    
+                    // Reduced logging frequency to prevent console spam
+                    // console.log('🔄 Data refreshed - Events:', this.events.length, 'Races:', this.races.length);
                 } catch (error) {
                     console.error('Error refreshing data:', error);
                 }
@@ -904,10 +924,21 @@
 
             renderDisplay() {
                 this.updateEventHeader();
-                this.renderUpcomingRaces();
-                this.renderRecentResults();
-                this.renderStatistics();
-                this.renderDriverProfile();
+                
+                // Show skeleton loading briefly
+                this.showUpcomingRacesSkeleton();
+                this.showRecentResultsSkeleton();
+                
+                // Render content after a short delay
+                setTimeout(() => {
+                    this.renderUpcomingRaces();
+                    this.renderRecentResults();
+                    this.renderStatistics();
+                    this.renderDriverProfile();
+                    
+                    this.hideUpcomingRacesSkeleton();
+                    this.hideRecentResultsSkeleton();
+                }, 500);
             }
 
             updateEventHeader() {
@@ -1388,6 +1419,53 @@
                 } else {
                     container.innerHTML = this.renderGroupedRacesSorted(recentRaces, 'completed');
                 }
+            }
+
+            // Skeleton loading functions for live display
+            showUpcomingRacesSkeleton() {
+                console.log('🔄 Showing upcoming races skeleton loading...');
+                const skeleton = document.getElementById('upcomingRacesSkeleton');
+                const grid = document.getElementById('upcoming-races-grid');
+                
+                if (skeleton) {
+                    skeleton.innerHTML = UIComponents.createSkeletonCards(3, 'card');
+                    skeleton.style.display = 'grid';
+                    skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
+                    skeleton.style.gap = '1rem';
+                }
+                if (grid) grid.style.display = 'none';
+            }
+
+            hideUpcomingRacesSkeleton() {
+                console.log('✅ Hiding upcoming races skeleton loading...');
+                const skeleton = document.getElementById('upcomingRacesSkeleton');
+                const grid = document.getElementById('upcoming-races-grid');
+                
+                if (skeleton) skeleton.style.display = 'none';
+                if (grid) grid.style.display = 'grid';
+            }
+
+            showRecentResultsSkeleton() {
+                console.log('🔄 Showing recent results skeleton loading...');
+                const skeleton = document.getElementById('recentResultsSkeleton');
+                const grid = document.getElementById('recent-results-grid');
+                
+                if (skeleton) {
+                    skeleton.innerHTML = UIComponents.createSkeletonCards(3, 'card');
+                    skeleton.style.display = 'grid';
+                    skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
+                    skeleton.style.gap = '1rem';
+                }
+                if (grid) grid.style.display = 'none';
+            }
+
+            hideRecentResultsSkeleton() {
+                console.log('✅ Hiding recent results skeleton loading...');
+                const skeleton = document.getElementById('recentResultsSkeleton');
+                const grid = document.getElementById('recent-results-grid');
+                
+                if (skeleton) skeleton.style.display = 'none';
+                if (grid) grid.style.display = 'grid';
             }
 
             // Update renderUpcomingRaces

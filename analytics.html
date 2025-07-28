@@ -104,6 +104,10 @@
 
         <!-- Overall Analytics -->
         <div id="overallAnalytics" class="overall-analytics">
+            <!-- Skeleton loading for overall analytics -->
+            <div id="overallSkeleton" class="skeleton-loading" style="display: none;">
+                <!-- Skeleton cards will be populated by JavaScript -->
+            </div>
             <div class="analytics-loading">
                 <i class="fas fa-spinner fa-spin"></i>
                 <p>Loading analytics data...</p>
@@ -112,6 +116,10 @@
 
         <!-- Series Analytics -->
         <div id="seriesAnalytics" class="series-analytics" style="display: none;">
+            <!-- Skeleton loading for series analytics -->
+            <div id="seriesSkeleton" class="skeleton-loading" style="display: none;">
+                <!-- Skeleton cards will be populated by JavaScript -->
+            </div>
             <div class="analytics-loading">
                 <i class="fas fa-spinner fa-spin"></i>
                 <p>Loading series analytics...</p>
@@ -122,6 +130,10 @@
         <div id="eventsAnalytics" class="events-analytics" style="display: none;">
             <!-- Event Selection Grid -->
             <div id="eventGrid" class="event-grid">
+                <!-- Skeleton loading for events grid -->
+                <div id="eventGridSkeleton" class="skeleton-loading" style="display: none;">
+                    <!-- Skeleton cards will be populated by JavaScript -->
+                </div>
                 <div class="analytics-loading">
                     <i class="fas fa-spinner fa-spin"></i>
                     <p>Loading events...</p>
@@ -880,6 +892,70 @@
             }
         }
 
+        // Skeleton loading functions for analytics page
+        function showOverallSkeleton() {
+            console.log('🔄 Showing overall analytics skeleton loading...');
+            const skeleton = document.getElementById('overallSkeleton');
+            const loading = document.querySelector('#overallAnalytics .analytics-loading');
+            
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(6, 'card');
+                skeleton.style.display = 'grid';
+                skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+                skeleton.style.gap = '1.5rem';
+            }
+            if (loading) loading.style.display = 'none';
+        }
+
+        function hideOverallSkeleton() {
+            console.log('✅ Hiding overall analytics skeleton loading...');
+            const skeleton = document.getElementById('overallSkeleton');
+            
+            if (skeleton) skeleton.style.display = 'none';
+        }
+
+        function showSeriesSkeleton() {
+            console.log('🔄 Showing series analytics skeleton loading...');
+            const skeleton = document.getElementById('seriesSkeleton');
+            const loading = document.querySelector('#seriesAnalytics .analytics-loading');
+            
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(4, 'card');
+                skeleton.style.display = 'grid';
+                skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+                skeleton.style.gap = '1.5rem';
+            }
+            if (loading) loading.style.display = 'none';
+        }
+
+        function hideSeriesSkeleton() {
+            console.log('✅ Hiding series analytics skeleton loading...');
+            const skeleton = document.getElementById('seriesSkeleton');
+            
+            if (skeleton) skeleton.style.display = 'none';
+        }
+
+        function showEventGridSkeleton() {
+            console.log('🔄 Showing event grid skeleton loading...');
+            const skeleton = document.getElementById('eventGridSkeleton');
+            const loading = document.querySelector('#eventGrid .analytics-loading');
+            
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(8, 'card');
+                skeleton.style.display = 'grid';
+                skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+                skeleton.style.gap = '1.5rem';
+            }
+            if (loading) loading.style.display = 'none';
+        }
+
+        function hideEventGridSkeleton() {
+            console.log('✅ Hiding event grid skeleton loading...');
+            const skeleton = document.getElementById('eventGridSkeleton');
+            
+            if (skeleton) skeleton.style.display = 'none';
+        }
+
         // Analytics Navigation
         function showAnalyticsView(view) {
             // Update active button
@@ -912,8 +988,11 @@
         // Load overall analytics
         async function loadOverallAnalytics() {
             const container = document.getElementById('overallAnalytics');
+            showOverallSkeleton();
             
             try {
+                // Simulate loading delay
+                await new Promise(resolve => setTimeout(resolve, 800));
                 // Calculate overall statistics
                 const totalRevenue = allParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
                 const totalDrivers = allParticipants.length;
@@ -1005,9 +1084,11 @@
                         </div>
                     </div>
                 `;
+                hideOverallSkeleton();
 
             } catch (error) {
                 console.error('Error loading overall analytics:', error);
+                hideOverallSkeleton();
                 container.innerHTML = `
                     <div class="analytics-section">
                         <div class="section-header">
@@ -1042,8 +1123,13 @@
         // Load series analytics
         async function loadSeriesAnalytics() {
             const container = document.getElementById('seriesAnalytics');
+            showSeriesSkeleton();
+            
+            // Simulate loading delay
+            await new Promise(resolve => setTimeout(resolve, 600));
             
             if (allSeries.length === 0) {
+                hideSeriesSkeleton();
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon"><i class="fas fa-trophy"></i></div>
@@ -1099,13 +1185,19 @@
             }
 
             container.innerHTML = seriesCards;
+            hideSeriesSkeleton();
         }
 
         // Load event grid
         async function loadEventGrid() {
             const container = document.getElementById('eventGrid');
+            showEventGridSkeleton();
+            
+            // Simulate loading delay
+            await new Promise(resolve => setTimeout(resolve, 700));
             
             if (allEvents.length === 0) {
+                hideEventGridSkeleton();
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
@@ -1154,6 +1246,7 @@
             }).join('');
 
             container.innerHTML = eventCards;
+            hideEventGridSkeleton();
         }
 
         // Select event for detailed analytics
