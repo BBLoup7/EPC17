@@ -1,7 +1,7 @@
 // Test script to verify class matching logic
 const seriesData = {
     "id": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
-    "sledClasses": [
+    "racingClasses": [
         {
             "id": "class_1751979436251_1oroniehp",
             "name": "600 Stock",
@@ -62,19 +62,19 @@ const seriesData = {
 const participantClasses = ["Outlaw", "Pro-Max", "4 temps", "1000 Improve"];
 
 console.log("Testing class matching logic...");
-console.log("Available classes:", seriesData.sledClasses.map(c => ({ id: c.id, name: c.name })));
+console.log("Available classes:", seriesData.racingClasses.map(c => ({ id: c.id, name: c.name })));
 console.log("Participant classes:", participantClasses);
 
 participantClasses.forEach(classId => {
     // Find class details - handle both ID and name-based lookups
-    let classDetail = seriesData.sledClasses.find(c => c.id === classId);
+    let classDetail = seriesData.racingClasses.find(c => c.id === classId);
     if (!classDetail) {
         // Fallback: look up by name if not found by ID
-        classDetail = seriesData.sledClasses.find(c => c.name === classId);
+        classDetail = seriesData.racingClasses.find(c => c.name === classId);
     }
     if (!classDetail) {
         // Additional fallback: case-insensitive name matching
-        classDetail = seriesData.sledClasses.find(c => 
+        classDetail = seriesData.racingClasses.find(c => 
             c.name.toLowerCase() === classId.toLowerCase()
         );
     }

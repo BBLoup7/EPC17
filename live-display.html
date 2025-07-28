@@ -46,12 +46,45 @@
             justify-content: space-between;
             align-items: center;
             min-height: 50px;
+            position: relative;
         }
 
         .header-left {
             display: flex;
             align-items: center;
             gap: 1rem;
+        }
+
+        /* Sneaky Back Button */
+        .back-button {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(74, 144, 226, 0.2);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            color: var(--accent-primary);
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            z-index: 10;
+        }
+
+        .back-button:hover {
+            background: rgba(74, 144, 226, 0.3);
+            border-color: rgba(74, 144, 226, 0.5);
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
         }
 
         .event-info {
@@ -559,6 +592,179 @@
             }
         }
 
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            /* Adjust live display layout for mobile */
+            .live-display-container {
+                grid-template-rows: auto 1fr;
+                height: 100vh;
+                margin-top: 0;
+            }
+            
+            /* Single column layout on mobile */
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                gap: 0.5rem;
+                padding: 0.5rem;
+            }
+            
+            .content-section {
+                padding: 0.75rem;
+                min-height: auto;
+            }
+            
+            /* Compact header for mobile */
+            .header-section {
+                padding: 0.5rem 1rem;
+                min-height: 40px;
+            }
+            
+            .event-title {
+                font-size: 1.1rem;
+            }
+            
+            .event-subtitle {
+                font-size: 0.7rem;
+            }
+            
+            /* Adjust race cards for mobile */
+            .race-card {
+                padding: 0.3rem 0.3rem 0.5rem 0.3rem;
+                min-height: 60px;
+                max-height: 70px;
+            }
+            
+            .race-title {
+                font-size: 0.75rem;
+            }
+            
+            .participant {
+                padding: 0.15rem 0.25rem 0.25rem 0.25rem;
+                font-size: 0.6rem;
+                min-width: 80px;
+            }
+            
+            .participant-name {
+                font-size: 0.7rem;
+            }
+            
+            .participant-lane {
+                font-size: 0.55rem;
+                padding: 0.05rem 0.2rem;
+            }
+            
+            /* Adjust stats for mobile */
+            .stat-box {
+                padding: 0.5rem;
+            }
+            
+            .stat-title {
+                font-size: 0.6rem;
+            }
+            
+            .stat-value {
+                font-size: 1.2rem;
+            }
+            
+            .stat-description {
+                font-size: 0.55rem;
+            }
+            
+            /* Adjust driver profile for mobile */
+            .driver-profile {
+                padding: 0.5rem;
+                margin-top: 0.5rem;
+            }
+            
+            .driver-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
+            
+            .driver-name {
+                font-size: 0.8rem;
+            }
+            
+            .driver-stat-value {
+                font-size: 0.9rem;
+            }
+            
+            .driver-stat-label {
+                font-size: 0.5rem;
+            }
+            
+            /* Adjust section headers for mobile */
+            .section-header {
+                margin-bottom: 0.5rem;
+            }
+            
+            .section-title {
+                font-size: 1rem;
+            }
+            
+            .section-icon {
+                width: 20px;
+                height: 20px;
+                font-size: 0.7rem;
+            }
+            
+            /* Adjust group headers for mobile */
+            .group-header {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.75rem;
+                margin-top: 0.4rem;
+                margin-bottom: 0.15rem;
+            }
+            
+            /* Hide back button on mobile when nav is open */
+            body.nav-open .back-button {
+                opacity: 0.3;
+                pointer-events: none;
+            }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 480px) {
+            .live-display-container {
+                margin-top: 0;
+                height: 100vh;
+            }
+            
+            .header-section {
+                padding: 0.4rem 0.8rem;
+                min-height: 35px;
+            }
+            
+            .event-title {
+                font-size: 1rem;
+            }
+            
+            .main-content {
+                padding: 0.3rem;
+                gap: 0.3rem;
+            }
+            
+            .content-section {
+                padding: 0.5rem;
+            }
+            
+            .race-card {
+                min-height: 55px;
+                max-height: 65px;
+            }
+            
+            .participant {
+                min-width: 70px;
+                font-size: 0.55rem;
+            }
+            
+            .participant-name {
+                font-size: 0.65rem;
+            }
+        }
+
         /* Animation for stat transitions */
         @keyframes fadeInUp {
             from {
@@ -639,9 +845,16 @@
     </style>
 </head>
 <body>
+
+
     <div class="live-display-container">
         <!-- Compact Header -->
         <div class="header-section">
+            <!-- Sneaky Back Button -->
+            <button class="back-button" onclick="window.history.back()" title="Go Back">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            
             <div class="header-left">
                 <div class="event-info">
                     <h1 class="event-title" id="event-title">Loading Event...</h1>
@@ -671,10 +884,6 @@
                     <h2 class="section-title">Upcoming Races</h2>
                 </div>
                 <div class="races-container" id="upcoming-races">
-                    <!-- Skeleton loading for upcoming races -->
-                    <div id="upcomingRacesSkeleton" class="skeleton-loading" style="display: none;">
-                        <!-- Skeleton cards will be populated by JavaScript -->
-                    </div>
                     <div class="races-grid" id="upcoming-races-grid">
                         <!-- Upcoming races will be populated here -->
                     </div>
@@ -690,10 +899,6 @@
                     <h2 class="section-title">Recent Results</h2>
                 </div>
                 <div class="races-container" id="recent-results">
-                    <!-- Skeleton loading for recent results -->
-                    <div id="recentResultsSkeleton" class="skeleton-loading" style="display: none;">
-                        <!-- Skeleton cards will be populated by JavaScript -->
-                    </div>
                     <div class="races-grid" id="recent-results-grid">
                         <!-- Recent race results will be populated here -->
                     </div>
@@ -925,20 +1130,11 @@
             renderDisplay() {
                 this.updateEventHeader();
                 
-                // Show skeleton loading briefly
-                this.showUpcomingRacesSkeleton();
-                this.showRecentResultsSkeleton();
-                
-                // Render content after a short delay
-                setTimeout(() => {
-                    this.renderUpcomingRaces();
-                    this.renderRecentResults();
-                    this.renderStatistics();
-                    this.renderDriverProfile();
-                    
-                    this.hideUpcomingRacesSkeleton();
-                    this.hideRecentResultsSkeleton();
-                }, 500);
+                // Render content immediately without skeleton loading
+                this.renderUpcomingRaces();
+                this.renderRecentResults();
+                this.renderStatistics();
+                this.renderDriverProfile();
             }
 
             updateEventHeader() {
@@ -1421,52 +1617,7 @@
                 }
             }
 
-            // Skeleton loading functions for live display
-            showUpcomingRacesSkeleton() {
-                console.log('🔄 Showing upcoming races skeleton loading...');
-                const skeleton = document.getElementById('upcomingRacesSkeleton');
-                const grid = document.getElementById('upcoming-races-grid');
-                
-                if (skeleton) {
-                    skeleton.innerHTML = UIComponents.createSkeletonCards(3, 'card');
-                    skeleton.style.display = 'grid';
-                    skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
-                    skeleton.style.gap = '1rem';
-                }
-                if (grid) grid.style.display = 'none';
-            }
 
-            hideUpcomingRacesSkeleton() {
-                console.log('✅ Hiding upcoming races skeleton loading...');
-                const skeleton = document.getElementById('upcomingRacesSkeleton');
-                const grid = document.getElementById('upcoming-races-grid');
-                
-                if (skeleton) skeleton.style.display = 'none';
-                if (grid) grid.style.display = 'grid';
-            }
-
-            showRecentResultsSkeleton() {
-                console.log('🔄 Showing recent results skeleton loading...');
-                const skeleton = document.getElementById('recentResultsSkeleton');
-                const grid = document.getElementById('recent-results-grid');
-                
-                if (skeleton) {
-                    skeleton.innerHTML = UIComponents.createSkeletonCards(3, 'card');
-                    skeleton.style.display = 'grid';
-                    skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
-                    skeleton.style.gap = '1rem';
-                }
-                if (grid) grid.style.display = 'none';
-            }
-
-            hideRecentResultsSkeleton() {
-                console.log('✅ Hiding recent results skeleton loading...');
-                const skeleton = document.getElementById('recentResultsSkeleton');
-                const grid = document.getElementById('recent-results-grid');
-                
-                if (skeleton) skeleton.style.display = 'none';
-                if (grid) grid.style.display = 'grid';
-            }
 
             // Update renderUpcomingRaces
             renderUpcomingRaces() {

@@ -1,5 +1,5 @@
 /**
- * Unified Statistics Manager for Snowmobile Drag Racing Event Manager
+ * Unified Statistics Manager for EPC17 Event Management System
  * Handles all participant statistics calculations and updates
  * OPTIMIZED for large datasets (hundreds of events, thousands of drivers)
  */

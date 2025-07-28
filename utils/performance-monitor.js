@@ -1,5 +1,5 @@
 /**
- * Performance Monitor for Snowmobile Drag Racing Event Manager
+ * Performance Monitor for EPC17 Event Management System
  * Tracks and optimizes application performance for large datasets
  */
 

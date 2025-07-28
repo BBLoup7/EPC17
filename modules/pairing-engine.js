@@ -1,5 +1,5 @@
 /**
- * Enhanced Pairing Engine Module for Snowmobile Drag Racing Event Manager
+ * Enhanced Pairing Engine Module for EPC17 Event Management System
  * Handles multi-lane race generation, lane assignment optimization, and opponent tracking
  */
 
