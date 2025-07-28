@@ -28,7 +28,7 @@
             <li><a href="races.html">Races</a></li>
             <li><a href="driver-profile.html">Drivers</a></li>
             <li><a href="analytics.html">Analytics</a></li>
-                            <li><a href="live-display.html">Live Display</a></li>
+            <li><a href="live-display.html">Live Display</a></li>
         </ul>
         
         <!-- Mobile Hamburger Menu -->
@@ -73,462 +73,352 @@
         <div class="mobile-nav-overlay"></div>
     </nav>
 
-    <main class="main-content">
-        <div class="hero-section">
-            <h1>Welcome to EPC TECHNOLOGY</h1>
-            <p class="hero-subtitle">PROJECT 17 - Advanced Drag Racing Tournament Management System</p>
-            <div class="hero-actions">
-                <a href="registration.html" class="btn btn-primary">Register Now</a>
-                <a href="series.html" class="btn btn-secondary">View Series</a>
+    <div class="home-layout">
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="hero-section">
+                <h1>🏁 Run Smarter Races. Save Time. Stay Fair.</h1>
+                <p class="hero-subtitle">Our drag racing event app takes the chaos out of race day.</p>
+                <div class="hero-actions">
+                    <a href="registration.html" class="btn btn-primary">Get Started</a>
+                    <a href="series.html" class="btn btn-secondary">View Demo</a>
+                </div>
             </div>
-        </div>
 
-        <!-- Completed Features Section -->
-        <div class="features-section completed-features">
-            <h2>✅ Recently Completed Features</h2>
-            <div class="features-grid">
-                <div class="feature-card completed">
-                    <div class="feature-icon">🔧</div>
-                    <h3>Race Generation Fixed</h3>
-                    <p>Fixed the racegen error and bracket initialization issues.</p>
+            <!-- Skeleton loading for features -->
+            <div id="featuresSkeleton" class="skeleton-loading" style="display: none;">
+                <!-- Skeleton cards will be populated by JavaScript -->
+            </div>
+
+            <!-- Features Grid -->
+            <div class="features-showcase" id="featuresShowcase">
+                <div class="feature-item">
+                    <div class="feature-icon">⏱️</div>
+                    <h3>Save Time & Staff</h3>
+                    <p>Automated race pairing, results, and class handling—no more paperwork, no more last-minute scrambles.</p>
                 </div>
 
-                <div class="feature-card completed">
-                    <div class="feature-icon">📋</div>
-                    <h3>Class Order Management</h3>
-                    <p>Support for creating, grouping, and reordering of racing categories.</p>
-                </div>
-
-                <div class="feature-card completed">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Smart Lane Assignment</h3>
-                    <p>Fixed lane assignment logic to ensure racers use lanes they've used least.</p>
-                </div>
-
-                <div class="feature-card completed">
+                <div class="feature-item">
                     <div class="feature-icon">⚖️</div>
-                    <h3>Fair Bracket Logic</h3>
-                    <p>Prevent repeat matchups and overused lanes with intelligent pairing.</p>
+                    <h3>Consistent & Fair</h3>
+                    <p>Balanced lanes. Transparent brackets. No favoritism. Just clean, competitive racing.</p>
                 </div>
 
-                <div class="feature-card completed">
-                    <div class="feature-icon">🚫</div>
-                    <h3>DSQ & False Start Logic</h3>
-                    <p>Support for disqualifications and false start handling.</p>
+                <div class="feature-item">
+                    <div class="feature-icon">📺</div>
+                    <h3>Real-Time Clarity</h3>
+                    <p>Show race schedules and results on-screen, instantly. Everyone knows what's happening—racers, crew, and fans.</p>
                 </div>
 
-                <div class="feature-card completed">
-                    <div class="feature-icon">🔄</div>
-                    <h3>Driver Swap Functionality</h3>
-                    <p>Reorganize drivers within the same race using swap buttons.</p>
+                <div class="feature-item">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Built for the Future</h3>
+                    <p>Future-proof features. Easy updates. Scalable for any size event.</p>
                 </div>
 
-                <div class="feature-card completed">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Early Next Round Generation</h3>
-                    <p>Optimize round pacing by generating next rounds when possible.</p>
-                </div>
-
-                <div class="feature-card completed">
+                <div class="feature-item">
                     <div class="feature-icon">📊</div>
-                    <h3>Enhanced Analytics</h3>
-                    <p>Renamed "Statistics" to "Analytics" with improved race/time tracking.</p>
-                </div>
-
-                <div class="feature-card completed">
-                    <div class="feature-icon">🔍</div>
-                    <h3>Improved Search</h3>
-                    <p>Enhanced driver profile search with actual search functionality.</p>
-                </div>
-
-                <div class="feature-card completed">
-                    <div class="feature-icon">✏️</div>
-                    <h3>Direct Editing</h3>
-                    <p>Support editing participants directly in Registration tab.</p>
-                </div>
-
-                <div class="feature-card completed">
-                    <div class="feature-icon">📝</div>
-                    <h3>Registration Form</h3>
-                    <p>Complete registration form with all needed fields including sponsor information.</p>
-                </div>
-
-                <div class="feature-card completed">
-                    <div class="feature-icon">📅</div>
-                    <h3>Season System</h3>
-                    <p>Create "Season" system under Series with proper event linking.</p>
-                </div>
-
-                <div class="feature-card completed">
-                    <div class="feature-icon">🖥️</div>
-                    <h3>Big Screen Display</h3>
-                    <p>Live event feed with recent results, upcoming races, and rotating analytics for big screen display.</p>
+                    <h3>Effortless Stats Tracking</h3>
+                    <p>Driver performance, event summaries, and detailed analytics—organized and ready to share.</p>
                 </div>
             </div>
-        </div>
 
-        <!-- Upcoming Features Section -->
-        <div class="features-section upcoming-features">
-            <h2>🚀 Upcoming Features & Updates</h2>
-            
-            <!-- High Priority -->
-            <div class="priority-section">
-                <h3>🔥 High Priority</h3>
-                <div class="features-grid">
-                    <div class="feature-card upcoming high-priority">
-                        <div class="feature-icon">👥</div>
-                        <h3>Fix Event Registration</h3>
-                        <p>Add existing drivers to events - currently drivers are counted but don't show up when initializing brackets.</p>
-                    </div>
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <h2>Ready to Transform Your Race Day?</h2>
+                <p>Join the future of drag racing event management</p>
+                <div class="cta-buttons">
+                    <a href="registration.html" class="btn btn-primary btn-large">Start Your Event</a>
+                    <a href="live-display.html" class="btn btn-outline btn-large">See Live Display</a>
+                </div>
+            </div>
+        </main>
 
-                    <div class="feature-card upcoming high-priority">
-                        <div class="feature-icon">🏁</div>
-                        <h3>False Start Ranking Fix</h3>
-                        <p>Fix false start logic to give last place in race but not affect total standings.</p>
-                    </div>
+        <!-- Sidebar Ads -->
+        <aside class="sidebar-ads">
+            <div class="ad-space">
+                <div class="ad-placeholder">
+                    <h4>Your Ad Here</h4>
+                    <p>Ad space available</p>
+                </div>
+            </div>
 
-                    <div class="feature-card upcoming high-priority">
-                        <div class="feature-icon">⚖️</div>
-                        <h3>Race Balancing</h3>
-                        <p>Balance the last 2 races when free run is disabled - ensure fair distribution of drivers.</p>
-                    </div>
-
-                    <div class="feature-card upcoming high-priority">
-                        <div class="feature-icon">🚫</div>
-                        <h3>False Start Disqualification</h3>
-                        <p>Implement proper false start disqualification logic.</p>
+            <div class="ad-space">
+                <div class="ad-content">
+                    <h4>EACDQ.com</h4>
+                    <p class="ad-subtitle">L'équipe d'animation Courses et Drags du Québec</p>
+                    <div class="ad-description">
+                        <p>Event promoter, event animation, security and all needs for events.</p>
+                        <p class="ad-since">Since 2016</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Core Features -->
-            <div class="priority-section">
-                <h3>⚙️ Core Features</h3>
-                <div class="features-grid">
-                                        <div class="feature-card upcoming">
-                        <div class="feature-icon">🔒</div>
-                        <h3>Security Improvements</h3>
-                        <p>Secure "Clear All Data" button with confirmation and protect all delete operations.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">🔄</div>
-                        <h3>Race Reorganization</h3>
-                        <p>Fix race reorganization within the same race - changing drivers of lanes around.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">📊</div>
-                        <h3>Event Count Fix</h3>
-                        <p>Fix event/participant count subtitle under Series management.</p>
-                    </div>
+            <div class="ad-space">
+                <div class="ad-placeholder">
+                    <h4>Your Ad Here</h4>
+                    <p>Ad space available</p>
                 </div>
             </div>
-
-            <!-- User Experience -->
-            <div class="priority-section">
-                <h3>🎨 User Experience</h3>
-                <div class="features-grid">
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">🏆</div>
-                        <h3>Achievement System</h3>
-                        <p>Fix and implement the achievement system for driver recognition.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">📄</div>
-                        <h3>Export Functionality</h3>
-                        <p>Add Extract button to convert stats and results to PDF files.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">🔗</div>
-                        <h3>Tie-Breaker Logic</h3>
-                        <p>Test and implement tie-breaker race logic for bracket and round ties.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">📋</div>
-                        <h3>Draft Status Removal</h3>
-                        <p>Remove "Draft" status in Series management page.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Advanced Features -->
-            <div class="priority-section">
-                <h3>🚀 Advanced Features</h3>
-                <div class="features-grid">
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">💰</div>
-                        <h3>Purse Calculator</h3>
-                        <p>Create automatic payout calculator based on % payback and sponsors.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">⏱️</div>
-                        <h3>Smart Race Spacing</h3>
-                        <p>Add logic to avoid back-to-back races for multi-class drivers.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">🌳</div>
-                        <h3>Visual Tournament Brackets</h3>
-                        <p>Build proper upper/lower tracking system for double & single elimination.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">🎲</div>
-                        <h3>Random Double Elimination</h3>
-                        <p>Add full random double elimination logic with manual fallback.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tournament System -->
-            <div class="priority-section">
-                <h3>🏆 Tournament System</h3>
-                <div class="features-grid">
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">📋</div>
-                        <h3>Report System</h3>
-                        <p>Create printable driver information reports with auto-print crash-proof system.</p>
-                    </div>
-
-                    <div class="feature-card upcoming">
-                        <div class="feature-icon">💾</div>
-                        <h3>Back-up System</h3>
-                        <p>Implement comprehensive data backup and recovery system.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Future Ideas -->
-            <div class="priority-section">
-                <h3>💡 Future Ideas</h3>
-                <div class="features-grid">
-                    <div class="feature-card upcoming idea">
-                        <div class="feature-icon">📧</div>
-                        <h3>Email Stats PDF</h3>
-                        <p>Automatic PDF of full driver profile after event completion.</p>
-                    </div>
-
-                    <div class="feature-card upcoming idea">
-                        <div class="feature-icon">📱</div>
-                        <h3>SMS Alerts</h3>
-                        <p>"You race in 5 heats" message to driver phones.</p>
-                    </div>
-
-                    <div class="feature-card upcoming idea">
-                        <div class="feature-icon">📺</div>
-                        <h3>Live Results Page</h3>
-                        <p>Auto-refreshing viewer mode for fans on mobile devices.</p>
-                    </div>
-
-                    <div class="feature-card upcoming idea">
-                        <div class="feature-icon">🔧</div>
-                        <h3>Tech Inspection Page</h3>
-                        <p>Dedicated page for vehicle inspections and compliance checks.</p>
-                    </div>
-
-                    <div class="feature-card upcoming idea">
-                        <div class="feature-icon">🤖</div>
-                        <h3>AI Announcer</h3>
-                        <p>AI-powered announcer to replace or assist real announcers.</p>
-                    </div>
-
-                    <div class="feature-card upcoming idea">
-                        <div class="feature-icon">🌍</div>
-                        <h3>Translation Support</h3>
-                        <p>Multi-language support for international events.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <h2>Quick Actions</h2>
-            <div class="actions-grid">
-                <a href="registration.html" class="action-card">
-                    <div class="action-icon">📝</div>
-                    <h3>Register Driver</h3>
-                    <p>Add new participants to the system</p>
-                </a>
-                <a href="series.html" class="action-card">
-                    <div class="action-icon">🏆</div>
-                    <h3>Manage Series</h3>
-                    <p>Create and configure racing series</p>
-                </a>
-                <a href="events.html" class="action-card">
-                    <div class="action-icon">📅</div>
-                    <h3>Create Event</h3>
-                    <p>Set up new racing events</p>
-                </a>
-                <a href="races.html" class="action-card">
-                    <div class="action-icon">🏁</div>
-                    <h3>Manage Races</h3>
-                    <p>Generate brackets and manage race flow</p>
-                </a>
-            </div>
-        </div>
-    </main>
+        </aside>
+    </div>
 
     <style>
-        .features-section {
-            margin: 2rem 0;
+        .home-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .main-content {
             padding: 2rem 0;
         }
 
-        .completed-features {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 2rem;
-            margin: 2rem 0;
-            border: 1px solid var(--border-color);
+        .hero-section {
+            text-align: center;
+            padding: 3rem 0;
+            margin-bottom: 3rem;
         }
 
-        .upcoming-features {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 2rem;
-            margin: 2rem 0;
-            border: 1px solid var(--border-color);
-        }
-
-        .priority-section {
-            margin: 2rem 0;
-        }
-
-        .priority-section h3 {
+        .hero-section h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
             font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin: 1rem 0;
-        }
-
-        .feature-card {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid var(--border-color);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .feature-card.completed {
-            border-left: 4px solid var(--success);
-        }
-
-        .feature-card.upcoming {
-            border-left: 4px solid var(--accent-primary);
-        }
-
-        .feature-card.high-priority {
-            border-left: 4px solid var(--error);
-            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
-        }
-
-        .feature-card.idea {
-            border-left: 4px solid var(--warning);
-            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
-        }
-
-        .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card h3 {
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .feature-card p {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            margin-bottom: 2rem;
             line-height: 1.5;
         }
 
-        .quick-actions {
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .features-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
             margin: 3rem 0;
         }
 
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin: 1rem 0;
-        }
-
-        .action-card {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            text-decoration: none;
-            color: inherit;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .feature-item {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
             border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .action-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-            text-decoration: none;
-            color: inherit;
+        .feature-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
-        .action-icon {
-            font-size: 2rem;
+        .feature-icon {
+            font-size: 3rem;
             margin-bottom: 1rem;
         }
 
-        .action-card h3 {
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
+        .feature-item h3 {
+            font-size: 1.25rem;
             font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
         }
 
-        .action-card p {
+        .feature-item p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 3rem 0;
+            margin-top: 3rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* Sidebar Ads */
+        .sidebar-ads {
+            padding: 2rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .ad-space {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .ad-placeholder {
+            padding: 2rem;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+        }
+
+        .ad-placeholder h4 {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .ad-placeholder p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .ad-content {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .ad-content h4 {
+            color: var(--accent-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .ad-subtitle {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .ad-description {
             color: var(--text-muted);
             font-size: 0.9rem;
             line-height: 1.5;
         }
 
+        .ad-since {
+            font-weight: 500;
+            color: var(--accent-primary);
+            margin-top: 0.5rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .home-layout {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .sidebar-ads {
+                order: -1;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 1rem 0;
+            }
+
+            .ad-space {
+                min-width: 250px;
+                flex-shrink: 0;
+            }
+        }
+
         @media (max-width: 768px) {
-            .features-grid {
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+
+            .features-showcase {
                 grid-template-columns: 1fr;
             }
-            
-            .actions-grid {
-                grid-template-columns: 1fr;
+
+            .hero-actions,
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
             }
         }
     </style>
 
     <script src="utils/performance-monitor.js"></script>
+    <script src="utils/ui-components.js"></script>
     <script src="js/mobile-nav.js"></script>
     
     <!-- Performance Dashboard -->
     <div id="performance-dashboard-container"></div>
     
     <script>
+        // Skeleton loading functions for home page
+        function showFeaturesSkeleton() {
+            console.log('🔄 Showing features skeleton loading...');
+            const skeleton = document.getElementById('featuresSkeleton');
+            const showcase = document.getElementById('featuresShowcase');
+            
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(5, 'card');
+                skeleton.style.display = 'grid';
+                skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
+                skeleton.style.gap = '2rem';
+            }
+            if (showcase) showcase.style.display = 'none';
+        }
+
+        function hideFeaturesSkeletonLoading() {
+            console.log('✅ Hiding features skeleton loading...');
+            const skeleton = document.getElementById('featuresSkeleton');
+            const showcase = document.getElementById('featuresShowcase');
+            
+            if (skeleton) skeleton.style.display = 'none';
+            if (showcase) showcase.style.display = 'grid';
+        }
+
         // Load performance dashboard
         fetch('components/performance-dashboard.html')
             .then(response => response.text())
@@ -539,6 +429,13 @@
         
         // Fix desktop navigation click issues
         document.addEventListener('DOMContentLoaded', function() {
+            // Show skeleton loading briefly for visual effect
+            showFeaturesSkeleton();
+            
+            // Hide skeleton after a short delay (simulating loading)
+            setTimeout(() => {
+                hideFeaturesSkeletonLoading();
+            }, 800);
             const navLinks = document.querySelectorAll('.nav-links li');
             
             navLinks.forEach(li => {

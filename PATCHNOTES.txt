@@ -1,0 +1,9 @@
+added skeleton screen for all pages.
+Changed the Home page from functionality to ads and app description
+
+
+Bug fixes
+
+Fix the incapacity to click on any other page when in the analytics page.
+Fixed live display refresh bug.
+Fixed some live display Race UI errors.

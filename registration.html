@@ -794,10 +794,18 @@
         </div>
 
         <div id="formView" class="tab-content active">
+            <!-- Skeleton loading for registration form -->
+            <div id="formSkeleton" class="skeleton-loading" style="display: none;">
+                <!-- Skeleton cards will be populated by JavaScript -->
+            </div>
             <!-- Registration form will be loaded here -->
         </div>
 
         <div id="listView" class="tab-content">
+            <!-- Skeleton loading for participant list -->
+            <div id="participantsSkeleton" class="skeleton-loading" style="display: none;">
+                <!-- Skeleton cards will be populated by JavaScript -->
+            </div>
             <!-- Participant list will be loaded here -->
         </div>
 
@@ -1032,9 +1040,45 @@
             }
         }
 
+        // Skeleton loading functions for registration page
+        function showFormSkeleton() {
+            console.log('🔄 Showing registration form skeleton loading...');
+            const skeleton = document.getElementById('formSkeleton');
+            
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(1, 'card');
+                skeleton.style.display = 'block';
+            }
+        }
+
+        function hideFormSkeleton() {
+            console.log('✅ Hiding registration form skeleton loading...');
+            const skeleton = document.getElementById('formSkeleton');
+            
+            if (skeleton) skeleton.style.display = 'none';
+        }
+
+        function showParticipantsSkeleton() {
+            console.log('🔄 Showing participants skeleton loading...');
+            const skeleton = document.getElementById('participantsSkeleton');
+            
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(8, 'table');
+                skeleton.style.display = 'block';
+            }
+        }
+
+        function hideParticipantsSkeleton() {
+            console.log('✅ Hiding participants skeleton loading...');
+            const skeleton = document.getElementById('participantsSkeleton');
+            
+            if (skeleton) skeleton.style.display = 'none';
+        }
+
         // Load registration form component
         async function loadRegistrationForm() {
             try {
+                showFormSkeleton();
                 const formView = document.getElementById('formView');
                 const response = await fetch('components/registration-form.html');
                 const html = await response.text();
@@ -1077,8 +1121,10 @@
                 }
                 
                 console.log('Registration form loaded successfully');
+                hideFormSkeleton();
             } catch (error) {
                 console.error('Error loading registration form:', error);
+                hideFormSkeleton();
                 document.getElementById('formView').innerHTML = `
                     <div class="error-message">
                         <h3>Error Loading Registration Form</h3>
@@ -1501,6 +1547,7 @@
         // Load participant list component
         async function loadParticipantList() {
             try {
+                showParticipantsSkeleton();
                 const listView = document.getElementById('listView');
                 const response = await fetch('components/participant-list.html');
                 const html = await response.text();
@@ -1565,8 +1612,10 @@
                 }, 500);
                 
                 console.log('✅ Participant list component loaded successfully');
+                hideParticipantsSkeleton();
             } catch (error) {
                 console.error('❌ Error loading participant list:', error);
+                hideParticipantsSkeleton();
                 document.getElementById('listView').innerHTML = `
                     <div class="error-message">
                         <h3>Error Loading Participant List</h3>

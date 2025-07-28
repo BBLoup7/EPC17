@@ -593,6 +593,11 @@
                 </div>
             </div>
 
+            <!-- Skeleton loading for series -->
+            <div id="seriesSkeleton" class="skeleton-loading" style="display: none;">
+                <!-- Skeleton cards will be populated by JavaScript -->
+            </div>
+
             <div id="seriesListContainer">
                 <!-- Series list will be loaded here -->
             </div>
@@ -702,11 +707,41 @@
             }
         }
 
+        // Skeleton loading functions for series page
+        function showSeriesSkeleton() {
+            console.log('🔄 Showing series skeleton loading...');
+            const skeleton = document.getElementById('seriesSkeleton');
+            const container = document.getElementById('seriesListContainer');
+            
+            if (skeleton) {
+                skeleton.innerHTML = UIComponents.createSkeletonCards(6, 'card');
+                skeleton.style.display = 'grid';
+                skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+                skeleton.style.gap = '1.5rem';
+            }
+            if (container) container.style.display = 'none';
+        }
+
+        function hideSeriesSkeleton() {
+            console.log('✅ Hiding series skeleton loading...');
+            const skeleton = document.getElementById('seriesSkeleton');
+            const container = document.getElementById('seriesListContainer');
+            
+            if (skeleton) skeleton.style.display = 'none';
+            if (container) container.style.display = 'block';
+        }
+
         // Load series list
         function loadSeriesList() {
             console.log('Loading series list...');
-            seriesManager.loadSeriesContent();
-            loadSeriesStats();
+            showSeriesSkeleton();
+            
+            // Simulate loading delay and then show content
+            setTimeout(() => {
+                seriesManager.loadSeriesContent();
+                loadSeriesStats();
+                hideSeriesSkeleton();
+            }, 600);
         }
 
         // Show series creation form - use SeriesManager's method
