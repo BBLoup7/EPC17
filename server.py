@@ -110,20 +110,37 @@ def network_test():
 def handle_participants():
     """Handle participant registration and retrieval with pagination"""
     if request.method == 'POST':
+        print(f"🔍 DEBUG - POST /api/participants called")
+        print(f"🔍 DEBUG - Content-Type: {request.content_type}")
+        print(f"🔍 DEBUG - Request data: {request.data}")
+        
         data = request.json
+        print(f"🔍 DEBUG - Parsed JSON: {data}")
+        
         if not data or not data.get('name'):
+            print(f"❌ DEBUG - Validation failed: name missing")
             return jsonify({'error': 'Name is required'}), 400
             
         data['id'] = generate_id()
         data['registrationDate'] = datetime.now().isoformat()
         data['paymentStatus'] = data.get('paymentStatus', 'pending')
         
-        participants = load_data('participants.json')
-        participants.append(data)
+        print(f"🔍 DEBUG - Final data to save: {data}")
         
-        if save_data('participants.json', participants):
+        participants = load_data('participants.json')
+        print(f"🔍 DEBUG - Current participants count: {len(participants)}")
+        
+        participants.append(data)
+        print(f"🔍 DEBUG - After append count: {len(participants)}")
+        
+        save_result = save_data('participants.json', participants)
+        print(f"🔍 DEBUG - Save result: {save_result}")
+        
+        if save_result:
+            print(f"✅ DEBUG - Successfully saved participant: {data['id']}")
             return jsonify(data), 201
         else:
+            print(f"❌ DEBUG - Failed to save participant")
             return jsonify({'error': 'Failed to save participant'}), 500
     
     # GET request with pagination
@@ -150,13 +167,15 @@ def handle_participants():
     
     # Apply pagination
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 50))
+    limit = int(request.args.get('limit', 1000))  # Increase default limit to 1000 to get all participants
     
     total = len(participants)
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
     
     paginated_participants = participants[start_idx:end_idx]
+    
+    print(f"🔍 DEBUG - Returning {len(paginated_participants)} participants (total: {total})")
     
     return jsonify({
         'participants': paginated_participants,
@@ -269,13 +288,15 @@ def handle_series():
     
     # Apply pagination
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 20))
+    limit = int(request.args.get('limit', 1000))  # Increase default limit to 1000 to get all series
     
     total = len(series)
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
     
     paginated_series = series[start_idx:end_idx]
+    
+    print(f"🔍 DEBUG - Returning {len(paginated_series)} series (total: {total})")
     
     return jsonify({
         'series': paginated_series,
@@ -395,13 +416,15 @@ def handle_events():
     
     # Apply pagination
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 20))
+    limit = int(request.args.get('limit', 1000))  # Increase default limit to 1000 to get all events
     
     total = len(events)
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
     
     paginated_events = events[start_idx:end_idx]
+    
+    print(f"🔍 DEBUG - Returning {len(paginated_events)} events (total: {total})")
     
     return jsonify({
         'events': paginated_events,
@@ -417,34 +440,59 @@ def handle_event_by_id(event_id):
     if request.method == 'PUT':
         """Update a specific event"""
         try:
+            print(f"🔍 DEBUG - PUT /api/events/{event_id} called")
             data = request.json
-            if not data or not data.get('name'):
-                return jsonify({'error': 'Event name is required'}), 400
+            print(f"🔍 DEBUG - Request data: {data}")
+            
+            if not data:
+                print(f"❌ DEBUG - No data provided")
+                return jsonify({'error': 'No data provided'}), 400
             
             events = load_data('events.json')
             
             # Find the event to update
             event_index = next((i for i, e in enumerate(events) if e['id'] == event_id), None)
-            if event_index is None:
+            if (event_index is None):
+                print(f"❌ DEBUG - Event {event_id} not found")
                 return jsonify({'error': 'Event not found'}), 404
             
-            # Update the event data
-            data['id'] = event_id  # Ensure ID doesn't change
-            data['updatedAt'] = datetime.now().isoformat()
+            # Get the existing event data
+            existing_event = events[event_index]
+            print(f"🔍 DEBUG - Existing event: {existing_event.get('name', 'Unknown')}")
+            
+            # For partial updates, preserve existing data and only update provided fields
+            if not data.get('name') and 'name' not in data:
+                # This is a partial update (like participant count sync)
+                # Preserve the existing name and other required fields
+                data['name'] = existing_event.get('name')
+                print(f"🔍 DEBUG - Partial update detected, preserving name: {data['name']}")
+                if not data['name']:
+                    print(f"❌ DEBUG - No name found in existing event")
+                    return jsonify({'error': 'Event name is required'}), 400
+            
+            # Update the event data (merge with existing data)
+            updated_event = { **existing_event, **data }
+            updated_event['id'] = event_id  # Ensure ID doesn't change
+            updated_event['updatedAt'] = datetime.now().isoformat()
+            
+            print(f"🔍 DEBUG - Updated event data: {updated_event.get('name', 'Unknown')}")
             
             # Preserve original creation date if not provided
-            if 'createdAt' not in data and 'createdDate' in events[event_index]:
-                data['createdAt'] = events[event_index]['createdDate']
+            if 'createdAt' not in updated_event and 'createdDate' in existing_event:
+                updated_event['createdAt'] = existing_event['createdDate']
             
             # Update participant count if participants list changed
             if 'participants' in data:
-                data['currentParticipants'] = len(data['participants'])
+                updated_event['currentParticipants'] = len(data['participants'])
+                print(f"🔍 DEBUG - Updated participant count: {updated_event['currentParticipants']}")
             
-            events[event_index] = data
+            events[event_index] = updated_event
             
             if save_data('events.json', events):
-                return jsonify(data), 200
+                print(f"✅ DEBUG - Successfully updated event: {updated_event.get('name', 'Unknown')}")
+                return jsonify(updated_event), 200
             else:
+                print(f"❌ DEBUG - Failed to save event data")
                 return jsonify({'error': 'Failed to update event'}), 500
                 
         except Exception as e:

@@ -1145,8 +1145,8 @@
     "winRate": 33.3
   },
   {
-    "avgPosition": 1,
-    "bestStreak": 1,
+    "avgPosition": 4,
+    "bestStreak": 0,
     "contact": {
       "email": "driver1@1.1",
       "emergency": "",
@@ -1158,13 +1158,13 @@
     "eventsParticipated": 1,
     "id": "932af4a8-c26e-4139-bca5-f36a6e0b77f7",
     "lanePerformance": {
-      "4": {
+      "5": {
         "total": 1,
-        "wins": 1,
-        "winRate": 100
+        "wins": 0,
+        "winRate": 0
       }
     },
-    "lastRaceDate": "2025-07-08T13:36:19.436Z",
+    "lastRaceDate": "2025-07-27T03:38:06.489Z",
     "name": "Cassius Franklin",
     "nickname": "cass",
     "paymentStatus": "pending",
@@ -1199,44 +1199,44 @@
     "sponsors": [],
     "statistics": {
       "totalRaces": 1,
-      "totalWins": 1,
-      "winRate": 100,
-      "avgPosition": 1,
-      "bestStreak": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 4,
+      "bestStreak": 0,
       "eventsParticipated": 1,
       "lanePerformance": {
-        "4": {
+        "5": {
           "total": 1,
-          "wins": 1,
-          "winRate": 100
+          "wins": 0,
+          "winRate": 0
         }
       },
-      "recentWinRate": 100,
-      "lastUpdated": "2025-07-08T13:32:09.475Z",
-      "lastCalculated": 1751981529475,
-      "totalLosses": 0,
-      "bestPosition": 1,
-      "worstPosition": 1,
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-27T03:38:06.489Z",
+      "lastCalculated": 1753587486489,
+      "totalLosses": 1,
+      "bestPosition": 4,
+      "worstPosition": 4,
       "raceHistory": [
         {
           "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
           "className": "1000 Improve",
           "round": 1,
-          "heatId": "heat-r1-h2-1751981355734-0brnoc29e",
-          "lane": 4,
-          "position": 1,
+          "heatId": "heat-r1-h1-1753587447932-14b8us238",
+          "lane": 5,
+          "position": 4,
           "result": "completed",
-          "timestamp": "2025-07-08T13:29:15.734Z",
-          "opponents": "Leonard Cisneros, Arran Shepard, Markus David, Moses Young"
+          "timestamp": "2025-07-27T03:37:27.933Z",
+          "opponents": "Ioan Daniels, Ashley Hamilton, Edmund Jacobs, Lyndon Walsh"
         }
       ]
     },
     "status": "active",
     "totalFee": 350,
     "totalRaces": 1,
-    "totalWins": 1,
-    "updatedAt": "2025-07-08T09:36:19.442841",
-    "winRate": 100
+    "totalWins": 0,
+    "updatedAt": "2025-07-26T23:38:06.718688",
+    "winRate": 0
   },
   {
     "avgPosition": 4,
@@ -1845,7 +1845,7 @@
         "winRate": 0
       }
     },
-    "lastRaceDate": "2025-07-08T13:36:20.064Z",
+    "lastRaceDate": "2025-07-27T03:38:06.739Z",
     "name": "Ioan Daniels",
     "nickname": "",
     "paymentStatus": "pending",
@@ -1893,8 +1893,8 @@
         }
       },
       "recentWinRate": 0,
-      "lastUpdated": "2025-07-08T13:32:03.267Z",
-      "lastCalculated": 1751981523267,
+      "lastUpdated": "2025-07-27T03:38:06.739Z",
+      "lastCalculated": 1753587486739,
       "totalLosses": 1,
       "bestPosition": 5,
       "worstPosition": 5,
@@ -1903,12 +1903,12 @@
           "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
           "className": "1000 Improve",
           "round": 1,
-          "heatId": "heat-r1-h1-1751981355734-zdrfiv7ik",
+          "heatId": "heat-r1-h1-1753587447932-14b8us238",
           "lane": 1,
           "position": 5,
           "result": "completed",
-          "timestamp": "2025-07-08T13:29:15.734Z",
-          "opponents": "Matteo Hampton, Brendon Parks, Mattie Chan, Edmund Jacobs"
+          "timestamp": "2025-07-27T03:37:27.933Z",
+          "opponents": "Ashley Hamilton, Edmund Jacobs, Lyndon Walsh, Cassius Franklin"
         }
       ]
     },
@@ -1916,7 +1916,7 @@
     "totalFee": 1650,
     "totalRaces": 1,
     "totalWins": 0,
-    "updatedAt": "2025-07-08T09:36:20.073857",
+    "updatedAt": "2025-07-26T23:38:06.805117",
     "winRate": 0
   },
   {
@@ -3640,8 +3640,8 @@
     "winRate": 0
   },
   {
-    "avgPosition": 1,
-    "bestStreak": 1,
+    "avgPosition": 0,
+    "bestStreak": 0,
     "contact": {
       "email": "driver1@1.1",
       "emergency": "",
@@ -3650,16 +3650,10 @@
     "createdAt": "2025-07-08T13:17:41.715Z",
     "dob": "2025-07-07",
     "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
-    "eventsParticipated": 1,
+    "eventsParticipated": 0,
     "id": "6b381e9a-8f17-4aa0-ba76-0a96fc8eb76b",
-    "lanePerformance": {
-      "1": {
-        "total": 1,
-        "wins": 1,
-        "winRate": 100
-      }
-    },
-    "lastRaceDate": "2025-07-08T13:36:19.744Z",
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-27T03:38:02.803Z",
     "name": "Lyndon Walsh",
     "nickname": "",
     "paymentStatus": "pending",
@@ -3686,45 +3680,26 @@
     },
     "sponsors": [],
     "statistics": {
-      "totalRaces": 1,
-      "totalWins": 1,
-      "winRate": 100,
-      "avgPosition": 1,
-      "bestStreak": 1,
-      "eventsParticipated": 1,
-      "lanePerformance": {
-        "1": {
-          "total": 1,
-          "wins": 1,
-          "winRate": 100
-        }
-      },
-      "recentWinRate": 100,
-      "lastUpdated": "2025-07-08T13:32:15.492Z",
-      "lastCalculated": 1751981535492,
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-27T03:38:02.801Z",
       "totalLosses": 0,
-      "bestPosition": 1,
-      "worstPosition": 1,
-      "raceHistory": [
-        {
-          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
-          "className": "1000 Improve",
-          "round": 1,
-          "heatId": "final-heat-1751981355734-4uapl1scx",
-          "lane": 1,
-          "position": 1,
-          "result": "completed",
-          "timestamp": "2025-07-08T13:29:15.734Z",
-          "opponents": "Mohsin Hudson"
-        }
-      ]
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
     },
     "status": "active",
     "totalFee": 400,
-    "totalRaces": 1,
-    "totalWins": 1,
-    "updatedAt": "2025-07-08T09:36:19.754203",
-    "winRate": 100
+    "totalRaces": 0,
+    "totalWins": 0,
+    "updatedAt": "2025-07-26T23:38:03.210888",
+    "winRate": 0
   },
   {
     "avgPosition": 4,
@@ -4375,7 +4350,7 @@
     "winRate": 50
   },
   {
-    "avgPosition": 0,
+    "avgPosition": 3,
     "bestStreak": 0,
     "contact": {
       "email": "driver1@1.1",
@@ -4385,10 +4360,16 @@
     "createdAt": "2025-07-08T13:19:41.132Z",
     "dob": "2025-07-07",
     "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
-    "eventsParticipated": 0,
+    "eventsParticipated": 1,
     "id": "9c947f87-1598-4806-b9a0-3c55d85ba5f4",
-    "lanePerformance": {},
-    "lastRaceDate": "2025-07-08T13:36:19.553Z",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-27T03:38:06.140Z",
     "name": "Edmund Jacobs",
     "nickname": "",
     "paymentStatus": "pending",
@@ -4408,25 +4389,44 @@
     },
     "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
+      "totalRaces": 1,
       "totalWins": 0,
       "winRate": 0,
-      "avgPosition": 0,
+      "avgPosition": 3,
       "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
       "recentWinRate": 0,
-      "lastUpdated": "2025-07-08T13:36:19.553Z",
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "lastUpdated": "2025-07-27T03:38:06.140Z",
+      "lastCalculated": 1753587486140,
+      "totalLosses": 1,
+      "bestPosition": 3,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "02668ce2-df22-4d1b-ab7d-b30b57165f40",
+          "className": "1000 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753587447932-14b8us238",
+          "lane": 3,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-27T03:37:27.933Z",
+          "opponents": "Ioan Daniels, Ashley Hamilton, Lyndon Walsh, Cassius Franklin"
+        }
+      ]
     },
     "status": "active",
     "totalFee": 150,
-    "totalRaces": 0,
+    "totalRaces": 1,
     "totalWins": 0,
-    "updatedAt": "2025-07-08T09:36:19.567327",
+    "updatedAt": "2025-07-26T23:38:06.469977",
     "winRate": 0
   },
   {
@@ -4951,7 +4951,30 @@
     "sponsors": [],
     "status": "active",
     "totalFee": 150,
-    "updatedAt": "2025-07-08T09:22:15.363944"
+    "updatedAt": "2025-07-26T23:38:06.121840",
+    "totalRaces": 0,
+    "totalWins": 0,
+    "winRate": 0,
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "eventsParticipated": 0,
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-27T03:38:03.227Z",
+    "statistics": {
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-27T03:38:03.227Z",
+      "totalLosses": 0,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
+    }
   },
   {
     "contact": {
@@ -6087,16 +6110,21 @@
     "updatedAt": "2025-07-26T04:48:58.446842"
   },
   {
-    "name": "abc3",
-    "nickname": "",
-    "racingNumber": null,
-    "dob": "2025-07-25",
     "contact": {
       "email": "",
-      "phone": "",
-      "emergency": ""
+      "emergency": "",
+      "phone": ""
     },
-    "sponsors": [],
+    "createdAt": "2025-07-26T22:23:54.656Z",
+    "dob": "2025-07-25",
+    "eventId": "3e8a8e28-9e34-4408-9d75-71811f2e73d7",
+    "id": "83e9eae6-9547-4e71-a9ef-e083b1b7e394",
+    "name": "abc3",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-26T18:23:54.661677",
+    "registrationType": "event",
     "selectedClasses": [
       "800 Stock",
       "600 Improve",
@@ -6109,69 +6137,1025 @@
       "4 temps"
     ],
     "sledConfigurations": {
-      "800 Stock": {
+      "1000 Improve": {
+        "engine": "",
         "make": "",
         "model": "",
-        "year": "",
-        "engine": ""
-      },
-      "600 Improve": {
-        "make": "",
-        "model": "",
-        "year": "",
-        "engine": ""
-      },
-      "800 Improve": {
-        "make": "",
-        "model": "",
-        "year": "",
-        "engine": ""
-      },
-      "600 Stock": {
-        "make": "",
-        "model": "",
-        "year": "",
-        "engine": ""
-      },
-      "Outlaw": {
-        "make": "",
-        "model": "",
-        "year": "",
-        "engine": ""
-      },
-      "Pro-Max": {
-        "make": "",
-        "model": "",
-        "year": "",
-        "engine": ""
+        "year": ""
       },
       "1000 Stock": {
+        "engine": "",
         "make": "",
         "model": "",
-        "year": "",
-        "engine": ""
-      },
-      "1000 Improve": {
-        "make": "",
-        "model": "",
-        "year": "",
-        "engine": ""
+        "year": ""
       },
       "4 temps": {
+        "engine": "",
         "make": "",
         "model": "",
-        "year": "",
-        "engine": ""
+        "year": ""
+      },
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
       }
     },
-    "totalFee": 2300,
-    "registrationDate": "2025-07-26T18:23:54.661677",
-    "registrationType": "event",
-    "eventId": "3e8a8e28-9e34-4408-9d75-71811f2e73d7",
+    "sponsors": [],
     "status": "active",
-    "id": "83e9eae6-9547-4e71-a9ef-e083b1b7e394",
-    "createdAt": "2025-07-26T22:23:54.656Z",
-    "updatedAt": "2025-07-26T22:23:54.656Z",
+    "totalFee": 2300,
+    "updatedAt": "2025-07-26T23:39:09.227945",
+    "totalRaces": 0,
+    "totalWins": 0,
+    "winRate": 0,
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "eventsParticipated": 0,
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-27T03:39:03.571Z",
+    "statistics": {
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-27T03:39:03.571Z",
+      "totalLosses": 0,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
+    }
+  },
+  {
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-27T02:58:29.406Z",
+    "dob": "2025-07-25",
+    "eventId": "3e8a8e28-9e34-4408-9d75-71811f2e73d7",
+    "id": "d324dd80-0336-47c4-a8de-8670cd5f0424",
+    "name": "abc3",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-26T22:58:29.412846",
+    "registrationType": "event",
+    "selectedClasses": [
+      "800 Improve",
+      "1000 Improve",
+      "Outlaw",
+      "1000 Stock",
+      "Pro-Max",
+      "600 Improve",
+      "600 Stock",
+      "4 temps",
+      "800 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 2300,
+    "updatedAt": "2025-07-26T23:39:03.551587",
+    "totalRaces": 0,
+    "totalWins": 0,
+    "winRate": 0,
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "eventsParticipated": 0,
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-27T03:38:47.182Z",
+    "statistics": {
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-27T03:38:47.179Z",
+      "totalLosses": 0,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
+    }
+  },
+  {
+    "name": "Test Driver 1753585388777",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "11866a0f-a585-457c-9b52-3723a010d42f",
+    "createdAt": "2025-07-27T03:03:08.777Z",
+    "updatedAt": "2025-07-27T03:03:08.777Z",
+    "registrationDate": "2025-07-26T23:03:08.780067",
     "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753585661823",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "3f6cc2c5-fed0-417b-8266-5a5af7629152",
+    "createdAt": "2025-07-27T03:07:41.823Z",
+    "updatedAt": "2025-07-27T03:07:41.823Z",
+    "registrationDate": "2025-07-26T23:07:42.125972",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753585689887",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "90410919-d3db-4015-8159-2676b77062b9",
+    "createdAt": "2025-07-27T03:08:09.887Z",
+    "updatedAt": "2025-07-27T03:08:09.887Z",
+    "registrationDate": "2025-07-26T23:08:10.142948",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753585794706",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "92ff0dec-b982-4bf1-b733-776d48ad3482",
+    "createdAt": "2025-07-27T03:09:54.706Z",
+    "updatedAt": "2025-07-27T03:09:54.706Z",
+    "registrationDate": "2025-07-26T23:09:55.013259",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753585801129",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "a7741fc1-bfb7-4629-9441-af608c34a208",
+    "createdAt": "2025-07-27T03:10:01.129Z",
+    "updatedAt": "2025-07-27T03:10:01.129Z",
+    "registrationDate": "2025-07-26T23:10:01.435556",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753585815795",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "712dee7d-7470-428f-a0c2-dafa7429bcb8",
+    "createdAt": "2025-07-27T03:10:15.795Z",
+    "updatedAt": "2025-07-27T03:10:15.796Z",
+    "registrationDate": "2025-07-26T23:10:16.034931",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753585827760",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "97cb84c0-48ef-4a15-8f6c-6071217bc52a",
+    "createdAt": "2025-07-27T03:10:27.760Z",
+    "updatedAt": "2025-07-27T03:10:27.760Z",
+    "registrationDate": "2025-07-26T23:10:28.068807",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Simple Test 1753586011631",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "registrationType": "event",
+    "id": "d5527d42-fe60-476c-b0da-99020d49e271",
+    "createdAt": "2025-07-27T03:13:31.631Z",
+    "updatedAt": "2025-07-27T03:13:31.631Z",
+    "registrationDate": "2025-07-26T23:13:31.635625",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586013502",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "056b5230-50f0-4c52-90b7-3ef60cde1998",
+    "createdAt": "2025-07-27T03:13:33.502Z",
+    "updatedAt": "2025-07-27T03:13:33.502Z",
+    "registrationDate": "2025-07-26T23:13:33.742860",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Simple Test 1753586020217",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "registrationType": "event",
+    "id": "e48064e3-579e-4c4d-8517-3b448c55994b",
+    "createdAt": "2025-07-27T03:13:40.219Z",
+    "updatedAt": "2025-07-27T03:13:40.219Z",
+    "registrationDate": "2025-07-26T23:13:40.541126",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586023292",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "c1a2b532-5ec1-43ec-912d-c32dbdcabecb",
+    "createdAt": "2025-07-27T03:13:43.292Z",
+    "updatedAt": "2025-07-27T03:13:43.292Z",
+    "registrationDate": "2025-07-26T23:13:43.599860",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Simple Test 1753586028934",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "registrationType": "event",
+    "id": "11c566be-83e3-45d3-b45b-b65c47257759",
+    "createdAt": "2025-07-27T03:13:48.935Z",
+    "updatedAt": "2025-07-27T03:13:48.935Z",
+    "registrationDate": "2025-07-26T23:13:48.938148",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586030896",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "ea0e6c19-1626-4018-9e90-8f6b5318b960",
+    "createdAt": "2025-07-27T03:13:50.896Z",
+    "updatedAt": "2025-07-27T03:13:50.896Z",
+    "registrationDate": "2025-07-26T23:13:51.144540",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586038405",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "b078ea84-81cf-4512-aa68-1de81ca4835e",
+    "createdAt": "2025-07-27T03:13:58.405Z",
+    "updatedAt": "2025-07-27T03:13:58.405Z",
+    "registrationDate": "2025-07-26T23:13:58.629509",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Simple Test 1753586049114",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "registrationType": "event",
+    "id": "407e999d-9045-4ec8-9594-ac9e8e105fe9",
+    "createdAt": "2025-07-27T03:14:09.115Z",
+    "updatedAt": "2025-07-27T03:14:09.115Z",
+    "registrationDate": "2025-07-26T23:14:09.119147",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586053351",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "fbd3382d-d706-4714-aff1-648ba933cbfd",
+    "createdAt": "2025-07-27T03:14:13.351Z",
+    "updatedAt": "2025-07-27T03:14:13.351Z",
+    "registrationDate": "2025-07-26T23:14:13.591892",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Direct Test 1753586265282",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "id": "1ede9060-7b03-4619-ba1b-48a937cfdbd2",
+    "registrationDate": "2025-07-26T23:17:45.284421",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Simple Test 1753586268434",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "registrationType": "event",
+    "id": "64a11356-2140-40bf-b00f-046fedf9e2da",
+    "createdAt": "2025-07-27T03:17:48.436Z",
+    "updatedAt": "2025-07-27T03:17:48.437Z",
+    "registrationDate": "2025-07-26T23:17:48.440017",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586269733",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "1afe22ae-730a-4256-a52d-d8c0d561e25c",
+    "createdAt": "2025-07-27T03:17:49.733Z",
+    "updatedAt": "2025-07-27T03:17:49.733Z",
+    "registrationDate": "2025-07-26T23:17:49.959493",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Direct Test 1753586290751",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "id": "67a9a1bb-0078-4e8f-b28a-83b6b145d040",
+    "registrationDate": "2025-07-26T23:18:11.063764",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Simple Test 1753586299801",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "registrationType": "event",
+    "id": "77d55e28-94fb-4ffc-86df-f4adf989f50d",
+    "createdAt": "2025-07-27T03:18:19.803Z",
+    "updatedAt": "2025-07-27T03:18:19.803Z",
+    "registrationDate": "2025-07-26T23:18:19.807708",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586301623",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "7b036bf2-b7aa-4d47-9ddb-76a656f26095",
+    "createdAt": "2025-07-27T03:18:21.623Z",
+    "updatedAt": "2025-07-27T03:18:21.623Z",
+    "registrationDate": "2025-07-26T23:18:21.859579",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Direct Test 1753586390527",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "id": "640b4a85-abdf-468d-88d5-799253ab6409",
+    "registrationDate": "2025-07-26T23:19:50.530262",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Simple Test 1753586392181",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "registrationType": "event",
+    "id": "3504a0f2-e6c4-4e47-9614-c50f26e5feea",
+    "createdAt": "2025-07-27T03:19:52.183Z",
+    "updatedAt": "2025-07-27T03:19:52.183Z",
+    "registrationDate": "2025-07-26T23:19:52.186749",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586393541",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "2a595fc3-ee32-4dec-a04f-0552918026ae",
+    "createdAt": "2025-07-27T03:19:53.541Z",
+    "updatedAt": "2025-07-27T03:19:53.541Z",
+    "registrationDate": "2025-07-26T23:19:53.796306",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Direct Test 1753586437402",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "id": "b6b78c65-3f0b-4094-a8bf-dd5b02a209f3",
+    "registrationDate": "2025-07-26T23:20:37.404465",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Simple Test 1753586438472",
+    "dob": "1990-01-01",
+    "selectedClasses": [
+      "Test"
+    ],
+    "status": "active",
+    "registrationType": "event",
+    "id": "18e95b2a-4cc8-4ac1-a7fc-eb110e1957ca",
+    "createdAt": "2025-07-27T03:20:38.473Z",
+    "updatedAt": "2025-07-27T03:20:38.473Z",
+    "registrationDate": "2025-07-26T23:20:38.476672",
+    "paymentStatus": "pending"
+  },
+  {
+    "name": "Test Driver 1753586439874",
+    "nickname": "test",
+    "dob": "1990-01-01",
+    "contact": {
+      "email": "test@example.com",
+      "phone": "555-1234"
+    },
+    "selectedClasses": [
+      "Test Class"
+    ],
+    "sledConfigurations": {
+      "Test Class": {
+        "make": "Test Make",
+        "model": "Test Model",
+        "year": "2023"
+      }
+    },
+    "totalFee": 50,
+    "registrationType": "event",
+    "status": "active",
+    "id": "233352ef-dcbf-476b-b9c7-3bca6f6c2ae0",
+    "createdAt": "2025-07-27T03:20:39.874Z",
+    "updatedAt": "2025-07-27T03:20:39.874Z",
+    "registrationDate": "2025-07-26T23:20:40.116810",
+    "paymentStatus": "pending"
+  },
+  {
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-27T04:10:12.396Z",
+    "dob": "2025-07-26",
+    "eventId": "3e8a8e28-9e34-4408-9d75-71811f2e73d7",
+    "id": "e6950d1c-9b0f-4577-8a62-6d1e15015b87",
+    "name": "Z Test 1",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-27T00:10:12.718020",
+    "registrationType": "event",
+    "selectedClasses": [
+      "Outlaw",
+      "Pro-Max",
+      "4 temps",
+      "800 Improve",
+      "1000 Stock",
+      "1000 Improve",
+      "800 Stock",
+      "600 Improve",
+      "600 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "4 temps": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "600 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "800 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Outlaw": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "Pro-Max": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 2300,
+    "updatedAt": "2025-07-27T00:10:13.060489"
+  },
+  {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-27T04:17:23.237Z",
+    "dob": "2025-07-27",
+    "eventId": "e306a919-7eaa-45a9-b183-726455780bf9",
+    "eventsParticipated": 1,
+    "id": "d3722670-a2cd-454e-ad40-8d820e4c317e",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-27T04:18:40.496Z",
+    "name": "Z Test 11",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-27T00:17:23.251738",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [
+      "1"
+    ],
+    "statistics": {
+      "totalRaces": 1,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 2,
+      "bestStreak": 0,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-27T04:18:26.081Z",
+      "lastCalculated": 1753589906081,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "e306a919-7eaa-45a9-b183-726455780bf9",
+          "className": "1000 Improve",
+          "round": "final",
+          "heatId": "final-heat-1753589863298-1kn6h1fyt",
+          "lane": 1,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-27T04:17:43.298Z",
+          "opponents": "Z Test 12"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 250,
+    "totalRaces": 1,
+    "totalWins": 0,
+    "updatedAt": "2025-07-27T00:18:40.501317",
+    "winRate": 0
+  },
+  {
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-27T04:17:33.344Z",
+    "dob": "2025-07-27",
+    "eventId": "e306a919-7eaa-45a9-b183-726455780bf9",
+    "id": "516d323d-a6b0-4aa8-9fcf-eb677e46ea07",
+    "name": "Z Test 12",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-27T00:17:33.653729",
+    "registrationType": "event",
+    "selectedClasses": [
+      "1000 Improve",
+      "1000 Stock"
+    ],
+    "sledConfigurations": {
+      "1000 Improve": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "1000 Stock": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "sponsors": [],
+    "status": "active",
+    "totalFee": 250,
+    "updatedAt": "2025-07-27T00:18:25.739759",
+    "totalRaces": 0,
+    "totalWins": 0,
+    "winRate": 0,
+    "avgPosition": 0,
+    "bestStreak": 0,
+    "eventsParticipated": 0,
+    "lanePerformance": {},
+    "lastRaceDate": "2025-07-27T04:18:23.508Z",
+    "statistics": {
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "avgPosition": 0,
+      "bestStreak": 0,
+      "eventsParticipated": 0,
+      "lanePerformance": {},
+      "recentWinRate": 0,
+      "lastUpdated": "2025-07-27T04:18:23.508Z",
+      "totalLosses": 0,
+      "bestPosition": null,
+      "worstPosition": null,
+      "raceHistory": []
+    }
   }
 ]

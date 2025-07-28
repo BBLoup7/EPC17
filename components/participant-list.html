@@ -228,32 +228,59 @@ tr:hover {
 if (!window.participantListScriptLoaded) {
     window.participantListScriptLoaded = true;
 
-// Global variables for the participant list (only declare if not already declared)
-if (typeof window.allParticipants === 'undefined') {
-    window.allParticipants = [];
-    window.filteredParticipants = [];
-    window.allEvents = [];
-}
+// Global variables with performance optimizations
+let allParticipants = [];
+let allEvents = [];
+let filteredParticipants = [];
+let currentPage = 1;
+const itemsPerPage = 50; // Increased for better performance
 
-// Use existing variables or create new ones
-var allParticipants = window.allParticipants;
-var filteredParticipants = window.filteredParticipants;
-var allEvents = window.allEvents;
+// Performance optimization: Cache frequently accessed data
+const performanceCache = {
+    participantEventMap: new Map(),
+    lastCacheUpdate: 0,
+    cacheTTL: 60000, // 1 minute cache
+    virtualRows: new Map(),
+    renderedRange: { start: 0, end: itemsPerPage }
+};
 
-// Pagination variables (only declare if not already declared)
-if (typeof window.participantListCurrentPage === 'undefined') {
-    window.participantListCurrentPage = 1;
-}
-var currentPage = window.participantListCurrentPage;
+// Virtual scrolling implementation
+const virtualScrollConfig = {
+    rowHeight: 60, // Estimated row height in pixels
+    containerHeight: 400, // Visible container height
+    overscan: 5 // Extra rows to render outside visible area
+};
 
-// Only declare itemsPerPage if not already declared
-if (typeof window.participantListItemsPerPage === 'undefined') {
-    window.participantListItemsPerPage = 40; // 40 participants per page as requested
+// Refresh participant data without reinitializing the component
+async function refreshParticipantList() {
+    console.log('🔄 Refreshing participant list data...');
+    
+    if (!window.dataManager) {
+        console.error('❌ DataManager not available for refresh');
+        return;
+    }
+    
+    try {
+        // Force reload data from server (bypass cache)
+        console.log('🔄 Reloading data from server (forced)...');
+        await window.dataManager.loadFromStorage(['participants', 'events'], true);
+        
+        // Reload the participant data
+        await loadParticipantData();
+        
+        // Refresh dropdown options
+        loadEventOptions();
+        loadClassOptions();
+        
+        console.log('✅ Participant list refreshed successfully');
+        
+    } catch (error) {
+        console.error('❌ Error refreshing participant list:', error);
+    }
 }
-var itemsPerPage = window.participantListItemsPerPage;
 
 // Initialize the participant list
-function initializeParticipantList() {
+async function initializeParticipantList() {
     // Prevent multiple initializations
     if (window.participantListInitialized) {
         console.log('🚫 Participant list already initialized, skipping');
@@ -269,6 +296,16 @@ function initializeParticipantList() {
         console.warn('⚠️ DataManager not ready, retrying in 500ms...');
         setTimeout(initializeParticipantList, 500);
         return;
+    }
+    
+    // Ensure data is loaded before proceeding
+    try {
+        console.log('🔄 Ensuring data is loaded from server...');
+        await window.dataManager.loadFromStorage(['participants', 'events']);
+        console.log('✅ Data loaded successfully');
+    } catch (error) {
+        console.error('❌ Failed to load data:', error);
+        // Continue anyway with empty data
     }
     
     // Verify we actually have data before proceeding
@@ -311,53 +348,100 @@ function initializeParticipantList() {
     }
 }
 
-// Load all participant data
+// Performance-optimized data loading
 async function loadParticipantData() {
     try {
-        console.log('📦 Loading participant data...');
-        console.log('🔗 DataManager:', !!window.dataManager);
+        console.log('📦 Loading participant data with performance optimizations...');
         
         // Show skeleton loading
         showSkeletonLoading();
         
         if (!window.dataManager) {
             console.error('❌ DataManager not available');
-            allParticipants = window.allParticipants = [];
-            allEvents = window.allEvents = [];
-            filteredParticipants = window.filteredParticipants = [];
+            resetEmptyData();
             hideSkeletonLoading();
             return;
         }
         
-        // Simulate loading delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Get data from DataManager - use array methods for component compatibility
-        allParticipants = window.allParticipants = window.dataManager.getParticipantsArray() || [];
-        allEvents = window.allEvents = window.dataManager.getEventsArray() || [];
-        filteredParticipants = window.filteredParticipants = [...allParticipants];
-        
-        console.log('📋 Loaded participants:', allParticipants.length);
-        console.log('📅 Loaded events:', allEvents.length);
-        
-        // Log sample data for debugging
-        if (allParticipants.length > 0) {
-            console.log('👤 Sample participant:', allParticipants[0]);
-        }
-        if (allEvents.length > 0) {
-            console.log('📅 Sample event:', allEvents[0]);
+        // Use performance monitor to track this operation
+        if (window.performanceMonitor) {
+            window.performanceMonitor.trackOperation('participant_data_load', async () => {
+                await loadDataWithOptimizations();
+            });
+        } else {
+            await loadDataWithOptimizations();
         }
         
-        hideSkeletonLoading();
-        updateParticipantStats();
-        renderParticipantTable();
     } catch (error) {
         console.error('❌ Error loading participant data:', error);
-        allParticipants = window.allParticipants = [];
-        allEvents = window.allEvents = [];
-        filteredParticipants = window.filteredParticipants = [];
+        resetEmptyData();
+    } finally {
         hideSkeletonLoading();
     }
+}
+
+// Optimized data loading implementation
+async function loadDataWithOptimizations() {
+    // Batch data requests
+    const [participantsArray, eventsArray] = await Promise.all([
+        Promise.resolve(window.dataManager.getParticipantsArray() || []),
+        Promise.resolve(window.dataManager.getEventsArray() || [])
+    ]);
+    
+    // Update global data
+    allParticipants = window.allParticipants = participantsArray;
+    allEvents = window.allEvents = eventsArray;
+    filteredParticipants = window.filteredParticipants = [...allParticipants];
+    
+    console.log('📋 Loaded participants:', allParticipants.length);
+    console.log('📅 Loaded events:', allEvents.length);
+    
+    // Build performance cache
+    buildParticipantEventCache();
+    
+    // Update UI with batched operations
+    requestAnimationFrame(() => {
+        updateParticipantStats();
+        renderParticipantTableOptimized();
+    });
+}
+
+// Build cache for participant-event relationships
+function buildParticipantEventCache() {
+    console.log('🔄 Building participant-event cache...');
+    const startTime = performance.now();
+    
+    performanceCache.participantEventMap.clear();
+    
+    // Build reverse lookup for better performance
+    allParticipants.forEach(participant => {
+        const registeredEvents = allEvents.filter(event => 
+            event.participants && event.participants.includes(participant.id)
+        );
+        
+        performanceCache.participantEventMap.set(participant.id, {
+            events: registeredEvents,
+            eventNames: registeredEvents.map(e => e.name).join(', ') || 'Not registered for any event'
+        });
+    });
+    
+    performanceCache.lastCacheUpdate = Date.now();
+    
+    const endTime = performance.now();
+    console.log(`✅ Cache built in ${(endTime - startTime).toFixed(2)}ms for ${allParticipants.length} participants`);
+}
+
+// Check if cache needs refresh
+function isCacheValid() {
+    return (Date.now() - performanceCache.lastCacheUpdate) < performanceCache.cacheTTL;
+}
+
+// Reset empty data helper
+function resetEmptyData() {
+    allParticipants = window.allParticipants = [];
+    allEvents = window.allEvents = [];
+    filteredParticipants = window.filteredParticipants = [];
+    performanceCache.participantEventMap.clear();
 }
 
 // Show skeleton loading
@@ -385,336 +469,145 @@ function hideSkeletonLoading() {
     if (pagination) pagination.style.display = 'block';
 }
 
-// Setup event listeners for filters
-function setupParticipantFilters() {
-    const searchInput = document.getElementById('participantSearch');
-    const eventFilter = document.getElementById('eventFilter');
-    const classFilter = document.getElementById('classFilter');
-    const statusFilter = document.getElementById('statusFilter');
-    
-    console.log('🔍 Setting up filters...');
-    console.log('   - Search input found:', !!searchInput);
-    console.log('   - Event filter found:', !!eventFilter);
-    console.log('   - Class filter found:', !!classFilter);
-    console.log('   - Status filter found:', !!statusFilter);
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', applyParticipantFilters);
-        console.log('   ✅ Search input listener attached');
+// Debouncing for search and filters
+let filterDebounceTimer = null;
+const FILTER_DEBOUNCE_DELAY = 300; // ms
+
+// Optimized participant filters with debouncing
+function applyParticipantFiltersOptimized() {
+    // Clear existing timer
+    if (filterDebounceTimer) {
+        clearTimeout(filterDebounceTimer);
     }
     
-    if (eventFilter) {
-        eventFilter.addEventListener('change', applyParticipantFilters);
-        console.log('   ✅ Event filter listener attached');
-    }
-    
-    if (classFilter) {
-        classFilter.addEventListener('change', applyParticipantFilters);
-        console.log('   ✅ Class filter listener attached');
-    }
-    
-    if (statusFilter) {
-        statusFilter.addEventListener('change', applyParticipantFilters);
-        console.log('   ✅ Status filter listener attached');
-    }
+    // Debounce the filter operation
+    filterDebounceTimer = setTimeout(() => {
+        performFilterOperation();
+    }, FILTER_DEBOUNCE_DELAY);
 }
 
-// Load event options for the filter combo box
-function loadEventOptions() {
-    console.log('🔄 Loading event options...');
-    const eventFilterDropdown = document.getElementById('eventFilterDropdown');
-    console.log('📋 Event filter dropdown found:', !!eventFilterDropdown);
-    console.log('📊 Available events:', allEvents.length);
+// Actual filter operation with performance optimizations
+function performFilterOperation() {
+    console.log('🔍 Applying optimized participant filters...');
+    const startTime = performance.now();
     
-    if (!eventFilterDropdown) {
-        console.error('❌ Event filter dropdown not found');
-        return;
-    }
-    
-    if (allEvents.length === 0) {
-        console.warn('⚠️ No events available for dropdown');
-        eventFilterDropdown.innerHTML = '<div class="combo-option" data-value="">No Events Available</div>';
-        return;
-    }
-    
-    const eventOptions = allEvents.map(event => 
-        `<div class="combo-option" data-value="${event.id}">${event.name} - ${new Date(event.date).toLocaleDateString()}</div>`
-    ).join('');
-    
-    eventFilterDropdown.innerHTML = '<div class="combo-option" data-value="">All Events</div>' + eventOptions;
-    console.log('✅ Event combo box populated with', allEvents.length, 'events');
-}
-
-// Load class options for the filter combo box
-function loadClassOptions() {
-    console.log('🔄 Loading class options...');
-    const classFilterDropdown = document.getElementById('classFilterDropdown');
-    console.log('📋 Class filter dropdown found:', !!classFilterDropdown);
-    console.log('👥 Available participants:', allParticipants.length);
-    
-    if (!classFilterDropdown) {
-        console.error('❌ Class filter dropdown not found');
-        return;
-    }
-    
-    // Get unique classes from all participants
-    const allClasses = new Set();
-    allParticipants.forEach(participant => {
-        const classes = participant.selectedClasses || [];
-        classes.forEach(className => allClasses.add(className));
-    });
-    
-    console.log('🏷️ Unique classes found:', Array.from(allClasses));
-    
-    const classOptions = Array.from(allClasses).sort().map(className =>
-        `<div class="combo-option" data-value="${className}">${className}</div>`
-    ).join('');
-    
-    classFilterDropdown.innerHTML = '<div class="combo-option" data-value="">All Classes</div>' + classOptions;
-    console.log('✅ Class combo box populated with', allClasses.size, 'classes');
-}
-
-// Set up combo box functionality
-function setupComboBoxes() {
-    console.log('🔧 Setting up combo boxes...');
-    
-    // Event combo box
-    const eventInput = document.getElementById('eventFilterInput');
-    const eventDropdown = document.getElementById('eventFilterDropdown');
-    const eventHidden = document.getElementById('eventFilter');
-    
-    if (eventInput && eventDropdown && eventHidden) {
-        setupComboBox(eventInput, eventDropdown, eventHidden, 'All Events');
-    }
-    
-    // Class combo box
-    const classInput = document.getElementById('classFilterInput');
-    const classDropdown = document.getElementById('classFilterDropdown');
-    const classHidden = document.getElementById('classFilter');
-    
-    if (classInput && classDropdown && classHidden) {
-        setupComboBox(classInput, classDropdown, classHidden, 'All Classes');
-    }
-}
-
-// Set up individual combo box
-function setupComboBox(input, dropdown, hiddenInput, defaultText) {
-    let selectedValue = '';
-    let selectedText = defaultText;
-    
-    // Show dropdown on input focus
-    input.addEventListener('focus', () => {
-        dropdown.style.display = 'block';
-        // Clear the input text to show all options immediately
-        input.value = '';
-        filterComboOptions(input, dropdown);
-    });
-    
-    // Handle input changes for filtering
-    input.addEventListener('input', () => {
-        dropdown.style.display = 'block';
-        filterComboOptions(input, dropdown);
-    });
-    
-    // Handle option selection
-    dropdown.addEventListener('click', (e) => {
-        if (e.target.classList.contains('combo-option')) {
-            const value = e.target.dataset.value;
-            const text = e.target.textContent;
-            
-            selectedValue = value;
-            selectedText = text;
-            
-            // Only set text if it's not the "All" option
-            if (value !== '') {
-                input.value = text;
-            } else {
-                input.value = '';
-            }
-            hiddenInput.value = value;
-            dropdown.style.display = 'none';
-            
-            // Update visual selection
-            updateComboSelection(dropdown, value);
-            
-            // Apply filters
-            applyParticipantFilters();
-        }
-    });
-    
-    // Hide dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
-    
-    // Handle keyboard navigation
-    input.addEventListener('keydown', (e) => {
-        const options = dropdown.querySelectorAll('.combo-option');
-        const highlighted = dropdown.querySelector('.combo-option.highlighted');
-        
-        switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                if (!highlighted) {
-                    options[0]?.classList.add('highlighted');
-                } else {
-                    const nextIndex = Array.from(options).indexOf(highlighted) + 1;
-                    if (nextIndex < options.length) {
-                        highlighted.classList.remove('highlighted');
-                        options[nextIndex].classList.add('highlighted');
-                    }
-                }
-                break;
-                
-            case 'ArrowUp':
-                e.preventDefault();
-                if (highlighted) {
-                    const prevIndex = Array.from(options).indexOf(highlighted) - 1;
-                    if (prevIndex >= 0) {
-                        highlighted.classList.remove('highlighted');
-                        options[prevIndex].classList.add('highlighted');
-                    }
-                }
-                break;
-                
-            case 'Enter':
-                e.preventDefault();
-                if (highlighted) {
-                    const value = highlighted.dataset.value;
-                    const text = highlighted.textContent;
-                    
-                    selectedValue = value;
-                    selectedText = text;
-                    
-                    // Only set text if it's not the "All" option
-                    if (value !== '') {
-                        input.value = text;
-                    } else {
-                        input.value = '';
-                    }
-                    hiddenInput.value = value;
-                    dropdown.style.display = 'none';
-                    
-                    updateComboSelection(dropdown, value);
-                    applyParticipantFilters();
-                }
-                break;
-                
-            case 'Escape':
-                dropdown.style.display = 'none';
-                break;
-        }
-    });
-}
-
-// Filter combo box options based on input
-function filterComboOptions(input, dropdown) {
-    const searchTerm = input.value.toLowerCase();
-    const options = dropdown.querySelectorAll('.combo-option');
-    
-    options.forEach(option => {
-        const text = option.textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            option.style.display = 'block';
-        } else {
-            option.style.display = 'none';
-        }
-    });
-    
-    // Remove any existing highlights
-    dropdown.querySelectorAll('.combo-option.highlighted').forEach(opt => {
-        opt.classList.remove('highlighted');
-    });
-}
-
-// Update visual selection in combo box
-function updateComboSelection(dropdown, selectedValue) {
-    dropdown.querySelectorAll('.combo-option').forEach(option => {
-        option.classList.remove('selected');
-        if (option.dataset.value === selectedValue) {
-            option.classList.add('selected');
-        }
-    });
-}
-
-// Apply all filters to participants
-function applyParticipantFilters() {
-    const searchTerm = document.getElementById('participantSearch')?.value?.toLowerCase() || '';
+    const searchTerm = document.getElementById('participantSearch')?.value.toLowerCase().trim() || '';
     const eventFilter = document.getElementById('eventFilter')?.value || '';
     const classFilter = document.getElementById('classFilter')?.value || '';
     const statusFilter = document.getElementById('statusFilter')?.value || '';
     
-    filteredParticipants = window.filteredParticipants = allParticipants.filter(participant => {
-        // Search filter
+    // Use more efficient filtering with early returns
+    filteredParticipants = allParticipants.filter(participant => {
+        // Early return for search term (most expensive operation)
         if (searchTerm) {
-            const searchableText = [
-                participant.name,
-                participant.nickname,
-                participant.racingNumber,
-                participant.sledMake,
-                participant.sledModel,
-                participant.sledYear,
-                participant.contact?.email,
-                participant.contactEmail
-            ].filter(Boolean).join(' ').toLowerCase();
+            const nameMatch = participant.name?.toLowerCase().includes(searchTerm);
+            const nicknameMatch = participant.nickname?.toLowerCase().includes(searchTerm);
+            const numberMatch = participant.racingNumber?.toString().includes(searchTerm);
             
-            if (!searchableText.includes(searchTerm)) {
+            if (!nameMatch && !nicknameMatch && !numberMatch) {
                 return false;
             }
         }
         
-        // Event filter - check if participant is registered for the selected event
-        if (eventFilter) {
-            const selectedEvent = allEvents.find(e => e.id === eventFilter);
-            if (!selectedEvent || !selectedEvent.participants || !selectedEvent.participants.includes(participant.id)) {
-                return false;
-            }
+        // Status filter (cheap operation)
+        if (statusFilter && participant.status !== statusFilter) {
+            return false;
         }
         
-        // Class filter
+        // Class filter (moderate cost)
         if (classFilter) {
-            const participantClasses = participant.selectedClasses || [];
-            if (!participantClasses.includes(classFilter)) {
+            const classes = participant.selectedClasses || [];
+            if (!classes.includes(classFilter)) {
                 return false;
             }
         }
         
-        // Status filter
-        if (statusFilter) {
-            const participantStatus = participant.status || 'active';
-            if (participantStatus !== statusFilter) {
-                return false;
+        // Event filter (potentially expensive, use cache)
+        if (eventFilter) {
+            if (isCacheValid() && performanceCache.participantEventMap.has(participant.id)) {
+                const cachedInfo = performanceCache.participantEventMap.get(participant.id);
+                const isRegisteredForEvent = cachedInfo.events.some(event => event.id === eventFilter);
+                if (!isRegisteredForEvent) {
+                    return false;
+                }
+            } else {
+                // Fallback to direct lookup
+                const isRegisteredForEvent = allEvents.some(event => 
+                    event.id === eventFilter && 
+                    event.participants && 
+                    event.participants.includes(participant.id)
+                );
+                if (!isRegisteredForEvent) {
+                    return false;
+                }
             }
         }
         
         return true;
     });
     
-    // Reset to first page when filters are applied
-            currentPage = window.participantListCurrentPage = 1;
+    // Update global state
+    window.filteredParticipants = filteredParticipants;
     
-    updateParticipantStats();
-    renderParticipantTable();
+    // Reset to first page when filters are applied
+    currentPage = window.participantListCurrentPage = 1;
+    
+    const endTime = performance.now();
+    console.log(`✅ Filters applied in ${(endTime - startTime).toFixed(2)}ms - ${filteredParticipants.length}/${allParticipants.length} participants`);
+    
+    // Update UI efficiently
+    requestAnimationFrame(() => {
+        updateParticipantStats();
+        renderParticipantTableOptimized();
+    });
 }
 
-// Clear all filters
-function clearFilters() {
-    document.getElementById('participantSearch').value = '';
-    document.getElementById('eventFilter').value = '';
-    document.getElementById('classFilter').value = '';
-    document.getElementById('statusFilter').value = '';
+// Keep original function name for backward compatibility with debouncing
+function applyParticipantFilters() {
+    applyParticipantFiltersOptimized();
+}
+
+// Optimized clear filters function
+function clearFiltersOptimized() {
+    console.log('🧹 Clearing all filters...');
     
-    // Clear combo box inputs (keep empty for better UX)
-    document.getElementById('eventFilterInput').value = '';
-    document.getElementById('classFilterInput').value = '';
+    // Clear form inputs efficiently
+    const inputs = [
+        'participantSearch',
+        'eventFilter',
+        'classFilter',
+        'statusFilter',
+        'eventFilterInput',
+        'classFilterInput'
+    ];
+    
+    inputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) input.value = '';
+    });
     
     // Hide dropdowns
-    document.getElementById('eventFilterDropdown').style.display = 'none';
-    document.getElementById('classFilterDropdown').style.display = 'none';
+    const dropdowns = ['eventFilterDropdown', 'classFilterDropdown'];
+    dropdowns.forEach(dropdownId => {
+        const dropdown = document.getElementById(dropdownId);
+        if (dropdown) dropdown.style.display = 'none';
+    });
     
-    applyParticipantFilters();
+    // Reset filters without debouncing for immediate response
+    filteredParticipants = [...allParticipants];
+    window.filteredParticipants = filteredParticipants;
+    currentPage = 1;
+    
+    // Update UI
+    requestAnimationFrame(() => {
+        updateParticipantStats();
+        renderParticipantTableOptimized();
+    });
+}
+
+// Keep original function name for compatibility
+function clearFilters() {
+    clearFiltersOptimized();
 }
 
 // Update participant statistics
@@ -736,24 +629,62 @@ function updateParticipantStats() {
     console.log('✅ Stats updated successfully');
 }
 
-// Render the participant table with pagination
-function renderParticipantTable() {
-    console.log('🗂️ Rendering participant table...');
+// Optimized table rendering with virtual scrolling
+function renderParticipantTableOptimized() {
+    console.log('🗂️ Rendering participant table with optimizations...');
     const tbody = document.getElementById('participantsTableBody');
     const paginationContainer = document.getElementById('participantsPagination');
-    
-    console.log('🗂️ Table body found:', !!tbody);
-    console.log('🗂️ Pagination container found:', !!paginationContainer);
     
     if (!tbody) {
         console.error('❌ Table body not found!');
         return;
     }
     
-    console.log('🗂️ Rendering', filteredParticipants.length, 'participants');
+    // Use virtual scrolling for large datasets
+    if (filteredParticipants.length > 100) {
+        renderVirtualizedTable(tbody, paginationContainer);
+        return;
+    }
     
+    // Standard rendering for smaller datasets
+    renderStandardTable(tbody, paginationContainer);
+}
+
+// Virtual scrolling implementation for large datasets
+function renderVirtualizedTable(tbody, paginationContainer) {
+    console.log('🚀 Using virtual scrolling for', filteredParticipants.length, 'participants');
+    
+    // Calculate visible range
+    const visibleCount = Math.ceil(virtualScrollConfig.containerHeight / virtualScrollConfig.rowHeight);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, filteredParticipants.length);
+    
+    // Update rendered range
+    performanceCache.renderedRange = { start: startIndex, end: endIndex };
+    
+    // Create virtual rows efficiently
+    const fragment = document.createDocumentFragment();
+    const currentPageParticipants = filteredParticipants.slice(startIndex, endIndex);
+    
+    // Batch DOM operations
+    currentPageParticipants.forEach((participant, index) => {
+        const row = createOptimizedParticipantRow(participant, startIndex + index);
+        fragment.appendChild(row);
+    });
+    
+    // Single DOM update
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
+    
+    // Render pagination efficiently
+    renderOptimizedPagination(paginationContainer);
+    
+    console.log(`✅ Virtual table rendered: ${currentPageParticipants.length} rows`);
+}
+
+// Standard table rendering for smaller datasets
+function renderStandardTable(tbody, paginationContainer) {
     if (filteredParticipants.length === 0) {
-        console.log('📋 No participants to display, showing empty message');
         tbody.innerHTML = `
             <tr>
                 <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
@@ -761,9 +692,7 @@ function renderParticipantTable() {
                 </td>
             </tr>
         `;
-        if (paginationContainer) {
-            paginationContainer.innerHTML = '';
-        }
+        if (paginationContainer) paginationContainer.innerHTML = '';
         return;
     }
     
@@ -773,83 +702,129 @@ function renderParticipantTable() {
     const endIndex = startIndex + itemsPerPage;
     const currentPageParticipants = filteredParticipants.slice(startIndex, endIndex);
     
-    console.log(`📄 Page ${currentPage} of ${totalPages} (showing ${currentPageParticipants.length} of ${filteredParticipants.length} participants)`);
+    // Batch create rows
+    const fragment = document.createDocumentFragment();
+    currentPageParticipants.forEach(participant => {
+        const row = createOptimizedParticipantRow(participant);
+        fragment.appendChild(row);
+    });
     
-    const rowsHtml = currentPageParticipants.map(participant => {
-        // Find all events this participant is registered for
+    // Single DOM update
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
+    
+    // Render pagination
+    renderOptimizedPagination(paginationContainer);
+}
+
+// Create optimized participant row with caching
+function createOptimizedParticipantRow(participant, rowIndex = null) {
+    const row = document.createElement('tr');
+    
+    // Use cached event data if available
+    let eventInfo;
+    if (isCacheValid() && performanceCache.participantEventMap.has(participant.id)) {
+        eventInfo = performanceCache.participantEventMap.get(participant.id);
+    } else {
+        // Fallback to direct lookup (will trigger cache rebuild)
         const registeredEvents = allEvents.filter(event => 
             event.participants && event.participants.includes(participant.id)
         );
-        const eventName = registeredEvents.length > 0 
-            ? registeredEvents.map(e => e.name).join(', ') 
-            : 'Not registered for any event';
-        
-        const classes = participant.selectedClasses || [];
-        const classesText = classes.join(', ') || 'N/A';
-        
-        const sledInfo = [
-            participant.sledYear,
-            participant.sledMake,
-            participant.sledModel
-        ].filter(Boolean).join(' ') || 'N/A';
-        
-        const status = participant.status || 'active';
-        const statusClass = `status-${status}`;
-        
-        return `
-            <tr>
-                <td>
-                    <strong>${participant.name}</strong>
-                    ${participant.nickname ? `<br><small>(${participant.nickname})</small>` : ''}
-                </td>
-                <td>${participant.racingNumber ? `#${participant.racingNumber}` : 'N/A'}</td>
-                <td>${classesText}</td>
-                <td>${sledInfo}</td>
-                <td>${participant.totalFee ? `$${participant.totalFee.toFixed(2)}` : 'N/A'}</td>
-                <td><span class="status-badge ${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="editParticipant('${participant.id}')" title="Edit Participant">
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteParticipant('${participant.id}')" title="Delete Participant">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-    
-    tbody.innerHTML = rowsHtml;
-    
-    // Render pagination
-    if (paginationContainer && totalPages > 1) {
-        paginationContainer.innerHTML = UIComponents.createPagination(
-            currentPage, 
-            totalPages, 
-            filteredParticipants.length, 
-            itemsPerPage, 
-            'changeParticipantPage'
-        );
-    } else if (paginationContainer) {
-        paginationContainer.innerHTML = '';
+        eventInfo = {
+            events: registeredEvents,
+            eventNames: registeredEvents.map(e => e.name).join(', ') || 'Not registered for any event'
+        };
     }
+    
+    // Optimize class and sled info processing
+    const classesText = (participant.selectedClasses || []).join(', ') || 'N/A';
+    const sledInfo = [
+        participant.sledYear,
+        participant.sledMake,
+        participant.sledModel
+    ].filter(Boolean).join(' ') || 'N/A';
+    
+    const status = participant.status || 'active';
+    const statusClass = `status-${status}`;
+    
+    // Build row HTML efficiently
+    row.innerHTML = `
+        <td>
+            <strong>${participant.name}</strong>
+            ${participant.nickname ? `<br><small>(${participant.nickname})</small>` : ''}
+        </td>
+        <td>${participant.racingNumber ? `#${participant.racingNumber}` : 'N/A'}</td>
+        <td>${classesText}</td>
+        <td>${sledInfo}</td>
+        <td>${participant.totalFee ? `$${participant.totalFee.toFixed(2)}` : 'N/A'}</td>
+        <td><span class="status-badge ${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+        <td>
+            <button class="btn btn-sm btn-primary" onclick="editParticipant('${participant.id}')" title="Edit Participant">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteParticipant('${participant.id}')" title="Delete Participant">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </td>
+    `;
+    
+    // Add virtual scroll index if needed
+    if (rowIndex !== null) {
+        row.dataset.virtualIndex = rowIndex;
+    }
+    
+    return row;
 }
 
-// Change participant page
-function changeParticipantPage(page) {
+// Optimized pagination rendering
+function renderOptimizedPagination(paginationContainer) {
+    if (!paginationContainer) return;
+    
+    const totalPages = Math.ceil(filteredParticipants.length / itemsPerPage);
+    
+    if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    // Use efficient pagination component
+    paginationContainer.innerHTML = UIComponents.createPagination(
+        currentPage, 
+        totalPages, 
+        filteredParticipants.length, 
+        itemsPerPage, 
+        'changeParticipantPageOptimized'
+    );
+}
+
+// Optimized page change with performance tracking
+function changeParticipantPageOptimized(page) {
     if (page < 1) return;
     
     const totalPages = Math.ceil(filteredParticipants.length / itemsPerPage);
     if (page > totalPages) return;
     
-            currentPage = window.participantListCurrentPage = page;
-    renderParticipantTable();
+    currentPage = window.participantListCurrentPage = page;
     
-    // Scroll to top of table
+    // Use performance monitoring if available
+    if (window.performanceMonitor) {
+        window.performanceMonitor.trackOperation('page_change', () => {
+            return Promise.resolve(renderParticipantTableOptimized());
+        });
+    } else {
+        renderParticipantTableOptimized();
+    }
+    
+    // Smooth scroll to top
     const table = document.getElementById('participantsTable');
     if (table) {
         table.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+}
+
+// Keep the old function name for backward compatibility
+function changeParticipantPage(page) {
+    changeParticipantPageOptimized(page);
 }
 
 // Edit participant function
@@ -1723,6 +1698,224 @@ function deleteParticipant(participantId) {
     }
 }
 
+// Setup participant filters with event listeners
+function setupParticipantFilters() {
+    console.log('🔧 Setting up participant filters...');
+    
+    const searchInput = document.getElementById('participantSearch');
+    const eventFilter = document.getElementById('eventFilter');
+    const classFilter = document.getElementById('classFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    // Add event listeners for filters
+    if (searchInput) {
+        searchInput.addEventListener('input', applyParticipantFiltersOptimized);
+    }
+    if (eventFilter) {
+        eventFilter.addEventListener('change', applyParticipantFiltersOptimized);
+    }
+    if (classFilter) {
+        classFilter.addEventListener('change', applyParticipantFiltersOptimized);
+    }
+    if (statusFilter) {
+        statusFilter.addEventListener('change', applyParticipantFiltersOptimized);
+    }
+    
+    console.log('✅ Participant filters setup complete');
+}
+
+// Setup combo boxes for event and class filters
+function setupComboBoxes() {
+    console.log('🔧 Setting up combo boxes...');
+    
+    // Setup event filter combo box
+    setupComboBox('eventFilterInput', 'eventFilterDropdown', 'eventFilter', 'onEventFilterSelect');
+    
+    // Setup class filter combo box
+    setupComboBox('classFilterInput', 'classFilterDropdown', 'classFilter', 'onClassFilterSelect');
+    
+    console.log('✅ Combo boxes setup complete');
+}
+
+// Setup individual combo box
+function setupComboBox(inputId, dropdownId, hiddenInputId, onSelectCallback) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    
+    if (!input || !dropdown || !hiddenInput) {
+        console.warn(`⚠️ Missing elements for combo box: ${inputId}, ${dropdownId}, ${hiddenInputId}`);
+        return;
+    }
+    
+    // Show dropdown on focus
+    input.addEventListener('focus', () => {
+        dropdown.style.display = 'block';
+    });
+    
+    // Filter options on input
+    input.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        filterComboOptions(dropdown, searchTerm);
+    });
+    
+    // Handle option selection
+    dropdown.addEventListener('click', (e) => {
+        if (e.target.classList.contains('combo-option')) {
+            const value = e.target.getAttribute('data-value');
+            const label = e.target.textContent;
+            updateComboSelection(input, hiddenInput, value, label);
+            dropdown.style.display = 'none';
+            
+            // Trigger filter update
+            if (typeof window[onSelectCallback] === 'function') {
+                window[onSelectCallback](value, label);
+            } else {
+                applyParticipantFiltersOptimized();
+            }
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
+// Filter combo box options
+function filterComboOptions(dropdown, searchTerm) {
+    const options = dropdown.querySelectorAll('.combo-option');
+    let hasVisibleOptions = false;
+    
+    options.forEach(option => {
+        const label = option.textContent.toLowerCase();
+        if (label.includes(searchTerm)) {
+            option.style.display = 'block';
+            hasVisibleOptions = true;
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Show/hide no results message
+    let noResults = dropdown.querySelector('.combo-no-results');
+    if (!hasVisibleOptions) {
+        if (!noResults) {
+            noResults = document.createElement('div');
+            noResults.className = 'combo-option combo-no-results';
+            noResults.textContent = 'No results found';
+            dropdown.appendChild(noResults);
+        }
+        noResults.style.display = 'block';
+    } else if (noResults) {
+        noResults.style.display = 'none';
+    }
+}
+
+// Update combo box selection
+function updateComboSelection(input, hiddenInput, value, label) {
+    input.value = label;
+    hiddenInput.value = value;
+}
+
+// Event filter selection callback
+window.onEventFilterSelect = function(value, label) {
+    console.log('Event filter selected:', value, label);
+    applyParticipantFiltersOptimized();
+};
+
+// Class filter selection callback
+window.onClassFilterSelect = function(value, label) {
+    console.log('Class filter selected:', value, label);
+    applyParticipantFiltersOptimized();
+};
+
+// Load event options for filter dropdown
+function loadEventOptions() {
+    console.log('📅 Loading event options for filter...');
+    
+    const dropdown = document.getElementById('eventFilterDropdown');
+    if (!dropdown) {
+        console.warn('⚠️ Event filter dropdown not found');
+        return;
+    }
+    
+    // Clear existing options except "All Events"
+    const allEventsOption = dropdown.querySelector('.combo-option[data-value=""]');
+    dropdown.innerHTML = '';
+    if (allEventsOption) {
+        dropdown.appendChild(allEventsOption);
+    } else {
+        const allEventsDiv = document.createElement('div');
+        allEventsDiv.className = 'combo-option';
+        allEventsDiv.setAttribute('data-value', '');
+        allEventsDiv.textContent = 'All Events';
+        dropdown.appendChild(allEventsDiv);
+    }
+    
+    // Add event options
+    if (allEvents && allEvents.length > 0) {
+        allEvents.forEach(event => {
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'combo-option';
+            eventDiv.setAttribute('data-value', event.id);
+            eventDiv.textContent = event.name;
+            dropdown.appendChild(eventDiv);
+        });
+    }
+    
+    console.log(`✅ Loaded ${allEvents?.length || 0} event options`);
+}
+
+// Load class options for filter dropdown
+function loadClassOptions() {
+    console.log('🏁 Loading class options for filter...');
+    
+    const dropdown = document.getElementById('classFilterDropdown');
+    if (!dropdown) {
+        console.warn('⚠️ Class filter dropdown not found');
+        return;
+    }
+    
+    // Clear existing options except "All Classes"
+    const allClassesOption = dropdown.querySelector('.combo-option[data-value=""]');
+    dropdown.innerHTML = '';
+    if (allClassesOption) {
+        dropdown.appendChild(allClassesOption);
+    } else {
+        const allClassesDiv = document.createElement('div');
+        allClassesDiv.className = 'combo-option';
+        allClassesDiv.setAttribute('data-value', '');
+        allClassesDiv.textContent = 'All Classes';
+        dropdown.appendChild(allClassesDiv);
+    }
+    
+    // Get unique classes from all participants
+    const allClasses = new Set();
+    if (allParticipants && allParticipants.length > 0) {
+        allParticipants.forEach(participant => {
+            if (participant.selectedClasses && Array.isArray(participant.selectedClasses)) {
+                participant.selectedClasses.forEach(className => {
+                    if (className) allClasses.add(className);
+                });
+            }
+        });
+    }
+    
+    // Add class options
+    Array.from(allClasses).sort().forEach(className => {
+        const classDiv = document.createElement('div');
+        classDiv.className = 'combo-option';
+        classDiv.setAttribute('data-value', className);
+        classDiv.textContent = className;
+        dropdown.appendChild(classDiv);
+    });
+    
+    console.log(`✅ Loaded ${allClasses.size} class options`);
+}
+
 // Cleanup function to reset initialization state
 function cleanupParticipantList() {
     console.log('🧹 Cleaning up participant list component');
@@ -1735,16 +1928,16 @@ function cleanupParticipantList() {
     const statusFilter = document.getElementById('statusFilter');
     
     if (searchInput) {
-        searchInput.removeEventListener('input', applyParticipantFilters);
+        searchInput.removeEventListener('input', applyParticipantFiltersOptimized);
     }
     if (eventFilter) {
-        eventFilter.removeEventListener('change', applyParticipantFilters);
+        eventFilter.removeEventListener('change', applyParticipantFiltersOptimized);
     }
     if (classFilter) {
-        classFilter.removeEventListener('change', applyParticipantFilters);
+        classFilter.removeEventListener('change', applyParticipantFiltersOptimized);
     }
     if (statusFilter) {
-        statusFilter.removeEventListener('change', applyParticipantFilters);
+        statusFilter.removeEventListener('change', applyParticipantFiltersOptimized);
     }
 }
 
@@ -1784,7 +1977,7 @@ async function debugParticipantLoading() {
             
             // Try to update the display
             updateParticipantStats();
-            renderParticipantTable();
+            renderParticipantTableOptimized();
             loadEventOptions();
             loadClassOptions();
             
@@ -1813,14 +2006,17 @@ window.initializeEditForm = initializeEditForm;
 window.loadEditEventOptions = loadEditEventOptions;
 window.loadEditClassOptions = loadEditClassOptions;
 window.loadEditSponsors = loadEditSponsors;
-window.addEditSponsor = addEditSponsor;
-window.removeEditSponsor = removeEditSponsor;
+window.addEditSponsor = addEditSponsorTag;
 window.setupComboBoxes = setupComboBoxes;
 window.setupComboBox = setupComboBox;
 window.filterComboOptions = filterComboOptions;
 window.updateComboSelection = updateComboSelection;
 window.handleEditFormSubmit = handleEditFormSubmit;
 window.changeParticipantPage = changeParticipantPage;
+window.refreshParticipantList = refreshParticipantList;
+window.setupParticipantFilters = setupParticipantFilters;
+window.loadEventOptions = loadEventOptions;
+window.loadClassOptions = loadClassOptions;
 
 // Auto-initialize when the component loads
 async function attemptInitialization() {
@@ -1833,16 +2029,16 @@ async function attemptInitialization() {
         try {
             // Force data loading if not already done
             console.log('🔄 Calling loadFromStorage() to ensure data is loaded...');
-            await window.dataManager.loadFromStorage();
+            await window.dataManager.loadFromStorage(['participants', 'events']);
             
             // Now check if we have data
-            const testParticipants = window.dataManager.getParticipants();
-            const testEvents = window.dataManager.getEvents();
+            const testParticipants = window.dataManager.getParticipantsArray();
+            const testEvents = window.dataManager.getEventsArray();
             console.log('📊 After loadFromStorage - Participants:', testParticipants?.length, 'Events:', testEvents?.length);
             
             // Initialize component regardless of data availability
             console.log('✅ DataManager ready, initializing component...');
-            initializeParticipantList();
+            await initializeParticipantList();
             
             // If no data found, just log it but don't retry
             if (!testParticipants?.length && !testEvents?.length) {
@@ -1852,7 +2048,7 @@ async function attemptInitialization() {
             console.error('❌ Error loading data from DataManager:', error);
             // Don't retry on error, just initialize with empty data
             console.log('🔄 Initializing component with empty data due to error...');
-            initializeParticipantList();
+            await initializeParticipantList();
         }
     } else {
         console.log('⏳ DataManager not ready, retrying in 500ms...');

@@ -64,77 +64,359 @@ class DataManager {
     }
 
     /**
-     * SIMPLIFIED: Load data from server only
+     * OPTIMIZED: Load from storage with performance enhancements
      */
-    async loadFromStorage(dataTypes = null) {
-        console.log('📡 Loading data from server (SIMPLIFIED)...');
+    async loadFromStorage(dataTypes = null, force = false) {
+        console.log('🔄 Loading data from server with performance optimizations...');
         
-        // If no specific types requested, load essential data first
-        if (!dataTypes) {
-            dataTypes = ['series', 'events', 'participants', 'race-brackets']; // Load core data first including participants
+        // Use performance monitoring if available
+        if (window.performanceMonitor) {
+            return await window.performanceMonitor.trackOperation('data_storage_load', async () => {
+                return await this.loadFromStorageOptimized(dataTypes, force);
+            });
+        } else {
+            return await this.loadFromStorageOptimized(dataTypes, force);
         }
-        
+    }
+
+    /**
+     * Internal optimized loading implementation
+     */
+    async loadFromStorageOptimized(dataTypes = null, force = false) {
         try {
-            // Load requested data types in parallel, but only if not already loaded
-            // Always refresh participants data to ensure real-time updates
-            const loadPromises = dataTypes
-                .filter(type => type === 'participants' || !this.loadedDataTypes.has(type))
-                .map(async (type) => {
-                    if (this.loadingPromises.has(type)) {
-                        return this.loadingPromises.get(type);
-                    }
-                    
-                    let loadPromise;
-                    
-                    // Handle race-brackets specially
-                    if (type === 'race-brackets') {
-                        loadPromise = this.loadRaceBrackets().catch(() => ({}));
-                    } else {
-                        loadPromise = this.fetchFromServer(type).catch(() => []);
-                    }
-                    
-                    this.loadingPromises.set(type, loadPromise);
-                    
-                    const data = await loadPromise;
-                    
-                    // For race-brackets, data is already stored in this.data.raceBrackets by loadRaceBrackets
-                    if (type !== 'race-brackets') {
-                        // Map data types to correct property names
-                        const propertyMap = {
-                            'participant': 'participants',
-                            'participants': 'participants',
-                            'series': 'series',
-                            'event': 'events',
-                            'events': 'events',
-                            'race': 'races',
-                            'races': 'races'
-                        };
-                        const propertyName = propertyMap[type] || type + 's';
-                        this.data[propertyName] = data;
-                    }
-                    
-                    this.loadedDataTypes.add(type);
-                    this.lastLoadTime.set(type, Date.now());
-                    this.loadingPromises.delete(type);
-                    
-                    if (type === 'race-brackets') {
-                        console.log(`✅ ${type} loaded from server: ${Object.keys(data).length} events`);
-                    } else {
-                        console.log(`✅ ${type} loaded from server: ${Array.isArray(data) ? data.length : 'object'}`);
-                    }
-                    return data;
-                });
+            const typesToLoad = dataTypes || ['participants', 'events', 'series', 'race-brackets'];
+            console.log('📋 Data types to load:', typesToLoad);
             
-            if (loadPromises.length > 0) {
-                await Promise.all(loadPromises);
+            // Create batched requests to reduce server load
+            const batchSize = 2; // Load 2 data types concurrently
+            const batches = [];
+            
+            for (let i = 0; i < typesToLoad.length; i += batchSize) {
+                batches.push(typesToLoad.slice(i, i + batchSize));
             }
+            
+            // Process batches sequentially to prevent server overload
+            for (const batch of batches) {
+                const loadPromises = batch
+                    .filter(type => {
+                        if (force || type === 'participants' || type === 'race-brackets') return true;
+                        if (!this.data[type]) return true;
+                        if (Array.isArray(this.data[type]) && this.data[type].length === 0) return true;
+                        if (typeof this.data[type] === 'object' && Object.keys(this.data[type]).length === 0) return true;
+                        return false;
+                    })
+                    .map(async (type) => {
+                        return await this.loadSingleDataTypeOptimized(type);
+                    });
+                
+                // Wait for current batch to complete before starting next
+                await Promise.all(loadPromises);
+                
+                // Small delay between batches to prevent overwhelming the server
+                if (batches.indexOf(batch) < batches.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+            }
+            
+            console.log('✅ Optimized data loading completed');
+            
+            // Cleanup old data to prevent memory leaks
+            this.cleanupOldCachedData();
+            
+            return true;
             
         } catch (error) {
             console.error('❌ Failed to load data from server:', error);
             throw error;
         }
+    }
+
+    /**
+     * Load single data type with error handling, retries, and enhanced caching
+     */
+    async loadSingleDataTypeOptimized(type, retryCount = 0) {
+        const maxRetries = 2;
         
-        return true;
+        // Check for cached network data first
+        if (this.shouldUseCachedData(type)) {
+            console.log(`📊 Using cached data for ${type}`);
+            return this.data[type];
+        }
+        
+        try {
+            console.log(`🔍 Loading ${type} from server (attempt ${retryCount + 1})`);
+            
+            const startTime = performance.now();
+            const response = await fetch(`${this.baseUrl}/${type}`, {
+                headers: {
+                    'Cache-Control': this.getCacheControlHeader(type),
+                    'Accept': 'application/json',
+                    'If-Modified-Since': this.getLastModifiedHeader(type)
+                }
+            });
+            
+            const endTime = performance.now();
+            const requestTime = endTime - startTime;
+            
+            // Log slow network requests for debugging
+            if (requestTime > 800) {
+                console.warn(`🐌 Slow network request: ${type} took ${requestTime.toFixed(2)}ms`);
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            // Check if data was modified (304 Not Modified)
+            if (response.status === 304) {
+                console.log(`📊 ${type} not modified, using cached data`);
+                return this.data[type];
+            }
+            
+            const data = await response.json();
+            
+            // Update cache metadata
+            this.updateCacheMetadata(type, response.headers);
+            
+            // Process data efficiently based on type
+            await this.processLoadedData(type, data);
+            
+            return data;
+            
+        } catch (error) {
+            console.error(`❌ Failed to load ${type}:`, error);
+            
+            // Enhanced retry logic for network failures
+            if (retryCount < maxRetries && this.shouldRetryRequest(error)) {
+                const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+                console.log(`🔄 Retrying ${type} load in ${backoffDelay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                return await this.loadSingleDataTypeOptimized(type, retryCount + 1);
+            }
+            
+            // Set empty data for failed loads to prevent app crashes
+            this.setEmptyDataForType(type);
+            throw error;
+        }
+    }
+
+    /**
+     * Process loaded data with memory-efficient techniques
+     */
+    async processLoadedData(type, data) {
+        const startTime = performance.now();
+        
+        if (type === 'participants' && data.participants) {
+            // Optimize participant data structure
+            this.data[type] = this.optimizeParticipantData(data.participants);
+            console.log(`✅ ${type} optimized: ${this.data[type].length} participants`);
+            
+        } else if (type === 'events' && data.events) {
+            // Optimize event data structure
+            this.data[type] = this.optimizeEventData(data.events);
+            console.log(`✅ ${type} optimized: ${this.data[type].length} events`);
+            
+        } else if (type === 'series' && data.series) {
+            this.data[type] = data.series;
+            console.log(`✅ ${type} loaded: ${data.series.length} series`);
+            
+        } else if (type === 'races' && Array.isArray(data)) {
+            this.data[type] = data;
+            console.log(`✅ ${type} loaded: ${data.length} races`);
+            
+        } else if (type === 'races' && data.races && Array.isArray(data.races)) {
+            this.data[type] = data.races;
+            console.log(`✅ ${type} loaded: ${data.races.length} races`);
+            
+        } else if (type === 'race-brackets' && Array.isArray(data)) {
+            // Efficiently convert array to eventId-keyed object
+            const bracketMap = new Map();
+            
+            // Process in chunks to prevent blocking
+            const chunkSize = 20;
+            for (let i = 0; i < data.length; i += chunkSize) {
+                const chunk = data.slice(i, i + chunkSize);
+                
+                chunk.forEach(bracket => {
+                    if (bracket.eventId) {
+                        bracketMap.set(bracket.eventId, bracket);
+                    }
+                });
+                
+                // Yield control to prevent UI blocking
+                if (i + chunkSize < data.length) {
+                    await new Promise(resolve => setTimeout(resolve, 1));
+                }
+            }
+            
+            // Convert Map to plain object for compatibility
+            this.data.raceBrackets = Object.fromEntries(bracketMap);
+            console.log(`✅ ${type} optimized: ${data.length} brackets converted to eventId map`);
+            
+        } else if (Array.isArray(data)) {
+            this.data[type] = data;
+            console.log(`✅ ${type} loaded: ${data.length} items`);
+            
+        } else {
+            this.data[type] = data;
+            console.log(`✅ ${type} loaded: ${Object.keys(data).length} items`);
+        }
+        
+        const endTime = performance.now();
+        console.log(`⏱️ ${type} processing took ${(endTime - startTime).toFixed(2)}ms`);
+    }
+
+    /**
+     * Optimize participant data for better performance
+     */
+    optimizeParticipantData(participants) {
+        return participants.map(participant => {
+            // Ensure consistent data structure
+            return {
+                ...participant,
+                selectedClasses: participant.selectedClasses || [],
+                status: participant.status || 'active',
+                totalFee: typeof participant.totalFee === 'number' ? participant.totalFee : 0,
+                // Pre-compute searchable text for faster filtering
+                _searchText: [
+                    participant.name,
+                    participant.nickname,
+                    participant.racingNumber,
+                    participant.sledMake,
+                    participant.sledModel,
+                    participant.sledYear,
+                    participant.contact?.email,
+                    participant.contactEmail
+                ].filter(Boolean).join(' ').toLowerCase()
+            };
+        });
+    }
+
+    /**
+     * Optimize event data for better performance
+     */
+    optimizeEventData(events) {
+        return events.map(event => {
+            // Ensure consistent data structure and pre-compute values
+            return {
+                ...event,
+                participants: event.participants || [],
+                classes: event.classes || [],
+                // Pre-format date for display
+                _formattedDate: event.date ? new Date(event.date).toLocaleDateString() : 'TBD',
+                // Pre-compute participant count
+                _participantCount: (event.participants || []).length
+            };
+        });
+    }
+
+    /**
+     * Set empty data for failed type loads
+     */
+    setEmptyDataForType(type) {
+        if (type === 'race-brackets') {
+            this.data.raceBrackets = {};
+        } else {
+            this.data[type] = [];
+        }
+    }
+
+    /**
+     * Enhanced cleanup with cache metadata management
+     */
+    cleanupOldCachedData() {
+        // Clear any temporary processing data
+        if (this.tempData) {
+            this.tempData.clear();
+        }
+        
+        // Clean old cache metadata (keep only last 10 entries per type)
+        if (this.cacheMetadata) {
+            Object.keys(this.cacheMetadata).forEach(type => {
+                const cacheAge = Date.now() - (this.cacheMetadata[type]?.lastLoaded || 0);
+                if (cacheAge > 24 * 60 * 60 * 1000) { // 24 hours
+                    delete this.cacheMetadata[type];
+                }
+            });
+        }
+        
+        // Force garbage collection hint
+        if (window.gc && typeof window.gc === 'function') {
+            setTimeout(() => window.gc(), 1000);
+        }
+    }
+
+    /**
+     * Check if we should use cached data
+     */
+    shouldUseCachedData(type) {
+        if (!this.data[type]) return false;
+        
+        const cacheAge = Date.now() - (this.cacheMetadata?.[type]?.lastLoaded || 0);
+        
+        // Different cache TTL for different data types
+        const ttl = this.getCacheTTL(type);
+        
+        return cacheAge < ttl;
+    }
+
+    /**
+     * Get cache TTL for different data types
+     */
+    getCacheTTL(type) {
+        const ttlMap = {
+            'participants': 30000,      // 30 seconds (frequently changing)
+            'events': 60000,           // 1 minute (moderately changing)  
+            'series': 300000,          // 5 minutes (rarely changing)
+            'race-brackets': 120000    // 2 minutes (slow to load, moderate changes)
+        };
+        
+        return ttlMap[type] || 60000; // Default 1 minute
+    }
+
+    /**
+     * Get appropriate Cache-Control header
+     */
+    getCacheControlHeader(type) {
+        if (type === 'race-brackets') {
+            return 'max-age=120'; // 2 minutes for race brackets
+        } else if (type === 'participants') {
+            return 'max-age=30';  // 30 seconds for participants
+        }
+        return 'max-age=60'; // Default 1 minute
+    }
+
+    /**
+     * Get Last-Modified header for conditional requests
+     */
+    getLastModifiedHeader(type) {
+        return this.cacheMetadata?.[type]?.lastModified || '';
+    }
+
+    /**
+     * Update cache metadata
+     */
+    updateCacheMetadata(type, headers) {
+        if (!this.cacheMetadata) {
+            this.cacheMetadata = {};
+        }
+        
+        this.cacheMetadata[type] = {
+            lastLoaded: Date.now(),
+            lastModified: headers.get('Last-Modified') || '',
+            etag: headers.get('ETag') || ''
+        };
+    }
+
+    /**
+     * Determine if request should be retried
+     */
+    shouldRetryRequest(error) {
+        // Retry on network errors, timeouts, or 5xx server errors
+        return error.name === 'TypeError' || 
+               error.message.includes('fetch') ||
+               error.message.includes('timeout') ||
+               (error.message.includes('HTTP 5'));
     }
 
     /**
@@ -360,24 +642,58 @@ class DataManager {
             participantData.createdAt = new Date().toISOString();
             participantData.updatedAt = new Date().toISOString();
             
-            // Save to server
-            const savedParticipant = await this.saveToServer('participants', participantData, false);
+            console.log('🔍 DEBUG - Adding participant to server:', {
+                id: participantData.id,
+                name: participantData.name,
+                dataKeys: Object.keys(participantData)
+            });
             
-            // Update local data cache
-            this.data.participants.push(savedParticipant);
-            
-            // Broadcast participant added event
-            if (this.eventBus) {
-                this.eventBus.emit('participant-added', {
-                    participant: savedParticipant,
-                    timestamp: new Date().toISOString()
+            // Save to server FIRST
+            let savedParticipant;
+            try {
+                console.log('📡 Attempting to save to server...');
+                savedParticipant = await this.saveToServer('participants', participantData);
+                console.log('✅ Successfully saved to server:', savedParticipant.id);
+                console.log('🔍 DEBUG - Server response:', {
+                    id: savedParticipant.id,
+                    name: savedParticipant.name,
+                    responseKeys: Object.keys(savedParticipant)
                 });
+            } catch (serverError) {
+                console.error('❌ FAILED to save to server:', serverError);
+                console.error('❌ Server error details:', {
+                    message: serverError.message,
+                    stack: serverError.stack
+                });
+                throw new Error(`Failed to save participant to server: ${serverError.message}`);
             }
             
-            console.log('✅ Participant added via server:', savedParticipant.id);
+            // Update local cache ONLY if server save succeeded
+            if (!this.data.participants) {
+                this.data.participants = [];
+            }
+            
+            // Remove any existing participant with the same ID (in case of updates)
+            this.data.participants = this.data.participants.filter(p => p.id !== savedParticipant.id);
+            
+            // Add the new participant
+            this.data.participants.push(savedParticipant);
+            
+            console.log('🔍 DEBUG - After adding to cache:', {
+                id: savedParticipant.id,
+                name: savedParticipant.name,
+                totalParticipants: this.data.participants.length
+            });
+            
+            // Emit event for real-time updates
+            if (this.eventBus) {
+                this.eventBus.emit('participant-added', savedParticipant);
+            }
+            
             return savedParticipant;
+            
         } catch (error) {
-            console.error('Failed to add participant:', error);
+            console.error('❌ Error in addParticipant:', error);
             throw error;
         }
     }
@@ -424,7 +740,18 @@ class DataManager {
      * Get participant by ID
      */
     getParticipant(id) {
-        return this.data.participants.find(p => p.id === id);
+        if (!this.data.participants) {
+            console.error('❌ this.data.participants is null/undefined!');
+            return null;
+        }
+        
+        const participant = this.data.participants.find(p => p.id === id);
+        
+        if (!participant) {
+            console.log(`🔍 DEBUG - Participant ${id} not found. Available: ${this.data.participants.length} participants`);
+        }
+        
+        return participant;
     }
 
     /**
@@ -432,6 +759,9 @@ class DataManager {
      * For component compatibility - returns array directly
      */
     getParticipantsArray() {
+        console.log('🔍 getParticipantsArray() called');
+        console.log('🔍 this.data.participants:', this.data.participants);
+        console.log('🔍 this.data.participants length:', this.data.participants?.length || 0);
         return this.data.participants || [];
     }
 
@@ -472,6 +802,55 @@ class DataManager {
      */
     getRacesArray() {
         return this.data.races || [];
+    }
+
+    /**
+     * SIMPLIFIED: Get races with pagination and filtering
+     */
+    async getRaces(filters = {}, page = 1, limit = 50) {
+        // Check if we need to load races
+        if (!this.loadedDataTypes.has('races')) {
+            await this.loadFromStorage(['races']);
+        }
+        
+        // Ensure races is an array
+        let races = this.data.races;
+        if (!Array.isArray(races)) {
+            console.warn('⚠️ Races data is not an array, initializing as empty array:', typeof races);
+            races = [];
+        }
+        
+        // Apply filters
+        if (filters.eventId) {
+            races = races.filter(r => r.eventId === filters.eventId);
+        }
+        if (filters.status) {
+            races = races.filter(r => r.status === filters.status);
+        }
+        if (filters.search) {
+            const searchLower = filters.search.toLowerCase();
+            races = races.filter(r => 
+                r.name && r.name.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        // If no pagination is requested (default case for live display), return array directly
+        if (page === 1 && limit === 50 && Object.keys(filters).length === 0) {
+            return races;
+        }
+        
+        // Apply pagination
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedRaces = races.slice(startIndex, endIndex);
+        
+        return {
+            races: paginatedRaces,
+            total: races.length,
+            page,
+            limit,
+            totalPages: Math.ceil(races.length / limit)
+        };
     }
 
     /**
@@ -526,7 +905,17 @@ class DataManager {
             // Save to server
             const savedSeries = await this.saveToServer('series', seriesData, false);
             
-            // Update local data cache
+            // Update local data cache - ensure series array exists
+            if (!this.data.series) {
+                console.warn('⚠️ this.data.series was null/undefined, initializing as array');
+                this.data.series = [];
+            }
+            
+            if (!Array.isArray(this.data.series)) {
+                console.error('❌ this.data.series is not an array:', typeof this.data.series);
+                this.data.series = [];
+            }
+            
             this.data.series.push(savedSeries);
             
             // Broadcast series added event
@@ -549,11 +938,17 @@ class DataManager {
      * Get all series
      */
     getAllSeries() {
-        // Ensure series data is loaded
-        if (!this.loadedDataTypes.has('series')) {
-            console.warn('⚠️ Series data not loaded, returning empty array');
+        // Ensure series data is loaded and is an array
+        if (!this.data.series) {
+            console.warn('⚠️ this.data.series is null/undefined, returning empty array');
             return [];
         }
+        
+        if (!Array.isArray(this.data.series)) {
+            console.error('❌ this.data.series is not an array:', typeof this.data.series);
+            return [];
+        }
+        
         return [...this.data.series];
     }
 
@@ -799,11 +1194,33 @@ class DataManager {
                 throw new Error('Event not found');
             }
             
-            // Check if participant exists
-            const participant = this.getParticipant(participantId);
+            // Check if participant exists - if not found, try refreshing cache first
+            let participant = this.getParticipant(participantId);
             if (!participant) {
+                console.log('⚠️ Participant not found in cache, refreshing from server...');
+                await this.loadFromStorage(['participants'], true); // Force refresh
+                participant = this.getParticipant(participantId);
+            }
+            
+            if (!participant) {
+                console.error('❌ Participant still not found after cache refresh:', participantId);
+                console.log('🔍 Available participants:', this.data.participants.map(p => ({ id: p.id, name: p.name })));
                 throw new Error('Participant not found');
             }
+            
+            // Debug: Log the actual objects to see their structure
+            console.log('🔍 DEBUG - Event object:', {
+                id: event.id,
+                name: event.name,
+                hasName: 'name' in event,
+                keys: Object.keys(event)
+            });
+            console.log('🔍 DEBUG - Participant object:', {
+                id: participant.id,
+                name: participant.name,
+                hasName: 'name' in participant,
+                keys: Object.keys(participant)
+            });
             
             // Initialize participants array if it doesn't exist
             if (!event.participants) {
@@ -838,20 +1255,20 @@ class DataManager {
                 this.updateParticipant(participantId, updatedParticipant)
             ]);
             
-            console.log(`🔧 Updated participant ${participant.name} eventId to ${eventId}`);
+            console.log(`🔧 Updated participant ${participant.name || participant.id || 'Unknown'} eventId to ${eventId}`);
             
             // Broadcast participant registered event
             if (this.eventBus) {
                 this.eventBus.emit('participant-registered', {
                     eventId,
                     participantId,
-                    eventName: event.name,
-                    participantName: participant.name,
+                    eventName: event.name || 'Unknown Event',
+                    participantName: participant.name || 'Unknown Participant',
                     timestamp: new Date().toISOString()
                 });
             }
             
-            console.log(`✅ Participant ${participant.name} registered for event ${event.name}`);
+            console.log(`✅ Participant ${participant.name || participant.id || 'Unknown'} registered for event ${event.name || event.id || 'Unknown'}`);
             return true;
         } catch (error) {
             console.error('Failed to register participant for event:', error);
@@ -1134,6 +1551,18 @@ class DataManager {
      */
     getRaceBracket(eventId) {
         return this.data.raceBrackets[eventId] || null;
+    }
+
+    /**
+     * SIMPLIFIED: Get all race brackets
+     */
+    async getRaceBrackets() {
+        // Check if we need to load race brackets
+        if (!this.loadedDataTypes.has('race-brackets')) {
+            await this.loadRaceBrackets();
+        }
+        
+        return this.data.raceBrackets || {};
     }
 
     // Utility Methods

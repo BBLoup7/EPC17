@@ -20,7 +20,7 @@
     ],
     "createdAt": "2025-07-05T09:09:14.777Z",
     "createdDate": "2025-07-05T05:09:14.780280",
-    "currentParticipants": 5,
+    "currentParticipants": 2,
     "date": "2025-07-05",
     "description": "",
     "driverMeetingTime": "08:00",
@@ -33,9 +33,6 @@
     "name": "Test 1",
     "numberOfTracks": 3,
     "participants": [
-      "589f2d7d-da2a-4f6c-b2d7-580f1f262d72",
-      "62daed11-a926-4705-ac35-bc77365bca88",
-      "57050520-0e0c-4ded-97f2-3407ed89af04",
       "3fc188ab-1249-4941-afc3-88535afbf046",
       "a5396e4f-0afc-497b-b5e9-cf9c24e1d67b"
     ],
@@ -44,7 +41,7 @@
     "seriesId": "ac34ff11-c15a-49db-8a91-495f78ee41fe",
     "status": "active",
     "trackSurface": "snow",
-    "updatedAt": "2025-07-06T19:59:27.422086",
+    "updatedAt": "2025-07-26T23:30:39.483253",
     "weatherContingency": "proceed"
   },
   {
@@ -52,7 +49,7 @@
     "classSettings": [],
     "createdAt": "2025-07-07T01:54:44.427Z",
     "createdDate": "2025-07-06T21:54:44.431000",
-    "currentParticipants": 4,
+    "currentParticipants": 3,
     "date": "2025-07-05",
     "description": "",
     "driverMeetingTime": "08:00",
@@ -64,17 +61,16 @@
     "name": "Test 2",
     "numberOfTracks": 3,
     "participants": [
+      "62daed11-a926-4705-ac35-bc77365bca88",
       "116fa64a-c20d-466c-9831-cfd53bd74572",
-      "c7ad59d3-3259-4684-848d-e9534a53438d",
-      "589f2d7d-da2a-4f6c-b2d7-580f1f262d72",
-      "62daed11-a926-4705-ac35-bc77365bca88"
+      "c7ad59d3-3259-4684-848d-e9534a53438d"
     ],
     "registrationOpen": true,
     "requiresClassSeparation": true,
     "seriesId": "ac34ff11-c15a-49db-8a91-495f78ee41fe",
     "status": "upcoming",
     "trackSurface": "snow",
-    "updatedAt": "2025-07-08T01:44:52.394079",
+    "updatedAt": "2025-07-26T23:30:39.932511",
     "weatherContingency": "proceed"
   },
   {
@@ -203,7 +199,7 @@
     ],
     "createdAt": "2025-07-11T09:44:07.681Z",
     "createdDate": "2025-07-11T05:44:07.686357",
-    "currentParticipants": 8,
+    "currentParticipants": 0,
     "date": "2025-07-11",
     "description": "",
     "driverMeetingTime": "08:00",
@@ -215,23 +211,14 @@
     "maxParticipants": 125,
     "name": "Drag Beauceville",
     "numberOfTracks": 3,
-    "participants": [
-      "ad9069e3-a4f3-450b-a928-8fe83a432008",
-      "c5e31914-aca4-403d-850b-e44e9df778ec",
-      "13117256-8305-425e-a1b9-7983d4e8c70e",
-      "7e6db154-03f5-4887-8af3-720a20c38c74",
-      "052b56c5-eef6-46d5-858b-c399317f700d",
-      "9aaafe44-2ffb-4184-8d16-24ce4f5b4858",
-      "1e38fd54-b1b7-4985-a58c-0beb8bafc399",
-      "aec5509d-1174-4e15-8c63-aa5ba694c35c"
-    ],
+    "participants": [],
     "registrationOpen": true,
     "requiresClassSeparation": true,
     "seasonId": "season_1751979436251_rwx2b5v5a",
     "seriesId": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
     "status": "active",
     "trackSurface": "snow",
-    "updatedAt": "2025-07-26T04:26:09.618406",
+    "updatedAt": "2025-07-26T23:30:40.184326",
     "weatherContingency": "proceed"
   },
   {
@@ -239,7 +226,7 @@
     "classSettings": [],
     "createdAt": "2025-07-26T08:48:17.606Z",
     "createdDate": "2025-07-26T04:48:17.611899",
-    "currentParticipants": 2,
+    "currentParticipants": 0,
     "date": "2025-07-26",
     "description": "",
     "driverMeetingTime": "08:00",
@@ -250,17 +237,126 @@
     "maxParticipants": 2222,
     "name": "aaa1",
     "numberOfTracks": 3,
-    "participants": [
-      "2b72f234-6712-4c91-b40d-6044c10b14b6",
-      "83e9eae6-9547-4e71-a9ef-e083b1b7e394"
-    ],
+    "participants": [],
     "registrationOpen": true,
     "requiresClassSeparation": true,
     "seasonId": "season_1751979436251_rwx2b5v5a",
     "seriesId": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
     "status": "upcoming",
     "trackSurface": "snow",
-    "updatedAt": "2025-07-26T18:23:54.684423",
+    "updatedAt": "2025-07-27T00:19:48.813390",
     "weatherContingency": "proceed"
+  },
+  {
+    "name": "Z test 2",
+    "date": "2025-07-27",
+    "location": "aaaa",
+    "seriesId": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
+    "seasonId": "season_1751979436251_rwx2b5v5a",
+    "numberOfTracks": 3,
+    "eliminationType": "single",
+    "classSettings": [
+      {
+        "classId": "class_1751979436251_1oroniehp",
+        "className": "600 Stock",
+        "fee": 50,
+        "description": "600 Stock class racing"
+      },
+      {
+        "classId": "class_1751979436251_aqz1dslsy",
+        "className": "600 Improve",
+        "fee": 100,
+        "description": "600 Improve class racing"
+      }
+    ],
+    "classOrder": [
+      "class_1751979436251_1oroniehp",
+      "class_1751979436251_aqz1dslsy"
+    ],
+    "registrationOpen": true,
+    "description": "",
+    "driverMeetingTime": "08:00",
+    "trackSurface": "snow",
+    "weatherContingency": "proceed",
+    "requiresClassSeparation": true,
+    "participants": [],
+    "maxParticipants": 1234,
+    "freeRunEnabled": false,
+    "id": "40b5e455-f4f1-438a-b09e-21eec812b61d",
+    "createdAt": "2025-07-27T04:11:11.634Z",
+    "updatedAt": "2025-07-27T00:11:34.998905",
+    "createdDate": "2025-07-27T00:11:11.638766",
+    "status": "active",
+    "currentParticipants": 0,
+    "eventName": "Z test 2"
+  },
+  {
+    "name": "Z test 3",
+    "date": "2025-07-27",
+    "location": "aaaaa",
+    "seriesId": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
+    "seasonId": "season_1751979436251_rwx2b5v5a",
+    "numberOfTracks": 3,
+    "eliminationType": "double",
+    "classSettings": [],
+    "classOrder": [],
+    "registrationOpen": true,
+    "description": "",
+    "driverMeetingTime": "08:00",
+    "trackSurface": "snow",
+    "weatherContingency": "proceed",
+    "requiresClassSeparation": true,
+    "participants": [],
+    "maxParticipants": 1234,
+    "freeRunEnabled": false,
+    "id": "c7977262-4716-4db7-a36a-5115fd2a8f35",
+    "createdAt": "2025-07-27T04:14:49.994Z",
+    "updatedAt": "2025-07-27T04:14:49.994Z",
+    "createdDate": "2025-07-27T00:14:49.998460",
+    "status": "upcoming",
+    "currentParticipants": 0
+  },
+  {
+    "name": "Z test 4",
+    "date": "2025-07-27",
+    "location": "aaaaa",
+    "seriesId": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
+    "seasonId": null,
+    "numberOfTracks": 3,
+    "eliminationType": "double",
+    "classSettings": [
+      {
+        "classId": "class_1751979436251_w5ibw72qw",
+        "className": "1000 Improve",
+        "description": "1000 Improve class racing",
+        "fee": 150
+      },
+      {
+        "classId": "class_1751979436251_5h1rbujg3",
+        "className": "1000 Stock",
+        "description": "1000 Stock class racing",
+        "fee": 100
+      }
+    ],
+    "classOrder": [
+      "class_1751979436251_w5ibw72qw",
+      "class_1751979436251_5h1rbujg3"
+    ],
+    "registrationOpen": true,
+    "description": "",
+    "driverMeetingTime": "08:00",
+    "trackSurface": "snow",
+    "weatherContingency": "proceed",
+    "requiresClassSeparation": true,
+    "participants": [],
+    "maxParticipants": 1234,
+    "freeRunEnabled": false,
+    "id": "e306a919-7eaa-45a9-b183-726455780bf9",
+    "createdAt": "2025-07-27T04:15:49.620Z",
+    "updatedAt": "2025-07-27T00:19:49.135622",
+    "createdDate": "2025-07-27T00:15:49.623715",
+    "status": "active",
+    "currentParticipants": 0,
+    "eventName": "Z test 4"
   }
 ]

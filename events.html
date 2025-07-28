@@ -1371,8 +1371,64 @@
         }
 
         function getSelectedClasses() {
-            // Return classes in the configured order
-            return classOrder.length > 0 ? classOrder : [];
+            console.log('🔍 getSelectedClasses called, classOrder:', classOrder);
+            
+            // Always read from DOM checkboxes to get current user selections
+            const selectedClasses = [];
+            const seriesSelect = document.querySelector('select[name="seriesId"]');
+            const seriesId = seriesSelect ? seriesSelect.value : null;
+            console.log('🔍 getSelectedClasses - Series selection:', {
+                seriesSelect: seriesSelect ? 'FOUND' : 'NOT FOUND',
+                seriesId: seriesId
+            });
+            
+            if (!seriesId) return selectedClasses;
+            
+            const series = dataManager.getSeries(seriesId);
+            if (!series || !series.sledClasses) return selectedClasses;
+            
+            // Build selected classes array from DOM checkboxes
+            const selectedClassesMap = new Map();
+            
+            series.sledClasses.forEach(cls => {
+                const checkbox = document.getElementById(`checkbox-${cls.id}`);
+                const priceInput = document.getElementById(`price-${cls.id}`);
+                
+                console.log(`🔍 Checking class ${cls.name}: checkbox=${checkbox?.checked}, price=${priceInput?.value}`);
+                
+                if (checkbox && checkbox.checked) {
+                    selectedClassesMap.set(cls.id, {
+                        classId: cls.id,
+                        className: cls.name,
+                        fee: parseFloat(priceInput.value) || 0,
+                        description: cls.description
+                    });
+                }
+            });
+            
+            // If we have an existing order and classes match, use that order
+            if (classOrder.length > 0) {
+                // First add classes in the existing order (if they're still selected)
+                classOrder.forEach(orderedClass => {
+                    if (selectedClassesMap.has(orderedClass.classId)) {
+                        selectedClasses.push(selectedClassesMap.get(orderedClass.classId));
+                        selectedClassesMap.delete(orderedClass.classId);
+                    }
+                });
+                
+                // Then add any newly selected classes that weren't in the order
+                selectedClassesMap.forEach(classData => {
+                    selectedClasses.push(classData);
+                });
+            } else {
+                // No existing order, just return classes in series order
+                selectedClassesMap.forEach(classData => {
+                    selectedClasses.push(classData);
+                });
+            }
+            
+            console.log('🔍 Returning selected classes:', selectedClasses);
+            return selectedClasses;
         }
 
         // Debug function to help troubleshoot class ordering
@@ -2084,7 +2140,10 @@
                     const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
                     const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
                     
-                    const participantCount = event.participants ? event.participants.length : 0;
+                    // Calculate participant count correctly by filtering participants with this eventId
+                    const allParticipants = dataManager.getParticipantsArray();
+                    const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
+                    const participantCount = eventParticipants.length;
                     const eventStatus = getEventStatus(event);
                     
                     return `
@@ -2164,22 +2223,98 @@
             }
         }
 
-        // Show events skeleton loading
+        // Optimized events skeleton loading
         function showEventsSkeletonLoading() {
+            console.log('🔄 Showing optimized events skeleton loading...');
             const eventsGrid = document.getElementById('eventsGrid');
             const skeleton = document.getElementById('eventsSkeleton');
             const pagination = document.getElementById('eventsPagination');
             
             if (eventsGrid) eventsGrid.style.display = 'none';
             if (skeleton) {
-                skeleton.innerHTML = UIComponents.createSkeletonCards(8, 'card');
+                // Use performance monitoring if available
+                if (window.performanceMonitor) {
+                    window.performanceMonitor.trackOperation('skeleton_render', () => {
+                        return Promise.resolve(renderSkeletonOptimized(skeleton, 8, 'card'));
+                    });
+                } else {
+                    renderSkeletonOptimized(skeleton, 8, 'card');
+                }
                 skeleton.style.display = 'block';
             }
             if (pagination) pagination.style.display = 'none';
         }
 
-        // Hide events skeleton loading
+        // Optimized skeleton rendering
+        function renderSkeletonOptimized(container, count, type) {
+            // Create skeleton elements using DOM instead of innerHTML
+            const fragment = document.createDocumentFragment();
+            
+            for (let i = 0; i < count; i++) {
+                const skeletonCard = createSkeletonCardElement(type);
+                fragment.appendChild(skeletonCard);
+            }
+            
+            // Single DOM update
+            container.innerHTML = '';
+            container.appendChild(fragment);
+            
+            console.log(`✅ Rendered ${count} skeleton ${type} cards efficiently`);
+        }
+
+        // Create skeleton card DOM element
+        function createSkeletonCardElement(type) {
+            if (type === 'card') {
+                const card = document.createElement('div');
+                card.className = 'skeleton-card';
+                
+                const elements = [
+                    { class: 'skeleton skeleton-title', tag: 'div' },
+                    { class: 'skeleton skeleton-text', tag: 'div' },
+                    { class: 'skeleton skeleton-text short', tag: 'div' },
+                    { class: 'skeleton skeleton-text medium', tag: 'div' },
+                    { class: 'skeleton skeleton-button', tag: 'div', style: 'margin-top: 1rem;' }
+                ];
+                
+                elements.forEach(config => {
+                    const element = document.createElement(config.tag);
+                    element.className = config.class;
+                    if (config.style) element.style.cssText = config.style;
+                    card.appendChild(element);
+                });
+                
+                return card;
+            } else if (type === 'table') {
+                const row = document.createElement('div');
+                row.className = 'skeleton-table-row';
+                
+                for (let i = 0; i < 5; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'skeleton skeleton-table-cell';
+                    row.appendChild(cell);
+                }
+                
+                return row;
+            } else { // list
+                const card = document.createElement('div');
+                card.className = 'skeleton-card';
+                
+                const text1 = document.createElement('div');
+                text1.className = 'skeleton skeleton-text';
+                
+                const text2 = document.createElement('div');
+                text2.className = 'skeleton skeleton-text short';
+                
+                card.appendChild(text1);
+                card.appendChild(text2);
+                
+                return card;
+            }
+        }
+
+        // Hide events skeleton loading (optimized)
         function hideEventsSkeletonLoading() {
+            console.log('✅ Hiding events skeleton loading...');
             const eventsGrid = document.getElementById('eventsGrid');
             const skeleton = document.getElementById('eventsSkeleton');
             const pagination = document.getElementById('eventsPagination');

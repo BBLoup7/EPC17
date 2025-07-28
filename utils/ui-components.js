@@ -1,16 +1,27 @@
 /**
  * UI Components for Snowmobile Drag Racing Event Manager
- * Provides reusable UI components like skeleton screens, pagination, and combo boxes
+ * Provides reusable UI components with performance optimizations
  */
 
 class UIComponents {
+    // Component cache for better performance
+    static componentCache = new Map();
+    static cacheSize = 100; // Maximum cached components
+    
     /**
-     * Create skeleton loading cards
+     * Create skeleton loading cards with caching
      * @param {number} count - Number of skeleton cards to create
      * @param {string} type - Type of skeleton (card, table, list)
      * @returns {string} HTML string of skeleton elements
      */
     static createSkeletonCards(count = 3, type = 'card') {
+        const cacheKey = `skeleton_${type}_${count}`;
+        
+        // Check cache first
+        if (this.componentCache.has(cacheKey)) {
+            return this.componentCache.get(cacheKey);
+        }
+        
         const skeletons = [];
         
         for (let i = 0; i < count; i++) {
@@ -44,34 +55,42 @@ class UIComponents {
             }
         }
         
-        return skeletons.join('');
+        const result = skeletons.join('');
+        
+        // Cache the result
+        this.cacheComponent(cacheKey, result);
+        
+        return result;
     }
 
     /**
-     * Create pagination component
+     * Create pagination component with performance optimizations
      * @param {number} currentPage - Current page number
      * @param {number} totalPages - Total number of pages
      * @param {number} totalItems - Total number of items
      * @param {number} itemsPerPage - Items per page
-     * @param {Function} onPageChange - Callback function for page changes
+     * @param {string} onPageChange - Callback function name for page changes
      * @returns {string} HTML string of pagination component
      */
     static createPagination(currentPage, totalPages, totalItems, itemsPerPage, onPageChange) {
         if (totalPages <= 1) return '';
         
+        // Use faster template literals and minimize DOM string building
         const startItem = (currentPage - 1) * itemsPerPage + 1;
         const endItem = Math.min(currentPage * itemsPerPage, totalItems);
         
-        let paginationHTML = `
-            <div class="pagination">
-                <button class="pagination-button" 
-                        onclick="${onPageChange}(${currentPage - 1})" 
-                        ${currentPage <= 1 ? 'disabled' : ''}>
-                    Previous
-                </button>
-        `;
+        const parts = [];
         
-        // Show page numbers
+        // Previous button
+        parts.push(`
+            <button class="pagination-button" 
+                    onclick="${onPageChange}(${currentPage - 1})" 
+                    ${currentPage <= 1 ? 'disabled' : ''}>
+                Previous
+            </button>
+        `);
+        
+        // Page number logic optimized for performance
         const maxVisiblePages = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
         let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
@@ -80,43 +99,142 @@ class UIComponents {
             startPage = Math.max(1, endPage - maxVisiblePages + 1);
         }
         
-        // First page
+        // First page if not in range
         if (startPage > 1) {
-            paginationHTML += `
-                <button class="pagination-button" onclick="${onPageChange}(1)">1</button>
-                ${startPage > 2 ? '<span class="pagination-info">...</span>' : ''}
-            `;
+            parts.push(`<button class="pagination-button" onclick="${onPageChange}(1)">1</button>`);
+            if (startPage > 2) {
+                parts.push('<span class="pagination-info">...</span>');
+            }
         }
         
-        // Page numbers
+        // Page number buttons (batch create for better performance)
+        const pageButtons = [];
         for (let i = startPage; i <= endPage; i++) {
-            paginationHTML += `
+            pageButtons.push(`
                 <button class="pagination-button ${i === currentPage ? 'active' : ''}" 
                         onclick="${onPageChange}(${i})">${i}</button>
-            `;
+            `);
         }
+        parts.push(...pageButtons);
         
-        // Last page
+        // Last page if not in range
         if (endPage < totalPages) {
-            paginationHTML += `
-                ${endPage < totalPages - 1 ? '<span class="pagination-info">...</span>' : ''}
-                <button class="pagination-button" onclick="${onPageChange}(${totalPages})">${totalPages}</button>
-            `;
+            if (endPage < totalPages - 1) {
+                parts.push('<span class="pagination-info">...</span>');
+            }
+            parts.push(`<button class="pagination-button" onclick="${onPageChange}(${totalPages})">${totalPages}</button>`);
         }
         
-        paginationHTML += `
-                <button class="pagination-button" 
-                        onclick="${onPageChange}(${currentPage + 1})" 
-                        ${currentPage >= totalPages ? 'disabled' : ''}>
-                    Next
-                </button>
-                <div class="pagination-info">
-                    Showing ${startItem}-${endItem} of ${totalItems} items
-                </div>
-            </div>
-        `;
+        // Next button
+        parts.push(`
+            <button class="pagination-button" 
+                    onclick="${onPageChange}(${currentPage + 1})" 
+                    ${currentPage >= totalPages ? 'disabled' : ''}>
+                Next
+            </button>
+        `);
         
-        return paginationHTML;
+        // Info section
+        parts.push(`
+            <div class="pagination-info">
+                Showing ${startItem}-${endItem} of ${totalItems} results
+            </div>
+        `);
+        
+        return `<div class="pagination">${parts.join('')}</div>`;
+    }
+
+    /**
+     * Cache component HTML with size management
+     */
+    static cacheComponent(key, html) {
+        // Manage cache size to prevent memory leaks
+        if (this.componentCache.size >= this.cacheSize) {
+            // Remove oldest entries (FIFO)
+            const firstKey = this.componentCache.keys().next().value;
+            this.componentCache.delete(firstKey);
+        }
+        
+        this.componentCache.set(key, html);
+    }
+
+    /**
+     * Clear component cache to free memory
+     */
+    static clearCache() {
+        this.componentCache.clear();
+        console.log('🧹 UI component cache cleared');
+    }
+
+    /**
+     * Memory cleanup utility for large datasets
+     */
+    static performMemoryCleanup() {
+        console.log('🧹 Performing UI memory cleanup...');
+        
+        // Clear component cache
+        this.clearCache();
+        
+        // Remove unused event listeners
+        this.cleanupEventListeners();
+        
+        // Force garbage collection hint
+        if (window.gc && typeof window.gc === 'function') {
+            setTimeout(() => window.gc(), 1000);
+        }
+        
+        console.log('✅ UI memory cleanup completed');
+    }
+
+    /**
+     * Clean up orphaned event listeners
+     */
+    static cleanupEventListeners() {
+        // Remove event listeners from removed DOM elements
+        const orphanedElements = document.querySelectorAll('[data-cleanup-listeners]');
+        
+        orphanedElements.forEach(element => {
+            // Clone and replace element to remove all event listeners
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+        });
+        
+        console.log(`🧹 Cleaned up ${orphanedElements.length} orphaned event listeners`);
+    }
+
+    /**
+     * Create optimized table row with memory efficiency
+     */
+    static createTableRow(data, columns, actions = []) {
+        const row = document.createElement('tr');
+        
+        // Use document fragment for better performance
+        const fragment = document.createDocumentFragment();
+        
+        columns.forEach(column => {
+            const cell = document.createElement('td');
+            
+            if (typeof column.render === 'function') {
+                cell.innerHTML = column.render(data);
+            } else {
+                cell.textContent = data[column.key] || '';
+            }
+            
+            fragment.appendChild(cell);
+        });
+        
+        // Actions column if provided
+        if (actions.length > 0) {
+            const actionsCell = document.createElement('td');
+            const actionButtons = actions.map(action => 
+                `<button class="btn btn-sm ${action.class}" onclick="${action.onClick}('${data.id}')">${action.label}</button>`
+            ).join(' ');
+            actionsCell.innerHTML = actionButtons;
+            fragment.appendChild(actionsCell);
+        }
+        
+        row.appendChild(fragment);
+        return row;
     }
 
     /**

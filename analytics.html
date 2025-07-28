@@ -782,6 +782,24 @@
                 const actualParticipants = allParticipants.filter(p => p.eventId === event.id);
                 const actualCount = actualParticipants.length;
                 
+                // Debug logging to understand the data structure
+                if (event.name === 'aaa1' || event.name === 'Z test 4') {
+                    console.log(`🔍 DEBUG - Event "${event.name}" (${event.id}):`);
+                    console.log('🔍 All participants sample:', allParticipants.slice(0, 3).map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        eventId: p.eventId,
+                        hasEventId: !!p.eventId
+                    })));
+                    console.log('🔍 Filtered participants:', actualParticipants.map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        eventId: p.eventId
+                    })));
+                    console.log('🔍 Event.participants array:', event.participants);
+                    console.log('🔍 Event.currentParticipants:', event.currentParticipants);
+                }
+                
                 // Check if there's a discrepancy
                 const originalCount = event.currentParticipants || 0;
                 const originalParticipants = event.participants || [];
@@ -801,7 +819,15 @@
             
             // Save corrected counts back to server if needed
             if (needsUpdate && updatedEvents.length > 0) {
-                console.log(`🔧 Updating ${updatedEvents.length} events with corrected participant counts...`);
+                console.log(`🔧 WOULD UPDATE ${updatedEvents.length} events with corrected participant counts, but sync is disabled for debugging`);
+                console.log('🔧 Events that would be updated:', updatedEvents.map(e => ({
+                    name: e.name,
+                    id: e.id,
+                    currentParticipants: e.currentParticipants,
+                    participantsArray: e.participants
+                })));
+                // Temporarily disabled to prevent data corruption
+                /*
                 try {
                     for (const event of updatedEvents) {
                         await updateEventParticipantCount(event);
@@ -810,6 +836,7 @@
                 } catch (error) {
                     console.error('❌ Error updating participant counts:', error);
                 }
+                */
             }
         }
 

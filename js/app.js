@@ -57,6 +57,325 @@ window.logPerformanceSummary = function() {
     return null;
 };
 
+// Enhanced App class with performance monitoring
+class App {
+    constructor() {
+        this.currentSection = 'home';
+        this.loadingStack = [];
+        this.performanceOptimizations = true;
+        
+        // Initialize performance monitoring
+        this.initializePerformanceMonitoring();
+        
+        console.log('🚀 App initialized with performance optimizations');
+    }
+
+    /**
+     * Initialize performance monitoring system
+     */
+    initializePerformanceMonitoring() {
+        if (window.performanceMonitor) {
+            console.log('📊 Starting performance monitoring...');
+            window.performanceMonitor.startMonitoring();
+            
+            // Set up periodic performance checks
+            this.setupPerformanceChecks();
+            
+            // Set up memory cleanup intervals
+            this.setupMemoryCleanup();
+        }
+    }
+
+    /**
+     * Set up periodic performance checks
+     */
+    setupPerformanceChecks() {
+        // Check performance every 30 seconds
+        setInterval(() => {
+            this.performPerformanceCheck();
+        }, 30000);
+        
+        // Full performance audit every 5 minutes
+        setInterval(() => {
+            this.performFullPerformanceAudit();
+        }, 300000);
+    }
+
+    /**
+     * Set up memory cleanup intervals
+     */
+    setupMemoryCleanup() {
+        // Light cleanup every 2 minutes
+        setInterval(() => {
+            this.performLightCleanup();
+        }, 120000);
+        
+        // Deep cleanup every 10 minutes
+        setInterval(() => {
+            this.performDeepCleanup();
+        }, 600000);
+    }
+
+    /**
+     * Perform quick performance check
+     */
+    performPerformanceCheck() {
+        if (!window.performanceMonitor) return;
+        
+        const health = window.performanceMonitor.checkRacingAppPerformance();
+        
+        if (health.overallHealth === 'poor') {
+            console.warn('⚠️ Performance issues detected:', health.issues);
+            this.handlePerformanceIssues(health.issues);
+        } else if (health.overallHealth === 'needs_improvement') {
+            console.log('💡 Performance could be improved:', health.issues);
+        }
+    }
+
+    /**
+     * Perform full performance audit
+     */
+    performFullPerformanceAudit() {
+        if (!window.performanceMonitor) return;
+        
+        console.log('🔍 Performing full performance audit...');
+        const report = window.performanceMonitor.getPerformanceReport();
+        
+        // Log summary for debugging
+        console.log('📊 Performance Audit Results:');
+        console.log(`Memory: ${(report.memory.current / 1024 / 1024).toFixed(2)}MB (${report.memory.trend})`);
+        console.log(`Operations tracked: ${Object.keys(report.operations).length}`);
+        
+        if (report.recommendations.length > 0) {
+            console.log('💡 Performance Recommendations:');
+            report.recommendations.forEach((rec, index) => {
+                console.log(`${index + 1}. ${rec.suggestion}`);
+            });
+        }
+        
+        // Auto-optimize if critical issues found
+        this.autoOptimizeIfNeeded(report);
+    }
+
+    /**
+     * Handle performance issues automatically
+     */
+    handlePerformanceIssues(issues) {
+        issues.forEach(issue => {
+            switch (issue.operation) {
+                case 'participant_data_load':
+                    console.log('🔧 Auto-optimizing participant data loading...');
+                    this.optimizeParticipantLoading();
+                    break;
+                case 'bracket_render':
+                    console.log('🔧 Auto-optimizing bracket rendering...');
+                    this.optimizeBracketRendering();
+                    break;
+                case 'page_change':
+                    console.log('🔧 Auto-optimizing page changes...');
+                    this.optimizePageChanges();
+                    break;
+            }
+        });
+    }
+
+    /**
+     * Auto-optimize based on performance report
+     */
+    autoOptimizeIfNeeded(report) {
+        // Check memory usage
+        if (report.memory.trend === 'increasing') {
+            console.log('🧹 Memory trend increasing - triggering cleanup...');
+            this.performDeepCleanup();
+        }
+        
+        // Check for excessive operations
+        const operationCounts = Object.values(report.operations)
+            .reduce((sum, op) => sum + op.count, 0);
+            
+        if (operationCounts > 1000) {
+            console.log('🔧 High operation count detected - optimizing...');
+            this.optimizeHighTrafficOperations();
+        }
+    }
+
+    /**
+     * Optimize participant loading
+     */
+    optimizeParticipantLoading() {
+        // Increase cache TTL
+        if (window.performanceCache) {
+            window.performanceCache.cacheTTL = Math.min(window.performanceCache.cacheTTL * 1.5, 300000);
+            console.log(`📊 Increased cache TTL to ${window.performanceCache.cacheTTL}ms`);
+        }
+        
+        // Trigger cache rebuild
+        if (typeof window.buildParticipantEventCache === 'function') {
+            window.buildParticipantEventCache();
+        }
+    }
+
+    /**
+     * Optimize bracket rendering
+     */
+    optimizeBracketRendering() {
+        // Clear any heavy DOM elements
+        const containers = document.querySelectorAll('.bracket-container, .brackets-container');
+        containers.forEach(container => {
+            if (container.children.length > 100) {
+                console.log('🧹 Clearing heavy bracket container...');
+                const firstChild = container.firstChild;
+                container.innerHTML = '';
+                if (firstChild) container.appendChild(firstChild);
+            }
+        });
+    }
+
+    /**
+     * Optimize page changes
+     */
+    optimizePageChanges() {
+        // Preload critical resources
+        this.preloadCriticalResources();
+        
+        // Optimize navigation
+        this.optimizeNavigation();
+    }
+
+    /**
+     * Optimize high traffic operations
+     */
+    optimizeHighTrafficOperations() {
+        // Clear operation history to reset counters
+        if (window.performanceMonitor) {
+            console.log('🔄 Clearing performance monitoring data...');
+            window.performanceMonitor.clearData();
+        }
+        
+        // Trigger UI cleanup
+        this.performLightCleanup();
+    }
+
+    /**
+     * Perform light cleanup
+     */
+    performLightCleanup() {
+        console.log('🧹 Performing light memory cleanup...');
+        
+        // Clear UI component cache
+        if (window.UIComponents) {
+            window.UIComponents.clearCache();
+        }
+        
+        // Clear any temporary data
+        if (window.tempCache) {
+            window.tempCache.clear();
+        }
+    }
+
+    /**
+     * Perform deep cleanup
+     */
+    performDeepCleanup() {
+        console.log('🧹 Performing deep memory cleanup...');
+        
+        // UI Components cleanup
+        if (window.UIComponents) {
+            window.UIComponents.performMemoryCleanup();
+        }
+        
+        // Clear large data caches
+        if (window.performanceCache) {
+            if (window.performanceCache.participantEventMap.size > 1000) {
+                console.log('🧹 Clearing large participant event cache...');
+                window.performanceCache.participantEventMap.clear();
+                window.performanceCache.lastCacheUpdate = 0;
+            }
+        }
+        
+        // Clear browser caches if available
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    if (name.includes('temp') || name.includes('old')) {
+                        caches.delete(name);
+                    }
+                });
+            });
+        }
+        
+        // Force garbage collection hint
+        if (window.gc && typeof window.gc === 'function') {
+            setTimeout(() => window.gc(), 1000);
+        }
+    }
+
+    /**
+     * Preload critical resources
+     */
+    preloadCriticalResources() {
+        // Preload critical data if not already loaded
+        if (window.dataManager) {
+            const criticalTypes = ['participants', 'events'];
+            criticalTypes.forEach(type => {
+                if (!window.dataManager.data[type] || window.dataManager.data[type].length === 0) {
+                    console.log(`⏳ Preloading critical data: ${type}`);
+                    window.dataManager.loadFromStorage([type]);
+                }
+            });
+        }
+    }
+
+    /**
+     * Optimize navigation
+     */
+    optimizeNavigation() {
+        // Prefetch likely next sections based on user behavior
+        const currentSection = this.currentSection;
+        const likelyNext = this.getLikelyNextSection(currentSection);
+        
+        if (likelyNext) {
+            console.log(`⏳ Prefetching likely next section: ${likelyNext}`);
+            this.prefetchSection(likelyNext);
+        }
+    }
+
+    /**
+     * Get likely next section based on current section
+     */
+    getLikelyNextSection(currentSection) {
+        const navigationPatterns = {
+            'home': 'series',
+            'series': 'events',
+            'events': 'registration',
+            'registration': 'races',
+            'races': 'analytics'
+        };
+        
+        return navigationPatterns[currentSection];
+    }
+
+    /**
+     * Prefetch section resources
+     */
+    prefetchSection(sectionName) {
+        // Prefetch section-specific data
+        const sectionDataMap = {
+            'events': ['events', 'series'],
+            'registration': ['participants', 'events'],
+            'races': ['race-brackets', 'events'],
+            'analytics': ['participants', 'events', 'race-brackets']
+        };
+        
+        const dataTypes = sectionDataMap[sectionName];
+        if (dataTypes && window.dataManager) {
+            window.dataManager.loadFromStorage(dataTypes).catch(() => {
+                // Silent fail for prefetching
+            });
+        }
+    }
+}
+
 // Initialize data loading on app start with performance tracking
 async function initializeApp() {
     console.log('🚀 Initializing application (SIMPLIFIED)...');

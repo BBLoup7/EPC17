@@ -1090,6 +1090,252 @@
         window.showFinalResultsSkeletonLoading = showFinalResultsSkeletonLoading;
         window.hideFinalResultsSkeletonLoading = hideFinalResultsSkeletonLoading;
 
+        // Performance-optimized bracket rendering
+        async function renderBrackets(eventId) {
+            console.log('🏁 Rendering brackets with performance optimizations for event:', eventId);
+            
+            const container = document.getElementById('brackets-container');
+            if (!container) {
+                console.error('❌ Brackets container not found');
+                return;
+            }
+            
+            // Show loading state
+            showBracketsSkeletonLoading();
+            
+            try {
+                // Use performance monitoring if available
+                if (window.performanceMonitor) {
+                    await window.performanceMonitor.trackOperation('bracket_render', async () => {
+                        await renderBracketsOptimized(eventId, container);
+                    });
+                } else {
+                    await renderBracketsOptimized(eventId, container);
+                }
+            } catch (error) {
+                console.error('❌ Error rendering brackets:', error);
+                container.innerHTML = `
+                    <div class="error-message">
+                        <h3>Error Loading Brackets</h3>
+                        <p>Unable to load race brackets. Please try again.</p>
+                        <button class="btn btn-primary" onclick="renderBrackets('${eventId}')">
+                            <i class="fas fa-refresh"></i> Retry
+                        </button>
+                    </div>
+                `;
+            } finally {
+                hideBracketsSkeletonLoading();
+            }
+        }
+        
+        // Optimized bracket rendering implementation
+        async function renderBracketsOptimized(eventId, container) {
+            const brackets = await dataManager.getRaceBracket(eventId);
+            
+            if (!brackets || !brackets.classes || Object.keys(brackets.classes).length === 0) {
+                container.innerHTML = `
+                    <div class="no-brackets">
+                        <h3>No Brackets Generated</h3>
+                        <p>Click "Initialize Brackets" to generate tournament brackets for this event.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Use document fragment for efficient DOM manipulation
+            const fragment = document.createDocumentFragment();
+            
+            // Render brackets in chunks to prevent UI blocking
+            const classEntries = Object.entries(brackets.classes);
+            const chunkSize = 3; // Process 3 classes at a time
+            
+            for (let i = 0; i < classEntries.length; i += chunkSize) {
+                const chunk = classEntries.slice(i, i + chunkSize);
+                
+                // Process chunk
+                for (const [className, classData] of chunk) {
+                    const classElement = createOptimizedClassBracket(className, classData);
+                    fragment.appendChild(classElement);
+                }
+                
+                // Yield control to prevent blocking
+                if (i + chunkSize < classEntries.length) {
+                    await new Promise(resolve => setTimeout(resolve, 1));
+                }
+            }
+            
+            // Single DOM update
+            container.innerHTML = '';
+            container.appendChild(fragment);
+            
+            console.log(`✅ Rendered brackets for ${classEntries.length} classes`);
+        }
+        
+        // Create optimized class bracket element
+        function createOptimizedClassBracket(className, classData) {
+            const classDiv = document.createElement('div');
+            classDiv.className = 'bracket-class';
+            
+            // Create header
+            const header = document.createElement('h3');
+            header.textContent = className;
+            classDiv.appendChild(header);
+            
+            // Create rounds container
+            const roundsContainer = document.createElement('div');
+            roundsContainer.className = 'bracket-rounds';
+            
+            if (classData.rounds && classData.rounds.length > 0) {
+                // Use document fragment for rounds
+                const roundsFragment = document.createDocumentFragment();
+                
+                classData.rounds.forEach((round, roundIndex) => {
+                    const roundElement = createOptimizedRoundElement(round, roundIndex + 1);
+                    roundsFragment.appendChild(roundElement);
+                });
+                
+                roundsContainer.appendChild(roundsFragment);
+            } else {
+                roundsContainer.innerHTML = '<p class="no-results">No rounds generated yet.</p>';
+            }
+            
+            classDiv.appendChild(roundsContainer);
+            return classDiv;
+        }
+        
+        // Create optimized round element
+        function createOptimizedRoundElement(round, roundNumber) {
+            const roundDiv = document.createElement('div');
+            roundDiv.className = 'bracket-round';
+            
+            const title = document.createElement('h4');
+            title.textContent = `Round ${roundNumber}`;
+            roundDiv.appendChild(title);
+            
+            if (round.heats && round.heats.length > 0) {
+                const heatsFragment = document.createDocumentFragment();
+                
+                // Limit visible heats for performance (show first 10, with "show more" option)
+                const visibleHeats = round.heats.slice(0, 10);
+                const hasMoreHeats = round.heats.length > 10;
+                
+                visibleHeats.forEach(heat => {
+                    const matchElement = createOptimizedMatchElement(heat);
+                    heatsFragment.appendChild(matchElement);
+                });
+                
+                if (hasMoreHeats) {
+                    const showMoreBtn = document.createElement('button');
+                    showMoreBtn.className = 'btn btn-sm btn-secondary show-more-heats';
+                    showMoreBtn.innerHTML = `<i class="fas fa-chevron-down"></i> Show ${round.heats.length - 10} more`;
+                    showMoreBtn.onclick = () => expandRoundHeats(roundDiv, round.heats, 10);
+                    heatsFragment.appendChild(showMoreBtn);
+                }
+                
+                roundDiv.appendChild(heatsFragment);
+            } else {
+                const noHeats = document.createElement('p');
+                noHeats.className = 'no-results';
+                noHeats.textContent = 'No heats in this round.';
+                roundDiv.appendChild(noHeats);
+            }
+            
+            return roundDiv;
+        }
+        
+        // Create optimized match element
+        function createOptimizedMatchElement(heat) {
+            const matchDiv = document.createElement('div');
+            matchDiv.className = `bracket-match ${heat.status === 'completed' ? 'completed' : ''}`;
+            
+            // Heat title
+            const heatTitle = document.createElement('div');
+            heatTitle.className = 'heat-title';
+            heatTitle.innerHTML = `<strong>Heat ${heat.heatNumber}</strong> (Race #${heat.raceNumber || 'TBD'})`;
+            matchDiv.appendChild(heatTitle);
+            
+            // Participants container
+            const participantsDiv = document.createElement('div');
+            participantsDiv.className = 'match-participants';
+            
+            if (heat.lanes && heat.lanes.length > 0) {
+                const participantsFragment = document.createDocumentFragment();
+                
+                heat.lanes.forEach(lane => {
+                    const participantDiv = document.createElement('div');
+                    participantDiv.className = 'participant';
+                    
+                    if (lane.participant) {
+                        participantDiv.textContent = `Lane ${lane.lane}: ${lane.participant.name}`;
+                        
+                        // Check if this participant won
+                        if (heat.results && heat.results.length > 0) {
+                            const result = heat.results.find(r => r.participantId === lane.participant.id);
+                            if (result && result.position === 1) {
+                                participantDiv.classList.add('winner');
+                            }
+                        }
+                    } else {
+                        participantDiv.textContent = `Lane ${lane.lane}: BYE`;
+                        participantDiv.classList.add('bye');
+                    }
+                    
+                    participantsFragment.appendChild(participantDiv);
+                });
+                
+                participantsDiv.appendChild(participantsFragment);
+            } else {
+                participantsDiv.innerHTML = '<div class="participant">No participants assigned</div>';
+            }
+            
+            matchDiv.appendChild(participantsDiv);
+            
+            // Add match actions if needed
+            if (heat.status !== 'completed') {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'match-actions';
+                actionsDiv.innerHTML = `
+                    <button class="btn btn-sm btn-primary" onclick="enterHeatResults('${heat.id}')">
+                        <i class="fas fa-flag-checkered"></i> Enter Results
+                    </button>
+                `;
+                matchDiv.appendChild(actionsDiv);
+            }
+            
+            return matchDiv;
+        }
+        
+        // Expand round heats (lazy loading)
+        function expandRoundHeats(roundDiv, allHeats, currentCount) {
+            const additionalHeats = allHeats.slice(currentCount, currentCount + 10);
+            const hasMore = allHeats.length > currentCount + 10;
+            
+            const fragment = document.createDocumentFragment();
+            
+            additionalHeats.forEach(heat => {
+                const matchElement = createOptimizedMatchElement(heat);
+                fragment.appendChild(matchElement);
+            });
+            
+            // Find and remove the "show more" button
+            const showMoreBtn = roundDiv.querySelector('.show-more-heats');
+            if (showMoreBtn) {
+                showMoreBtn.remove();
+            }
+            
+            // Add new heats
+            roundDiv.appendChild(fragment);
+            
+            // Add new "show more" button if needed
+            if (hasMore) {
+                const newShowMoreBtn = document.createElement('button');
+                newShowMoreBtn.className = 'btn btn-sm btn-secondary show-more-heats';
+                newShowMoreBtn.innerHTML = `<i class="fas fa-chevron-down"></i> Show ${allHeats.length - currentCount - 10} more`;
+                newShowMoreBtn.onclick = () => expandRoundHeats(roundDiv, allHeats, currentCount + 10);
+                roundDiv.appendChild(newShowMoreBtn);
+            }
+        }
+
         // Fix navigation click issues
         document.addEventListener('DOMContentLoaded', function() {
             const navLinks = document.querySelectorAll('.nav-links li');

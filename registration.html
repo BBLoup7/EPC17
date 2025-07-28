@@ -944,11 +944,15 @@
                 // Ensure DataManager has latest data before loading component
                 if (window.dataManager && typeof window.dataManager.loadFromStorage === 'function') {
                     console.log('🔄 Refreshing DataManager before loading participant list...');
-                    await window.dataManager.loadFromStorage();
+                    await window.dataManager.loadFromStorage(['participants', 'events'], true); // Force refresh
                 }
                 
-                loadParticipantList().then(() => {
-                    // Component is already initialized by loadParticipantList
+                loadParticipantList().then(async () => {
+                    // After component is loaded, refresh the data if refresh function is available
+                    if (typeof window.refreshParticipantList === 'function') {
+                        console.log('🔄 Refreshing participant list data after tab switch...');
+                        await window.refreshParticipantList();
+                    }
                     window.participantListLoading = false;
                 }).catch(error => {
                     console.error('Error loading participant list:', error);
@@ -1345,11 +1349,6 @@
                     }
                 }
                 
-                // Refresh participant list if it's visible
-                if (document.getElementById('listView').classList.contains('active')) {
-                    loadParticipantList();
-                }
-
                 // Broadcast registration event for real-time updates
                 if (dataManager.eventBus) {
                     dataManager.eventBus.emit('participant-registered', {
@@ -1358,6 +1357,18 @@
                         eventId: selectedEvent,
                         timestamp: new Date().toISOString()
                     });
+                }
+                
+                // Refresh participant list if it's visible
+                if (document.getElementById('listView').classList.contains('active')) {
+                    console.log('🔄 Refreshing participant list after registration...');
+                    if (typeof window.refreshParticipantList === 'function') {
+                        await window.refreshParticipantList();
+                    } else if (typeof window.initializeParticipantList === 'function') {
+                        await window.initializeParticipantList();
+                    } else if (typeof loadParticipantData === 'function') {
+                        await loadParticipantData();
+                    }
                 }
                 
                 return createdParticipant;
@@ -1537,17 +1548,17 @@
                 });
                 
                 // Wait a moment for scripts to initialize, then check for functions
-                setTimeout(() => {
+                setTimeout(async () => {
                     console.log('🔍 Checking for participant list functions...');
                     console.log('   - window.initializeParticipantList:', typeof window.initializeParticipantList);
                     console.log('   - initializeParticipantList:', typeof initializeParticipantList);
                     
                     if (typeof window.initializeParticipantList === 'function') {
                         console.log('✅ Calling window.initializeParticipantList()');
-                        window.initializeParticipantList();
+                        await window.initializeParticipantList();
                     } else if (typeof initializeParticipantList === 'function') {
                         console.log('✅ Calling initializeParticipantList()');
-                        initializeParticipantList();
+                        await initializeParticipantList();
                     } else {
                         console.error('❌ No initialization function found!');
                     }
@@ -1573,7 +1584,7 @@
             // Check if the new component is available, if so, use it instead
             if (typeof window.initializeParticipantList === 'function') {
                 console.log('✅ Using new participant list component instead');
-                window.initializeParticipantList();
+                await window.initializeParticipantList();
                 return;
             }
             
@@ -2110,7 +2121,7 @@
                     
                     // Also try the new component's reload function
                     if (typeof initializeParticipantList === 'function') {
-                        initializeParticipantList();
+                        await initializeParticipantList();
                     }
                     
                     alert(`${participant.name} has been deleted successfully`);
@@ -2431,9 +2442,9 @@
                             await window.dataManager.deleteParticipant(participantId);
                             
                             // Refresh the participant list
-                            if (typeof window.initializeParticipantList === 'function') {
-                                window.initializeParticipantList();
-                            } else if (typeof loadParticipantData === 'function') {
+                                                if (typeof window.initializeParticipantList === 'function') {
+                        await window.initializeParticipantList();
+                    } else if (typeof loadParticipantData === 'function') {
                                 await loadParticipantData();
                             }
                             
