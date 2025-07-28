@@ -113,29 +113,5 @@
     "updatedAt": "2025-07-08T12:57:16.251Z",
     "createdDate": "2025-07-08T08:57:16.258510",
     "events": []
-  },
-  {
-    "createdAt": "2025-07-27T03:25:19.221Z",
-    "createdDate": "2025-07-26T23:25:19.222547",
-    "description": "",
-    "events": [],
-    "id": "3278a567-b455-4cd4-83e2-912207af23b8",
-    "name": "Series 1",
-    "pointsSystem": "standard",
-    "registrationFee": 0,
-    "rules": "",
-    "seasonEndDate": "2025-08-01T00:00:00.000Z",
-    "seasonStartDate": "2025-06-01T00:00:00.000Z",
-    "sledClasses": [
-      {
-        "defaultFee": 75,
-        "description": "Class 1 class racing",
-        "id": "class_1751325403140_86h4f89vj",
-        "name": "Class 1"
-      }
-    ],
-    "standings": [],
-    "status": "upcoming",
-    "updatedAt": "2025-07-27T03:25:19.221Z"
   }
 ]

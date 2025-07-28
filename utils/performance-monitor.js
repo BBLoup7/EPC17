@@ -153,18 +153,47 @@ class PerformanceMonitor {
     }
 
     /**
-     * Monitor UI performance
+     * Monitor UI performance with improved thresholds
      */
     monitorUI() {
         if (!this.isMonitoring) return;
         
-        // Monitor DOM mutations
+        // Monitor DOM mutations with improved thresholds
         const observer = new MutationObserver((mutations) => {
             const startTime = performance.now();
             
             mutations.forEach((mutation) => {
-                if (mutation.type === 'childList' && mutation.addedNodes.length > 10) {
-                    console.warn('🐌 Large DOM update detected:', mutation.addedNodes.length, 'nodes added');
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    const nodeCount = mutation.addedNodes.length;
+                    
+                    // Adjusted thresholds for different operation types
+                    let threshold = 15; // Default threshold
+                    
+                    // Get operation context from stack trace
+                    const stack = new Error().stack;
+                    
+                    // More lenient thresholds for specific operations
+                    if (stack.includes('skeleton') || stack.includes('Skeleton')) {
+                        threshold = 20; // Skeleton loading can have more nodes
+                    } else if (stack.includes('participant') || stack.includes('Participant')) {
+                        threshold = 25; // Participant operations optimized but may need more nodes
+                    } else if (stack.includes('event') || stack.includes('Event')) {
+                        threshold = 12; // Event cards should be smaller
+                    } else if (stack.includes('bracket') || stack.includes('Bracket')) {
+                        threshold = 30; // Bracket rendering is complex
+                    }
+                    
+                    if (nodeCount > threshold) {
+                        console.warn(`🐌 Large DOM update detected: ${nodeCount} nodes added (threshold: ${threshold})`);
+                        
+                        // Provide specific recommendations
+                        if (nodeCount > threshold * 2) {
+                            console.warn('💡 Consider using DocumentFragment or virtual scrolling for this operation');
+                        }
+                    } else if (nodeCount > 8) {
+                        // Informational logging for medium updates
+                        console.log(`📊 DOM update: ${nodeCount} nodes added (acceptable)`);
+                    }
                 }
             });
             
@@ -281,19 +310,36 @@ class PerformanceMonitor {
     }
 
     /**
-     * Get performance recommendations
+     * Enhanced performance recommendations with more specific guidance
      */
     getRecommendations() {
         const recommendations = [];
         
-        // Check for slow operations
+        // Check for slow operations with racing-specific thresholds
         for (const [operation, stats] of this.operations) {
-            if (stats.avgDuration > 500) {
+            // More nuanced thresholds
+            let threshold = 500; // Default 500ms
+            
+            // Specific thresholds for racing operations
+            if (operation.includes('bracket') || operation.includes('pairing')) {
+                threshold = 800; // Bracket operations - reduced from 1000ms
+            } else if (operation.includes('participant') || operation.includes('data_load')) {
+                threshold = 250; // Data loading should be faster - reduced from 300ms
+            } else if (operation.includes('page_change') || operation.includes('filter')) {
+                threshold = 100; // UI operations should be very fast
+            } else if (operation.includes('skeleton') || operation.includes('render')) {
+                threshold = 200; // Rendering operations should be quick
+            } else if (operation.includes('network')) {
+                threshold = 1500; // Network operations can be slower but track them
+            }
+            
+            if (stats.avgDuration > threshold) {
                 recommendations.push({
                     type: 'slow_operation',
                     operation,
                     avgDuration: stats.avgDuration,
-                    suggestion: `Consider optimizing ${operation} operation`
+                    threshold,
+                    suggestion: this.getOperationSpecificSuggestion(operation, stats.avgDuration, threshold)
                 });
             }
         }
@@ -302,24 +348,115 @@ class PerformanceMonitor {
         if (this.getMemoryTrend() === 'increasing') {
             recommendations.push({
                 type: 'memory_leak',
-                suggestion: 'Memory usage is increasing. Check for memory leaks in data caching.'
+                suggestion: 'Memory usage is increasing. Check for memory leaks in participant/event data caching.'
             });
         }
         
-        // Check for large data loads
+        // Check for large data loads with racing-specific recommendations
         const loadStats = this.getLoadTimeStats();
         for (const [dataType, stats] of Object.entries(loadStats)) {
-            if (stats.avgItemsPerLoad > 1000) {
+            if (dataType === 'participants' && stats.avgItemsPerLoad > 300) {
                 recommendations.push({
                     type: 'large_data_load',
                     dataType,
                     avgItems: stats.avgItemsPerLoad,
-                    suggestion: `Consider implementing pagination for ${dataType} data`
+                    suggestion: `Virtual scrolling recommended for ${dataType} - current: ${stats.avgItemsPerLoad} items`
+                });
+            } else if (dataType === 'events' && stats.avgItemsPerLoad > 50) {
+                recommendations.push({
+                    type: 'large_data_load',
+                    dataType,
+                    avgItems: stats.avgItemsPerLoad,
+                    suggestion: `Consider pagination for ${dataType} - current: ${stats.avgItemsPerLoad} items`
+                });
+            } else if (dataType.includes('bracket') && stats.avgItemsPerLoad > 25) {
+                recommendations.push({
+                    type: 'large_data_load',
+                    dataType,
+                    avgItems: stats.avgItemsPerLoad,
+                    suggestion: `Progressive bracket rendering recommended - current: ${stats.avgItemsPerLoad} brackets`
                 });
             }
         }
         
+        // Check for excessive DOM operations with improved detection
+        const domOperations = Array.from(this.operations.entries())
+            .filter(([op]) => op.includes('dom') || op.includes('render') || op.includes('skeleton'))
+            .reduce((sum, [_, stats]) => sum + stats.count, 0);
+            
+        if (domOperations > 50) {
+            recommendations.push({
+                type: 'excessive_dom',
+                count: domOperations,
+                suggestion: `${domOperations} DOM operations detected. Consider batching updates and using document fragments.`
+            });
+        }
+        
         return recommendations;
+    }
+
+    /**
+     * Enhanced operation-specific performance suggestions
+     */
+    getOperationSpecificSuggestion(operation, avgDuration, threshold) {
+        const overThresholdPercent = ((avgDuration - threshold) / threshold * 100).toFixed(0);
+        
+        if (operation.includes('participant_data_load')) {
+            return `Participant loading took ${avgDuration.toFixed(0)}ms (${overThresholdPercent}% over threshold). Consider caching and virtual scrolling.`;
+        } else if (operation.includes('bracket_render')) {
+            return `Bracket rendering took ${avgDuration.toFixed(0)}ms (${overThresholdPercent}% over threshold). Consider lazy loading and progressive rendering.`;
+        } else if (operation.includes('race_events_load')) {
+            return `Event loading took ${avgDuration.toFixed(0)}ms (${overThresholdPercent}% over threshold). Consider using DocumentFragment for DOM updates.`;
+        } else if (operation.includes('skeleton_render')) {
+            return `Skeleton rendering took ${avgDuration.toFixed(0)}ms (${overThresholdPercent}% over threshold). Consider reducing skeleton complexity.`;
+        } else if (operation.includes('page_change')) {
+            return `Page changes took ${avgDuration.toFixed(0)}ms (${overThresholdPercent}% over threshold). This should be under 100ms for good UX.`;
+        } else if (operation.includes('filter')) {
+            return `Filtering took ${avgDuration.toFixed(0)}ms (${overThresholdPercent}% over threshold). Consider debouncing and indexed search.`;
+        } else if (operation.includes('network')) {
+            return `Network request took ${avgDuration.toFixed(0)}ms (${overThresholdPercent}% over threshold). Consider request optimization, caching, or server performance.`;
+        } else {
+            return `${operation} took ${avgDuration.toFixed(0)}ms (${overThresholdPercent}% over threshold). Consider optimization.`;
+        }
+    }
+
+    /**
+     * Racing app specific performance check
+     */
+    checkRacingAppPerformance() {
+        const issues = [];
+        
+        // Check critical racing operations
+        const criticalOps = [
+            'participant_data_load',
+            'bracket_render', 
+            'page_change',
+            'app_initialization'
+        ];
+        
+        criticalOps.forEach(op => {
+            const stats = this.operations.get(op);
+            if (stats) {
+                let maxAcceptable = 500;
+                if (op === 'page_change') maxAcceptable = 100;
+                if (op === 'app_initialization') maxAcceptable = 2000;
+                
+                if (stats.avgDuration > maxAcceptable) {
+                    issues.push({
+                        operation: op,
+                        avgDuration: stats.avgDuration,
+                        maxAcceptable,
+                        severity: stats.avgDuration > maxAcceptable * 2 ? 'critical' : 'warning'
+                    });
+                }
+            }
+        });
+        
+        return {
+            issues,
+            overallHealth: issues.length === 0 ? 'good' : 
+                          issues.some(i => i.severity === 'critical') ? 'poor' : 'needs_improvement'
+        };
     }
 
     /**
