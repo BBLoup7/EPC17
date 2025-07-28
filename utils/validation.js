@@ -1,5 +1,5 @@
 /**
- * Form Validation Utilities for Snowmobile Drag Racing Event Manager
+ * Form Validation Utilities for EPC17 Event Management System
  * Provides comprehensive validation functions for all forms
  */
 
@@ -284,10 +284,10 @@ class Validator {
                 (value) => this.minLength(value, 2, 'Participant name'),
                 (value) => this.maxLength(value, 50, 'Participant name')
             ],
-            sledClass: [
-                (value) => this.required(value, 'Sled class'),
-                (value) => this.oneOf(value, ['pro', 'sport', 'stock', 'modified'], 'Sled class')
-            ],
+                    vehicleClass: [
+            (value) => this.required(value, 'Vehicle class'),
+            (value) => this.oneOf(value, ['pro', 'sport', 'stock', 'modified'], 'Vehicle class')
+        ],
             teamName: [
                 (value) => this.maxLength(value, 50, 'Team name')
             ],

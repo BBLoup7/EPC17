@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2025-07-28T19:11:38.967Z",
+  "seriesCount": 4,
+  "eventsCount": 40,
+  "driversCount": 12000,
+  "totalParticipants": 12000,
+  "averageParticipantsPerEvent": 300,
+  "eventsWithMostParticipants": [
+    {
+      "name": "Stress Event 2-3",
+      "participants": 338
+    },
+    {
+      "name": "Stress Event 3-5",
+      "participants": 331
+    },
+    {
+      "name": "Stress Event 1-7",
+      "participants": 327
+    },
+    {
+      "name": "Stress Event 1-3",
+      "participants": 326
+    },
+    {
+      "name": "Stress Event 3-8",
+      "participants": 326
+    }
+  ],
+  "backupLocation": "C:\\EPC17\\data\\stress-test-backup"
+}

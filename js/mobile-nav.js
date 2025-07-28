@@ -3,7 +3,7 @@
  * Handles hamburger menu functionality across all pages
  */
 
-// Remove mobile navigation on desktop immediately
+// Hide mobile navigation on desktop immediately
 function hideMobileNavOnDesktop() {
     if (window.innerWidth > 768) {
         const mobileElements = document.querySelectorAll('.mobile-nav-toggle, .mobile-nav-menu, .mobile-nav-overlay');
@@ -12,25 +12,37 @@ function hideMobileNavOnDesktop() {
                 element.style.display = 'none';
                 element.style.visibility = 'hidden';
                 element.style.opacity = '0';
-                element.style.position = 'absolute';
-                element.style.left = '-9999px';
-                element.style.top = '-9999px';
-                element.style.width = '0';
-                element.style.height = '0';
-                element.style.overflow = 'hidden';
                 element.style.pointerEvents = 'none';
-                // Completely remove from DOM on desktop
-                element.remove();
             }
         });
     }
 }
 
+// Show mobile navigation on mobile devices
+function showMobileNavOnMobile() {
+    if (window.innerWidth <= 768) {
+        const mobileToggle = document.querySelector('.mobile-nav-toggle');
+        if (mobileToggle) {
+            mobileToggle.style.display = 'flex';
+            mobileToggle.style.visibility = 'visible';
+            mobileToggle.style.opacity = '1';
+            mobileToggle.style.pointerEvents = 'auto';
+            console.log('Mobile navigation shown on mobile device');
+        } else {
+            console.warn('Mobile navigation toggle not found');
+        }
+    }
+}
+
 // Run immediately when script loads
 hideMobileNavOnDesktop();
+showMobileNavOnMobile();
 
 // Also run on window resize
-window.addEventListener('resize', hideMobileNavOnDesktop);
+window.addEventListener('resize', () => {
+    hideMobileNavOnDesktop();
+    showMobileNavOnMobile();
+});
 
 class MobileNavigation {
     constructor() {
@@ -51,6 +63,10 @@ class MobileNavigation {
             console.warn('Mobile navigation elements not found');
             return;
         }
+        
+        console.log('Mobile navigation initialized successfully');
+        console.log('Mobile toggle found:', this.mobileNavToggle);
+        console.log('Mobile menu found:', this.mobileNavMenu);
         
         this.bindEvents();
         this.setActivePage();
@@ -202,6 +218,7 @@ class MobileNavigation {
 document.addEventListener('DOMContentLoaded', () => {
     // Run the desktop hiding function again after DOM loads
     hideMobileNavOnDesktop();
+    showMobileNavOnMobile();
     
     // Only initialize mobile navigation on mobile devices
     if (window.innerWidth <= 768) {

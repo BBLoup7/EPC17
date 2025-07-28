@@ -1,4 +1,4 @@
-# 🏁 Snowmobile Drag Racing Event Manager - Implementation Plan
+# 🏁 EPC17 - Implementation Plan
 
 ## ✅ COMPLETED: Unified Architecture & Database Consolidation
 
@@ -128,7 +128,7 @@ python server.py
 await fetch('/api/participants', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'John Doe', sledClass: 'pro' })
+    body: JSON.stringify({ name: 'John Doe', vehicleClass: 'pro' })
 });
 
 // Get standings

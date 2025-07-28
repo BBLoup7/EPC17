@@ -1,5 +1,5 @@
 /**
- * Registration Module for Snowmobile Drag Racing Event Manager
+ * Registration Module for EPC17 Event Management System
  * Handles both season-level and event-specific registration
  */
 
@@ -541,10 +541,10 @@ class RegistrationManager {
                     <strong>Name:</strong> ${Helpers.sanitizeHtml(participant.name)}
                 </div>
                 <div class="detail-row">
-                    <strong>Sled Classes:</strong> 
-                    ${participant.sledClasses ? 
-                        participant.sledClasses.map(cls => cls.toUpperCase()).join(', ') :
-                        participant.sledClass?.toUpperCase() || 'NO CLASS'
+                                    <strong>Racing Classes:</strong>
+                ${participant.sledClasses ?
+                participant.sledClasses.map(cls => cls.toUpperCase()).join(', ') :
+                participant.sledClass?.toUpperCase() || 'NO CLASS'
                     }
                 </div>
                 ${participant.totalRegistrationFee ? `

@@ -1,5 +1,5 @@
 /**
- * Series Management Module for Snowmobile Drag Racing Event Manager
+ * Series Management Module for EPC17 Event Management System
  * Handles series creation and event management with season support
  */
 
@@ -8,7 +8,7 @@ class SeriesManager {
         this.series = new Map();
         this.currentSeries = null;
         this.currentSeriesId = null;
-        this.storageKey = 'snowmobile_racing_series';
+        this.storageKey = 'epc17_racing_series';
         this.init();
     }
 

@@ -1,5 +1,5 @@
 /**
- * Data Management for Snowmobile Drag Racing Event Manager
+ * Data Management for EPC17 Event Management System
  * Server-based data persistence via REST API with real-time notifications
  * SIMPLIFIED: Single storage strategy using server API only
  */
@@ -147,7 +147,17 @@ class DataManager {
             console.log(`🔍 Loading ${type} from server (attempt ${retryCount + 1})`);
             
             const startTime = performance.now();
-            const response = await fetch(`${this.baseUrl}/${type}`, {
+            // Load all data with high limits for complete functionality
+            const queryParams = type === 'participants' ? { limit: 50000 } : {};
+            let url = `${this.baseUrl}/${type}`;
+            
+            // Add query parameters if needed
+            if (Object.keys(queryParams).length > 0) {
+                const params = new URLSearchParams(queryParams);
+                url += `?${params.toString()}`;
+            }
+            
+            const response = await fetch(url, {
                 headers: {
                     'Cache-Control': this.getCacheControlHeader(type),
                     'Accept': 'application/json',
@@ -210,6 +220,11 @@ class DataManager {
             // Optimize participant data structure
             this.data[type] = this.optimizeParticipantData(data.participants);
             console.log(`✅ ${type} optimized: ${this.data[type].length} participants`);
+            
+            // Performance warning for large datasets
+            if (data.participants.length > 10000) {
+                console.warn(`⚠️ PERFORMANCE WARNING: Loaded ${data.participants.length} participants. This may cause performance issues. Consider contacting software representative for optimization.`);
+            }
             
         } else if (type === 'events' && data.events) {
             // Optimize event data structure
@@ -282,9 +297,9 @@ class DataManager {
                     participant.name,
                     participant.nickname,
                     participant.racingNumber,
-                    participant.sledMake,
-                    participant.sledModel,
-                    participant.sledYear,
+                                    participant.vehicleMake,
+                participant.vehicleModel,
+                participant.vehicleYear,
                     participant.contact?.email,
                     participant.contactEmail
                 ].filter(Boolean).join(' ').toLowerCase()
@@ -422,8 +437,15 @@ class DataManager {
     /**
      * SIMPLIFIED: Fetch from server
      */
-    async fetchFromServer(endpoint) {
-        const url = `${this.baseUrl}/${endpoint}`;
+    async fetchFromServer(endpoint, queryParams = {}) {
+        let url = `${this.baseUrl}/${endpoint}`;
+        
+        // Add query parameters if provided
+        if (Object.keys(queryParams).length > 0) {
+            const params = new URLSearchParams(queryParams);
+            url += `?${params.toString()}`;
+        }
+        
         console.log(`🔍 DEBUG - Fetching from server: ${url}`);
         const response = await fetch(url);
         
@@ -741,18 +763,27 @@ class DataManager {
      * Get participant by ID
      */
     getParticipant(id) {
-        if (!this.data.participants) {
-            console.error('❌ this.data.participants is null/undefined!');
-            return null;
+        // First check in main participants array
+        if (this.data.participants) {
+            const participant = this.data.participants.find(p => p.id === id);
+            if (participant) {
+                return participant;
+            }
         }
         
-        const participant = this.data.participants.find(p => p.id === id);
-        
-        if (!participant) {
-            console.log(`🔍 DEBUG - Participant ${id} not found. Available: ${this.data.participants.length} participants`);
+        // Then check in event-specific participants
+        if (this.data.eventParticipants) {
+            for (const eventId in this.data.eventParticipants) {
+                const eventParticipants = this.data.eventParticipants[eventId];
+                const participant = eventParticipants.find(p => p.id === id);
+                if (participant) {
+                    return participant;
+                }
+            }
         }
         
-        return participant;
+        console.log(`🔍 DEBUG - Participant ${id} not found. Available: ${this.data.participants?.length || 0} participants + event-specific participants`);
+        return null;
     }
 
     /**
@@ -771,22 +802,23 @@ class DataManager {
      */
     async loadParticipantsForEvent(eventId) {
         console.log(`🔍 DEBUG - Loading participants for event: ${eventId}`);
-        const url = `${this.baseUrl}/participants?eventId=${eventId}`;
-        console.log(`🔍 DEBUG - Fetching from server: ${url}`);
         
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        try {
+            // Use the fetchFromServer method with query parameters
+            const participants = await this.fetchFromServer('participants', { eventId });
+            console.log(`🔍 DEBUG - Loaded ${participants.length} participants for event ${eventId}`);
+            
+            // Store these participants in memory for this event
+            if (!this.data.eventParticipants) {
+                this.data.eventParticipants = {};
+            }
+            this.data.eventParticipants[eventId] = participants;
+            
+            return participants;
+        } catch (error) {
+            console.error(`❌ Failed to load participants for event ${eventId}:`, error);
+            throw error;
         }
-        
-        const data = await response.json();
-        console.log(`🔍 DEBUG - Server response:`, data);
-        
-        // Handle paginated response
-        const participants = data.participants || data;
-        console.log(`🔍 DEBUG - Extracted participants:`, participants);
-        
-        return participants;
     }
 
     /**

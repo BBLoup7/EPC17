@@ -1,7 +1,7 @@
-# 🏁 Snowmobile Drag Racing Event Manager (EPC17)
+# 🏁 EPC17 - Event Management System
 
 ## Overview
-Professional event management system for snowmobile drag racing events with network-accessible server architecture for multi-computer access.
+Professional event management system for racing events with network-accessible server architecture for multi-computer access.
 
 ## 🚀 Quick Start
 
