@@ -99,11 +99,10 @@ class DataManager {
             for (const batch of batches) {
                 const loadPromises = batch
                     .filter(type => {
-                        if (force || type === 'participants' || type === 'race-brackets') return true;
-                        if (!this.data[type]) return true;
-                        if (Array.isArray(this.data[type]) && this.data[type].length === 0) return true;
-                        if (typeof this.data[type] === 'object' && Object.keys(this.data[type]).length === 0) return true;
-                        return false;
+                        return force || type === 'participants' || type === 'race-brackets' ||
+                               !this.data[type] ||
+                               (Array.isArray(this.data[type]) && this.data[type].length === 0) ||
+                               (typeof this.data[type] === 'object' && Object.keys(this.data[type]).length === 0);
                     })
                     .map(async (type) => {
                         return await this.loadSingleDataTypeOptimized(type);

@@ -1739,6 +1739,15 @@
     background: rgba(220, 38, 38, 0.05); /* Slightly more visible on hover */
 }
 
+/* Final results styling for False Start */
+.final-result-row.fs-row {
+    background: rgba(245, 158, 11, 0.02); /* Very subtle background */
+}
+
+.final-result-row.fs-row:hover {
+    background: rgba(245, 158, 11, 0.05); /* Slightly more visible on hover */
+}
+
 .dsq-rank {
     background: #dc2626;
     color: white;

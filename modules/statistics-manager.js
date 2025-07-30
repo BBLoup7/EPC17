@@ -53,6 +53,34 @@ class StatisticsManager {
     }
 
     /**
+     * OPTIMIZED: Reverse participant statistics for a heat reset
+     */
+    async reverseParticipantStatistics(raceResults, eventId, heatId) {
+        console.log('📊 Reversing participant statistics for heat:', heatId);
+        
+        if (!raceResults || !Array.isArray(raceResults)) {
+            console.warn('Invalid race results provided for reversal');
+            return false;
+        }
+
+        // Queue the reversal for background processing
+        this.updateQueue.push({
+            raceResults,
+            eventId,
+            heatId,
+            timestamp: Date.now(),
+            isReversal: true // Flag to indicate this is a reversal
+        });
+
+        // Process queue in background if not already processing
+        if (!this.isProcessing) {
+            this.processUpdateQueue();
+        }
+
+        return true;
+    }
+
+    /**
      * OPTIMIZED: Process update queue in background
      */
     async processUpdateQueue() {
@@ -87,7 +115,7 @@ class StatisticsManager {
         const event = this.dataManager.getEvent(batch[0].eventId);
 
         for (const update of batch) {
-            const { raceResults, eventId, heatId } = update;
+            const { raceResults, eventId, heatId, isReversal = false } = update;
             
             // Process each participant's result
             for (const result of raceResults) {
@@ -134,7 +162,8 @@ class StatisticsManager {
                 this.statsCache.set(participantId, updatedStats);
                 this.lastUpdateTime.set(cacheKey, updateTime);
                 
-                console.log(`📊 Updated stats for ${participant.name}:`, {
+                const action = isReversal ? 'Reversed' : 'Updated';
+                console.log(`📊 ${action} stats for ${participant.name}:`, {
                     races: updatedStats.totalRaces,
                     wins: updatedStats.totalWins,
                     winRate: `${updatedStats.winRate}%`
@@ -144,7 +173,8 @@ class StatisticsManager {
 
         // Broadcast statistics update event
         if (this.eventBus && updatedParticipants.size > 0) {
-            this.eventBus.emit('statistics-updated', {
+            const eventType = batch[0].isReversal ? 'statistics-reversed' : 'statistics-updated';
+            this.eventBus.emit(eventType, {
                 participantIds: Array.from(updatedParticipants),
                 eventId: batch[0].eventId,
                 heatId: batch[0].heatId,
@@ -152,7 +182,8 @@ class StatisticsManager {
             });
         }
 
-        console.log(`✅ Processed batch: ${updatedParticipants.size} participants updated`);
+        const action = batch[0].isReversal ? 'reversed' : 'updated';
+        console.log(`✅ Processed batch: ${updatedParticipants.size} participants ${action}`);
     }
 
     /**

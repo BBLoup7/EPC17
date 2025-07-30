@@ -1045,7 +1045,7 @@
         // Load events for event registration
         async function loadEvents() {
             try {
-                const eventsResult = dataManager ? await dataManager.getEvents() : { events: [] };
+                const eventsResult = dataManager ? await dataManager.getEvents({}, 1, 1000) : { events: [] };
                 const events = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
                 const eventSelectContainer = document.getElementById('eventSelectContainer');
                 
@@ -1671,6 +1671,12 @@
                     console.log('   - window.initializeParticipantList:', typeof window.initializeParticipantList);
                     console.log('   - initializeParticipantList:', typeof initializeParticipantList);
                     
+                    // Check if component is already initialized
+                    if (window.participantListInitialized) {
+                        console.log('✅ Component already initialized, skipping manual initialization');
+                        return;
+                    }
+                    
                     if (typeof window.initializeParticipantList === 'function') {
                         console.log('✅ Calling window.initializeParticipantList()');
                         await window.initializeParticipantList();
@@ -1678,7 +1684,16 @@
                         console.log('✅ Calling initializeParticipantList()');
                         await initializeParticipantList();
                     } else {
-                        console.error('❌ No initialization function found!');
+                        console.log('⏳ Initialization function not found yet, component may be auto-initializing');
+                        // Don't show error, just wait a bit longer
+                        setTimeout(async () => {
+                            if (typeof window.initializeParticipantList === 'function') {
+                                console.log('✅ Found initialization function on retry');
+                                await window.initializeParticipantList();
+                            } else {
+                                console.error('❌ No initialization function found after retry!');
+                            }
+                        }, 1000);
                     }
                 }, 500);
                 
@@ -1710,7 +1725,7 @@
             
             // Only run old code if new component is not available
             try {
-                const participantsResult = dataManager ? await dataManager.getParticipants() : { participants: [] };
+                const participantsResult = dataManager ? await dataManager.getParticipants({}, 1, 1000) : { participants: [] };
                 const participants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
                 const container = document.querySelector('.participant-list');
                 
@@ -2145,7 +2160,7 @@
         // Load available events for add existing
         async function loadAvailableEvents() {
             try {
-                const eventsResult = dataManager ? await dataManager.getEvents() : { events: [] };
+                const eventsResult = dataManager ? await dataManager.getEvents({}, 1, 1000) : { events: [] };
                 const events = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
                 const targetEventContainer = document.getElementById('targetEventContainer');
                 
@@ -2178,7 +2193,7 @@
         // Load existing drivers
         async function loadExistingDrivers() {
             try {
-                const participantsResult = dataManager ? await dataManager.getParticipants() : { participants: [] };
+                const participantsResult = dataManager ? await dataManager.getParticipants({}, 1, 1000) : { participants: [] };
                 const participants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
                 const driversList = document.getElementById('existingDriversList');
                 
@@ -2281,7 +2296,7 @@
         async function checkForDuplicateDrivers(formData) {
             if (!dataManager) return [];
             
-            const participantsResult = await dataManager.getParticipants();
+            const participantsResult = await dataManager.getParticipants({}, 1, 1000);
             const existingParticipants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
             const potentialDuplicates = [];
             
@@ -2582,9 +2597,9 @@
         window.debugClassAssignments = async function() {
             console.log('🔍 DEBUG: Checking class assignments...');
             
-            const participantsResult = await dataManager.getParticipants();
+            const participantsResult = await dataManager.getParticipants({}, 1, 1000);
             const participants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
-            const eventsResult = await dataManager.getEvents();
+            const eventsResult = await dataManager.getEvents({}, 1, 1000);
             const events = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
             
             console.log('📋 All Participants:');

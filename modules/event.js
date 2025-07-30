@@ -37,7 +37,7 @@ class EventManager {
         if (!container) return;
 
         try {
-            const result = await dataManager.getEvents();
+            const result = await dataManager.getEvents({}, 1, 1000);
             const events = result.events || result; // Handle both paginated and direct array responses
             
             if (events.length === 0) {
@@ -801,7 +801,7 @@ class EventManager {
      */
     async getEventSummary() {
         try {
-            const result = await dataManager.getEvents();
+            const result = await dataManager.getEvents({}, 1, 1000);
             const allEvents = result.events || result; // Handle both paginated and direct array responses
             const now = new Date();
             
