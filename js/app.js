@@ -1,5 +1,5 @@
 // Initialize core systems first
-console.log('🏁 Initializing Snowmobile Racing Event Manager (SIMPLIFIED)...');
+console.log('🏁 Initializing EPC17 Event Management System (SIMPLIFIED)...');
 
 // Initialize performance monitor first (with fallback)
 let performanceMonitor;

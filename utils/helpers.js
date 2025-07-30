@@ -1,5 +1,5 @@
 /**
- * Common Utility Functions for Snowmobile Drag Racing Event Manager
+ * Common Utility Functions for EPC17 Event Management System
  * Provides reusable helper functions across the application
  */
 

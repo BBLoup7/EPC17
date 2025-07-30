@@ -1,5 +1,5 @@
 /**
- * Achievement Manager for Snowmobile Racing Event Manager
+ * Achievement Manager for EPC17 Event Management System
  * Handles achievement calculation, award logic, and display
  */
 

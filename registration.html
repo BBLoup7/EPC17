@@ -178,6 +178,65 @@
             margin-bottom: 0;
         }
         
+        /* Performance Warning Styles */
+        .performance-warning {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(255, 107, 53, 0.3);
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .warning-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .warning-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .warning-text {
+            flex: 1;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .warning-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+        
+        .warning-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         /* Add Existing Driver Styles */
         .add-existing-container {
             max-width: 1200px;
@@ -770,6 +829,18 @@
     </nav>
 
     <main class="main-content">
+        <!-- Performance Warning Banner -->
+        <div id="performance-warning" class="performance-warning" style="display: none;">
+            <div class="warning-content">
+                <span class="warning-icon">⚠️</span>
+                <span class="warning-text">
+                    <strong>Performance Notice:</strong> Large dataset detected. Loading may take longer than usual. 
+                    For optimal performance with datasets over 10,000 participants, please contact your software representative.
+                </span>
+                <button class="warning-close" onclick="dismissPerformanceWarning()">×</button>
+            </div>
+        </div>
+        
         <div class="page-header">
             <div>
                 <h1>Event Registration</h1>
@@ -2534,6 +2605,42 @@
             
             return { participants, events };
         };
+
+        // Performance warning functions
+        function showPerformanceWarning() {
+            const warning = document.getElementById('performance-warning');
+            if (warning) {
+                warning.style.display = 'block';
+            }
+        }
+        
+        function dismissPerformanceWarning() {
+            const warning = document.getElementById('performance-warning');
+            if (warning) {
+                warning.style.display = 'none';
+                // Store dismissal in localStorage to avoid showing again in this session
+                localStorage.setItem('performance-warning-dismissed', 'true');
+            }
+        }
+        
+        // Check if we should show performance warning
+        function checkPerformanceWarning() {
+            if (window.dataManager) {
+                const participants = window.dataManager.getParticipantsArray();
+                const isLargeDataset = participants.length > 10000;
+                const wasDismissed = localStorage.getItem('performance-warning-dismissed') === 'true';
+                
+                if (isLargeDataset && !wasDismissed) {
+                    showPerformanceWarning();
+                }
+            }
+        }
+        
+        // Check performance warning after data loads
+        if (window.dataManager) {
+            // Wait a bit for data to load, then check
+            setTimeout(checkPerformanceWarning, 2000);
+        }
 
     </script>
     

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Snowmobile Racing Event Manager - Network Server
+EPC17 - Event Management System - Network Server
 Robust data management for multi-client access across local network
 """
 
@@ -11,6 +11,7 @@ import json
 import threading
 from datetime import datetime
 import uuid
+import ssl
 
 app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
 # Enable CORS for all origins with all methods and headers
@@ -28,6 +29,70 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # Thread lock for concurrent access safety
 data_lock = threading.Lock()
+
+def create_self_signed_cert():
+    """Create a self-signed certificate for HTTPS"""
+    try:
+        from cryptography import x509
+        from cryptography.x509.oid import NameOID
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from datetime import datetime, timedelta
+        
+        # Generate private key
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+        
+        # Create certificate
+        subject = issuer = x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Alaska"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "EPC Technology"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "EPC Technology"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+        ])
+        
+        cert = x509.CertificateBuilder().subject_name(
+            subject
+        ).issuer_name(
+            issuer
+        ).public_key(
+            private_key.public_key()
+        ).serial_number(
+            x509.random_serial_number()
+        ).not_valid_before(
+            datetime.utcnow()
+        ).not_valid_after(
+            datetime.utcnow() + timedelta(days=365)
+        ).add_extension(
+            x509.SubjectAlternativeName([
+                x509.DNSName("localhost"),
+                x509.IPAddress("127.0.0.1"),
+                x509.IPAddress("192.168.1.114"),
+            ]),
+            critical=False,
+        ).sign(private_key, hashes.SHA256())
+        
+        # Save certificate and key
+        with open("cert.pem", "wb") as f:
+            f.write(cert.public_bytes(serialization.Encoding.PEM))
+        
+        with open("key.pem", "wb") as f:
+            f.write(private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            ))
+        
+        return True
+    except ImportError:
+        print("⚠️  cryptography library not available. Install with: pip install cryptography")
+        return False
+    except Exception as e:
+        print(f"⚠️  Failed to create certificate: {e}")
+        return False
 
 def get_data_file(filename):
     """Get full path for data file"""
@@ -101,6 +166,10 @@ def analytics():
 def statistics():
     return render_template('analytics.html')  # Redirect to analytics for backward compatibility
 
+@app.route('/big-screen.html')
+def big_screen_redirect():
+    return render_template('live-display.html')  # Redirect old big-screen.html to live-display.html
+
 @app.route('/network-test')
 def network_test():
     return render_template('network-test.html')
@@ -167,7 +236,13 @@ def handle_participants():
     
     # Apply pagination
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 1000))  # Increase default limit to 1000 to get all participants
+    limit = int(request.args.get('limit', 50000))  # High default limit to get all participants
+    
+    # Log performance warning for large datasets
+    if len(participants) > 10000:
+        print(f"⚠️ PERFORMANCE WARNING: Loading {len(participants)} participants. Consider contacting software representative for optimization.")
+    
+    print(f"🔍 DEBUG - Loading participants: page={page}, limit={limit}, total_participants={len(participants)}")
     
     total = len(participants)
     start_idx = (page - 1) * limit
@@ -798,7 +873,7 @@ def get_standings():
             'wins': wins,
             'points': points,
             'team': participant.get('team', ''),
-            'sledClass': participant.get('sledClass', '')
+            'vehicleClass': participant.get('vehicleClass', '')
         })
     
     # Sort by points (descending)
@@ -1256,17 +1331,41 @@ def serve_static(filename):
     return response
 
 if __name__ == '__main__':
-    print("🏁 Starting Snowmobile Racing Event Manager Server")
+    print("🏁 Starting EPC17 Event Management System Server")
     print("📡 Network accessible at:")
     print("   - http://localhost:5000")
     print("   - http://127.0.0.1:5000")
     print("   - http://[your-ip]:5000 (for network access)")
     print("💾 Data stored in: ./data/")
     
+    # Check for SSL certificates
+    use_ssl = False
+    if os.path.exists("cert.pem") and os.path.exists("key.pem"):
+        use_ssl = True
+        print("🔒 SSL certificates found - HTTPS enabled")
+        print("   - https://localhost:5000")
+        print("   - https://127.0.0.1:5000")
+        print("   - https://[your-ip]:5000 (for network access)")
+    else:
+        print("🔓 Running in HTTP mode (no SSL certificates)")
+        print("💡 To enable HTTPS, install cryptography: pip install cryptography")
+        print("   Then restart the server to auto-generate certificates")
+    
     # Run server accessible from network
-    app.run(
-        host='0.0.0.0',  # Accept connections from any IP
-        port=5000,
-        debug=False,     # Disable debug mode for network deployment
-        threaded=True    # Enable multi-threading for concurrent requests
-    ) 
+    if use_ssl:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain("cert.pem", "key.pem")
+        app.run(
+            host='0.0.0.0',  # Accept connections from any IP
+            port=5000,
+            debug=False,     # Disable debug mode for network deployment
+            threaded=True,   # Enable multi-threading for concurrent requests
+            ssl_context=context
+        )
+    else:
+        app.run(
+            host='0.0.0.0',  # Accept connections from any IP
+            port=5000,
+            debug=False,     # Disable debug mode for network deployment
+            threaded=True    # Enable multi-threading for concurrent requests
+        ) 

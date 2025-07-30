@@ -1,5 +1,5 @@
 /**
- * Event Management Module for Snowmobile Drag Racing Event Manager
+ * Event Management Module for EPC17 Event Management System
  * Handles event creation, configuration, track management, and participant registration
  */
 

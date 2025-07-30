@@ -1345,7 +1345,7 @@ tbody tr:hover {
     .mobile-nav-toggle,
     .mobile-nav-menu,
     .mobile-nav-overlay {
-        display: none !important;
+        display: none;
     }
     
     /* Additional desktop hiding - ensure mobile nav is never visible on desktop */
@@ -1353,29 +1353,29 @@ tbody tr:hover {
         .mobile-nav-toggle,
         .mobile-nav-menu,
         .mobile-nav-overlay {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            position: absolute !important;
-            left: -9999px !important;
-            top: -9999px !important;
-            width: 0 !important;
-            height: 0 !important;
-            overflow: hidden !important;
+            display: none;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 0;
+            height: 0;
+            overflow: hidden;
         }
     }
     
     /* Force hide mobile navigation on desktop - highest specificity */
     body .main-nav .mobile-nav-menu,
     body .main-nav .mobile-nav-overlay {
-        display: none !important;
+        display: none;
     }
     
     /* Only show on mobile */
     @media (max-width: 768px) {
         body .main-nav .mobile-nav-menu.active {
-            display: block !important;
+            display: block;
         }
     }
     
@@ -1598,11 +1598,11 @@ tbody tr:hover {
     /* Show hamburger on mobile */
     @media (max-width: 768px) {
         .mobile-nav-toggle {
-            display: flex;
+            display: flex !important;
         }
         
         .nav-links {
-            display: none;
+            display: none !important;
         }
         
         /* Allow mobile menu to be shown on mobile */
@@ -1611,7 +1611,11 @@ tbody tr:hover {
         }
         
         .mobile-nav-menu.active {
-            display: block;
+            display: block !important;
+        }
+        
+        .mobile-nav-overlay.active {
+            display: block !important;
         }
     }
 

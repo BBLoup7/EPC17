@@ -1,5 +1,5 @@
 /**
- * UI Components for Snowmobile Drag Racing Event Manager
+ * UI Components for EPC17 Event Management System
  * Provides reusable UI components with performance optimizations
  */
 

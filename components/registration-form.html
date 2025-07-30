@@ -52,17 +52,17 @@
         </div>
 
         <div class="form-section">
-            <h3>Racing Classes & Sled Information *</h3>
+            <h3>Racing Classes & Vehicle Information *</h3>
             <div class="form-group">
-                <label class="form-label">Select Classes and Configure Sleds</label>
+                <label class="form-label">Select Classes and Configure Vehicles</label>
                 <div id="sledClassesContainer" class="classes-container">
                     <!-- Classes will be populated dynamically from series data -->
                 </div>
-                <p class="help-text">Select all classes you want to compete in and configure sled information for each class.</p>
+                <p class="help-text">Select all classes you want to compete in and configure vehicle information for each class.</p>
             </div>
             
             <div id="sledConfigContainer" class="sled-config-container">
-                <!-- Sled configurations for selected classes will appear here -->
+                <!-- Vehicle configurations for selected classes will appear here -->
             </div>
         </div>
 
@@ -156,11 +156,11 @@
     font-weight: 600;
 }
 
-.sled-config-container {
+.vehicle-config-container {
     margin-top: 1.5rem;
 }
 
-.sled-config {
+.vehicle-config {
     background: var(--bg-primary);
     border-radius: 8px;
     padding: 1.5rem;
@@ -168,7 +168,7 @@
     border: 2px solid var(--accent-primary);
 }
 
-.sled-config h4 {
+.vehicle-config h4 {
     color: var(--accent-primary);
     margin-bottom: 1rem;
     font-size: 1.1rem;
@@ -177,7 +177,7 @@
     gap: 0.5rem;
 }
 
-.sled-config-grid {
+.vehicle-config-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
@@ -420,10 +420,10 @@ function populateClasses() {
 function handleClassSelection(className, isSelected) {
     if (isSelected) {
         selectedClasses.add(className);
-        createSledConfig(className);
+        createVehicleConfig(className);
     } else {
         selectedClasses.delete(className);
-        removeSledConfig(className);
+        removeVehicleConfig(className);
     }
     
     updateClassOptionStyles();
@@ -474,35 +474,35 @@ function renderSponsorTags() {
     });
 }
 
-function createSledConfig(className) {
+function createVehicleConfig(className) {
     const container = document.getElementById('sledConfigContainer');
     
     const configDiv = document.createElement('div');
-    configDiv.className = 'sled-config';
-    configDiv.id = `sled-config-${className.replace(/\s+/g, '-')}`;
+    configDiv.className = 'vehicle-config';
+    configDiv.id = `vehicle-config-${className.replace(/\s+/g, '-')}`;
     
     configDiv.innerHTML = `
-        <h4>🏁 Sled Configuration for ${className}</h4>
-        <div class="sled-config-grid">
+        <h4>🏁 Vehicle Configuration for ${className}</h4>
+        <div class="vehicle-config-grid">
             <div class="form-group">
-                <label class="form-label">Sled Make</label>
-                <input type="text" class="form-control" name="sled_${className}_make" 
-                       placeholder="e.g., Polaris, Ski-Doo, Arctic Cat">
+                <label class="form-label">Vehicle Make</label>
+                <input type="text" class="form-control" name="vehicle_${className}_make" 
+                                               placeholder="e.g., Brand A, Brand B, Brand C">
             </div>
             <div class="form-group">
-                <label class="form-label">Sled Model</label>
-                <input type="text" class="form-control" name="sled_${className}_model" 
-                       placeholder="e.g., RMK, Summit, M8000">
+                <label class="form-label">Vehicle Model</label>
+                <input type="text" class="form-control" name="vehicle_${className}_model" 
+                       placeholder="e.g., Model X, Model Y, Model Z">
             </div>
             <div class="form-group">
-                <label class="form-label">Sled Year</label>
-                <input type="number" class="form-control" name="sled_${className}_year" 
+                <label class="form-label">Vehicle Year</label>
+                <input type="number" class="form-control" name="vehicle_${className}_year" 
                        min="1990" max="2025" placeholder="e.g., 2023">
             </div>
             <div class="form-group">
-                <label class="form-label">Engine Size (cc)</label>
-                <input type="number" class="form-control" name="sled_${className}_engine" 
-                       placeholder="e.g., 800, 850, 900">
+                <label class="form-label">Engine</label>
+                <input type="text" class="form-control" name="vehicle_${className}_engine" 
+                       placeholder="e.g., V8, 4-cylinder, Electric">
             </div>
         </div>
     `;
@@ -510,8 +510,8 @@ function createSledConfig(className) {
     container.appendChild(configDiv);
 }
 
-function removeSledConfig(className) {
-    const configDiv = document.getElementById(`sled-config-${className.replace(/\s+/g, '-')}`);
+function removeVehicleConfig(className) {
+    const configDiv = document.getElementById(`vehicle-config-${className.replace(/\s+/g, '-')}`);
     if (configDiv) {
         configDiv.remove();
     }
@@ -580,14 +580,14 @@ function setupEventListeners() {
         try {
             const formData = new FormData(e.target);
             
-            // Collect sled information for each selected class
-            const sledConfigurations = {};
+            // Collect vehicle information for each selected class
+            const vehicleConfigurations = {};
             selectedClasses.forEach(className => {
-                sledConfigurations[className] = {
-                    make: formData.get(`sled_${className}_make`) || '',
-                    model: formData.get(`sled_${className}_model`) || '',
-                    year: formData.get(`sled_${className}_year`) || '',
-                    engine: formData.get(`sled_${className}_engine`) || ''
+                vehicleConfigurations[className] = {
+                    make: formData.get(`vehicle_${className}_make`) || '',
+                    model: formData.get(`vehicle_${className}_model`) || '',
+                    year: formData.get(`vehicle_${className}_year`) || '',
+                    engine: formData.get(`vehicle_${className}_engine`) || ''
                 };
             });
             
@@ -603,7 +603,7 @@ function setupEventListeners() {
                 },
                 sponsors: Array.from(sponsors),
                 selectedClasses: Array.from(selectedClasses),
-                sledConfigurations: sledConfigurations,
+                vehicleConfigurations: vehicleConfigurations,
                 totalFee: Array.from(selectedClasses).reduce((sum, className) => 
                     sum + (classFees[className] || 50), 0),
                 registrationDate: new Date().toISOString()

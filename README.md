@@ -1,11 +1,3 @@
-# 🏁 EPC17 - Professional Racing Event Management System
-
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
-
-> **EPC Technology - Project 17**  
-> A comprehensive racing event management system designed for professional drag racing events with network-accessible architecture.
 
 ## 🚀 Quick Start
 

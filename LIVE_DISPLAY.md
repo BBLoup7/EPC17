@@ -1,7 +1,7 @@
 # Live Display - Real-time Event Feed
 
 ## Overview
-The Live Display page (`live-display.html`) is designed for real-time event feeds displayed on large screens, projectors, or TVs during drag racing events. It provides live information about race results, upcoming races, statistics, and driver profiles with automatic event detection and frequent updates.
+The Live Display page (`live-display.html`) is designed for real-time event feeds displayed on large screens, projectors, or TVs during racing events. It provides live information about race results, upcoming races, statistics, and driver profiles with automatic event detection and frequent updates.
 
 ## Key Improvements Over Previous Version
 
