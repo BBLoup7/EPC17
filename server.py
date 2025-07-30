@@ -546,9 +546,12 @@ def handle_event_by_id(event_id):
                     return jsonify({'error': 'Event name is required'}), 400
             
             # Update the event data (merge with existing data)
-            updated_event = { **existing_event, **data }
-            updated_event['id'] = event_id  # Ensure ID doesn't change
-            updated_event['updatedAt'] = datetime.now().isoformat()
+            updated_event = {
+                **existing_event, 
+                **data,
+                'id': event_id,  # Ensure ID doesn't change
+                'updatedAt': datetime.now().isoformat()
+            }
             
             print(f"🔍 DEBUG - Updated event data: {updated_event.get('name', 'Unknown')}")
             
@@ -861,7 +864,7 @@ def get_standings():
                 break
         
         # Calculate stats
-        events_participated = len(set(r.get('eventId') for r in participant_races if r.get('eventId')))
+        events_participated = len({r.get('eventId') for r in participant_races if r.get('eventId')})
         wins = sum(1 for r in participant_races if r.get('position') == 1)
         points = sum(r.get('points', 0) for r in participant_races)
         
@@ -1064,7 +1067,7 @@ def calculate_event_achievements(event_id, participants, races, events, existing
             continue
             
         # Check if participant already has achievements (avoid duplicates)
-        existing_tags = set(a['tagId'] for a in existing_achievements if a.get('participantId') == participant_id)
+        existing_tags = {a['tagId'] for a in existing_achievements if a.get('participantId') == participant_id}
         
         # 🧨 Lane Bias Index - wins primarily from underperforming lane
         if stats['wins'] > 0 and stats['lane_wins']:

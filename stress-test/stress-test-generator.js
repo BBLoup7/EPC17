@@ -575,7 +575,7 @@ function generateStressTestData() {
     console.log(`   Total Participants: ${summary.totalParticipants.toLocaleString()}`);
     console.log(`   Average per Event: ${summary.averageParticipantsPerEvent}`);
     console.log(`\n📋 Backup created at: ${backupDir}`);
-    console.log(`📄 Summary saved to: stress-test-summary.json`);
+    console.log('📄 Summary saved to: stress-test-summary.json');
     
     return summary;
 }

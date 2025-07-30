@@ -167,6 +167,24 @@ class UIComponents {
     }
 
     /**
+     * Clean up combo box before recreating
+     * @param {string} id - Combo box ID
+     */
+    static cleanupComboBox(id) {
+        const container = document.getElementById(`${id}-container`);
+        if (container) {
+            // Remove initialization marker
+            container.removeAttribute('data-combo-initialized');
+            container.removeAttribute('data-combo-id');
+        }
+        
+        const input = document.getElementById(`${id}-input`);
+        if (input) {
+            input.removeAttribute('data-keydown-listener');
+        }
+    }
+
+    /**
      * Memory cleanup utility for large datasets
      */
     static performMemoryCleanup() {
@@ -281,6 +299,13 @@ class UIComponents {
     static showComboBoxDropdown(id) {
         const dropdown = document.getElementById(`${id}-dropdown`);
         if (dropdown) {
+            // Close all other dropdowns first
+            document.querySelectorAll('.combo-box-dropdown.active').forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('active');
+                }
+            });
+            
             dropdown.classList.add('active');
         }
     }
@@ -349,10 +374,26 @@ class UIComponents {
             input.setAttribute('data-selected-value', value);
         }
         
+        // Update the selected state of options
+        const dropdown = document.getElementById(`${id}-dropdown`);
+        if (dropdown) {
+            dropdown.querySelectorAll('.combo-box-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.getAttribute('data-value') === value) {
+                    option.classList.add('selected');
+                }
+            });
+        }
+        
         this.hideComboBoxDropdown(id);
         
+        // Call the callback function
         if (typeof window[onSelect] === 'function') {
-            window[onSelect](value, label);
+            try {
+                window[onSelect](value, label);
+            } catch (error) {
+                console.error('Error in combo box callback:', error);
+            }
         }
     }
 
@@ -402,24 +443,53 @@ class UIComponents {
         const container = document.getElementById(`${id}-container`);
         if (!container) return;
         
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!container.contains(e.target)) {
-                this.hideComboBoxDropdown(id);
-            }
-        });
+        // Remove existing event listeners to prevent duplicates
+        const existingListener = container.getAttribute('data-combo-initialized');
+        if (existingListener === 'true') {
+            return; // Already initialized
+        }
+        
+        // Mark as initialized
+        container.setAttribute('data-combo-initialized', 'true');
         
         // Handle keyboard navigation
         const input = document.getElementById(`${id}-input`);
         if (input) {
-            input.addEventListener('keydown', (e) => {
+            const keydownListener = (e) => {
                 if (e.key === 'Escape') {
                     this.hideComboBoxDropdown(id);
                 }
-            });
+            };
+            input.addEventListener('keydown', keydownListener);
+            
+            // Store reference for cleanup
+            input.setAttribute('data-keydown-listener', 'true');
         }
+        
+        // Store references for cleanup
+        container.setAttribute('data-combo-id', id);
     }
 }
+
+// Global click handler for closing dropdowns
+document.addEventListener('click', (e) => {
+    // Check if click is outside any combo box container
+    const comboContainers = document.querySelectorAll('.combo-box-container');
+    let clickedInsideCombo = false;
+    
+    comboContainers.forEach(container => {
+        if (container.contains(e.target)) {
+            clickedInsideCombo = true;
+        }
+    });
+    
+    // If clicked outside all combo boxes, close all dropdowns
+    if (!clickedInsideCombo) {
+        document.querySelectorAll('.combo-box-dropdown.active').forEach(dropdown => {
+            dropdown.classList.remove('active');
+        });
+    }
+});
 
 // Make UIComponents available globally
 window.UIComponents = UIComponents; 

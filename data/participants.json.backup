@@ -1,29 +1,46 @@
 [
   {
-    "id": "d15f9691-284c-4b23-b88b-1072ec01091c",
-    "name": "Per Nelson",
-    "nickname": "",
-    "dob": "1997-07-24",
-    "racingNumber": null,
-    "eventId": "58ee6952-54d6-4a45-adc3-ded7aeec4051",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
-    "paymentStatus": "paid",
-    "status": "active",
-    "selectedClasses": [
-      "Factory"
-    ],
-    "sledClasses": [
-      "Factory"
-    ],
-    "sledClass": "Factory",
-    "totalFee": 400,
+    "_searchText": "per nelson pernelson307@yahoo.com",
+    "avgPosition": 1.5,
+    "bestStreak": 1,
     "contact": {
       "email": "pernelson307@yahoo.com",
-      "phone": "184-711-9358",
-      "emergency": "881-898-9983"
+      "emergency": "881-898-9983",
+      "phone": "184-711-9358"
     },
-    "sponsors": [],
+    "createdAt": "2025-07-28T19:11:38.788Z",
+    "dob": "1997-07-24",
+    "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+    "eventsParticipated": 1,
+    "id": "d15f9691-284c-4b23-b88b-1072ec01091c",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "2": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      }
+    },
+    "lastRaceDate": "2025-07-30T01:47:46.455Z",
+    "name": "Per Nelson",
+    "nickname": "",
+    "paymentStatus": "paid",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
+    "selectedClasses": [
+      "class1",
+      "class2"
+    ],
+    "sledClass": "class1",
+    "sledClasses": [
+      "class1",
+      "class2"
+    ],
     "sledConfigurations": {
       "Factory": {
         "engine": "775cc",
@@ -32,32 +49,74 @@
         "year": "2015"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.788Z",
-      "lastCalculated": 1753729898788,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 3,
+      "totalWins": 1,
+      "winRate": 33.3,
+      "avgPosition": 1.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "2": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        }
+      },
+      "recentWinRate": 33.3,
+      "lastUpdated": "2025-07-30T01:47:18.136Z",
+      "lastCalculated": 1753840038136,
+      "totalLosses": 2,
+      "bestPosition": 1,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753839366195-20wnvct34",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:36:06.196Z",
+          "opponents": "drv 3, drv 2"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 2,
+          "heatId": "final-heat-1753839421397-zenhhqis3",
+          "lane": 1,
+          "position": "FS",
+          "result": "false_start",
+          "timestamp": "2025-07-30T01:37:01.398Z",
+          "opponents": "drv 1"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class2",
+          "round": 1,
+          "heatId": "heat-r1-h2-1753839371716-ivx923fzd",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:36:11.716Z",
+          "opponents": "drv 3"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.788Z",
-    "updatedAt": "2025-07-28T19:11:38.788Z"
+    "status": "active",
+    "totalFee": 405,
+    "totalRaces": 3,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T21:47:46.721276",
+    "winRate": 33.3
   },
   {
     "id": "f31bcaf0-f789-4a04-a740-2efa32f284ed",
@@ -120,33 +179,44 @@
     "updatedAt": "2025-07-28T19:11:38.788Z"
   },
   {
-    "id": "ba0216b2-0ea7-42fd-9616-a6590be1e0c8",
-    "name": "Francesco Alekseev",
-    "nickname": "",
-    "dob": "1986-08-18",
-    "racingNumber": null,
-    "eventId": "c3a8c147-e515-4a2e-ad29-08dcf2c45879",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
-    "paymentStatus": "pending",
-    "status": "active",
-    "selectedClasses": [
-      "1000 Improve",
-      "Championship"
-    ],
-    "sledClasses": [
-      "1000 Improve",
-      "Championship"
-    ],
-    "sledClass": "1000 Improve",
-    "totalFee": 800,
+    "_searchText": "francesco alekseev francescoalekseev478@outlook.com",
+    "avgPosition": 2.5,
+    "bestStreak": 0,
     "contact": {
       "email": "francescoalekseev478@outlook.com",
-      "phone": "813-881-1971",
-      "emergency": "331-621-1376"
+      "emergency": "331-621-1376",
+      "phone": "813-881-1971"
     },
-    "sponsors": [
-      "Sponsor 67"
+    "createdAt": "2025-07-28T19:11:38.788Z",
+    "dob": "1986-08-18",
+    "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+    "eventsParticipated": 1,
+    "id": "ba0216b2-0ea7-42fd-9616-a6590be1e0c8",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-30T01:47:37.575Z",
+    "name": "Francesco Alekseev",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
+    "selectedClasses": [
+      "class1"
+    ],
+    "sledClass": "class1",
+    "sledClasses": [
+      "class1"
     ],
     "sledConfigurations": {
       "1000 Improve": {
@@ -162,32 +232,65 @@
         "year": "2022"
       }
     },
+    "sponsors": [
+      "Sponsor 67"
+    ],
     "statistics": {
-      "totalRaces": 0,
+      "totalRaces": 2,
       "totalWins": 0,
       "winRate": 0,
-      "avgPosition": 0,
+      "avgPosition": 2.5,
       "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
       "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.788Z",
-      "lastCalculated": 1753729898788,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "lastUpdated": "2025-07-30T01:47:37.575Z",
+      "lastCalculated": 1753840057575,
+      "totalLosses": 2,
+      "bestPosition": 2,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 1,
+          "heatId": "heat-r1-h2-1753839366196-i55wai4wg",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:36:06.196Z",
+          "opponents": "drv 1"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 2,
+          "heatId": "final-heat-1753839421398-5mg2vikzo",
+          "lane": 3,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:37:01.398Z",
+          "opponents": "drv 2, drv 3"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
+    "status": "active",
+    "totalFee": 802,
+    "totalRaces": 2,
     "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.788Z",
-    "updatedAt": "2025-07-28T19:11:38.788Z"
+    "updatedAt": "2025-07-29T21:47:43.636546",
+    "winRate": 0
   },
   {
     "id": "36933c4b-6e72-48d5-bbd4-135303f19589",
@@ -868,74 +971,73 @@
     "updatedAt": "2025-07-28T19:11:38.789Z"
   },
   {
-    "id": "a45e7822-fa9f-4bf3-9309-7d7dbd7f0368",
-    "name": "Peter Phillips",
-    "nickname": "",
-    "dob": "2004-02-18",
-    "racingNumber": "614",
-    "eventId": "1d04a7dc-8567-431e-84cb-399e1b3b5bad",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
-    "paymentStatus": "waived",
-    "status": "active",
-    "selectedClasses": [
-      "4 temps",
-      "1000 Stock"
-    ],
-    "sledClasses": [
-      "4 temps",
-      "1000 Stock"
-    ],
-    "sledClass": "4 temps",
-    "totalFee": 300,
+    "_searchText": "peter phillips 614 peterphillips815@outlook.com",
+    "avgPosition": 0,
+    "bestStreak": 0,
     "contact": {
       "email": "peterphillips815@outlook.com",
-      "phone": "522-956-5356",
-      "emergency": "902-965-1034"
+      "emergency": "902-965-1034",
+      "phone": "522-956-5356"
     },
-    "sponsors": [
-      "Sponsor 43"
+    "createdAt": "2025-07-28T19:11:38.789Z",
+    "dob": "2004-02-18",
+    "eventId": "889f708d-73e5-4e38-931a-f7cd0ef9b010",
+    "eventsParticipated": 0,
+    "id": "a45e7822-fa9f-4bf3-9309-7d7dbd7f0368",
+    "lanePerformance": {},
+    "lastRaceDate": null,
+    "name": "Peter Phillips",
+    "nickname": "",
+    "paymentStatus": "waived",
+    "racingNumber": "614",
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
+    "selectedClasses": [
+      "600 Improve"
+    ],
+    "sledClass": "600 Improve",
+    "sledClasses": [
+      "600 Improve"
     ],
     "sledConfigurations": {
-      "4 temps": {
-        "engine": "1000cc",
-        "make": "Polaris",
-        "model": "Renegade",
-        "year": "2024"
-      },
       "1000 Stock": {
         "engine": "1123cc",
         "make": "Polaris",
         "model": "Renegade",
         "year": "2019"
+      },
+      "4 temps": {
+        "engine": "1000cc",
+        "make": "Polaris",
+        "model": "Renegade",
+        "year": "2024"
       }
     },
+    "sponsors": [
+      "Sponsor 43"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
       "avgPosition": 0,
+      "bestPosition": null,
       "bestStreak": 0,
       "eventsParticipated": 0,
       "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.789Z",
       "lastCalculated": 1753729898789,
+      "lastUpdated": "2025-07-28T19:11:38.789Z",
+      "raceHistory": [],
+      "recentWinRate": 0,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 0,
+      "totalWins": 0,
+      "winRate": 0,
+      "worstPosition": null
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
+    "status": "active",
+    "totalFee": 350,
     "totalRaces": 0,
     "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.789Z",
-    "updatedAt": "2025-07-28T19:11:38.789Z"
+    "updatedAt": "2025-07-29T19:07:57.026730",
+    "winRate": 0
   },
   {
     "id": "00eaa129-9100-450a-ab04-2f4260eda54a",
@@ -169795,31 +169897,38 @@
     "updatedAt": "2025-07-28T19:11:38.813Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 2,
+    "contact": {
+      "email": "pascalestewart90@outlook.com",
+      "emergency": "878-160-8447",
+      "phone": "654-464-6078"
+    },
+    "createdAt": "2025-07-28T19:11:38.813Z",
+    "dob": "2020-04-22",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "047c7ed0-4e82-4a0e-9838-9eabfa2c6ace",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 2,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T20:39:12.751Z",
     "name": "Pascale Stewart",
     "nickname": "pascale",
-    "dob": "2020-04-22",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "paid",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Senior"
     ],
+    "sledClass": "Senior",
     "sledClasses": [
       "Senior"
-    ],
-    "sledClass": "Senior",
-    "totalFee": 50,
-    "contact": {
-      "email": "pascalestewart90@outlook.com",
-      "phone": "654-464-6078",
-      "emergency": "878-160-8447"
-    },
-    "sponsors": [
-      "Sponsor 52"
     ],
     "sledConfigurations": {
       "Senior": {
@@ -169829,32 +169938,61 @@
         "year": "2015"
       }
     },
+    "sponsors": [
+      "Sponsor 52"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.813Z",
-      "lastCalculated": 1753729898813,
+      "totalRaces": 2,
+      "totalWins": 2,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 2,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 2,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T20:39:12.751Z",
+      "lastCalculated": 1753821552751,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h17-1753730814827-baafb23bh",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Isabel Morales"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h2-1753731565797-zyxwmbw9l",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Horst Martinez"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.813Z",
-    "updatedAt": "2025-07-28T19:11:38.813Z"
+    "status": "active",
+    "totalFee": 50,
+    "totalRaces": 2,
+    "totalWins": 2,
+    "updatedAt": "2025-07-29T16:39:13.869740",
+    "winRate": 100,
+    "_searchText": "pascale stewart pascale pascalestewart90@outlook.com"
   },
   {
     "id": "4c6f5d29-c3a5-45aa-aef6-69418d75a99f",
@@ -199955,30 +200093,44 @@
     "updatedAt": "2025-07-28T19:11:38.817Z"
   },
   {
+    "avgPosition": 1.5,
+    "bestStreak": 1,
+    "contact": {
+      "email": "horstmartinez281@hotmail.com",
+      "emergency": "482-713-6639",
+      "phone": "879-167-8533"
+    },
+    "createdAt": "2025-07-28T19:11:38.817Z",
+    "dob": "2000-05-02",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "f25a8d9a-b9fd-46bd-ab64-5818e4d4a465",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-29T20:39:19.428Z",
     "name": "Horst Martinez",
     "nickname": "",
-    "dob": "2000-05-02",
-    "racingNumber": "416",
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "pending",
-    "status": "active",
+    "racingNumber": "416",
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Amateur"
     ],
+    "sledClass": "Amateur",
     "sledClasses": [
       "Amateur"
     ],
-    "sledClass": "Amateur",
-    "totalFee": 50,
-    "contact": {
-      "email": "horstmartinez281@hotmail.com",
-      "phone": "879-167-8533",
-      "emergency": "482-713-6639"
-    },
-    "sponsors": [],
     "sledConfigurations": {
       "Amateur": {
         "engine": "539cc",
@@ -199987,32 +200139,64 @@
         "year": "2023"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.817Z",
-      "lastCalculated": 1753729898817,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T20:39:19.428Z",
+      "lastCalculated": 1753821559428,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h6-1753730814825-qccqjwnlf",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Alejandro Ruiz"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h2-1753731565797-zyxwmbw9l",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Pascale Stewart"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.817Z",
-    "updatedAt": "2025-07-28T19:11:38.817Z"
+    "status": "active",
+    "totalFee": 50,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T16:39:19.646431",
+    "winRate": 50,
+    "_searchText": "horst martinez 416 horstmartinez281@hotmail.com"
   },
   {
     "id": "a41a8d83-37a7-4ca7-a344-050ebcbdc0d6",
@@ -270026,37 +270210,55 @@
     "updatedAt": "2025-07-28T19:11:38.824Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 3,
+    "contact": {
+      "email": "nathaliemoreau789@yahoo.com",
+      "emergency": "969-591-7417",
+      "phone": "685-228-7444"
+    },
+    "createdAt": "2025-07-28T19:11:38.824Z",
+    "dob": "2002-08-02",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "ef57d683-f6de-4776-99b2-6abba6e6660e",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 2,
+        "winRate": 100
+      },
+      "2": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:32:20.231Z",
     "name": "Nathalie Moreau",
     "nickname": "",
-    "dob": "2002-08-02",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "pending",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "600 Stock",
       "Hybrid",
       "600 Improve"
     ],
+    "sledClass": "600 Stock",
     "sledClasses": [
       "600 Stock",
       "Hybrid",
       "600 Improve"
     ],
-    "sledClass": "600 Stock",
-    "totalFee": 850,
-    "contact": {
-      "email": "nathaliemoreau789@yahoo.com",
-      "phone": "685-228-7444",
-      "emergency": "969-591-7417"
-    },
-    "sponsors": [
-      "Sponsor 45"
-    ],
     "sledConfigurations": {
+      "600 Improve": {
+        "engine": "1031cc",
+        "make": "Arctic Cat",
+        "model": "Viper",
+        "year": "2016"
+      },
       "600 Stock": {
         "engine": "489cc",
         "make": "Arctic Cat",
@@ -270068,40 +270270,79 @@
         "make": "Ski-Doo",
         "model": "Thundercat",
         "year": "2016"
-      },
-      "600 Improve": {
-        "engine": "1031cc",
-        "make": "Arctic Cat",
-        "model": "Viper",
-        "year": "2016"
       }
     },
+    "sponsors": [
+      "Sponsor 45"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.824Z",
-      "lastCalculated": 1753729898824,
+      "totalRaces": 3,
+      "totalWins": 3,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 3,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 2,
+          "winRate": 100
+        },
+        "2": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T22:32:20.231Z",
+      "lastCalculated": 1753828340231,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Improve",
+          "round": 1,
+          "heatId": "heat-r1-h15-1753730834962-cqx27tfmk",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:27:14.965Z",
+          "opponents": "Ayumi King"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h12-1753730814826-z761i04mu",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Jonathan Roberts"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h3-1753731565797-0xxwhv3fg",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Jean-François Nkosi"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.824Z",
-    "updatedAt": "2025-07-28T19:11:38.824Z"
+    "status": "active",
+    "totalFee": 850,
+    "totalRaces": 3,
+    "totalWins": 3,
+    "updatedAt": "2025-07-29T18:32:21.516261",
+    "winRate": 100,
+    "_searchText": "nathalie moreau nathaliemoreau789@yahoo.com"
   },
   {
     "id": "7dc29e75-37f1-49ef-b9c8-34485d9a23a0",
@@ -276234,74 +276475,110 @@
     "updatedAt": "2025-07-28T19:11:38.824Z"
   },
   {
+    "avgPosition": 1.5,
+    "bestStreak": 1,
+    "contact": {
+      "email": "jean-françoisnkosi613@hotmail.com",
+      "emergency": "413-868-5010",
+      "phone": "909-939-1488"
+    },
+    "createdAt": "2025-07-28T19:11:38.824Z",
+    "dob": "1988-03-11",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "27efa9bd-c9e4-43c8-8809-bef3099d0772",
+    "lanePerformance": {
+      "2": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:32:27.556Z",
     "name": "Jean-François Nkosi",
     "nickname": "",
-    "dob": "1988-03-11",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "paid",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Open",
       "Factory"
     ],
+    "sledClass": "Open",
     "sledClasses": [
       "Open",
       "Factory"
     ],
-    "sledClass": "Open",
-    "totalFee": 100,
-    "contact": {
-      "email": "jean-françoisnkosi613@hotmail.com",
-      "phone": "909-939-1488",
-      "emergency": "413-868-5010"
-    },
-    "sponsors": [
-      "Sponsor 17"
-    ],
     "sledConfigurations": {
-      "Open": {
-        "engine": "1176cc",
-        "make": "Ski-Doo",
-        "model": "Thundercat",
-        "year": "2015"
-      },
       "Factory": {
         "engine": "1131cc",
         "make": "Polaris",
         "model": "Summit",
         "year": "2020"
+      },
+      "Open": {
+        "engine": "1176cc",
+        "make": "Ski-Doo",
+        "model": "Thundercat",
+        "year": "2015"
       }
     },
+    "sponsors": [
+      "Sponsor 17"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.824Z",
-      "lastCalculated": 1753729898824,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T22:32:27.556Z",
+      "lastCalculated": 1753828347556,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h9-1753730814825-0u8bs6wbl",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Vincenzo Moretti"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h3-1753731565797-0xxwhv3fg",
+          "lane": 2,
+          "position": 2,
+          "result": "false_start",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Nathalie Moreau"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.824Z",
-    "updatedAt": "2025-07-28T19:11:38.824Z"
+    "status": "active",
+    "totalFee": 100,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:32:27.796879",
+    "winRate": 50,
+    "_searchText": "jean-françois nkosi jean-françoisnkosi613@hotmail.com"
   },
   {
     "id": "1b98211c-c85c-44ed-b5b9-2acd36531c2d",
@@ -337399,31 +337676,38 @@
     "updatedAt": "2025-07-28T19:11:38.831Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "hanamthembu502@yahoo.com",
+      "emergency": "493-138-8619",
+      "phone": "388-826-4531"
+    },
+    "createdAt": "2025-07-28T19:11:38.831Z",
+    "dob": "2020-08-03",
+    "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
+    "eventsParticipated": 1,
     "id": "5385943f-7c52-4ebd-b3a9-67b5e8df1b18",
+    "lanePerformance": {
+      "3": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:58:13.244Z",
     "name": "Hana Mthembu",
     "nickname": "",
-    "dob": "2020-08-03",
-    "racingNumber": null,
-    "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "pending",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "600 Stock"
     ],
+    "sledClass": "600 Stock",
     "sledClasses": [
       "600 Stock"
-    ],
-    "sledClass": "600 Stock",
-    "totalFee": 100,
-    "contact": {
-      "email": "hanamthembu502@yahoo.com",
-      "phone": "388-826-4531",
-      "emergency": "493-138-8619"
-    },
-    "sponsors": [
-      "Sponsor 42"
     ],
     "sledConfigurations": {
       "600 Stock": {
@@ -337433,32 +337717,50 @@
         "year": "2019"
       }
     },
+    "sponsors": [
+      "Sponsor 42"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.831Z",
-      "lastCalculated": 1753729898831,
+      "totalRaces": 1,
+      "totalWins": 1,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "3": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T22:58:13.244Z",
+      "lastCalculated": 1753829893244,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753829829522-0ageq374k",
+          "lane": 3,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-29T22:57:09.525Z",
+          "opponents": "Yui Kruger, Martina Jensen"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.831Z",
-    "updatedAt": "2025-07-28T19:11:38.831Z"
+    "status": "active",
+    "totalFee": 100,
+    "totalRaces": 1,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:58:11.511664",
+    "winRate": 100,
+    "_searchText": "hana mthembu hanamthembu502@yahoo.com"
   },
   {
     "id": "486992dc-93d5-4301-995f-86bf76a258ae",
@@ -341208,33 +341510,40 @@
     "updatedAt": "2025-07-28T19:11:38.831Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 2,
+    "contact": {
+      "email": "berndgiordano601@racing.com",
+      "emergency": "513-131-4279",
+      "phone": "824-262-6876"
+    },
+    "createdAt": "2025-07-28T19:11:38.831Z",
+    "dob": "2009-07-22",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "34b48336-8cbb-421b-b773-db16c4138928",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 2,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:32:44.688Z",
     "name": "Bernd Giordano",
     "nickname": "",
-    "dob": "2009-07-22",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "waived",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Master",
       "Super Stock"
     ],
+    "sledClass": "Master",
     "sledClasses": [
       "Master",
       "Super Stock"
-    ],
-    "sledClass": "Master",
-    "totalFee": 500,
-    "contact": {
-      "email": "berndgiordano601@racing.com",
-      "phone": "824-262-6876",
-      "emergency": "513-131-4279"
-    },
-    "sponsors": [
-      "Sponsor 78"
     ],
     "sledConfigurations": {
       "Master": {
@@ -341250,32 +341559,61 @@
         "year": "2016"
       }
     },
+    "sponsors": [
+      "Sponsor 78"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.831Z",
-      "lastCalculated": 1753729898831,
+      "totalRaces": 2,
+      "totalWins": 2,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 2,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 2,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T22:32:44.688Z",
+      "lastCalculated": 1753828364688,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h19-1753730814828-hx0vba0pj",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Jean-François Costa"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h4-1753731565798-c9t8qufu8",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": ""
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.831Z",
-    "updatedAt": "2025-07-28T19:11:38.831Z"
+    "status": "active",
+    "totalFee": 500,
+    "totalRaces": 2,
+    "totalWins": 2,
+    "updatedAt": "2025-07-29T18:32:44.979935",
+    "winRate": 100,
+    "_searchText": "bernd giordano berndgiordano601@racing.com"
   },
   {
     "id": "7e02173b-5ceb-481c-9315-4764d1342e2f",
@@ -377657,35 +377995,42 @@
     "updatedAt": "2025-07-28T19:11:38.835Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "tundegyamfi26@hotmail.com",
+      "emergency": "384-897-7555",
+      "phone": "935-358-7614"
+    },
+    "createdAt": "2025-07-28T19:11:38.835Z",
+    "dob": "1980-04-03",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "569a86e3-86e4-4cf3-b277-850460631670",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:32:30.760Z",
     "name": "Tunde Gyamfi",
     "nickname": "",
-    "dob": "1980-04-03",
-    "racingNumber": "273",
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "waived",
-    "status": "active",
+    "racingNumber": "273",
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Championship",
       "Street",
       "Custom"
     ],
+    "sledClass": "Championship",
     "sledClasses": [
       "Championship",
       "Street",
       "Custom"
-    ],
-    "sledClass": "Championship",
-    "totalFee": 300,
-    "contact": {
-      "email": "tundegyamfi26@hotmail.com",
-      "phone": "935-358-7614",
-      "emergency": "384-897-7555"
-    },
-    "sponsors": [
-      "Sponsor 63"
     ],
     "sledConfigurations": {
       "Championship": {
@@ -377694,45 +378039,63 @@
         "model": "Thundercat",
         "year": "2017"
       },
-      "Street": {
-        "engine": "732cc",
-        "make": "Ski-Doo",
-        "model": "Thundercat",
-        "year": "2016"
-      },
       "Custom": {
         "engine": "533cc",
         "make": "Polaris",
         "model": "Summit",
         "year": "2023"
+      },
+      "Street": {
+        "engine": "732cc",
+        "make": "Ski-Doo",
+        "model": "Thundercat",
+        "year": "2016"
       }
     },
+    "sponsors": [
+      "Sponsor 63"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.835Z",
-      "lastCalculated": 1753729898835,
+      "totalRaces": 1,
+      "totalWins": 1,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T22:32:30.760Z",
+      "lastCalculated": 1753828350760,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h10-1753730814825-9yeosecbi",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Akira Johansen"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.835Z",
-    "updatedAt": "2025-07-28T19:11:38.835Z"
+    "status": "active",
+    "totalFee": 300,
+    "totalRaces": 1,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:32:36.553608",
+    "winRate": 100,
+    "_searchText": "tunde gyamfi 273 tundegyamfi26@hotmail.com"
   },
   {
     "id": "e64ee413-9d3a-4e34-9a10-e778440ce0b1",
@@ -416804,48 +417167,60 @@
     "updatedAt": "2025-07-28T19:11:38.839Z"
   },
   {
+    "avgPosition": 1.5,
+    "bestStreak": 1,
+    "contact": {
+      "email": "brigittemuller689@gmail.com",
+      "emergency": "514-550-5711",
+      "phone": "362-985-3154"
+    },
+    "createdAt": "2025-07-28T19:11:38.839Z",
+    "dob": "2019-11-16",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "60490e8e-02b8-4195-8d69-8b26319c3283",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:32:38.650Z",
     "name": "Brigitte Muller",
     "nickname": "",
-    "dob": "2019-11-16",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "paid",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Street",
       "Exhibition",
       "Super Stock"
     ],
+    "sledClass": "Street",
     "sledClasses": [
       "Street",
       "Exhibition",
       "Super Stock"
     ],
-    "sledClass": "Street",
-    "totalFee": 300,
-    "contact": {
-      "email": "brigittemuller689@gmail.com",
-      "phone": "362-985-3154",
-      "emergency": "514-550-5711"
-    },
-    "sponsors": [
-      "Sponsor 23"
-    ],
     "sledConfigurations": {
-      "Street": {
-        "engine": "631cc",
-        "make": "Yamaha",
-        "model": "Thundercat",
-        "year": "2017"
-      },
       "Exhibition": {
         "engine": "1150cc",
         "make": "Arctic Cat",
         "model": "Thundercat",
         "year": "2020"
+      },
+      "Street": {
+        "engine": "631cc",
+        "make": "Yamaha",
+        "model": "Thundercat",
+        "year": "2017"
       },
       "Super Stock": {
         "engine": "652cc",
@@ -416854,32 +417229,66 @@
         "year": "2021"
       }
     },
+    "sponsors": [
+      "Sponsor 23"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.839Z",
-      "lastCalculated": 1753729898839,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T22:32:38.650Z",
+      "lastCalculated": 1753828358650,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h5-1753730814825-uauuiabez",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Leila Zhao"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h5-1753731565798-p26zxvp41",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Tunde Gyamfi"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.839Z",
-    "updatedAt": "2025-07-28T19:11:38.839Z"
+    "status": "active",
+    "totalFee": 300,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:32:43.422584",
+    "winRate": 50,
+    "_searchText": "brigitte muller brigittemuller689@gmail.com"
   },
   {
     "id": "a779f6aa-f049-41ea-8a8e-03a4c8efd632",
@@ -431096,31 +431505,43 @@
     "updatedAt": "2025-07-28T19:11:38.840Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "andrewgutierrez979@outlook.com",
+      "emergency": "245-225-1517",
+      "phone": "785-873-5143"
+    },
+    "createdAt": "2025-07-28T19:11:38.840Z",
+    "dob": "2012-12-16",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "96e469ba-1047-46c4-98b0-0ab63be4e92a",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:36:36.014Z",
     "name": "Andrew Gutierrez",
     "nickname": "",
-    "dob": "2012-12-16",
-    "racingNumber": "623",
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "pending",
-    "status": "active",
+    "racingNumber": "623",
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Factory"
     ],
+    "sledClass": "Factory",
     "sledClasses": [
       "Factory"
-    ],
-    "sledClass": "Factory",
-    "totalFee": 400,
-    "contact": {
-      "email": "andrewgutierrez979@outlook.com",
-      "phone": "785-873-5143",
-      "emergency": "245-225-1517"
-    },
-    "sponsors": [
-      "Sponsor 100"
     ],
     "sledConfigurations": {
       "Factory": {
@@ -431130,32 +431551,66 @@
         "year": "2020"
       }
     },
+    "sponsors": [
+      "Sponsor 100"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.840Z",
-      "lastCalculated": 1753729898840,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T22:36:36.014Z",
+      "lastCalculated": 1753828596014,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h18-1753730814827-kfddsippd",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Mahmoud Novikov"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h6-1753731565799-2g5suwg3a",
+          "lane": 2,
+          "position": "FS",
+          "result": "false_start",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Maria Gallo"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.840Z",
-    "updatedAt": "2025-07-28T19:11:38.840Z"
+    "status": "active",
+    "totalFee": 400,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:36:36.247758",
+    "winRate": 50,
+    "_searchText": "andrew gutierrez 623 andrewgutierrez979@outlook.com"
   },
   {
     "id": "46313b42-22f1-46bd-af3e-3f34fc449b54",
@@ -443524,74 +443979,99 @@
     "updatedAt": "2025-07-28T19:11:38.843Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "mariagallo28@racing.com",
+      "emergency": "788-220-1529",
+      "phone": "768-627-1089"
+    },
+    "createdAt": "2025-07-28T19:11:38.843Z",
+    "dob": "2006-08-10",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "3f3b1908-fe47-407e-b157-49f6ab40e75a",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:36:28.828Z",
     "name": "Maria Gallo",
     "nickname": "maria",
-    "dob": "2006-08-10",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "paid",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Naturally Aspirated",
       "600 Stock"
     ],
+    "sledClass": "Naturally Aspirated",
     "sledClasses": [
       "Naturally Aspirated",
       "600 Stock"
     ],
-    "sledClass": "Naturally Aspirated",
-    "totalFee": 400,
-    "contact": {
-      "email": "mariagallo28@racing.com",
-      "phone": "768-627-1089",
-      "emergency": "788-220-1529"
-    },
-    "sponsors": [
-      "Sponsor 93"
-    ],
     "sledConfigurations": {
-      "Naturally Aspirated": {
-        "engine": "1007cc",
-        "make": "Ski-Doo",
-        "model": "Summit",
-        "year": "2019"
-      },
       "600 Stock": {
         "engine": "1147cc",
         "make": "Yamaha",
         "model": "Renegade",
         "year": "2023"
+      },
+      "Naturally Aspirated": {
+        "engine": "1007cc",
+        "make": "Ski-Doo",
+        "model": "Summit",
+        "year": "2019"
       }
     },
+    "sponsors": [
+      "Sponsor 93"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.843Z",
-      "lastCalculated": 1753729898843,
+      "totalRaces": 1,
+      "totalWins": 1,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T22:36:28.828Z",
+      "lastCalculated": 1753828588828,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h22-1753730814828-lk8edq1h6",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Kemi Al-Aisha"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.843Z",
-    "updatedAt": "2025-07-28T19:11:38.843Z"
+    "status": "active",
+    "totalFee": 400,
+    "totalRaces": 1,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:36:30.105606",
+    "winRate": 100,
+    "_searchText": "maria gallo maria mariagallo28@racing.com"
   },
   {
     "id": "69242da6-32f7-4462-8983-739da5576262",
@@ -483962,8 +484442,9 @@
     "updatedAt": "2025-07-28T19:11:38.856Z"
   },
   {
+    "_searchText": "viktor conti viktorconti294@racing.com",
     "avgPosition": 1,
-    "bestStreak": 1,
+    "bestStreak": 2,
     "contact": {
       "email": "viktorconti294@racing.com",
       "emergency": "743-634-9912",
@@ -483975,13 +484456,18 @@
     "eventsParticipated": 1,
     "id": "d09093b4-2f85-48ec-a63c-d7684cdf9761",
     "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
       "2": {
         "total": 1,
         "wins": 1,
         "winRate": 100
       }
     },
-    "lastRaceDate": "2025-07-28T19:29:40.077Z",
+    "lastRaceDate": "2025-07-29T22:36:17.154Z",
     "name": "Viktor Conti",
     "nickname": "",
     "paymentStatus": "paid",
@@ -484015,13 +484501,18 @@
       "Sponsor 49"
     ],
     "statistics": {
-      "totalRaces": 1,
-      "totalWins": 1,
+      "totalRaces": 2,
+      "totalWins": 2,
       "winRate": 100,
       "avgPosition": 1,
-      "bestStreak": 1,
+      "bestStreak": 2,
       "eventsParticipated": 1,
       "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
         "2": {
           "total": 1,
           "wins": 1,
@@ -484029,8 +484520,8 @@
         }
       },
       "recentWinRate": 100,
-      "lastUpdated": "2025-07-28T19:29:40.077Z",
-      "lastCalculated": 1753730980077,
+      "lastUpdated": "2025-07-29T22:36:17.154Z",
+      "lastCalculated": 1753828577154,
       "totalLosses": 0,
       "bestPosition": 1,
       "worstPosition": 1,
@@ -484045,16 +484536,26 @@
           "result": "completed",
           "timestamp": "2025-07-28T19:26:54.829Z",
           "opponents": "Pavel Al-Mahmoud"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h7-1753731565799-j349t5e0x",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Jacqueline Medina"
         }
       ]
     },
     "status": "active",
     "totalFee": 300,
-    "totalRaces": 1,
-    "totalWins": 1,
-    "updatedAt": "2025-07-28T15:30:51.199938",
-    "winRate": 100,
-    "_searchText": "viktor conti viktorconti294@racing.com"
+    "totalRaces": 2,
+    "totalWins": 2,
+    "updatedAt": "2025-07-29T18:36:18.399912",
+    "winRate": 100
   },
   {
     "id": "60e4221e-726e-477c-9127-f8767488026a",
@@ -496347,30 +496848,39 @@
     "updatedAt": "2025-07-28T19:11:38.857Z"
   },
   {
+    "avgPosition": 1.5,
+    "bestStreak": 1,
+    "contact": {
+      "email": "jacquelinemedina437@outlook.com",
+      "emergency": "941-886-7225",
+      "phone": "328-744-7371"
+    },
+    "createdAt": "2025-07-28T19:11:38.857Z",
+    "dob": "2015-04-15",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "d28bf597-fa68-45b5-8e73-c3c42c722ecc",
+    "lanePerformance": {
+      "2": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:36:24.385Z",
     "name": "Jacqueline Medina",
     "nickname": "",
-    "dob": "2015-04-15",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "paid",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Amateur"
     ],
+    "sledClass": "Amateur",
     "sledClasses": [
       "Amateur"
     ],
-    "sledClass": "Amateur",
-    "totalFee": 50,
-    "contact": {
-      "email": "jacquelinemedina437@outlook.com",
-      "phone": "328-744-7371",
-      "emergency": "941-886-7225"
-    },
-    "sponsors": [],
     "sledConfigurations": {
       "Amateur": {
         "engine": "1176cc",
@@ -496379,32 +496889,59 @@
         "year": "2017"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.857Z",
-      "lastCalculated": 1753729898857,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T22:36:24.385Z",
+      "lastCalculated": 1753828584385,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h8-1753730814825-nh4cn1wwb",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Gary Ruiz"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h7-1753731565799-j349t5e0x",
+          "lane": 2,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Viktor Conti"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.857Z",
-    "updatedAt": "2025-07-28T19:11:38.857Z"
+    "status": "active",
+    "totalFee": 50,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:36:24.654417",
+    "winRate": 50,
+    "_searchText": "jacqueline medina jacquelinemedina437@outlook.com"
   },
   {
     "id": "33c3ba7d-da80-4bd9-803f-156cedf6c7df",
@@ -518681,31 +519218,38 @@
     "updatedAt": "2025-07-28T19:11:38.858Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 2,
+    "contact": {
+      "email": "larsandre261@outlook.com",
+      "emergency": "649-468-8486",
+      "phone": "747-215-8699"
+    },
+    "createdAt": "2025-07-28T19:11:38.858Z",
+    "dob": "2004-09-19",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "328a2d44-a6d0-4dd0-b46f-7aed2948e324",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 2,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:44:39.978Z",
     "name": "Lars Andre",
     "nickname": "",
-    "dob": "2004-09-19",
-    "racingNumber": "55",
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "pending",
-    "status": "active",
+    "racingNumber": "55",
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Electric"
     ],
+    "sledClass": "Electric",
     "sledClasses": [
       "Electric"
-    ],
-    "sledClass": "Electric",
-    "totalFee": 400,
-    "contact": {
-      "email": "larsandre261@outlook.com",
-      "phone": "747-215-8699",
-      "emergency": "649-468-8486"
-    },
-    "sponsors": [
-      "Sponsor 75"
     ],
     "sledConfigurations": {
       "Electric": {
@@ -518715,32 +519259,61 @@
         "year": "2021"
       }
     },
+    "sponsors": [
+      "Sponsor 75"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.858Z",
-      "lastCalculated": 1753729898858,
+      "totalRaces": 2,
+      "totalWins": 2,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 2,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 2,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T22:44:39.978Z",
+      "lastCalculated": 1753829079978,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h4-1753730814824-3pp5sjp5g",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Rafael Castro"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h8-1753731565800-l3zlp4pqt",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Zhou Zaitsev"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.858Z",
-    "updatedAt": "2025-07-28T19:11:38.858Z"
+    "status": "active",
+    "totalFee": 400,
+    "totalRaces": 2,
+    "totalWins": 2,
+    "updatedAt": "2025-07-29T18:44:41.135617",
+    "winRate": 100,
+    "_searchText": "lars andre 55 larsandre261@outlook.com"
   },
   {
     "id": "9a13b349-133f-46c2-b813-5830076e2004",
@@ -552309,31 +552882,38 @@
     "updatedAt": "2025-07-28T19:11:38.861Z"
   },
   {
+    "avgPosition": 2,
+    "bestStreak": 0,
+    "contact": {
+      "email": "yuikruger326@yahoo.com",
+      "emergency": "455-723-6269",
+      "phone": "531-627-3294"
+    },
+    "createdAt": "2025-07-28T19:11:38.861Z",
+    "dob": "1993-06-11",
+    "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
+    "eventsParticipated": 1,
     "id": "7d202415-75b0-43c3-ae7c-e77d0c90f843",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:58:14.744Z",
     "name": "Yui Kruger",
     "nickname": "",
-    "dob": "1993-06-11",
-    "racingNumber": null,
-    "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "paid",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Modified"
     ],
+    "sledClass": "Modified",
     "sledClasses": [
       "Modified"
-    ],
-    "sledClass": "Modified",
-    "totalFee": 400,
-    "contact": {
-      "email": "yuikruger326@yahoo.com",
-      "phone": "531-627-3294",
-      "emergency": "455-723-6269"
-    },
-    "sponsors": [
-      "Sponsor 48"
     ],
     "sledConfigurations": {
       "Modified": {
@@ -552343,32 +552923,50 @@
         "year": "2022"
       }
     },
+    "sponsors": [
+      "Sponsor 48"
+    ],
     "statistics": {
-      "totalRaces": 0,
+      "totalRaces": 1,
       "totalWins": 0,
       "winRate": 0,
-      "avgPosition": 0,
+      "avgPosition": 2,
       "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
       "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.861Z",
-      "lastCalculated": 1753729898861,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "lastUpdated": "2025-07-29T22:58:14.744Z",
+      "lastCalculated": 1753829894744,
+      "totalLosses": 1,
+      "bestPosition": 2,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753829829522-0ageq374k",
+          "lane": 1,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-29T22:57:09.525Z",
+          "opponents": "Martina Jensen, Hana Mthembu"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
+    "status": "active",
+    "totalFee": 400,
+    "totalRaces": 1,
     "totalWins": 0,
+    "updatedAt": "2025-07-29T18:58:13.963969",
     "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.861Z",
-    "updatedAt": "2025-07-28T19:11:38.861Z"
+    "_searchText": "yui kruger yuikruger326@yahoo.com"
   },
   {
     "id": "caf06223-86b8-44c5-8e71-75295d98ebe1",
@@ -641770,42 +642368,54 @@
     "updatedAt": "2025-07-28T19:11:38.869Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "zhouzaitsev366@outlook.com",
+      "emergency": "662-366-3131",
+      "phone": "756-949-5603"
+    },
+    "createdAt": "2025-07-28T19:11:38.869Z",
+    "dob": "2014-08-24",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "ff5cbb17-38f0-4ee6-b241-0436214a5be2",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:44:47.833Z",
     "name": "Zhou Zaitsev",
     "nickname": "zhou",
-    "dob": "2014-08-24",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "waived",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Vintage",
       "Senior",
       "Novice"
     ],
+    "sledClass": "Vintage",
     "sledClasses": [
       "Vintage",
       "Senior",
       "Novice"
     ],
-    "sledClass": "Vintage",
-    "totalFee": 300,
-    "contact": {
-      "email": "zhouzaitsev366@outlook.com",
-      "phone": "756-949-5603",
-      "emergency": "662-366-3131"
-    },
-    "sponsors": [
-      "Sponsor 62"
-    ],
     "sledConfigurations": {
-      "Vintage": {
-        "engine": "622cc",
-        "make": "Yamaha",
-        "model": "Summit",
-        "year": "2021"
+      "Novice": {
+        "engine": "935cc",
+        "make": "Polaris",
+        "model": "Renegade",
+        "year": "2022"
       },
       "Senior": {
         "engine": "890cc",
@@ -641813,39 +642423,73 @@
         "model": "Viper",
         "year": "2016"
       },
-      "Novice": {
-        "engine": "935cc",
-        "make": "Polaris",
-        "model": "Renegade",
-        "year": "2022"
+      "Vintage": {
+        "engine": "622cc",
+        "make": "Yamaha",
+        "model": "Summit",
+        "year": "2021"
       }
     },
+    "sponsors": [
+      "Sponsor 62"
+    ],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.869Z",
-      "lastCalculated": 1753729898869,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T22:44:47.833Z",
+      "lastCalculated": 1753829087833,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h3-1753730814824-3sissssaw",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Liam Cano"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h8-1753731565800-l3zlp4pqt",
+          "lane": 2,
+          "position": "FS",
+          "result": "false_start",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Lars Andre"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.869Z",
-    "updatedAt": "2025-07-28T19:11:38.869Z"
+    "status": "active",
+    "totalFee": 300,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:44:53.495736",
+    "winRate": 50,
+    "_searchText": "zhou zaitsev zhou zhouzaitsev366@outlook.com"
   },
   {
     "id": "7bbc6294-371c-4521-be10-1f0115f89798",
@@ -644040,30 +644684,44 @@
     "updatedAt": "2025-07-28T19:11:38.869Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "jacquesfischer16@yahoo.com",
+      "emergency": "663-141-1923",
+      "phone": "387-954-7260"
+    },
+    "createdAt": "2025-07-28T19:11:38.869Z",
+    "dob": "1984-11-16",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "681918c4-7f3b-45dc-a23f-690caf564728",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "2": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:45:02.022Z",
     "name": "Jacques Fischer",
     "nickname": "",
-    "dob": "1984-11-16",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "waived",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Vintage"
     ],
+    "sledClass": "Vintage",
     "sledClasses": [
       "Vintage"
     ],
-    "sledClass": "Vintage",
-    "totalFee": 400,
-    "contact": {
-      "email": "jacquesfischer16@yahoo.com",
-      "phone": "387-954-7260",
-      "emergency": "663-141-1923"
-    },
-    "sponsors": [],
     "sledConfigurations": {
       "Vintage": {
         "engine": "848cc",
@@ -644072,32 +644730,64 @@
         "year": "2022"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.869Z",
-      "lastCalculated": 1753729898869,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "2": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T22:45:02.022Z",
+      "lastCalculated": 1753829102022,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h23-1753730814829-g4sfgnua5",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Yusuke Yamada"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h9-1753731565800-ycxmn38o2",
+          "lane": 1,
+          "position": "DSQ",
+          "result": "disqualified",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Yusuke Colombo"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.869Z",
-    "updatedAt": "2025-07-28T19:11:38.869Z"
+    "status": "active",
+    "totalFee": 400,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:45:02.316419",
+    "winRate": 50,
+    "_searchText": "jacques fischer jacquesfischer16@yahoo.com"
   },
   {
     "id": "8a8b3634-b2d8-4f3a-8a3a-328b456c9f4a",
@@ -683977,32 +684667,41 @@
     "updatedAt": "2025-07-28T19:11:38.874Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 2,
+    "contact": {
+      "email": "yusukecolombo208@hotmail.com",
+      "emergency": "514-614-9357",
+      "phone": "989-619-6145"
+    },
+    "createdAt": "2025-07-28T19:11:38.874Z",
+    "dob": "1999-11-25",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "5b6d258a-cc3d-4fc4-a2c2-b1d2adb52603",
+    "lanePerformance": {
+      "2": {
+        "total": 2,
+        "wins": 2,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:44:54.872Z",
     "name": "Yusuke Colombo",
     "nickname": "",
-    "dob": "1999-11-25",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "pending",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Custom",
       "Junior"
     ],
+    "sledClass": "Custom",
     "sledClasses": [
       "Custom",
       "Junior"
     ],
-    "sledClass": "Custom",
-    "totalFee": 150,
-    "contact": {
-      "email": "yusukecolombo208@hotmail.com",
-      "phone": "989-619-6145",
-      "emergency": "514-614-9357"
-    },
-    "sponsors": [],
     "sledConfigurations": {
       "Custom": {
         "engine": "1104cc",
@@ -684017,32 +684716,59 @@
         "year": "2015"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.874Z",
-      "lastCalculated": 1753729898874,
+      "totalRaces": 2,
+      "totalWins": 2,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 2,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 2,
+          "wins": 2,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T22:44:54.872Z",
+      "lastCalculated": 1753829094872,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h11-1753730814826-0cr56vm3z",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Jean-Claude Cano"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h9-1753731565800-ycxmn38o2",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Jacques Fischer"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.874Z",
-    "updatedAt": "2025-07-28T19:11:38.874Z"
+    "status": "active",
+    "totalFee": 150,
+    "totalRaces": 2,
+    "totalWins": 2,
+    "updatedAt": "2025-07-29T18:44:56.076434",
+    "winRate": 100,
+    "_searchText": "yusuke colombo yusukecolombo208@hotmail.com"
   },
   {
     "id": "934d6870-8351-4eb0-bb7d-736989a6eaf3",
@@ -689083,8 +689809,9 @@
     "updatedAt": "2025-07-28T19:11:38.874Z"
   },
   {
-    "avgPosition": 0,
-    "bestStreak": 0,
+    "_searchText": "fatima al-leila fatima fatimaal-leila44@racing.com",
+    "avgPosition": 1,
+    "bestStreak": 1,
     "contact": {
       "email": "fatimaal-leila44@racing.com",
       "emergency": "910-799-1637",
@@ -689093,10 +689820,16 @@
     "createdAt": "2025-07-28T19:11:38.874Z",
     "dob": "2014-09-03",
     "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "eventsParticipated": 0,
+    "eventsParticipated": 1,
     "id": "91738af7-8276-4b17-ac0b-fceac7d63f1f",
-    "lanePerformance": {},
-    "lastRaceDate": "2025-07-28T19:29:14.540Z",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:46:58.677Z",
     "name": "Fatima Al-Leila",
     "nickname": "fatima",
     "paymentStatus": "paid",
@@ -689120,27 +689853,56 @@
     },
     "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:29:14.540Z",
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T22:46:58.677Z",
+      "lastCalculated": 1753829218677,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753730814824-gvo35lx7i",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Pedro Jensen"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h10-1753731565800-30mbnzh69",
+          "lane": 1,
+          "position": "FS",
+          "result": "false_start",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Dirk Al-Malik"
+        }
+      ]
     },
     "status": "active",
     "totalFee": 100,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "updatedAt": "2025-07-28T15:29:15.453411",
-    "winRate": 0,
-    "_searchText": "fatima al-leila fatima fatimaal-leila44@racing.com"
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:46:59.884475",
+    "winRate": 50
   },
   {
     "id": "c8812c90-d3b9-4db9-920e-20817f10dff7",
@@ -716001,30 +716763,44 @@
     "updatedAt": "2025-07-28T19:11:38.877Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "dirkal-malik759@outlook.com",
+      "emergency": "599-144-6478",
+      "phone": "182-138-9410"
+    },
+    "createdAt": "2025-07-28T19:11:38.877Z",
+    "dob": "2015-03-21",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "e0b0b010-45a2-48e6-87a4-6fd5dd6ef3bb",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:47:05.692Z",
     "name": "Dirk Al-Malik",
     "nickname": "",
-    "dob": "2015-03-21",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "paid",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Custom"
     ],
+    "sledClass": "Custom",
     "sledClasses": [
       "Custom"
     ],
-    "sledClass": "Custom",
-    "totalFee": 200,
-    "contact": {
-      "email": "dirkal-malik759@outlook.com",
-      "phone": "182-138-9410",
-      "emergency": "599-144-6478"
-    },
-    "sponsors": [],
     "sledConfigurations": {
       "Custom": {
         "engine": "647cc",
@@ -716033,32 +716809,64 @@
         "year": "2021"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.877Z",
-      "lastCalculated": 1753729898877,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T22:47:05.692Z",
+      "lastCalculated": 1753829225692,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h20-1753730814828-0b2vfsx4c",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Jeremy Ramirez"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h10-1753731565800-30mbnzh69",
+          "lane": 2,
+          "position": "FS",
+          "result": "false_start",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Fatima Al-Leila"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.877Z",
-    "updatedAt": "2025-07-28T19:11:38.877Z"
+    "status": "active",
+    "totalFee": 200,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T18:47:05.935872",
+    "winRate": 50,
+    "_searchText": "dirk al-malik dirkal-malik759@outlook.com"
   },
   {
     "id": "7ae61088-73bb-425f-ae2a-eba350fed770",
@@ -737914,8 +738722,8 @@
   },
   {
     "_searchText": "louis lopez louis louislopez17@racing.com",
-    "avgPosition": 1.3,
-    "bestStreak": 1,
+    "avgPosition": 1.5,
+    "bestStreak": 3,
     "contact": {
       "email": "louislopez17@racing.com",
       "emergency": "169-271-6331",
@@ -737927,18 +738735,23 @@
     "eventsParticipated": 1,
     "id": "7f60c6c5-d162-45d6-abc8-18aae05d54da",
     "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      },
       "2": {
         "total": 2,
         "wins": 1,
         "winRate": 50
       },
       "3": {
-        "total": 1,
-        "wins": 1,
+        "total": 2,
+        "wins": 2,
         "winRate": 100
       }
     },
-    "lastRaceDate": "2025-07-28T22:41:14.093Z",
+    "lastRaceDate": "2025-07-28T22:44:27.267Z",
     "name": "Louis Lopez",
     "nickname": "louis",
     "paymentStatus": "paid",
@@ -737970,30 +738783,35 @@
     },
     "sponsors": [],
     "statistics": {
-      "totalRaces": 3,
-      "totalWins": 2,
+      "totalRaces": 6,
+      "totalWins": 4,
       "winRate": 66.7,
-      "avgPosition": 1.3,
-      "bestStreak": 1,
+      "avgPosition": 1.5,
+      "bestStreak": 3,
       "eventsParticipated": 1,
       "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        },
         "2": {
           "total": 2,
           "wins": 1,
           "winRate": 50
         },
         "3": {
-          "total": 1,
-          "wins": 1,
+          "total": 2,
+          "wins": 2,
           "winRate": 100
         }
       },
       "recentWinRate": 66.7,
-      "lastUpdated": "2025-07-28T22:39:31.452Z",
-      "lastCalculated": 1753742371452,
-      "totalLosses": 1,
+      "lastUpdated": "2025-07-28T22:44:27.267Z",
+      "lastCalculated": 1753742667267,
+      "totalLosses": 2,
       "bestPosition": 1,
-      "worstPosition": 2,
+      "worstPosition": 3,
       "raceHistory": [
         {
           "eventId": "576f91f8-d5c8-4a8a-a854-a3ba4202b317",
@@ -738027,14 +738845,47 @@
           "result": "completed",
           "timestamp": "2025-07-28T22:24:53.220Z",
           "opponents": "Tatiana Taylor, Fernando Addo"
+        },
+        {
+          "eventId": "576f91f8-d5c8-4a8a-a854-a3ba4202b317",
+          "className": "800 Stock",
+          "round": 4,
+          "heatId": "heat-r4-h4-1753741894919-iuakqsvv8",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T22:31:34.920Z",
+          "opponents": "Angelika Muller"
+        },
+        {
+          "eventId": "576f91f8-d5c8-4a8a-a854-a3ba4202b317",
+          "className": "800 Stock",
+          "round": 5,
+          "heatId": "heat-r5-h2-1753742110713-jkoywbkq9",
+          "lane": 3,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T22:35:10.713Z",
+          "opponents": "Yumi Weiss"
+        },
+        {
+          "eventId": "576f91f8-d5c8-4a8a-a854-a3ba4202b317",
+          "className": "800 Stock",
+          "round": "final",
+          "heatId": "final-heat-1753742353859-jn3t0ypi5",
+          "lane": 1,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-28T22:39:13.859Z",
+          "opponents": "Tunde Yoshida, Akiko Schneider"
         }
       ]
     },
     "status": "active",
     "totalFee": 250,
-    "totalRaces": 3,
-    "totalWins": 2,
-    "updatedAt": "2025-07-28T18:41:14.331460",
+    "totalRaces": 6,
+    "totalWins": 4,
+    "updatedAt": "2025-07-28T18:44:28.370210",
     "winRate": 66.7
   },
   {
@@ -759671,72 +760522,118 @@
     "updatedAt": "2025-07-28T19:11:38.881Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 2,
+    "contact": {
+      "email": "josephcooper780@yahoo.com",
+      "emergency": "881-388-5551",
+      "phone": "212-409-2616"
+    },
+    "createdAt": "2025-07-28T19:11:38.881Z",
+    "dob": "1988-05-12",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "994339e7-154e-4001-8bee-e9d1180fe5b5",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "2": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T23:00:35.533Z",
     "name": "Joseph Cooper",
     "nickname": "",
-    "dob": "1988-05-12",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "waived",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Exhibition",
       "600 Stock"
     ],
+    "sledClass": "Exhibition",
     "sledClasses": [
       "Exhibition",
       "600 Stock"
     ],
-    "sledClass": "Exhibition",
-    "totalFee": 800,
-    "contact": {
-      "email": "josephcooper780@yahoo.com",
-      "phone": "212-409-2616",
-      "emergency": "881-388-5551"
-    },
-    "sponsors": [],
     "sledConfigurations": {
-      "Exhibition": {
-        "engine": "805cc",
-        "make": "Ski-Doo",
-        "model": "Summit",
-        "year": "2024"
-      },
       "600 Stock": {
         "engine": "1026cc",
         "make": "Polaris",
         "model": "Viper",
         "year": "2021"
+      },
+      "Exhibition": {
+        "engine": "805cc",
+        "make": "Ski-Doo",
+        "model": "Summit",
+        "year": "2024"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.881Z",
-      "lastCalculated": 1753729898881,
+      "totalRaces": 2,
+      "totalWins": 2,
+      "winRate": 100,
+      "avgPosition": 1,
+      "bestStreak": 2,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "2": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 100,
+      "lastUpdated": "2025-07-29T23:00:35.533Z",
+      "lastCalculated": 1753830035533,
       "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h14-1753730814826-w1edwo52d",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Caroline Nelson"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h11-1753731565801-kyqdayvuf",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Kristina Lombardi"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.881Z",
-    "updatedAt": "2025-07-28T19:11:38.881Z"
+    "status": "active",
+    "totalFee": 800,
+    "totalRaces": 2,
+    "totalWins": 2,
+    "updatedAt": "2025-07-29T19:00:33.921952",
+    "winRate": 100,
+    "_searchText": "joseph cooper josephcooper780@yahoo.com"
   },
   {
     "id": "be89c0bf-afd2-453d-96e5-b4685328ecb7",
@@ -775360,72 +776257,118 @@
     "updatedAt": "2025-07-28T19:11:38.883Z"
   },
   {
+    "avgPosition": 1,
+    "bestStreak": 1,
+    "contact": {
+      "email": "kristinalombardi825@yahoo.com",
+      "emergency": "379-288-1883",
+      "phone": "197-462-9925"
+    },
+    "createdAt": "2025-07-28T19:11:38.883Z",
+    "dob": "1996-11-02",
+    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+    "eventsParticipated": 1,
     "id": "f7d54ce5-a5c3-4b36-a8af-8391b3d40ed7",
+    "lanePerformance": {
+      "1": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      },
+      "2": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-29T23:00:37.250Z",
     "name": "Kristina Lombardi",
     "nickname": "",
-    "dob": "1996-11-02",
-    "racingNumber": null,
-    "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "waived",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Hybrid",
       "Exhibition"
     ],
+    "sledClass": "Hybrid",
     "sledClasses": [
       "Hybrid",
       "Exhibition"
     ],
-    "sledClass": "Hybrid",
-    "totalFee": 300,
-    "contact": {
-      "email": "kristinalombardi825@yahoo.com",
-      "phone": "197-462-9925",
-      "emergency": "379-288-1883"
-    },
-    "sponsors": [],
     "sledConfigurations": {
-      "Hybrid": {
-        "engine": "517cc",
-        "make": "Polaris",
-        "model": "Viper",
-        "year": "2016"
-      },
       "Exhibition": {
         "engine": "408cc",
         "make": "Yamaha",
         "model": "Summit",
         "year": "2020"
+      },
+      "Hybrid": {
+        "engine": "517cc",
+        "make": "Polaris",
+        "model": "Viper",
+        "year": "2016"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
-      "totalWins": 0,
-      "winRate": 0,
-      "avgPosition": 0,
-      "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
-      "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.883Z",
-      "lastCalculated": 1753729898883,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "totalRaces": 2,
+      "totalWins": 1,
+      "winRate": 50,
+      "avgPosition": 1,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        },
+        "2": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-29T23:00:37.250Z",
+      "lastCalculated": 1753830037250,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h21-1753730814828-p7t2ea0b4",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-28T19:26:54.829Z",
+          "opponents": "Sergio Collins"
+        },
+        {
+          "eventId": "74398184-724b-4aa3-afc9-82ccfc9aaaf8",
+          "className": "600 Stock",
+          "round": 2,
+          "heatId": "heat-r2-h11-1753731565801-kyqdayvuf",
+          "lane": 1,
+          "position": "DSQ",
+          "result": "disqualified",
+          "timestamp": "2025-07-28T19:39:25.809Z",
+          "opponents": "Joseph Cooper"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
-    "totalWins": 0,
-    "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.883Z",
-    "updatedAt": "2025-07-28T19:11:38.883Z"
+    "status": "active",
+    "totalFee": 300,
+    "totalRaces": 2,
+    "totalWins": 1,
+    "updatedAt": "2025-07-29T19:00:40.740545",
+    "winRate": 50,
+    "_searchText": "kristina lombardi kristinalombardi825@yahoo.com"
   },
   {
     "id": "421763a3-226d-4cf6-b764-821d65cb95d2",
@@ -820622,34 +821565,43 @@
     "updatedAt": "2025-07-28T19:11:38.889Z"
   },
   {
+    "avgPosition": 3,
+    "bestStreak": 0,
+    "contact": {
+      "email": "martinajensen325@hotmail.com",
+      "emergency": "432-815-7041",
+      "phone": "801-612-6016"
+    },
+    "createdAt": "2025-07-28T19:11:38.889Z",
+    "dob": "2015-11-01",
+    "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
+    "eventsParticipated": 1,
     "id": "0ed4b5ed-abef-464c-9ea8-638d3a68ad1a",
+    "lanePerformance": {
+      "2": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-29T22:58:21.816Z",
     "name": "Martina Jensen",
     "nickname": "martina",
-    "dob": "2015-11-01",
-    "racingNumber": null,
-    "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
-    "registrationType": "event",
-    "registrationDate": "2025-07-28",
     "paymentStatus": "paid",
-    "status": "active",
+    "racingNumber": null,
+    "registrationDate": "2025-07-28",
+    "registrationType": "event",
     "selectedClasses": [
       "Master",
       "Professional",
       "Open"
     ],
+    "sledClass": "Master",
     "sledClasses": [
       "Master",
       "Professional",
       "Open"
     ],
-    "sledClass": "Master",
-    "totalFee": 1200,
-    "contact": {
-      "email": "martinajensen325@hotmail.com",
-      "phone": "801-612-6016",
-      "emergency": "432-815-7041"
-    },
-    "sponsors": [],
     "sledConfigurations": {
       "Master": {
         "engine": "953cc",
@@ -820657,45 +821609,61 @@
         "model": "Renegade",
         "year": "2016"
       },
-      "Professional": {
-        "engine": "955cc",
-        "make": "Polaris",
-        "model": "Viper",
-        "year": "2017"
-      },
       "Open": {
         "engine": "663cc",
         "make": "Polaris",
         "model": "Renegade",
         "year": "2018"
+      },
+      "Professional": {
+        "engine": "955cc",
+        "make": "Polaris",
+        "model": "Viper",
+        "year": "2017"
       }
     },
+    "sponsors": [],
     "statistics": {
-      "totalRaces": 0,
+      "totalRaces": 1,
       "totalWins": 0,
       "winRate": 0,
-      "avgPosition": 0,
+      "avgPosition": 3,
       "bestStreak": 0,
-      "eventsParticipated": 0,
-      "lanePerformance": {},
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "2": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
       "recentWinRate": 0,
-      "lastUpdated": "2025-07-28T19:11:38.889Z",
-      "lastCalculated": 1753729898889,
-      "totalLosses": 0,
-      "bestPosition": null,
-      "worstPosition": null,
-      "raceHistory": []
+      "lastUpdated": "2025-07-29T22:58:21.816Z",
+      "lastCalculated": 1753829901816,
+      "totalLosses": 1,
+      "bestPosition": 3,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "3fb6c6dd-7e60-49f4-888e-cf93e26332c1",
+          "className": "600 Stock",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753829829522-0ageq374k",
+          "lane": 2,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-29T22:57:09.525Z",
+          "opponents": "Yui Kruger, Hana Mthembu"
+        }
+      ]
     },
-    "avgPosition": 0,
-    "bestStreak": 0,
-    "eventsParticipated": 0,
-    "lanePerformance": {},
-    "lastRaceDate": null,
-    "totalRaces": 0,
+    "status": "active",
+    "totalFee": 1200,
+    "totalRaces": 1,
     "totalWins": 0,
+    "updatedAt": "2025-07-29T18:58:20.137929",
     "winRate": 0,
-    "createdAt": "2025-07-28T19:11:38.889Z",
-    "updatedAt": "2025-07-28T19:11:38.889Z"
+    "_searchText": "martina jensen martina martinajensen325@hotmail.com"
   },
   {
     "id": "8e8dd77a-ed54-41c9-b713-9ed14f9bb1a7",
@@ -830545,5 +831513,431 @@
     "winRate": 0,
     "createdAt": "2025-07-28T19:11:38.890Z",
     "updatedAt": "2025-07-28T19:11:38.890Z"
+  },
+  {
+    "_searchText": "drv 1",
+    "avgPosition": 1,
+    "bestStreak": 2,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-30T01:28:28.111Z",
+    "dob": "2025-07-29",
+    "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+    "eventsParticipated": 1,
+    "id": "a1ddee5d-5c3e-4e6b-9e0c-dd639b22a6a8",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      },
+      "2": {
+        "total": 2,
+        "wins": 2,
+        "winRate": 100
+      }
+    },
+    "lastRaceDate": "2025-07-30T08:42:07.585Z",
+    "name": "drv 1",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-29T21:28:28.127640",
+    "registrationType": "event",
+    "selectedClasses": [
+      "class1",
+      "class2"
+    ],
+    "sponsors": [
+      "aaa"
+    ],
+    "statistics": {
+      "totalRaces": 4,
+      "totalWins": 3,
+      "winRate": 75,
+      "avgPosition": 1,
+      "bestStreak": 2,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        },
+        "2": {
+          "total": 2,
+          "wins": 2,
+          "winRate": 100
+        }
+      },
+      "recentWinRate": 75,
+      "lastUpdated": "2025-07-30T08:41:53.324Z",
+      "lastCalculated": 1753864913324,
+      "totalLosses": 1,
+      "bestPosition": 1,
+      "worstPosition": 1,
+      "raceHistory": [
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 1,
+          "heatId": "heat-r1-h2-1753839366196-i55wai4wg",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:36:06.196Z",
+          "opponents": "Francesco Alekseev"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 2,
+          "heatId": "final-heat-1753839421397-zenhhqis3",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:37:01.398Z",
+          "opponents": "Per Nelson"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": "final",
+          "heatId": "final-heat-1753840053453-co0tb8wyb",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:47:33.453Z",
+          "opponents": "drv 3"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class2",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753839371715-3vg5tkb3q",
+          "lane": 1,
+          "position": "FS",
+          "result": "false_start",
+          "timestamp": "2025-07-30T01:36:11.716Z",
+          "opponents": "drv 2"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 5,
+    "totalRaces": 4,
+    "totalWins": 3,
+    "updatedAt": "2025-07-30T04:42:08.746320",
+    "vehicleConfigurations": {
+      "class1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "class2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "winRate": 75
+  },
+  {
+    "_searchText": "drv 2",
+    "avgPosition": 1.5,
+    "bestStreak": 1,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-30T01:28:44.078Z",
+    "dob": "2025-07-29",
+    "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+    "eventsParticipated": 1,
+    "id": "1d45a04e-c93f-495b-8d6e-f7247cbb4e89",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      },
+      "2": {
+        "total": 1,
+        "wins": 1,
+        "winRate": 100
+      },
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-30T01:47:44.903Z",
+    "name": "drv 2",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-29T21:28:44.081662",
+    "registrationType": "event",
+    "selectedClasses": [
+      "class1",
+      "class2"
+    ],
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 4,
+      "totalWins": 2,
+      "winRate": 50,
+      "avgPosition": 1.5,
+      "bestStreak": 1,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        },
+        "2": {
+          "total": 1,
+          "wins": 1,
+          "winRate": 100
+        },
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 50,
+      "lastUpdated": "2025-07-30T01:47:33.421Z",
+      "lastCalculated": 1753840053421,
+      "totalLosses": 2,
+      "bestPosition": 1,
+      "worstPosition": 2,
+      "raceHistory": [
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753839366195-20wnvct34",
+          "lane": 3,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:36:06.196Z",
+          "opponents": "drv 3, Per Nelson"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 2,
+          "heatId": "final-heat-1753839421398-5mg2vikzo",
+          "lane": 1,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:37:01.398Z",
+          "opponents": "drv 3, Francesco Alekseev"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class2",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753839371715-3vg5tkb3q",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:36:11.716Z",
+          "opponents": "drv 1"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class2",
+          "round": "final",
+          "heatId": "final-heat-1753839433078-g06vqjve7",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:37:13.078Z",
+          "opponents": "drv 3, Per Nelson"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 5,
+    "totalRaces": 4,
+    "totalWins": 2,
+    "updatedAt": "2025-07-29T21:47:45.091417",
+    "vehicleConfigurations": {
+      "class1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "class2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "winRate": 50
+  },
+  {
+    "_searchText": "drv 3",
+    "avgPosition": 2,
+    "bestStreak": 2,
+    "contact": {
+      "email": "",
+      "emergency": "",
+      "phone": ""
+    },
+    "createdAt": "2025-07-30T01:28:56.236Z",
+    "dob": "2025-07-29",
+    "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+    "eventsParticipated": 1,
+    "id": "5a68fa0f-9192-454a-9e28-41239a2ce327",
+    "lanePerformance": {
+      "1": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      },
+      "2": {
+        "total": 2,
+        "wins": 1,
+        "winRate": 50
+      },
+      "3": {
+        "total": 1,
+        "wins": 0,
+        "winRate": 0
+      }
+    },
+    "lastRaceDate": "2025-07-30T08:42:21.967Z",
+    "name": "drv 3",
+    "nickname": "",
+    "paymentStatus": "pending",
+    "racingNumber": null,
+    "registrationDate": "2025-07-29T21:28:57.664004",
+    "registrationType": "event",
+    "selectedClasses": [
+      "class1",
+      "class2"
+    ],
+    "sponsors": [],
+    "statistics": {
+      "totalRaces": 5,
+      "totalWins": 2,
+      "winRate": 40,
+      "avgPosition": 2,
+      "bestStreak": 2,
+      "eventsParticipated": 1,
+      "lanePerformance": {
+        "1": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        },
+        "2": {
+          "total": 2,
+          "wins": 1,
+          "winRate": 50
+        },
+        "3": {
+          "total": 1,
+          "wins": 0,
+          "winRate": 0
+        }
+      },
+      "recentWinRate": 40,
+      "lastUpdated": "2025-07-30T08:42:00.353Z",
+      "lastCalculated": 1753864920353,
+      "totalLosses": 3,
+      "bestPosition": 1,
+      "worstPosition": 3,
+      "raceHistory": [
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 1,
+          "heatId": "heat-r1-h1-1753839366195-20wnvct34",
+          "lane": 1,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:36:06.196Z",
+          "opponents": "Per Nelson, drv 2"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": 2,
+          "heatId": "final-heat-1753839421398-5mg2vikzo",
+          "lane": 2,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:37:01.398Z",
+          "opponents": "drv 2, Francesco Alekseev"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class1",
+          "round": "final",
+          "heatId": "final-heat-1753840053453-co0tb8wyb",
+          "lane": 3,
+          "position": 2,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:47:33.453Z",
+          "opponents": "drv 1"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class2",
+          "round": 1,
+          "heatId": "heat-r1-h2-1753839371716-ivx923fzd",
+          "lane": 1,
+          "position": 1,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:36:11.716Z",
+          "opponents": "Per Nelson"
+        },
+        {
+          "eventId": "f0f8b357-5fb9-4d5f-8013-04a2213cb33d",
+          "className": "class2",
+          "round": "final",
+          "heatId": "final-heat-1753839433078-g06vqjve7",
+          "lane": 2,
+          "position": 3,
+          "result": "completed",
+          "timestamp": "2025-07-30T01:37:13.078Z",
+          "opponents": "drv 2, Per Nelson"
+        }
+      ]
+    },
+    "status": "active",
+    "totalFee": 5,
+    "totalRaces": 5,
+    "totalWins": 2,
+    "updatedAt": "2025-07-30T04:42:22.494657",
+    "vehicleConfigurations": {
+      "class1": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      },
+      "class2": {
+        "engine": "",
+        "make": "",
+        "model": "",
+        "year": ""
+      }
+    },
+    "winRate": 40
   }
 ]

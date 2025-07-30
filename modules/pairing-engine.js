@@ -1130,6 +1130,58 @@ class PairingEngine {
     }
 
     /**
+     * Reverse a race result - remove it from all tracking histories
+     */
+    reverseRaceResult(heat, results) {
+        console.log('Reversing race result for heat:', heat.id);
+        
+        if (!results || !Array.isArray(results)) {
+            console.warn('Invalid results provided for reversal');
+            return false;
+        }
+
+        // Get participants from the heat
+        const participants = heat.lanes
+            .filter(lane => lane.participant)
+            .map(lane => lane.participant);
+
+        // Reverse opponent history - remove this heat's opponents
+        participants.forEach(participant1 => {
+            const opponents = this.opponentHistory.get(participant1.id) || new Set();
+            participants.forEach(participant2 => {
+                if (participant1.id !== participant2.id) {
+                    opponents.delete(participant2.id);
+                }
+            });
+            this.opponentHistory.set(participant1.id, opponents);
+        });
+
+        // Reverse lane history - decrement lane usage
+        heat.lanes.forEach(laneAssignment => {
+            if (laneAssignment.participant) {
+                const laneStats = this.laneHistory.get(laneAssignment.participant.id) || {};
+                if (laneStats[laneAssignment.lane]) {
+                    laneStats[laneAssignment.lane] = Math.max(0, laneStats[laneAssignment.lane] - 1);
+                }
+                this.laneHistory.set(laneAssignment.participant.id, laneStats);
+            }
+        });
+
+        // Reverse race history - remove this heat from race counts
+        participants.forEach(participant => {
+            const races = this.raceHistory.get(participant.id) || [];
+            const index = races.indexOf(heat.id);
+            if (index > -1) {
+                races.splice(index, 1);
+            }
+            this.raceHistory.set(participant.id, races);
+        });
+
+        console.log('Race result reversed successfully');
+        return true;
+    }
+
+    /**
      * Get statistics for a participant
      */
     getParticipantStats(participantId) {

@@ -197,7 +197,7 @@ class RegistrationManager {
         if (!select) return;
 
         try {
-            const result = await dataManager.getEvents();
+            const result = await dataManager.getEvents({}, 1, 1000);
             const events = result.events || result; // Handle both paginated and direct array responses
             select.innerHTML = '<option value="">Select an event...</option>';
             

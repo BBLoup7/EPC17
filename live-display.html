@@ -961,7 +961,7 @@
                     console.log('📡 Loading data for Live Display...');
                     
                     // Load events data
-                    const eventsResult = await window.dataManager.getEvents();
+                    const eventsResult = await window.dataManager.getEvents({}, 1, 1000);
                     this.events = eventsResult.events || eventsResult;
                     console.log('📅 Events loaded:', this.events?.length || 0, 'events');
                     
@@ -1004,7 +1004,7 @@
                     }
                     
                     // Load participants data
-                    const participantsResult = await window.dataManager.getParticipants();
+                    const participantsResult = await window.dataManager.getParticipants({}, 1, 1000);
                     this.participants = participantsResult.participants || participantsResult;
                     console.log('👥 Participants loaded:', this.participants?.length || 0, 'participants');
                     
@@ -1081,9 +1081,9 @@
                 // Refresh only the data files without re-running event selection logic
                 try {
                     const [eventsData, racesData, participantsData, bracketsData] = await Promise.all([
-                        dataManager.getEvents(),
+                        dataManager.getEvents({}, 1, 1000),
                         dataManager.getRaces(),
-                        dataManager.getParticipants(),
+                        dataManager.getParticipants({}, 1, 1000),
                         dataManager.getRaceBrackets()
                     ]);
                     

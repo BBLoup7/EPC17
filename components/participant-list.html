@@ -52,7 +52,6 @@
                     <th>Name</th>
                     <th>Racing #</th>
                     <th>Classes</th>
-                    <th>Sled Info</th>
                     <th>Total Fee</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -736,13 +735,8 @@ function createOptimizedParticipantRow(participant, rowIndex = null) {
         };
     }
     
-    // Optimize class and sled info processing
+    // Optimize class processing
     const classesText = (participant.selectedClasses || []).join(', ') || 'N/A';
-    const sledInfo = [
-        participant.sledYear,
-        participant.sledMake,
-        participant.sledModel
-    ].filter(Boolean).join(' ') || 'N/A';
     
     const status = participant.status || 'active';
     const statusClass = `status-${status}`;
@@ -755,7 +749,6 @@ function createOptimizedParticipantRow(participant, rowIndex = null) {
         </td>
         <td>${participant.racingNumber ? `#${participant.racingNumber}` : 'N/A'}</td>
         <td>${classesText}</td>
-        <td>${sledInfo}</td>
         <td>${participant.totalFee ? `$${participant.totalFee.toFixed(2)}` : 'N/A'}</td>
         <td><span class="status-badge ${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
         <td>
@@ -930,6 +923,14 @@ function createEditParticipantModal(participant) {
                     </div>
                 </div>
 
+                <!-- Vehicle Configurations -->
+                <div class="form-section">
+                    <h3>Vehicle Configurations</h3>
+                    <div id="editVehicleConfigurations" class="vehicle-configurations">
+                        <!-- Vehicle configurations will be loaded here -->
+                    </div>
+                </div>
+
                 <!-- Event Assignment -->
                 <div class="form-section">
                     <h3>Event Assignments</h3>
@@ -1003,6 +1004,39 @@ function createEditParticipantModal(participant) {
             
             .form-group {
                 margin-bottom: 1.5rem;
+            }
+            
+            .vehicle-configurations {
+                margin-top: 1rem;
+            }
+            
+            .vehicle-config {
+                background: var(--bg-primary);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .vehicle-config h4 {
+                margin: 0 0 1rem 0;
+                color: var(--text-primary);
+                font-size: 1rem;
+                font-weight: 600;
+            }
+            
+            .vehicle-config-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            
+            .vehicle-config-grid .form-group {
+                margin-bottom: 1rem;
+            }
+            
+            .vehicle-config-grid .form-group:last-child {
+                margin-bottom: 0;
             }
             
             .form-label, label {
@@ -1402,6 +1436,9 @@ function initializeEditForm(participant) {
     // Load available classes
     loadEditClassOptions(participant);
     
+    // Load vehicle configurations
+    loadEditVehicleConfigurations(participant);
+    
     // Load available events
     loadEditEventOptions(participant);
     loadEditSponsors(participant);
@@ -1453,10 +1490,10 @@ function loadEditClassOptions(participant) {
         console.log('No classes found from participants - classes should be configured in events/series');
     }
     
-    const classOptions = Array.from(allClasses).sort().map(className => {
+    const classOptionsHtml = Array.from(allClasses).sort().map(className => {
         const isSelected = participant.selectedClasses && participant.selectedClasses.includes(className);
         return `
-            <div class="class-option ${isSelected ? 'selected' : ''}" data-class="${className}" onclick="toggleEditClass('${className}')">
+            <div class="class-option ${isSelected ? 'selected' : ''}" data-class="${className}">
                 <h5>${className}</h5>
                 <div class="class-fee">$50.00</div>
                 <div class="class-description">Racing class</div>
@@ -1464,7 +1501,16 @@ function loadEditClassOptions(participant) {
         `;
     }).join('');
     
-    container.innerHTML = classOptions;
+    container.innerHTML = classOptionsHtml;
+    
+    // Add event listeners for class selection changes
+    const classOptionElements = container.querySelectorAll('.class-option');
+    classOptionElements.forEach(option => {
+        option.addEventListener('click', () => {
+            const className = option.dataset.class;
+            toggleEditClass(className);
+        });
+    });
 }
 
 // Load event options for editing
@@ -1510,6 +1556,95 @@ function loadEditEventOptions(participant) {
     }).join('');
     
     container.innerHTML = eventOptions;
+}
+
+// Load vehicle configurations for editing
+function loadEditVehicleConfigurations(participant) {
+    const container = document.getElementById('editVehicleConfigurations');
+    if (!container) return;
+    
+    // Clear existing configurations
+    container.innerHTML = '';
+    
+    // Load configurations for each selected class
+    if (participant.selectedClasses) {
+        participant.selectedClasses.forEach(className => {
+            addEditVehicleConfig(className, participant);
+        });
+    }
+}
+
+// Add vehicle configuration for a class
+function addEditVehicleConfig(className, participant) {
+    const container = document.getElementById('editVehicleConfigurations');
+    if (!container) return;
+    
+    // Check if configuration already exists
+    if (document.getElementById(`edit-vehicle-config-${className.replace(/\s+/g, '-')}`)) {
+        return;
+    }
+    
+    // Get existing configuration or create default
+    const existingConfig = participant.sledConfigurations?.[className] || {};
+    
+    const configDiv = document.createElement('div');
+    configDiv.className = 'vehicle-config';
+    configDiv.id = `edit-vehicle-config-${className.replace(/\s+/g, '-')}`;
+    
+    configDiv.innerHTML = `
+        <h4>🏁 Vehicle Configuration for ${className}</h4>
+        <div class="vehicle-config-grid">
+            <div class="form-group">
+                <label class="form-label">Vehicle Make</label>
+                <input type="text" class="form-control" id="edit_vehicle_${className.replace(/\s+/g, '_')}_make" 
+                       value="${existingConfig.make || ''}" placeholder="e.g., Brand A, Brand B, Brand C">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vehicle Model</label>
+                <input type="text" class="form-control" id="edit_vehicle_${className.replace(/\s+/g, '_')}_model" 
+                       value="${existingConfig.model || ''}" placeholder="e.g., Model X, Model Y, Model Z">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vehicle Year</label>
+                <input type="number" class="form-control" id="edit_vehicle_${className.replace(/\s+/g, '_')}_year" 
+                       value="${existingConfig.year || ''}" min="1990" max="2025" placeholder="e.g., 2023">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Engine</label>
+                <input type="text" class="form-control" id="edit_vehicle_${className.replace(/\s+/g, '_')}_engine" 
+                       value="${existingConfig.engine || ''}" placeholder="e.g., V8, 4-cylinder, Electric">
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(configDiv);
+}
+
+// Remove vehicle configuration for a class
+function removeEditVehicleConfig(className) {
+    const configDiv = document.getElementById(`edit-vehicle-config-${className.replace(/\s+/g, '-')}`);
+    if (configDiv) {
+        configDiv.remove();
+    }
+}
+
+// Toggle class selection and handle vehicle configuration
+function toggleEditClass(className) {
+    const option = document.querySelector(`#editClassSelection .class-option[data-class="${className}"]`);
+    if (!option) return;
+    
+    const isSelected = option.classList.contains('selected');
+    
+    if (isSelected) {
+        option.classList.remove('selected');
+        removeEditVehicleConfig(className);
+    } else {
+        option.classList.add('selected');
+        // Get participant data from the hidden input
+        const participantId = document.getElementById('editParticipantId').value;
+        const participant = allParticipants.find(p => p.id === participantId);
+        addEditVehicleConfig(className, participant);
+    }
 }
 
 // Load sponsors for editing
@@ -1602,6 +1737,18 @@ async function handleEditFormSubmit(event) {
         const selectedClassElements = document.querySelectorAll('.class-option.selected');
         const selectedClasses = Array.from(selectedClassElements).map(el => el.dataset.class);
         
+        // Collect vehicle configurations
+        const vehicleConfigurations = {};
+        selectedClasses.forEach(className => {
+            const classId = className.replace(/\s+/g, '_');
+            vehicleConfigurations[className] = {
+                make: document.getElementById(`edit_vehicle_${classId}_make`)?.value || '',
+                model: document.getElementById(`edit_vehicle_${classId}_model`)?.value || '',
+                year: document.getElementById(`edit_vehicle_${classId}_year`)?.value || '',
+                engine: document.getElementById(`edit_vehicle_${classId}_engine`)?.value || ''
+            };
+        });
+        
         const selectedEventElements = document.querySelectorAll('.event-option.selected');
         const selectedEvents = Array.from(selectedEventElements).map(el => el.dataset.eventId);
         
@@ -1621,6 +1768,7 @@ async function handleEditFormSubmit(event) {
             },
             sponsors: sponsors,
             selectedClasses: selectedClasses,
+            sledConfigurations: vehicleConfigurations, // Add vehicle configurations
             selectedEvents: selectedEvents, // Multiple events support
             eventId: selectedEvents.length > 0 ? selectedEvents[0] : null, // Keep backward compatibility
             status: document.getElementById('editStatus').value,
@@ -2012,6 +2160,10 @@ window.setupComboBox = setupComboBox;
 window.filterComboOptions = filterComboOptions;
 window.updateComboSelection = updateComboSelection;
 window.handleEditFormSubmit = handleEditFormSubmit;
+window.addEditVehicleConfig = addEditVehicleConfig;
+window.removeEditVehicleConfig = removeEditVehicleConfig;
+window.loadEditVehicleConfigurations = loadEditVehicleConfigurations;
+window.toggleEditClass = toggleEditClass;
 window.changeParticipantPage = changeParticipantPage;
 window.refreshParticipantList = refreshParticipantList;
 window.setupParticipantFilters = setupParticipantFilters;

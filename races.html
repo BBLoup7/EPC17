@@ -525,6 +525,96 @@
             border-top: 1px solid var(--border-color);
         }
 
+        .heat-results-modal {
+            padding: 1rem;
+        }
+
+        .heat-results-modal h3 {
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .results-table {
+            margin-bottom: 2rem;
+        }
+
+        .results-table table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table th {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .results-table td {
+            color: var(--text-primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        /* Modal cleanup fallback */
+        .dialog-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0,0,0,0.5) !important;
+            z-index: 999 !important;
+        }
+
+        .pairing-analysis-dialog {
+            position: fixed !important;
+            z-index: 1000 !important;
+        }
+
+        .reset-heat-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #6b7280 !important;
+            color: #9ca3af !important;
+        }
+
+        .reset-heat-btn.disabled:hover {
+            background: #6b7280 !important;
+            color: #9ca3af !important;
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -918,6 +1008,70 @@
                 modal.style.display = 'none';
             }
         }
+
+        function closeHeatResultsModal() {
+            closeRaceResultModal();
+        }
+
+        function showHeatResults(heatId) {
+            if (window.raceUI) {
+                window.raceUI.showHeatResults(heatId);
+            }
+        }
+
+        function resetCompletedHeatFromModal(heatId) {
+            if (window.raceUI) {
+                closeHeatResultsModal();
+                window.raceUI.resetCompletedHeat(heatId);
+            }
+        }
+
+        function showAdvancedResetOptions(heatId) {
+            if (window.raceUI) {
+                window.raceUI.showAdvancedResetOptions(heatId);
+            }
+        }
+
+        function closePairingAnalysisDialog() {
+            if (window.raceUI) {
+                window.raceUI.closePairingAnalysisDialog();
+            }
+        }
+
+
+
+        // Emergency cleanup function for stuck modals
+        function emergencyModalCleanup() {
+            console.log('Performing emergency modal cleanup...');
+            
+            // Remove all modal dialogs
+            const dialogs = document.querySelectorAll('.pairing-analysis-dialog, .modal');
+            dialogs.forEach(dialog => {
+                console.log('Removing dialog:', dialog.className);
+                dialog.remove();
+            });
+            
+            // Remove all overlays
+            const overlays = document.querySelectorAll('.dialog-overlay, div[style*="background: rgba(0,0,0,0.5)"]');
+            overlays.forEach(overlay => {
+                console.log('Removing overlay');
+                overlay.remove();
+            });
+            
+            // Remove any fixed position overlays
+            const fixedOverlays = document.querySelectorAll('div[style*="position: fixed"][style*="z-index: 999"]');
+            fixedOverlays.forEach(overlay => {
+                if (overlay.style.background && overlay.style.background.includes('rgba(0,0,0,0.5)')) {
+                    console.log('Removing fixed overlay');
+                    overlay.remove();
+                }
+            });
+            
+            console.log('Emergency modal cleanup completed');
+        }
+
+        // Add emergency cleanup to window for debugging
+        window.emergencyModalCleanup = emergencyModalCleanup;
 
         // Delete event function for race page
         window.deleteEventFromRacePage = async function(eventId) {

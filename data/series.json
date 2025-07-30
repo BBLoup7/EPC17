@@ -286,5 +286,39 @@
     "createdAt": "2025-07-28T19:11:38.787Z",
     "updatedAt": "2025-07-28T19:11:38.787Z",
     "createdDate": "2025-07-28"
+  },
+  {
+    "name": "Test 1",
+    "description": "",
+    "status": "upcoming",
+    "seasons": [
+      {
+        "id": "season_1753831830162_2z5v488ak",
+        "name": "test",
+        "startDate": "2025-07-24",
+        "endDate": "2025-08-07",
+        "status": "active",
+        "createdAt": "2025-07-29T23:30:30.162Z"
+      }
+    ],
+    "sledClasses": [
+      {
+        "id": "class_1753831830162_fhwpe2cb0",
+        "name": "class1",
+        "defaultFee": 2,
+        "description": "class1 class racing"
+      },
+      {
+        "id": "class_1753831830162_kpz7752r8",
+        "name": "class2",
+        "defaultFee": 3,
+        "description": "class2 class racing"
+      }
+    ],
+    "id": "ea0f4934-cd2a-4f19-aa54-1aed19e8660f",
+    "createdAt": "2025-07-29T23:30:30.162Z",
+    "updatedAt": "2025-07-29T23:30:30.162Z",
+    "createdDate": "2025-07-29T19:30:30.167098",
+    "events": []
   }
 ]
