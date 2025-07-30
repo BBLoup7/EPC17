@@ -1,163 +1,241 @@
-# 🏁 EPC17 - Event Management System
-
-## Overview
-Professional event management system for racing events with network-accessible server architecture for multi-computer access.
 
 ## 🚀 Quick Start
 
+### Prerequisites
+- Python 3.8 or higher
+- Modern web browser
+- Network access (for multi-computer setup)
+
 ### Installation
 ```bash
-pip install -r requirements.txt
-```
+# Clone the repository
+git clone https://github.com/your-username/EPC17.git
+cd EPC17
 
-### Start Server
-```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start the server
 python server.py
 ```
 
-**Server will be accessible at:**
-- `http://localhost:5000` (local machine)
-- `http://127.0.0.1:5000` (same as localhost)  
-- `http://[your-ip]:5000` (network access from other computers)
+### Access the Application
+- **Local Access**: `http://localhost:5000`
+- **Network Access**: `http://[your-ip]:5000` (accessible from other computers)
+
+## 🎯 Features
+
+### 🏆 Event Management
+- **Series Management**: Create and manage racing series with multiple events
+- **Event Configuration**: Set up individual racing events with custom tracks and elimination types
+- **Participant Registration**: Complete registration system with payment tracking
+- **Advanced Pairing**: Smart bracket generation avoiding rematches and optimizing track usage
+
+### 🏁 Race Operations
+- **Bracket Generation**: Single and double elimination brackets with winner/loser paths
+- **Real-time Results**: Instant race result entry and standings updates
+- **Track Assignment**: Optimized track rotation to ensure fair competition
+- **Live Display**: Real-time race information display for spectators
+
+### 📊 Analytics & Reporting
+- **Standings Tracking**: Real-time championship standings and points
+- **Performance Analytics**: Driver statistics and performance metrics
+- **Event Summaries**: Comprehensive event reports and results
+- **Data Export**: Export functionality for backup and analysis
+
+### 🌐 Network Architecture
+- **Multi-Computer Access**: Centralized server accessible from multiple computers
+- **Thread-Safe Operations**: Concurrent access protection for multiple users
+- **Automatic Backups**: Data backup system with version control
+- **Health Monitoring**: Server status and performance monitoring
 
 ## 🏗️ Architecture
 
-### Unified Data Management
-- **Single Source of Truth**: All data stored in `./data/` directory
-- **Server-Side Storage**: JSON files managed by Python Flask server
-- **Network Access**: CORS-enabled for multi-computer access
-- **Thread-Safe**: Concurrent access protection with automatic backups
-
-### Core Components
-
-#### Backend (`server.py`)
-- Flask REST API server
-- Thread-safe data operations
-- Network-accessible (`0.0.0.0:5000`)
-- Automatic data backup system
-- Health monitoring endpoint
-
-#### Frontend Data Manager (`utils/data-manager.js`)
-- Server-only data persistence
-- Unified API client
-- Error handling and offline fallback
-- Export/import functionality
-
-#### Modules
-- `modules/registration.js` - Participant registration
-- `modules/series.js` - Series management  
-- `modules/event.js` - Event creation and management
-- `modules/race.js` - Race brackets and results
-- `modules/pairing-engine.js` - Advanced pairing logic
-
-## 📊 Data Structure
-
-### Storage Files (in `./data/`)
-- `participants.json` - Participant registrations
-- `series.json` - Race series information  
-- `events.json` - Individual racing events
-- `races.json` - Race results and brackets
-
-### API Endpoints
-```
-GET/POST /api/participants    - Participant management
-GET/POST /api/series         - Series management  
-GET/POST /api/events         - Event management
-GET/POST /api/races          - Race results
-GET      /api/standings      - Calculate standings
-GET      /api/health         - Server health check
+### Backend (Python Flask)
+```python
+# Core server with REST API
+server.py              # Main Flask application
+requirements.txt       # Python dependencies
 ```
 
-## 🌐 Network Access
+### Frontend (HTML/CSS/JavaScript)
+```
+js/                    # Core JavaScript modules
+├── app.js            # Main application logic
+├── mobile-nav.js     # Mobile navigation
+└── race-ui.js        # Race interface components
 
-### Multi-Computer Setup
-1. **Server Computer**: Run `python server.py`
-2. **Client Computers**: Access via `http://[server-ip]:5000`
-3. **Same Data**: All computers access the same centralized database
+modules/               # Business logic modules
+├── registration.js   # Participant registration
+├── series.js         # Series management
+├── event.js          # Event operations
+├── race.js           # Race management
+└── pairing-engine.js # Advanced pairing logic
 
-### Firewall Configuration
-- **Windows**: Allow Python through Windows Firewall on port 5000
-- **Network**: Ensure port 5000 is open on local network
+utils/                 # Utility modules
+├── data-manager.js   # API client and data operations
+├── event-bus.js      # Event-driven communication
+├── helpers.js        # Helper functions
+└── validation.js     # Form validation
+```
 
-## 🔧 Features
+### Data Storage
+```
+data/                  # JSON-based data storage
+├── participants.json  # Participant registrations
+├── series.json       # Racing series data
+├── events.json       # Event configurations
+├── races.json        # Race results and brackets
+└── achievements.json # Achievement system data
+```
 
-### Robust Data Management
-- ✅ Thread-safe concurrent access
-- ✅ Automatic data backups
-- ✅ Error handling and recovery
-- ✅ Export/import functionality
-- ✅ Health monitoring
+## 🔧 API Endpoints
 
-### Racing Functionality  
-- ✅ Participant registration with payment helper (Do not support the payments itself)
-- ✅ Series, seasons and events management
-- ✅ Advanced pairing logic (avoid rematches, avoid returning lane logic)
-- ✅ Track assignment optimization
-- ✅ Instant Result of the event
-- ✅ Bracket generation and management (single elimination and double elimination with winner/loser(up/low) brackets)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/participants` | GET/POST | Participant management |
+| `/api/series` | GET/POST | Series management |
+| `/api/events` | GET/POST | Event management |
+| `/api/races` | GET/POST | Race results |
+| `/api/standings` | GET | Calculate standings |
+| `/api/health` | GET | Server health check |
 
-### User Experience
-- ✅ Clean, modern UI
-- ✅ Form validation
-- ✅ Responsive design
-- ✅ Error messages and feedback
-- ✅ Export capabilities
+## 📱 User Interface
 
-## 🏃‍♂️ Development
+### Modern Design
+- **Responsive Layout**: Works seamlessly on desktop, tablet, and mobile
+- **Clean Interface**: Professional racing event aesthetic
+- **Intuitive Navigation**: Easy-to-use navigation with mobile support
+- **Real-time Updates**: Live data updates without page refresh
 
-### File Structure
+### Key Pages
+- **Home**: Application overview and quick access
+- **Registration**: Participant registration and management
+- **Series**: Racing series creation and management
+- **Events**: Individual event setup and configuration
+- **Races**: Race brackets, results, and live updates
+- **Analytics**: Performance metrics and standings
+- **Live Display**: Real-time race information display
+
+## 🚀 Advanced Features
+
+### Smart Pairing Engine
+- **Rematch Avoidance**: Prevents drivers from racing the same opponent repeatedly
+- **Track Optimization**: Assigns tracks based on least-used algorithm
+- **Bracket Management**: Handles both single and double elimination formats
+- **Fair Competition**: Ensures balanced matchups and fair racing
+
+### Network Scalability
+- **Multi-User Support**: Multiple computers can access the same event data
+- **Concurrent Operations**: Thread-safe data operations for simultaneous users
+- **Real-time Synchronization**: All connected computers see live updates
+- **Offline Recovery**: Graceful handling of network interruptions
+
+### Data Management
+- **Automatic Backups**: Every save operation creates backup files
+- **Export Functionality**: Data export for analysis and backup
+- **UUID-based IDs**: Collision-free identification system
+- **Validation**: Comprehensive data validation and error handling
+
+## 🛠️ Development
+
+### Project Structure
 ```
 EPC17/
-├── server.py              # Main server application
+├── server.py              # Flask server application
 ├── requirements.txt       # Python dependencies
+├── README.md              # This file
+├── LICENSE.txt            # MIT License
 ├── data/                  # JSON data storage
-├── modules/               # Core business logic
-├── utils/                 # Helper utilities  
+├── modules/               # Business logic modules
+├── utils/                 # Utility modules
 ├── components/            # Reusable UI components
-├── js/                    # Main JavaScript files
+├── js/                    # Core JavaScript files
 ├── styles/                # CSS styling
 └── *.html                 # Page templates
 ```
 
-### Clean Architecture Principles
-- **Single Responsibility**: Each module has one purpose
-- **Server-First**: All data operations go through server API
-- **Network Ready**: Built for multi-computer access from day one
-- **Scalable**: Can handle large numbers of events and participants
+### Development Setup
+```bash
+# Install development dependencies
+pip install -r requirements.txt
+
+# Start development server
+python server.py
+
+# Access development environment
+# http://localhost:5000
+```
+
+### Code Standards
+- **ES6+ JavaScript**: Modern JavaScript with modules
+- **Semantic HTML5**: Accessible and semantic markup
+- **CSS3**: Modern styling with responsive design
+- **Python PEP 8**: Clean, readable Python code
+- **API-First Design**: All data operations through REST API
 
 ## 🚨 Troubleshooting
 
 ### Common Issues
 
-**Different data on different URLs**
-- **Fixed**: Now uses unified server API regardless of URL
-- All endpoints (`localhost`, `127.0.0.1`) show same data
+**Server won't start**
+```bash
+# Check Python version
+python --version
+
+# Verify dependencies
+pip list | grep Flask
+
+# Check port availability
+netstat -an | grep 5000
+```
 
 **Network access not working**
-- Check firewall settings
+- Ensure firewall allows port 5000
 - Verify server starts with `host='0.0.0.0'`
-- Use actual IP address, not localhost, from other computers
+- Use actual IP address from other computers
 
 **Data not persisting**
-- Server automatically saves to `./data/` directory
-- Check file permissions in data directory
+- Check file permissions in `data/` directory
 - Review server console for error messages
+- Verify automatic backup files are created
 
-## 📈 Scalability
+## 📈 Performance
 
-### Performance Optimizations
-- Parallel data loading
-- Thread-safe operations
-- Efficient API design
-- Minimal client-side state
+### Optimizations
+- **Parallel Data Loading**: Efficient data retrieval
+- **Minimal Client State**: Server-side data management
+- **Caching**: Smart caching for frequently accessed data
+- **Background Processing**: Non-blocking operations
 
-### Large Event Support
-- UUID-based IDs (no collision risk)
-- Indexed data access patterns
-- Memory-efficient operations
-- Background processing capability
+### Scalability
+- **Large Event Support**: Handles hundreds of participants
+- **Memory Efficient**: Optimized for resource usage
+- **Fast Response Times**: Quick API responses
+- **Concurrent Users**: Multiple simultaneous users supported
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
+
+## 🏆 About EPC Technology
+
+**EPC17** is developed by EPC Technology as part of Project 17, designed to revolutionize racing event management with modern technology and professional-grade features.
+
+### Contact
+- **Project**: EPC17 - Racing Event Management System
+- **Company**: EPC Technology
+- **Internal Name**: Project 17
 
 ---
 
-**Server Status**: Check `/api/health` endpoint for real-time status
-**Data Backup**: Automatic `.backup` files created on every save 
+**Ready to revolutionize your racing events?** 🏁  
+Start with EPC17 today and experience professional-grade event management. 
