@@ -1051,6 +1051,20 @@
                         this.refreshData();
                         this.refreshTimer = 8;
                     });
+
+                    // Listen for event status updates
+                    window.eventBus.on('eventStatusUpdated', (data) => {
+                        console.log('🔄 Event status updated - refreshing live display:', data);
+                        this.refreshData();
+                        this.refreshTimer = 8;
+                    });
+
+                    // Listen for event completion
+                    window.eventBus.on('eventCompleted', (data) => {
+                        console.log('🏁 Event completed - refreshing live display:', data);
+                        this.refreshData();
+                        this.refreshTimer = 8;
+                    });
                     
                     console.log('✅ Event bus listeners registered for real-time updates');
                 } else {

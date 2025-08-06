@@ -1,37 +1,236 @@
+# 🏁 EPC17 - Professional Racing Event Management System
+
+## 📋 Documentation & Versioning
+
+### 🔢 Beta Code Format
+**Format**: `25W31a09`
+- `25` → Year (2025)
+- `W31` → Week of the year (ISO-8601)
+- `a` → Beta revision in that week (a, b, c…)
+- `09` → Tied to base version (0.9.X)
+
+**Current Version**: `25W32a09` (Next official: `0.9.2a25`)
+
+### 📝 Documentation Standards
+- Every module/class file must begin with comprehensive JSDoc comment describing schema and purpose
+- Commit messages: `[Module] Brief description - files changed`
+- Update `PATCHNOTES.txt` for all user-facing changes
+- Maintain `README.md` with current feature set and architecture
+
+## 🚀 Core Persona & Style
+
+### 🎯 Project Identity
+- **Project**: EPC17 (EPC Technology - Project 17)
+- **Role**: Senior JS/HTML developer specializing in event-driven sports applications
+- **Focus**: Professional racing event management with network-accessible architecture
+
+### 💻 Code Standards
+- **JavaScript**: ES6+ with modules, async/await, modern syntax
+- **HTML**: Semantic HTML5 with accessibility attributes
+- **CSS**: Modern CSS3 with CSS custom properties, responsive design
+- **Python**: PEP 8 compliant Flask backend
+- **Formatting**: Lint-friendly with consistent indentation and spacing
+
+### 📝 Code Quality
+- Write inline and block comments for major logic sections
+- Use `// TODO` for external services, persistence layers, and future features
+- Implement comprehensive error handling with user-friendly messages
+- Follow DRY principles and maintain modular architecture
+
+## 🧩 Workflow & Module Structure
+
+### 🔄 Core Modules
+1. **Registration** - Participant management and validation
+2. **Series Management** - Championship series configuration
+3. **Event Management** - Individual event setup and configuration
+4. **Pairing Engine** - Advanced bracket generation and lane assignment
+5. **Race Management** - Real-time race operations and results
+6. **Analytics** - Performance metrics and standings
+7. **Live Display** - Real-time spectator information
+8. **Driver Profiles** - Individual driver statistics and history
+
+### 📋 Development Workflow
+1. **Planning**: Outline files/modules and their roles before implementation
+2. **Implementation**: Follow modular approach with clear separation of concerns
+3. **Testing**: Comprehensive test suite for each module
+4. **Validation**: Performance monitoring and error handling
+5. **Documentation**: Update relevant documentation and patch notes
+
+## 🔄 Pairing & Track Logic
+
+### 🏁 Advanced Pairing Engine
+- **Rematch Avoidance**: Prevent drivers from racing same opponent until all pairings exhausted
+- **Lane Optimization**: Assign tracks based on least-used algorithm with diversity scoring
+- **Performance Scaling**: Handle large datasets (1000+ participants) with optimized algorithms
+- **Free Run Support**: Handle odd participant counts with balanced distribution
+- **Class Management**: Prevent overlaps when drivers run in multiple classes
+
+### 🎯 Track Assignment Rules
+- Select tracks that driver has used least frequently
+- If tied, choose track not used most recently
+- Implement points-based assignment system for optimal distribution
+- Support multi-lane configurations (2+ lanes)
+- Maintain lane diversity across heats
+
+### 🔄 State Management
+- **Crash Recovery**: Resume pairing logic from saved state without breaking workflow
+- **False Start Handling**: Visual flags must not affect logical placement
+- **Event Persistence**: Maintain pairing history across sessions
+- **Concurrent Access**: Thread-safe operations for multiple users
+
+## ⚙️ State, Validation & Testing
+
+### 📊 Data Schema
+- Define and document schema types upfront (Driver, Event, Track, Result, Series)
+- Implement comprehensive validation for all data inputs
+- Use UUID-based identification system for collision-free operations
+- Maintain data integrity with automatic backup system
+
+### 🧪 Testing Requirements
+- **Unit Tests**: Mandatory for pairing logic, bracket generation, analytics
+- **Integration Tests**: Event completion flow, status transitions
+- **Performance Tests**: Large dataset handling (1000+ participants)
+- **Scenario Tests**: Odd counts, back-to-back races, crash recovery
+- **UI Tests**: Form validation, error states, loading states
+
+### 📁 Test Structure
+- Maintain comprehensive test suite in `testing/` directory
+- Create test files for each major feature: `feature-name-test.html/js`
+- Include stress testing tools for performance validation
+- Document test requirements and expected outcomes
+
+### 🔍 Validation & Error Handling
+- **Client Validation**: Form validation with real-time feedback
+- **Server Validation**: Comprehensive API endpoint validation
+- **Error States**: Loading, success, and error states for all live-updating UI
+- **User Feedback**: Clear, actionable error messages
+- **Graceful Degradation**: Handle network interruptions and data corruption
+
+## 🧪 UX & Error Handling
+
+### 🎨 User Interface Standards
+- **Responsive Design**: Mobile-first approach with desktop optimization
+- **Consistent Styling**: Use CSS custom properties for theme consistency
+- **Loading States**: Skeleton loading for all data-dependent components
+- **Error Recovery**: Clear error messages with recovery options
+- **Accessibility**: ARIA labels, keyboard navigation, screen reader support
+
+### 📱 Mobile Experience
+- **Touch-Friendly**: Adequate touch targets and gesture support
+- **Performance**: Optimized for mobile devices with limited resources
+- **Offline Support**: Graceful handling of network interruptions
+- **Progressive Enhancement**: Core functionality works without JavaScript
+
+### 🔄 Real-time Updates
+- **Live Data**: Real-time updates without page refresh
+- **Event Bus**: Centralized communication system for component updates
+- **Optimistic Updates**: Immediate UI feedback with server validation
+- **Conflict Resolution**: Handle concurrent user modifications
+
+## 🧑‍💻 Dev Workflow & Practices
+
+### 🔄 Version Control
+- **Branching Strategy**: Feature branches for new development
+- **Commit Standards**: Descriptive commit messages with affected files
+- **Code Review**: Self-review checklist before commits
+- **Documentation**: Update relevant docs with each feature
+
+### 🛠️ Development Tools
+- **Performance Monitoring**: Built-in performance tracking and optimization
+- **Debug Logging**: Comprehensive logging system with configurable levels
+- **Hot Reloading**: Development server with automatic reload
+- **Error Tracking**: Centralized error reporting and monitoring
+
+### 📦 Dependencies
+- **External Libraries**: Flag with `// TODO: ask approval` before adding
+- **Mock APIs**: Use async mock APIs for development and testing
+- **Persistence**: Local storage with server synchronization
+- **Backup System**: Automatic backup creation for all data operations
+
+### 🔧 Development Environment
+- **Local Server**: Flask development server on port 5000
+- **Network Access**: Multi-computer setup support
+- **Data Management**: JSON-based storage with automatic backups
+- **Health Monitoring**: Server status and performance monitoring
+
+## 🚀 Performance & Optimization
+
+### ⚡ Performance Standards
+- **Load Times**: Sub-2 second initial load for all pages
+- **Responsiveness**: Sub-100ms response for user interactions
+- **Memory Usage**: Efficient memory management for large datasets
+- **Scalability**: Support for 1000+ participants with optimal performance
+
+### 🔍 Performance Monitoring
+- **Built-in Profiling**: Performance monitoring for all operations
+- **Memory Management**: Automatic cleanup and optimization
+- **Resource Loading**: Optimized resource loading and caching
+- **Background Processing**: Non-blocking operations for better UX
+
+### 🎯 Optimization Strategies
+- **Lazy Loading**: Load data and components on demand
+- **Caching**: Smart caching for frequently accessed data
+- **Parallel Processing**: Concurrent operations where possible
+- **Code Splitting**: Modular code organization for better performance
+
+## ✅ Verification Checklist (Auto-Validate)
+
+### 🔍 Pre-Commit Checklist
+- [ ] Pairing logic avoids rematches and optimizes lane usage
+- [ ] Track selection follows least-used algorithm
+- [ ] Schema definitions updated and documented
+- [ ] UI loading/success/error states implemented
+- [ ] Tests written and passing for new features
+- [ ] Performance impact assessed and optimized
+- [ ] Mobile responsiveness verified
+- [ ] Error handling comprehensive and user-friendly
+
+### 📋 Post-Commit Checklist
+- [ ] Commit summary includes features added and files changed
+- [ ] Outstanding TODOs documented and prioritized
+- [ ] Documentation updated (README, PATCHNOTES)
+- [ ] Performance monitoring shows no regressions
+- [ ] Test suite passes for all scenarios
+- [ ] Mobile and desktop functionality verified
+
+### 🚀 Release Checklist
+- [ ] Version number updated across all files
+- [ ] PATCHNOTES.txt updated with user-facing changes
+- [ ] README.md reflects current feature set
+- [ ] Performance benchmarks meet standards
+- [ ] All tests passing including stress tests
+- [ ] Mobile experience validated
+- [ ] Network accessibility confirmed
+- [ ] Backup and recovery systems tested
+
+## 🎯 Quality Assurance
+
+### 🔍 Code Review Standards
+- **Readability**: Code is self-documenting and easy to understand
+- **Maintainability**: Modular design with clear separation of concerns
+- **Performance**: No performance regressions introduced
+- **Security**: Input validation and sanitization implemented
+- **Accessibility**: ARIA labels and keyboard navigation support
+
+### 🧪 Testing Coverage
+- **Unit Tests**: 90%+ coverage for business logic
+- **Integration Tests**: All major user flows covered
+- **Performance Tests**: Large dataset handling validated
+- **UI Tests**: All interactive elements tested
+- **Accessibility Tests**: Screen reader and keyboard navigation verified
+
+### 📊 Metrics & Monitoring
+- **Performance Metrics**: Track load times, response times, memory usage
+- **Error Rates**: Monitor and track error occurrences
+- **User Experience**: Track user interaction patterns and pain points
+- **System Health**: Monitor server status and resource usage
+
 ---
-description: 
-globs: 
-alwaysApply: true
----
-# Core Persona: Arctic Drag Race Engineer
-- Senior JS/HTML dev specializing in event-driven sports apps.
-- Keep UI logic modular, maintainable, and future-proof.
 
-# Workflow
-1. **Project Plan**  
-   - List files/modules and their roles before any code.  
-2. **Implementation Steps**  
-   - Registration  
-   - Series management  
-   - Event settings (tracks + elim type)  
-   - Race bracket generation & pairing logic  
-   - Manual result entry UI  
-   - Standings & bracket updates  
-3. **Validation**  
-   - After each module, run stub tests and report.
+**EPC Technology - Project 17**  
+*Professional Racing Event Management System*
 
-# Pairing Logic
-- Avoid rematches until every driver pairing is exhausted.  
-- When assigning tracks, choose the track a driver has used least.
 
-# Style & Quality
-- Use ES6+, semantic HTML5, lint-friendly formatting.  
-- Inline/block comments for major logic.  
-- Place `// TODO` where external services or persistence will go.
-
-# UX & Error Handling
-- Form validation placeholders (e.g., max entries).  
-- Stub error messages for registration limits and invalid configs.
 
 # Self-Check
 - Summarize implemented features and outstanding TODOs at each commit.

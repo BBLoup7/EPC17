@@ -65,7 +65,7 @@
                 <li><a href="live-display.html">🖥️ Live Display</a></li>
             </ul>
             <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">v1.0.0</div>
+                <div class="mobile-nav-version">25W32a09</div>
             </div>
         </div>
         
@@ -387,6 +387,8 @@
         }
     </style>
 
+    <script src="utils/debug-logger.js"></script>
+    <script src="utils/debug-config.js"></script>
     <script src="utils/performance-monitor.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="js/mobile-nav.js"></script>
@@ -397,7 +399,11 @@
     <script>
         // Skeleton loading functions for home page
         function showFeaturesSkeleton() {
-            console.log('🔄 Showing features skeleton loading...');
+            if (window.debugLogger) {
+                window.debugLogger.loading('Home', 'Showing features skeleton loading');
+            } else {
+                console.log('🔄 Showing features skeleton loading...');
+            }
             const skeleton = document.getElementById('featuresSkeleton');
             const showcase = document.getElementById('featuresShowcase');
             
@@ -411,7 +417,11 @@
         }
 
         function hideFeaturesSkeletonLoading() {
-            console.log('✅ Hiding features skeleton loading...');
+            if (window.debugLogger) {
+                window.debugLogger.loading('Home', 'Hiding features skeleton loading');
+            } else {
+                console.log('✅ Hiding features skeleton loading...');
+            }
             const skeleton = document.getElementById('featuresSkeleton');
             const showcase = document.getElementById('featuresShowcase');
             
@@ -425,7 +435,13 @@
             .then(html => {
                 document.getElementById('performance-dashboard-container').innerHTML = html;
             })
-            .catch(error => console.error('Failed to load performance dashboard:', error));
+            .catch(error => {
+                if (window.debugLogger) {
+                    window.debugLogger.error('Home', 'Failed to load performance dashboard', error);
+                } else {
+                    console.error('Failed to load performance dashboard:', error);
+                }
+            });
         
         // Fix desktop navigation click issues
         document.addEventListener('DOMContentLoaded', function() {

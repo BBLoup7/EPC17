@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Test - EPC17</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Driver List Sorting Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Basic Alphabetical Sorting</h2>
+        <div id="test1-result" class="test-result">Running test...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Case-Insensitive Sorting</h2>
+        <div id="test2-result" class="test-result">Running test...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Special Characters Sorting</h2>
+        <div id="test3-result" class="test-result">Running test...</div>
+    </div>
+
+    <script>
+        // Test data
+        const testParticipants = [
+            { id: '1', name: 'Zebra Driver' },
+            { id: '2', name: 'Alice Smith' },
+            { id: '3', name: 'Bob Johnson' },
+            { id: '4', name: 'Charlie Brown' },
+            { id: '5', name: 'David Wilson' },
+            { id: '6', name: 'Eve Davis' },
+            { id: '7', name: 'Frank Miller' },
+            { id: '8', name: 'Grace Lee' },
+            { id: '9', name: 'Henry Taylor' },
+            { id: '10', name: 'Ivy Chen' }
+        ];
+
+        const testParticipantsCase = [
+            { id: '1', name: 'zebra driver' },
+            { id: '2', name: 'Alice Smith' },
+            { id: '3', name: 'bob johnson' },
+            { id: '4', name: 'Charlie Brown' },
+            { id: '5', name: 'david wilson' }
+        ];
+
+        const testParticipantsSpecial = [
+            { id: '1', name: 'Zebra Driver' },
+            { id: '2', name: 'Alice-Smith' },
+            { id: '3', name: 'Bob_Johnson' },
+            { id: '4', name: 'Charlie Brown' },
+            { id: '5', name: 'David.Wilson' }
+        ];
+
+        // Sorting function (same as used in the app)
+        function sortParticipantsAlphabetically(participants) {
+            return participants.sort((a, b) => 
+                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+            );
+        }
+
+        // Test 1: Basic alphabetical sorting
+        function testBasicSorting() {
+            const sorted = sortParticipantsAlphabetically([...testParticipants]);
+            const expected = ['Alice Smith', 'Bob Johnson', 'Charlie Brown', 'David Wilson', 'Eve Davis', 'Frank Miller', 'Grace Lee', 'Henry Taylor', 'Ivy Chen', 'Zebra Driver'];
+            
+            const actual = sorted.map(p => p.name);
+            const passed = JSON.stringify(actual) === JSON.stringify(expected);
+            
+            document.getElementById('test1-result').innerHTML = `
+                <div class="${passed ? 'success' : 'error'}">
+                    <strong>${passed ? 'PASSED' : 'FAILED'}</strong><br>
+                    Expected: ${expected.join(', ')}<br>
+                    Actual: ${actual.join(', ')}
+                </div>
+            `;
+        }
+
+        // Test 2: Case-insensitive sorting
+        function testCaseInsensitiveSorting() {
+            const sorted = sortParticipantsAlphabetically([...testParticipantsCase]);
+            const expected = ['Alice Smith', 'bob johnson', 'Charlie Brown', 'david wilson', 'zebra driver'];
+            
+            const actual = sorted.map(p => p.name);
+            const passed = JSON.stringify(actual) === JSON.stringify(expected);
+            
+            document.getElementById('test2-result').innerHTML = `
+                <div class="${passed ? 'success' : 'error'}">
+                    <strong>${passed ? 'PASSED' : 'FAILED'}</strong><br>
+                    Expected: ${expected.join(', ')}<br>
+                    Actual: ${actual.join(', ')}
+                </div>
+            `;
+        }
+
+        // Test 3: Special characters sorting
+        function testSpecialCharactersSorting() {
+            const sorted = sortParticipantsAlphabetically([...testParticipantsSpecial]);
+            const expected = ['Alice-Smith', 'Bob_Johnson', 'Charlie Brown', 'David.Wilson', 'Zebra Driver'];
+            
+            const actual = sorted.map(p => p.name);
+            const passed = JSON.stringify(actual) === JSON.stringify(expected);
+            
+            document.getElementById('test3-result').innerHTML = `
+                <div class="${passed ? 'success' : 'error'}">
+                    <strong>${passed ? 'PASSED' : 'FAILED'}</strong><br>
+                    Expected: ${expected.join(', ')}<br>
+                    Actual: ${actual.join(', ')}
+                </div>
+            `;
+        }
+
+        // Run tests
+        window.onload = function() {
+            testBasicSorting();
+            testCaseInsensitiveSorting();
+            testSpecialCharactersSorting();
+        };
+    </script>
+</body>
+</html> 

@@ -150,6 +150,32 @@
             color: white;
         }
 
+        .race-management-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .race-management-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+            border: 1px solid #d97706;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+            border-color: #b45309;
+        }
+
         .badge-info {
             background: #3b82f6;
             color: white;
@@ -615,7 +641,121 @@
             color: #9ca3af !important;
         }
 
+        /* Search and Sort Controls Styles */
+        .search-sort-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            color: var(--text-secondary);
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-search:hover {
+            color: var(--text-primary);
+            background: var(--bg-primary);
+        }
+
+        .sort-container, .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sort-label, .filter-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .sort-select, .filter-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sort-select:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .sort-select option, .filter-select option {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
         @media (max-width: 768px) {
+            .search-sort-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .search-container {
+                min-width: auto;
+            }
+
+            .sort-container, .filter-container {
+                justify-content: space-between;
+            }
+
             .stats-grid {
                 grid-template-columns: 1fr;
             }
@@ -718,7 +858,7 @@
                 <li><a href="live-display.html">🖥️ Live Display</a></li>
             </ul>
             <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">v1.0.0</div>
+                <div class="mobile-nav-version">25W32a09</div>
             </div>
         </div>
         
@@ -751,6 +891,7 @@
                             <i class="fas fa-sync"></i>
                             Reload Data
                         </button>
+
                         <div class="utility-actions">
                             <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
                                 <i class="fas fa-trash-alt"></i> Clear All Data
@@ -758,8 +899,49 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Search and Sort Controls -->
+                <div class="search-sort-controls">
+                    <div class="search-container">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="racesSearch" class="search-input" placeholder="Search events by name..." oninput="filterRacesEvents()">
+                            <button class="clear-search" id="clearRacesSearch" onclick="clearRacesSearch()" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="sort-container">
+                        <label for="racesSort" class="sort-label">Sort by:</label>
+                        <select id="racesSort" class="sort-select" onchange="sortRacesEvents()">
+                            <option value="date-desc">Date (Newest First)</option>
+                            <option value="date-asc">Date (Oldest First)</option>
+                            <option value="name-asc">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                            <option value="location-asc">Location (A-Z)</option>
+                            <option value="location-desc">Location (Z-A)</option>
+                            <option value="participants-desc">Participants (High-Low)</option>
+                            <option value="participants-asc">Participants (Low-High)</option>
+                        </select>
+                    </div>
+                    <div class="filter-container">
+                        <label for="racesStatusFilter" class="filter-label">Status:</label>
+                        <select id="racesStatusFilter" class="filter-select" onchange="filterRacesEvents()">
+                            <option value="">All Status</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="active">Active</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div class="events-grid" id="events-grid">
                     <!-- Events will be loaded here -->
+                </div>
+                
+                <!-- Pagination for events -->
+                <div id="racesPagination" class="pagination-container" style="display: none;">
+                    <!-- Pagination will be rendered here -->
                 </div>
                 
                 <!-- Skeleton loading for events -->
@@ -775,10 +957,16 @@
                         <h2 id="selected-event-name">Event Name</h2>
                         <p id="selected-event-details">Event Details</p>
                     </div>
-                    <button class="btn btn-secondary" id="back-to-events">
-                        <i class="fas fa-arrow-left"></i>
-                        Back to Events
-                    </button>
+                    <div class="race-management-actions">
+                        <button class="btn btn-warning" id="complete-event" style="display: none;">
+                            <i class="fas fa-flag-checkered"></i>
+                            Mark Event Complete
+                        </button>
+                        <button class="btn btn-secondary" id="back-to-events">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Events
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Event Stats -->
@@ -817,6 +1005,9 @@
                             </button>
                         </div>
                     </div>
+                    
+
+                    
                     <div class="brackets-container" id="brackets-container">
                         <!-- Brackets will be rendered here -->
                     </div>
@@ -958,6 +1149,38 @@
             eventBus.on('statistics-recalculated', (data) => {
                 console.log('📡 Statistics recalculated event received:', data);
                 showToast(`Statistics recalculated for ${data.participantCount} participants`, 'success');
+            });
+
+            // Listen for event status updates
+            eventBus.on('eventStatusUpdated', (data) => {
+                console.log('📡 Event status updated event received:', data);
+                showToast(`Event status updated to ${data.status}`, 'info');
+                
+                // Refresh the race UI if we're viewing the same event
+                if (raceUI && raceUI.selectedEventId === data.eventId) {
+                    setTimeout(() => {
+                        raceUI.forceRefresh();
+                    }, 1000);
+                }
+                
+                // 🔄 REFRESH EVENT SELECTION GRID
+                refreshEventSelectionGrid();
+            });
+
+            // Listen for event completion
+            eventBus.on('eventCompleted', (data) => {
+                console.log('📡 Event completed event received:', data);
+                showToast(`Event completed! All classes finished.`, 'success');
+                
+                // Refresh the race UI if we're viewing the same event
+                if (raceUI && raceUI.selectedEventId === data.eventId) {
+                    setTimeout(() => {
+                        raceUI.forceRefresh();
+                    }, 1000);
+                }
+                
+                // 🔄 REFRESH EVENT SELECTION GRID
+                refreshEventSelectionGrid();
             });
 
             console.log('📡 Real-time event listeners set up successfully');
@@ -1145,6 +1368,11 @@
                 const reloadBtn = document.getElementById('reload-data-btn');
                 if (reloadBtn) {
                     reloadBtn.addEventListener('click', reloadData);
+                }
+                
+                // Initialize search and sort functionality
+                if (typeof window.allRacesEventsData !== 'undefined') {
+                    console.log('Search and sort functionality initialized for races page');
                 }
             }, 100);
         });
@@ -1487,6 +1715,280 @@
                 newShowMoreBtn.innerHTML = `<i class="fas fa-chevron-down"></i> Show ${allHeats.length - currentCount - 10} more`;
                 newShowMoreBtn.onclick = () => expandRoundHeats(roundDiv, allHeats, currentCount + 10);
                 roundDiv.appendChild(newShowMoreBtn);
+            }
+        }
+
+        // Search and Sort Variables for Races Page
+        window.allRacesEventsData = [];
+        window.filteredRacesEventsData = [];
+        window.currentRacesSortOption = 'date-desc';
+        window.currentRacesSearchTerm = '';
+        window.currentRacesStatusFilter = '';
+        
+        // Pagination Variables for Races Page
+        window.currentRacesPage = 1;
+        window.racesPerPage = 12;
+
+        // Search and Sort Functions for Races Page
+        function filterRacesEvents() {
+            const searchTerm = document.getElementById('racesSearch').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('racesStatusFilter').value;
+            const clearButton = document.getElementById('clearRacesSearch');
+            
+            // Update clear button visibility
+            if (clearButton) {
+                clearButton.style.display = searchTerm ? 'block' : 'none';
+            }
+            
+            // Store current filters
+            window.currentRacesSearchTerm = searchTerm;
+            window.currentRacesStatusFilter = statusFilter;
+            
+            // Reset to first page when filtering
+            window.currentRacesPage = 1;
+            
+            // Apply filters
+            window.filteredRacesEventsData = window.allRacesEventsData.filter(event => {
+                // Search filter
+                if (searchTerm) {
+                    const nameMatch = event.name && event.name.toLowerCase().includes(searchTerm);
+                    const locationMatch = event.location && event.location.toLowerCase().includes(searchTerm);
+                    if (!nameMatch && !locationMatch) {
+                        return false;
+                    }
+                }
+                
+                // Status filter
+                if (statusFilter) {
+                    const eventStatus = getEventStatus(event);
+                    if (eventStatus !== statusFilter) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Apply current sort
+            sortRacesEventsData();
+            
+            // Render filtered events with pagination
+            renderRacesEventsGrid(window.filteredRacesEventsData);
+            
+            // Update results count
+            updateRacesResultsCount();
+        }
+
+        function sortRacesEvents() {
+            const sortOption = document.getElementById('racesSort').value;
+            window.currentRacesSortOption = sortOption;
+            
+            // Reset to first page when sorting
+            window.currentRacesPage = 1;
+            
+            sortRacesEventsData();
+            renderRacesEventsGrid(window.filteredRacesEventsData);
+        }
+
+        function sortRacesEventsData() {
+            window.filteredRacesEventsData.sort((a, b) => {
+                switch (window.currentRacesSortOption) {
+                    case 'date-desc':
+                        return new Date(b.date) - new Date(a.date);
+                    case 'date-asc':
+                        return new Date(a.date) - new Date(b.date);
+                    case 'name-asc':
+                        return (a.name || '').localeCompare(b.name || '');
+                    case 'name-desc':
+                        return (b.name || '').localeCompare(a.name || '');
+                    case 'location-asc':
+                        return (a.location || '').localeCompare(b.location || '');
+                    case 'location-desc':
+                        return (b.location || '').localeCompare(a.location || '');
+                    case 'participants-desc':
+                        return (b.participants?.length || 0) - (a.participants?.length || 0);
+                    case 'participants-asc':
+                        return (a.participants?.length || 0) - (b.participants?.length || 0);
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        function clearRacesSearch() {
+            document.getElementById('racesSearch').value = '';
+            document.getElementById('clearRacesSearch').style.display = 'none';
+            filterRacesEvents();
+        }
+
+        function updateRacesResultsCount() {
+            const totalCount = window.allRacesEventsData.length;
+            const filteredCount = window.filteredRacesEventsData.length;
+            
+            console.log(`Races Events: Showing ${filteredCount} of ${totalCount} events`);
+        }
+
+        function renderRacesEventsGrid(events) {
+            const eventsGrid = document.getElementById('events-grid');
+            
+            if (!events || events.length === 0) {
+                eventsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <h3>No Events Found</h3>
+                        <p>${window.currentRacesSearchTerm || window.currentRacesStatusFilter ? 'No events match your current filters. Try adjusting your search criteria.' : 'No events available for race management.'}</p>
+                        ${window.currentRacesSearchTerm || window.currentRacesStatusFilter ? `
+                            <button class="btn btn-secondary" onclick="clearAllRacesFilters()">
+                                <i class="fas fa-times"></i>
+                                Clear Filters
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Hide pagination when no events
+                const pagination = document.getElementById('racesPagination');
+                if (pagination) {
+                    pagination.style.display = 'none';
+                }
+                return;
+            }
+            
+            // Calculate pagination
+            const totalEvents = events.length;
+            const totalPages = Math.ceil(totalEvents / window.racesPerPage);
+            
+            // Ensure current page is within bounds
+            if (window.currentRacesPage > totalPages) {
+                window.currentRacesPage = totalPages || 1;
+            }
+            
+            // Get events for current page
+            const startIndex = (window.currentRacesPage - 1) * window.racesPerPage;
+            const endIndex = startIndex + window.racesPerPage;
+            const pageEvents = events.slice(startIndex, endIndex);
+            
+            const eventsHtml = pageEvents.map(event => {
+                const eventStatus = getEventStatus(event);
+                const participantCount = event.participants ? event.participants.length : 0;
+                
+                return `
+                    <div class="event-card ${eventStatus.toLowerCase()}" data-event-id="${event.id}">
+                        <div class="event-header">
+                            <h3>${event.name}</h3>
+                            <span class="event-status status-${eventStatus}">${eventStatus}</span>
+                        </div>
+                        <div class="event-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Date:</span>
+                                <span class="detail-value">${new Date(event.date).toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Location:</span>
+                                <span class="detail-value">${event.location}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Participants:</span>
+                                <span class="detail-value">${participantCount}/${event.maxParticipants || 'Unlimited'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Tracks:</span>
+                                <span class="detail-value">${event.numberOfTracks || 3}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Elimination:</span>
+                                <span class="detail-value">${event.eliminationType === 'single' ? 'Single' : 'Double'}</span>
+                            </div>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn btn-primary" onclick="selectEventForRaces('${event.id}')">
+                                <i class="fas fa-flag-checkered"></i>
+                                Manage Races
+                            </button>
+                            <button class="btn btn-secondary" onclick="viewEventDetails('${event.id}')">
+                                <i class="fas fa-eye"></i>
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            eventsGrid.innerHTML = eventsHtml;
+            
+            // Render pagination
+            const pagination = document.getElementById('racesPagination');
+            if (pagination && totalPages > 1) {
+                pagination.style.display = 'block';
+                pagination.innerHTML = UIComponents.createPagination(
+                    window.currentRacesPage, 
+                    totalPages, 
+                    totalEvents, 
+                    window.racesPerPage, 
+                    'changeRacesPage'
+                );
+            } else if (pagination) {
+                pagination.style.display = 'none';
+            }
+        }
+
+        function clearAllRacesFilters() {
+            document.getElementById('racesSearch').value = '';
+            document.getElementById('racesStatusFilter').value = '';
+            document.getElementById('clearRacesSearch').style.display = 'none';
+            window.currentRacesSearchTerm = '';
+            window.currentRacesStatusFilter = '';
+            window.currentRacesPage = 1; // Reset to first page
+            window.filteredRacesEventsData = [...window.allRacesEventsData];
+            sortRacesEventsData();
+            renderRacesEventsGrid(window.filteredRacesEventsData);
+            updateRacesResultsCount();
+        }
+
+        function getEventStatus(event) {
+            return event.status || 'upcoming';
+        }
+
+        // 🔄 Refresh the event selection grid when event status changes
+        async function refreshEventSelectionGrid() {
+            try {
+                console.log('🔄 Refreshing event selection grid after status change...');
+                
+                // Reload fresh event data from server
+                await dataManager.loadFromStorage(['events'], true); // Force reload
+                
+                // Update the global event data array
+                const freshEvents = dataManager.getEventsArray();
+                window.allRacesEventsData = [...freshEvents];
+                
+                // Re-apply current filters and re-render
+                filterRacesEvents();
+                
+                console.log('✅ Event selection grid refreshed successfully');
+            } catch (error) {
+                console.error('❌ Error refreshing event selection grid:', error);
+            }
+        }
+
+        function selectEventForRaces(eventId) {
+            if (window.raceUI) {
+                window.raceUI.selectEvent(eventId);
+            }
+        }
+
+        function viewEventDetails(eventId) {
+            // Navigate to events page to view details
+            window.location.href = `events.html?event=${eventId}`;
+        }
+        
+        function changeRacesPage(page) {
+            window.currentRacesPage = page;
+            renderRacesEventsGrid(window.filteredRacesEventsData);
+            
+            // Scroll to top of events grid
+            const eventsGrid = document.getElementById('events-grid');
+            if (eventsGrid) {
+                eventsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
 

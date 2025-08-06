@@ -192,6 +192,70 @@
     margin-top: 0.25rem;
 }
 
+/* ===== SCROLL ANCHOR INDICATOR ===== */
+.scroll-anchor-indicator {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.scroll-anchor-indicator.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-anchor-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+    transition: all 0.2s ease;
+    animation: scrollAnchorPulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollAnchorPulse {
+    0%, 100% { 
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6);
+        transform: scale(1.05);
+    }
+}
+
+.scroll-anchor-btn:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+}
+
+.scroll-anchor-btn:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.scroll-anchor-btn i {
+    font-size: 1.1rem;
+}
+
+.scroll-anchor-text {
+    white-space: nowrap;
+}
+
 /* ===== TABS ===== */
 .race-tabs {
     display: flex;
@@ -1067,11 +1131,16 @@
 
 /* Enhanced hover effects for clickable participants */
 .clickable-participant {
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
     cursor: pointer;
     border-radius: 8px;
     padding: 0.5rem;
     margin: -0.5rem;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .clickable-participant:hover {
@@ -1089,6 +1158,18 @@
 .clickable-participant:hover .no-position {
     background: rgba(255, 255, 255, 0.2);
     color: white;
+}
+
+/* Active state for better click feedback */
+.clickable-participant:active {
+    transform: scale(0.98);
+    transition: all 0.1s ease;
+}
+
+/* Focus state for accessibility */
+.clickable-participant:focus {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
 }
 
 /* Animation for position feedback */
@@ -1472,6 +1553,20 @@
     .tab-btn {
         flex: 1;
         justify-content: center;
+    }
+    
+    .scroll-anchor-indicator {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .scroll-anchor-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .scroll-anchor-text {
+        display: none;
     }
 }
 

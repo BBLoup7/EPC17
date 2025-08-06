@@ -15,7 +15,11 @@ class PerformanceMonitor {
         this.startTime = Date.now();
         this.isMonitoring = false;
         
-        console.log('📊 PerformanceMonitor initialized');
+        if (window.debugLogger) {
+            window.debugLogger.init('PerformanceMonitor', 'PerformanceMonitor initialized');
+        } else {
+            console.log('📊 PerformanceMonitor initialized');
+        }
     }
 
     /**
@@ -29,7 +33,11 @@ class PerformanceMonitor {
         this.monitorNetwork();
         this.monitorUI();
         
-        console.log('📊 Performance monitoring started');
+        if (window.debugLogger) {
+            window.debugLogger.performance('Performance monitoring started');
+        } else {
+            console.log('📊 Performance monitoring started');
+        }
     }
 
     /**
@@ -37,7 +45,11 @@ class PerformanceMonitor {
      */
     stopMonitoring() {
         this.isMonitoring = false;
-        console.log('📊 Performance monitoring stopped');
+        if (window.debugLogger) {
+            window.debugLogger.performance('Performance monitoring stopped');
+        } else {
+            console.log('📊 Performance monitoring stopped');
+        }
     }
 
     /**
@@ -262,6 +274,31 @@ class PerformanceMonitor {
         };
         
         return report;
+    }
+
+    /**
+     * Get last operation statistics
+     */
+    getLastOperationStats() {
+        if (this.operations.size === 0) {
+            return null;
+        }
+        
+        // Get the most recent operation (last one added to the Map)
+        const lastOperation = Array.from(this.operations.entries()).pop();
+        if (!lastOperation) {
+            return null;
+        }
+        
+        const [operationName, stats] = lastOperation;
+        return {
+            operation: operationName,
+            duration: stats.avgDuration,
+            count: stats.count,
+            avgDuration: stats.avgDuration,
+            minDuration: stats.minDuration,
+            maxDuration: stats.maxDuration
+        };
     }
 
     /**

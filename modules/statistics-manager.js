@@ -15,7 +15,11 @@ class StatisticsManager {
         this.isProcessing = false; // Prevent concurrent processing
         this.batchSize = 50; // Process stats in batches
         
-        console.log('📊 StatisticsManager initialized (OPTIMIZED)');
+        if (window.debugLogger) {
+            window.debugLogger.init('StatisticsManager', 'StatisticsManager initialized (OPTIMIZED)');
+        } else {
+            console.log('📊 StatisticsManager initialized (OPTIMIZED)');
+        }
     }
 
     /**

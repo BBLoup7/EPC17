@@ -29,7 +29,11 @@ class SeriesManager {
         if (container) {
             this.loadSeriesContent();
         } else {
+            if (window.debugLogger) {
+            window.debugLogger.init('SeriesManager', 'SeriesManager initialized without UI (likely used for data access only)');
+        } else {
             console.log('SeriesManager initialized without UI (likely used for data access only)');
+        }
         }
     }
 

@@ -99,15 +99,32 @@ def get_data_file(filename):
     return os.path.join(DATA_DIR, filename)
 
 def load_data(filename):
-    """Thread-safe data loading"""
+    """Thread-safe data loading with enhanced error handling"""
     filepath = get_data_file(filename)
     with data_lock:
         if os.path.exists(filepath):
             try:
+                # Check file size to prevent loading corrupted large files
+                file_size = os.path.getsize(filepath)
+                if file_size > 100 * 1024 * 1024:  # 100MB limit
+                    print(f"⚠️ File {filename} is too large ({file_size} bytes), creating backup and resetting")
+                    # Create backup with timestamp
+                    backup_path = f"{filepath}.corrupted.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    os.rename(filepath, backup_path)
+                    # Return empty array for the reset
+                    return []
+                
                 with open(filepath, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError) as e:
-                print(f"Error loading {filename}: {e}")
+            except (json.JSONDecodeError, IOError, UnicodeDecodeError) as e:
+                print(f"❌ Error loading {filename}: {e}")
+                # Create backup of corrupted file
+                try:
+                    backup_path = f"{filepath}.corrupted.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    os.rename(filepath, backup_path)
+                    print(f"📦 Created backup of corrupted file: {backup_path}")
+                except Exception as backup_error:
+                    print(f"⚠️ Failed to create backup: {backup_error}")
                 return []
         return []
 
@@ -491,7 +508,7 @@ def handle_events():
     
     # Apply pagination
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 1000))  # Increase default limit to 1000 to get all events
+    limit = int(request.args.get('limit', 1000))  # Increased limit to allow more events
     
     total = len(events)
     start_idx = (page - 1) * limit

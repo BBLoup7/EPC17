@@ -387,8 +387,13 @@ async function loadDataWithOptimizations() {
         Promise.resolve(window.dataManager.getEventsArray() || [])
     ]);
     
+    // Sort participants alphabetically by name
+    const sortedParticipants = participantsArray.sort((a, b) => 
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    );
+    
     // Update global data
-    allParticipants = window.allParticipants = participantsArray;
+    allParticipants = window.allParticipants = sortedParticipants;
     allEvents = window.allEvents = eventsArray;
     filteredParticipants = window.filteredParticipants = [...allParticipants];
     

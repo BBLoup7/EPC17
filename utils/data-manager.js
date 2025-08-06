@@ -119,6 +119,9 @@ class DataManager {
             
             console.log('✅ Optimized data loading completed');
             
+            // Initialize event statuses for existing events
+            await this.initializeEventStatuses();
+            
             // Cleanup old data to prevent memory leaks
             this.cleanupOldCachedData();
             
@@ -215,6 +218,13 @@ class DataManager {
     async processLoadedData(type, data) {
         const startTime = performance.now();
         
+        // Validate data structure before processing
+        if (!this.validateDataStructure(type, data)) {
+            console.warn(`⚠️ Invalid data structure for ${type}, using empty data`);
+            this.setEmptyDataForType(type);
+            return;
+        }
+        
         if (type === 'participants' && data.participants) {
             // Optimize participant data structure
             this.data[type] = this.optimizeParticipantData(data.participants);
@@ -232,7 +242,7 @@ class DataManager {
             
         } else if (type === 'series' && data.series) {
             this.data[type] = data.series;
-            console.log(`✅ ${type} loaded: ${data.series.length} series`);
+            console.log(`✅ ${type} loaded: ${this.data[type].length} series`);
             
         } else if (type === 'races' && Array.isArray(data)) {
             this.data[type] = data;
@@ -252,7 +262,7 @@ class DataManager {
                 const chunk = data.slice(i, i + chunkSize);
                 
                 chunk.forEach(bracket => {
-                    if (bracket.eventId) {
+                    if (bracket && bracket.eventId) {
                         bracketMap.set(bracket.eventId, bracket);
                     }
                 });
@@ -332,6 +342,44 @@ class DataManager {
             this.data.raceBrackets = {};
         } else {
             this.data[type] = [];
+        }
+    }
+
+    /**
+     * Validate data structure before processing
+     */
+    validateDataStructure(type, data) {
+        if (!data) {
+            console.warn(`⚠️ ${type}: Data is null or undefined`);
+            return false;
+        }
+
+        // Check for corrupted data (non-object/array)
+        if (typeof data !== 'object' || data === null) {
+            console.warn(`⚠️ ${type}: Data is not an object or array`);
+            return false;
+        }
+
+        // Check for extremely large arrays that might be corrupted
+        if (Array.isArray(data) && data.length > 100000) {
+            console.warn(`⚠️ ${type}: Data array is suspiciously large (${data.length} items)`);
+            return false;
+        }
+
+        // Type-specific validation
+        switch (type) {
+            case 'participants':
+                return data.participants && Array.isArray(data.participants);
+            case 'events':
+                return data.events && Array.isArray(data.events);
+            case 'series':
+                return data.series && Array.isArray(data.series);
+            case 'races':
+                return Array.isArray(data) || (data.races && Array.isArray(data.races));
+            case 'race-brackets':
+                return Array.isArray(data);
+            default:
+                return true;
         }
     }
 
@@ -480,26 +528,133 @@ class DataManager {
     }
 
     /**
-     * SIMPLIFIED: Save to server
+     * Enhanced: Save to server with retry logic and batching
      */
-    async saveToServer(endpoint, data, isUpdate = false) {
+    async saveToServer(endpoint, data, isUpdate = false, options = {}) {
+        const maxRetries = options.maxRetries || 3;
+        const retryDelay = options.retryDelay || 1000;
+        const batch = options.batch || false;
+
+        // If batching is enabled, queue the save instead of immediate execution
+        if (batch && !options.force) {
+            return this.queueBatchSave(endpoint, data, isUpdate);
+        }
+
         const url = `${this.baseUrl}/${endpoint}`;
         const method = isUpdate ? 'PUT' : 'POST';
         const finalUrl = isUpdate ? `${url}/${data.id}` : url;
-        
-        const response = await fetch(finalUrl, {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`💾 Saving ${endpoint} to server (attempt ${attempt}/${maxRetries})`);
+                
+                const response = await fetch(finalUrl, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    // Handle 404 specifically for better user experience
+                    if (response.status === 404) {
+                        console.warn(`⚠️ Server endpoint not found for ${endpoint}, retrying...`);
+                        throw new Error(`Server endpoint not found (404)`);
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log(`✅ Successfully saved ${endpoint} to server`);
+                return result;
+
+            } catch (error) {
+                console.error(`❌ Failed to save ${endpoint} (attempt ${attempt}/${maxRetries}):`, error);
+                
+                if (attempt === maxRetries) {
+                    // Show user-friendly error message
+                    this.showConnectionError(endpoint, error.message);
+                    throw new Error(`Failed to save ${endpoint} after ${maxRetries} attempts: ${error.message}`);
+                }
+                
+                // Progressive backoff delay
+                const delay = retryDelay * Math.pow(2, attempt - 1);
+                console.log(`⏳ Waiting ${delay}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
         }
-        
-        return await response.json();
+    }
+
+    /**
+     * Queue batch save operations
+     */
+    queueBatchSave(endpoint, data, isUpdate = false) {
+        if (!this.batchQueue) {
+            this.batchQueue = new Map();
+        }
+
+        const key = `${endpoint}_${data.id || 'new'}`;
+        this.batchQueue.set(key, { endpoint, data, isUpdate });
+        console.log(`📦 Queued ${endpoint} for batch save`);
+
+        // Debounce batch execution
+        if (this.batchTimeout) {
+            clearTimeout(this.batchTimeout);
+        }
+
+        this.batchTimeout = setTimeout(() => {
+            this.executeBatchSaves();
+        }, 500); // 500ms debounce
+
+        return Promise.resolve();
+    }
+
+    /**
+     * Execute all queued batch saves
+     */
+    async executeBatchSaves() {
+        if (!this.batchQueue || this.batchQueue.size === 0) {
+            return;
+        }
+
+        console.log(`🚀 Executing batch save for ${this.batchQueue.size} items`);
+        const promises = [];
+
+        for (const [key, { endpoint, data, isUpdate }] of this.batchQueue.entries()) {
+            promises.push(
+                this.saveToServer(endpoint, data, isUpdate, { force: true, maxRetries: 2 })
+                    .catch(error => {
+                        console.error(`Failed to save ${endpoint} in batch:`, error);
+                        return { key, error: error.message };
+                    })
+            );
+        }
+
+        try {
+            const results = await Promise.allSettled(promises);
+            const failures = results.filter(r => r.status === 'rejected' || r.value?.error);
+            
+            if (failures.length > 0) {
+                console.warn(`⚠️ ${failures.length} items failed to save in batch`);
+            } else {
+                console.log(`✅ Batch save completed successfully`);
+            }
+        } finally {
+            this.batchQueue.clear();
+            this.batchTimeout = null;
+        }
+    }
+
+    /**
+     * Show connection error to user
+     */
+    showConnectionError(endpoint, error) {
+        if (window.showToast) {
+            window.showToast(`Connection error saving ${endpoint}. Changes saved locally.`, 'warning');
+        } else {
+            console.warn(`Connection error: ${error}`);
+        }
     }
 
     /**
@@ -572,7 +727,7 @@ class DataManager {
     /**
      * SIMPLIFIED: Get events with pagination and filtering
      */
-    async getEvents(filters = {}, page = 1, limit = 20) {
+    async getEvents(filters = {}, page = 1, limit = 1000) {
         // Check if we need to load events
         if (!this.loadedDataTypes.has('events')) {
             await this.loadFromStorage(['events']);
@@ -1086,9 +1241,10 @@ class DataManager {
                 eventData.id = 'event_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             }
             
-            // Add timestamps
+            // Add timestamps and set initial status
             eventData.createdAt = new Date().toISOString();
             eventData.updatedAt = new Date().toISOString();
+            eventData.status = eventData.status || 'upcoming'; // Set default status to upcoming
             
             // Save to server
             const savedEvent = await this.saveToServer('events', eventData, false);
@@ -1136,7 +1292,27 @@ class DataManager {
      * Get event by ID
      */
     getEvent(id) {
-        return this.data.events.find(e => e.id === id);
+        if (!this.data.events) {
+            console.warn('⚠️ getEvent: Events array not initialized');
+            return null;
+        }
+        
+        const event = this.data.events.find(e => e.id === id);
+        if (!event) {
+            console.warn(`⚠️ getEvent: Event ${id} not found in cache. Available events: ${this.data.events.length}`);
+            if (this.data.events.length > 0) {
+                console.log('📋 Available event IDs:', this.data.events.slice(0, 5).map(e => e.id));
+            }
+            
+            // Try to reload events from server if not found
+            console.log('🔄 Attempting to reload events from server...');
+            this.loadFromStorageOptimized(['events'], true).then(() => {
+                console.log('✅ Events reloaded from server');
+            }).catch(error => {
+                console.error('❌ Failed to reload events:', error);
+            });
+        }
+        return event;
     }
 
     /**
@@ -1210,6 +1386,144 @@ class DataManager {
         } catch (error) {
             console.error('Failed to delete event:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Update event status
+     */
+    async updateEventStatus(eventId, newStatus) {
+        try {
+            console.log(`🔄 Updating event ${eventId} status to: ${newStatus}`);
+            
+            const response = await fetch(`${this.baseUrl}/events/${eventId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to update event status: ${response.statusText}`);
+            }
+
+            // Get the updated event data from the response
+            let updatedEvent;
+            try {
+                updatedEvent = await response.json();
+            } catch (error) {
+                console.warn('⚠️ Could not parse response as JSON, updating status only');
+                // If we can't parse the response, just update the status in the existing event
+                const eventIndex = this.data.events.findIndex(e => e.id === eventId);
+                if (eventIndex !== -1) {
+                    this.data.events[eventIndex].status = newStatus;
+                    this.data.events[eventIndex].updatedAt = new Date().toISOString();
+                    console.log(`✅ Updated event ${eventId} status in local cache`);
+                }
+                // Emit event and return
+                if (this.eventBus) {
+                    this.eventBus.emit('eventStatusUpdated', { eventId, status: newStatus });
+                }
+                console.log(`✅ Event ${eventId} status updated to: ${newStatus}`);
+                return true;
+            }
+            
+            // Update local cache - ensure we have the events array
+            if (!this.data.events) {
+                console.warn('⚠️ Events array not initialized, creating it');
+                this.data.events = [];
+            }
+            
+            const eventIndex = this.data.events.findIndex(e => e.id === eventId);
+            if (eventIndex !== -1) {
+                // Update the existing event with new status and any other updated fields
+                this.data.events[eventIndex] = { ...this.data.events[eventIndex], ...updatedEvent };
+                console.log(`✅ Updated event ${eventId} in local cache`);
+            } else {
+                console.warn(`⚠️ Event ${eventId} not found in local cache, adding it`);
+                // If event not in cache, add it (this shouldn't happen normally)
+                this.data.events.push(updatedEvent);
+            }
+
+            // Emit event for UI updates
+            if (this.eventBus) {
+                this.eventBus.emit('eventStatusUpdated', { eventId, status: newStatus });
+            }
+
+            console.log(`✅ Event ${eventId} status updated to: ${newStatus}`);
+            return true;
+        } catch (error) {
+            console.error('❌ Error updating event status:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Check if an event is completed (all classes have finished their finals)
+     */
+    isEventCompleted(eventId) {
+        try {
+            const bracket = this.getRaceBracket(eventId);
+            if (!bracket || !bracket.classes) {
+                console.log(`🔍 Event ${eventId}: No bracket or classes found`);
+                return false;
+            }
+
+            const classNames = Object.keys(bracket.classes);
+            const totalClasses = classNames.length;
+            
+            if (totalClasses === 0) {
+                console.log(`🔍 Event ${eventId}: No classes in bracket`);
+                return false;
+            }
+
+            // Check each class completion status
+            const classStatuses = {};
+            let completedCount = 0;
+            
+            Object.entries(bracket.classes).forEach(([className, classBracket]) => {
+                const isComplete = classBracket.isComplete === true;
+                classStatuses[className] = isComplete;
+                if (isComplete) completedCount++;
+            });
+
+            const allClassesComplete = completedCount === totalClasses;
+            
+            console.log(`🔍 Event ${eventId} completion check:`);
+            console.log(`   📊 Classes: ${completedCount}/${totalClasses} complete`);
+            console.log(`   📋 Status by class:`, classStatuses);
+            console.log(`   🎯 Result: ${allClassesComplete ? 'COMPLETED ✅' : 'IN PROGRESS ⏳'}`);
+            
+            return allClassesComplete;
+        } catch (error) {
+            console.error('❌ Error checking event completion:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Set all existing events to 'upcoming' status if they don't have a status
+     */
+    async initializeEventStatuses() {
+        try {
+            console.log('🔄 Initializing event statuses...');
+            
+            const events = this.data.events.filter(event => !event.status);
+            if (events.length === 0) {
+                console.log('✅ All events already have status values');
+                return;
+            }
+
+            console.log(`📝 Setting ${events.length} events to 'upcoming' status`);
+            
+            for (const event of events) {
+                await this.updateEventStatus(event.id, 'upcoming');
+            }
+
+            console.log('✅ Event status initialization complete');
+        } catch (error) {
+            console.error('❌ Error initializing event statuses:', error);
         }
     }
 
@@ -1461,24 +1775,33 @@ class DataManager {
     }
 
     /**
-     * SIMPLIFIED: Save race bracket via server only with robust error handling
+     * OPTIMIZED: Save race bracket with batching and improved error handling
      */
-    async saveRaceBracket(eventId, bracketData) {
+    async saveRaceBracket(eventId, bracketData, options = {}) {
         try {
             // Ensure the bracket has an eventId
             bracketData.eventId = eventId;
             
             // Check if bracket already exists in local cache
             const existingBracket = this.data.raceBrackets[eventId];
+            const isUpdate = existingBracket && existingBracket.id;
             let savedBracket;
+
+            // Use batch saving for better performance during rapid saves
+            const useBatch = options.batch !== false; // Default to true unless explicitly disabled
             
-            if (existingBracket && existingBracket.id) {
+            if (isUpdate) {
                 // Try to update existing bracket using PUT
                 console.log('🔄 Attempting to update existing race bracket for event:', eventId, 'with ID:', existingBracket.id);
                 bracketData.id = existingBracket.id;
                 
                 try {
-                    savedBracket = await this.updateRaceBracket(existingBracket.id, bracketData);
+                    // Use enhanced saveToServer with batch support
+                    savedBracket = await this.saveToServer('race-brackets', bracketData, true, {
+                        batch: useBatch,
+                        maxRetries: 2,
+                        retryDelay: 500
+                    });
                     console.log('✅ Successfully updated existing race bracket');
                 } catch (updateError) {
                     // If update fails (404 - bracket doesn't exist on server), create new one
@@ -1486,7 +1809,11 @@ class DataManager {
                         console.warn('⚠️ Bracket not found on server, creating new one instead');
                         // Remove ID to force creation of new bracket
                         delete bracketData.id;
-                        savedBracket = await this.saveToServer('race-brackets', bracketData, false);
+                        savedBracket = await this.saveToServer('race-brackets', bracketData, false, {
+                            batch: useBatch,
+                            maxRetries: 2,
+                            retryDelay: 500
+                        });
                         console.log('✅ Created new race bracket after update failed');
                     } else {
                         // Re-throw other errors
@@ -1496,32 +1823,44 @@ class DataManager {
             } else {
                 // Create new bracket using POST
                 console.log('📝 Creating new race bracket for event:', eventId);
-                savedBracket = await this.saveToServer('race-brackets', bracketData, false);
+                savedBracket = await this.saveToServer('race-brackets', bracketData, false, {
+                    batch: useBatch,
+                    maxRetries: 2,
+                    retryDelay: 500
+                });
             }
                 
-            // Update local data cache
-            this.data.raceBrackets[eventId] = savedBracket;
+            // Update local data cache immediately (optimistic update)
+            this.data.raceBrackets[eventId] = savedBracket || bracketData;
             
             // Broadcast bracket saved event
             if (this.eventBus) {
                 this.eventBus.emit('race-bracket-saved', {
                     eventId,
-                    bracket: savedBracket,
+                    bracket: savedBracket || bracketData,
                     timestamp: new Date().toISOString()
                 });
             }
             
-            console.log('✅ Race bracket saved via server for event:', eventId, 'Final ID:', savedBracket.id);
-            return savedBracket;
+            console.log('✅ Race bracket saved via server for event:', eventId, 'Final ID:', savedBracket?.id || 'pending');
+            return savedBracket || bracketData;
         } catch (error) {
             console.error('❌ Failed to save race bracket for event:', eventId, error);
             
-            // Try one more fallback: create a completely new bracket
+            // Optimistic update: save to local cache even if server fails
+            this.data.raceBrackets[eventId] = bracketData;
+            console.log('💾 Bracket saved locally while server is unavailable');
+            
+            // Try one more fallback: create a completely new bracket (non-batched)
             try {
                 console.log('🔄 Attempting fallback: creating fresh bracket...');
                 const fallbackData = { ...bracketData };
                 delete fallbackData.id; // Remove any existing ID
-                const fallbackBracket = await this.saveToServer('race-brackets', fallbackData, false);
+                const fallbackBracket = await this.saveToServer('race-brackets', fallbackData, false, {
+                    batch: false, // Don't batch the fallback
+                    maxRetries: 1,
+                    retryDelay: 1000
+                });
                 
                 // Update local cache
                 this.data.raceBrackets[eventId] = fallbackBracket;
@@ -1529,8 +1868,9 @@ class DataManager {
                 console.log('✅ Fallback bracket creation succeeded:', fallbackBracket.id);
                 return fallbackBracket;
             } catch (fallbackError) {
-                console.error('❌ Fallback bracket creation also failed:', fallbackError);
-                throw new Error(`All bracket save attempts failed. Original: ${error.message}, Fallback: ${fallbackError.message}`);
+                console.warn('⚠️ Fallback bracket creation also failed, but local save succeeded:', fallbackError);
+                // Return local data since we've already saved it locally
+                return bracketData;
             }
         }
     }

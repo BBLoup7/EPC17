@@ -65,7 +65,7 @@
                 <li><a href="live-display.html">🖥️ Live Display</a></li>
             </ul>
             <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">v1.0.0</div>
+                <div class="mobile-nav-version">25W32a09</div>
             </div>
         </div>
         
@@ -1742,8 +1742,13 @@
         function populateDriverSelect() {
             const container = document.getElementById('driverSelectContainer');
             
+            // Sort participants alphabetically by name
+            const sortedParticipants = [...allData.participants].sort((a, b) => 
+                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+            );
+            
             // Create options array for combo box
-            const options = allData.participants.map(driver => ({
+            const options = sortedParticipants.map(driver => ({
                 value: driver.id,
                 label: driver.name
             }));
@@ -1796,11 +1801,16 @@
                 return;
             }
 
+            // Sort participants alphabetically by name
+            const sortedParticipants = [...allData.participants].sort((a, b) => 
+                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+            );
+            
             // Calculate pagination
-            const totalPages = Math.ceil(allData.participants.length / driversPerPage);
+            const totalPages = Math.ceil(sortedParticipants.length / driversPerPage);
             const startIndex = (currentDriversPage - 1) * driversPerPage;
             const endIndex = startIndex + driversPerPage;
-            const currentPageDrivers = allData.participants.slice(startIndex, endIndex);
+            const currentPageDrivers = sortedParticipants.slice(startIndex, endIndex);
             
             console.log(`📄 Drivers Page ${currentDriversPage} of ${totalPages} (showing ${currentPageDrivers.length} of ${allData.participants.length} drivers)`);
 

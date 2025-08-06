@@ -422,12 +422,42 @@
 
         /* Duplicate Detection Styles */
         .duplicate-warning {
-            background: #fff3e0;
-            border: 1px solid #ff9800;
-            border-radius: 8px;
-            padding: 1rem;
+            background: linear-gradient(135deg, #fff8e1, #ffecb3);
+            border: 2px solid #ff9800;
+            border-radius: 12px;
+            padding: 1.5rem;
             margin: 1rem 0;
             animation: slideInDown 0.3s ease-out;
+            box-shadow: 0 4px 20px rgba(255, 152, 0, 0.2);
+            position: relative;
+            z-index: 10;
+            color: #333; /* Dark text for better contrast */
+        }
+
+        .duplicate-warning h4 {
+            color: #d84315; /* Dark orange for better readability */
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .duplicate-warning p {
+            color: #424242; /* Dark gray for better contrast */
+            margin: 0.5rem 0;
+        }
+
+        .duplicate-warning::before {
+            content: "🚨";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #ff9800;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .duplicate-warning h4 {
@@ -490,6 +520,17 @@
             border-radius: 10px;
             margin-right: 0.25rem;
             font-size: 0.7rem;
+        }
+
+        .match-confidence {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            margin-right: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 600;
         }
 
         .use-existing-btn {
@@ -574,6 +615,58 @@
         .summary-section p {
             margin: 0.25rem 0;
             color: var(--text-secondary);
+        }
+
+        /* Driver Edit Section Styles */
+        .driver-edit-section {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 2px solid var(--primary);
+        }
+
+        .driver-edit-section h4 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .driver-edit-section h4:before {
+            content: "✏️";
+        }
+
+        .edit-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
         }
 
         @media (max-width: 768px) {
@@ -820,7 +913,7 @@
                 <li><a href="live-display.html">🖥️ Live Display</a></li>
             </ul>
             <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">v1.0.0</div>
+                <div class="mobile-nav-version">25W32a09</div>
             </div>
         </div>
         
@@ -914,14 +1007,49 @@
                     </div>
                 </div>
 
-                <!-- Step 3: Class Selection & Registration -->
+                <!-- Step 3: Driver Information & Class Selection -->
                 <div class="add-existing-step" id="registrationStep" style="display: none;">
                     <div class="step-header">
-                        <h3>Step 3: Complete Registration</h3>
+                        <h3>Step 3: Review & Edit Driver Information</h3>
                     </div>
                     
                     <div class="selected-driver-info" id="selectedDriverInfo">
                         <!-- Selected driver info will appear here -->
+                    </div>
+                    
+                    <!-- Driver Edit Section -->
+                    <div class="driver-edit-section" id="driverEditSection" style="display: none;">
+                        <h4>Edit Driver Information</h4>
+                        <div class="edit-form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="editDriverName" name="editDriverName">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nickname</label>
+                                <input type="text" class="form-control" id="editDriverNickname" name="editDriverNickname">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Racing Number</label>
+                                <input type="number" class="form-control" id="editDriverNumber" name="editDriverNumber" min="1" max="999">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editDriverEmail" name="editDriverEmail">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="editDriverPhone" name="editDriverPhone">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Emergency Contact</label>
+                                <input type="text" class="form-control" id="editDriverEmergency" name="editDriverEmergency">
+                            </div>
+                        </div>
+                        <div class="edit-actions">
+                            <button type="button" class="btn btn-secondary" onclick="cancelEditDriver()">Cancel Edit</button>
+                            <button type="button" class="btn btn-primary" onclick="saveDriverEdits()">Save Changes</button>
+                        </div>
                     </div>
                     
                     <div class="class-selection">
@@ -940,6 +1068,9 @@
                     
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="resetAddExisting()">Start Over</button>
+                        <button type="button" class="btn btn-outline" onclick="editDriverInfo()" id="editDriverBtn">
+                            <i class="fas fa-edit"></i> Edit Driver Info
+                        </button>
                         <button type="button" class="btn btn-primary" onclick="completeAddExisting()" id="completeBtn" disabled>
                             Complete Registration
                         </button>
@@ -1247,6 +1378,9 @@
                         }
                     }, 500);
                 }
+                
+                // Set up duplicate detection (no initial check to reduce spam)
+                setupDuplicateDetection();
             } else {
                 console.warn('Registration form not found');
             }
@@ -2147,6 +2281,7 @@
         // Reset registration step
         function resetRegistrationStep() {
             document.getElementById('registrationStep').style.display = 'none';
+            document.getElementById('driverEditSection').style.display = 'none';
             window.selectedDriverId = null;
             window.selectedEventId = null;
             window.selectedClasses = [];
@@ -2156,6 +2291,81 @@
                 card.classList.remove('selected');
             });
         }
+
+        // Edit driver information
+        window.editDriverInfo = function() {
+            const driver = dataManager.getParticipant(window.selectedDriverId);
+            if (!driver) {
+                alert('Driver not found');
+                return;
+            }
+
+            // Populate edit form with current driver data
+            document.getElementById('editDriverName').value = driver.name || '';
+            document.getElementById('editDriverNickname').value = driver.nickname || '';
+            document.getElementById('editDriverNumber').value = driver.racingNumber || '';
+            document.getElementById('editDriverEmail').value = driver.contact?.email || driver.contactEmail || '';
+            document.getElementById('editDriverPhone').value = driver.contact?.phone || driver.contactPhone || '';
+            document.getElementById('editDriverEmergency').value = driver.contact?.emergency || '';
+
+            // Show edit section
+            document.getElementById('driverEditSection').style.display = 'block';
+            document.getElementById('editDriverBtn').style.display = 'none';
+        };
+
+        // Cancel editing driver information
+        window.cancelEditDriver = function() {
+            document.getElementById('driverEditSection').style.display = 'none';
+            document.getElementById('editDriverBtn').style.display = 'inline-block';
+        };
+
+        // Save driver edits
+        window.saveDriverEdits = async function() {
+            try {
+                const driver = dataManager.getParticipant(window.selectedDriverId);
+                if (!driver) {
+                    alert('Driver not found');
+                    return;
+                }
+
+                // Collect edited data
+                const editedData = {
+                    ...driver,
+                    name: document.getElementById('editDriverName').value.trim(),
+                    nickname: document.getElementById('editDriverNickname').value.trim(),
+                    racingNumber: document.getElementById('editDriverNumber').value || null,
+                    contact: {
+                        ...driver.contact,
+                        email: document.getElementById('editDriverEmail').value.trim(),
+                        phone: document.getElementById('editDriverPhone').value.trim(),
+                        emergency: document.getElementById('editDriverEmergency').value.trim()
+                    }
+                };
+
+                // Validate required fields
+                if (!editedData.name) {
+                    alert('Driver name is required');
+                    return;
+                }
+
+                // Update driver in data manager
+                const success = await dataManager.updateParticipant(window.selectedDriverId, editedData);
+                if (success) {
+                    // Update the displayed driver info
+                    showRegistrationStep(editedData, window.selectedEventId);
+                    
+                    // Hide edit section
+                    cancelEditDriver();
+                    
+                    showToast('Driver information updated successfully', 'success');
+                } else {
+                    alert('Failed to update driver information');
+                }
+            } catch (error) {
+                console.error('Error saving driver edits:', error);
+                alert('Error saving driver information. Please try again.');
+            }
+        };
 
         // Load available events for add existing
         async function loadAvailableEvents() {
@@ -2195,6 +2405,12 @@
             try {
                 const participantsResult = dataManager ? await dataManager.getParticipants({}, 1, 1000) : { participants: [] };
                 const participants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
+                
+                // Sort participants alphabetically by name
+                const sortedParticipants = participants.sort((a, b) => 
+                    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+                );
+                
                 const driversList = document.getElementById('existingDriversList');
                 
                 if (participants.length === 0) {
@@ -2208,7 +2424,7 @@
                     return;
                 }
 
-                const driversHtml = participants.map(driver => {
+                const driversHtml = sortedParticipants.map(driver => {
                     const classes = driver.selectedClasses || driver.sledClasses || [driver.sledClass].filter(Boolean);
                     const classesText = Array.isArray(classes) ? classes.join(', ') : (classes || 'N/A');
                     
@@ -2302,50 +2518,69 @@
             
             existingParticipants.forEach(participant => {
                 const matchReasons = [];
+                let totalScore = 0;
+                let maxScore = 0;
                 
                 // Check name similarity (exact match or very similar)
                 if (formData.name && participant.name) {
+                    maxScore += 1;
                     const nameSimilarity = calculateStringSimilarity(
                         formData.name.toLowerCase().trim(), 
                         participant.name.toLowerCase().trim()
                     );
-                    if (nameSimilarity > 0.8) {
-                        matchReasons.push('Name');
+                    if (nameSimilarity > 0.95) {
+                        matchReasons.push('Exact Name');
+                        totalScore += 1;
+                    } else if (nameSimilarity > 0.85) {
+                        matchReasons.push('Very Similar Name');
+                        totalScore += 0.9;
                     }
                 }
                 
-                // Check email match
+                // Check email match (exact match only)
                 const formEmail = formData.email || formData.contactEmail;
                 const participantEmail = participant.contact?.email || participant.contactEmail;
-                if (formEmail && participantEmail && 
-                    formEmail.toLowerCase().trim() === participantEmail.toLowerCase().trim()) {
-                    matchReasons.push('Email');
+                if (formEmail && participantEmail) {
+                    maxScore += 1;
+                    if (formEmail.toLowerCase().trim() === participantEmail.toLowerCase().trim()) {
+                        matchReasons.push('Email');
+                        totalScore += 1;
+                    }
                 }
                 
-                // Check phone match
+                // Check phone match (exact match only)
                 const formPhone = formData.phone || formData.contactPhone;
                 const participantPhone = participant.contact?.phone || participant.contactPhone;
                 if (formPhone && participantPhone) {
+                    maxScore += 1;
                     const cleanFormPhone = cleanPhoneNumber(formPhone);
                     const cleanParticipantPhone = cleanPhoneNumber(participantPhone);
-                    if (cleanFormPhone === cleanParticipantPhone) {
+                    if (cleanFormPhone && cleanParticipantPhone && cleanFormPhone === cleanParticipantPhone) {
                         matchReasons.push('Phone');
+                        totalScore += 1;
                     }
                 }
                 
                 // Check date of birth match
-                if (formData.dateOfBirth && participant.dateOfBirth && 
-                    formData.dateOfBirth === participant.dateOfBirth) {
-                    matchReasons.push('Date of Birth');
+                if (formData.dateOfBirth && participant.dateOfBirth) {
+                    maxScore += 1;
+                    if (formData.dateOfBirth === participant.dateOfBirth) {
+                        matchReasons.push('Date of Birth');
+                        totalScore += 1;
+                    }
                 }
                 
-                // If any matches found, add to potential duplicates
-                if (matchReasons.length > 0) {
-                    potentialDuplicates.push({
-                        participant: participant,
-                        matchReasons: matchReasons,
-                        confidence: matchReasons.length / 4 // 4 total possible matches
-                    });
+                // If any matches found and confidence is high enough, add to potential duplicates
+                if (matchReasons.length > 0 && totalScore > 0) {
+                    const confidence = maxScore > 0 ? totalScore / maxScore : 0;
+                    // Show if confidence is at least 50% or we have multiple exact matches
+                    if (confidence >= 0.5 || (matchReasons.includes('Exact Name') && matchReasons.length >= 2)) {
+                        potentialDuplicates.push({
+                            participant: participant,
+                            matchReasons: matchReasons,
+                            confidence: confidence
+                        });
+                    }
                 }
             });
             
@@ -2353,13 +2588,34 @@
             return potentialDuplicates.sort((a, b) => b.confidence - a.confidence);
         }
         
-        // Calculate string similarity (simple Levenshtein-based approach)
+        // Calculate string similarity (more strict approach with length consideration)
         function calculateStringSimilarity(str1, str2) {
             const len1 = str1.length;
             const len2 = str2.length;
             
             if (len1 === 0) return len2 === 0 ? 1 : 0;
             if (len2 === 0) return 0;
+            
+            // Exact match check first
+            if (str1 === str2) return 1;
+            
+            const maxLen = Math.max(len1, len2);
+            const minLen = Math.min(len1, len2);
+            
+            // For longer names, allow more character differences
+            let maxAllowedDistance;
+            if (maxLen <= 5) {
+                maxAllowedDistance = 1; // Very short names: only 1 character difference
+            } else if (maxLen <= 10) {
+                maxAllowedDistance = 2; // Short names: 2 character differences
+            } else if (maxLen <= 15) {
+                maxAllowedDistance = 3; // Medium names: 3 character differences
+            } else {
+                maxAllowedDistance = Math.floor(maxLen * 0.2); // Long names: 20% of length
+            }
+            
+            // If length difference is more than allowed, it's not similar enough
+            if (maxLen - minLen > maxAllowedDistance) return 0;
             
             const matrix = Array(len2 + 1).fill().map(() => Array(len1 + 1).fill(0));
             
@@ -2378,7 +2634,10 @@
             }
             
             const distance = matrix[len2][len1];
-            const maxLen = Math.max(len1, len2);
+            
+            // Only consider it similar if the difference is within allowed range
+            if (distance > maxAllowedDistance) return 0;
+            
             return (maxLen - distance) / maxLen;
         }
         
@@ -2394,49 +2653,72 @@
             
             if (potentialDuplicates.length === 0) return;
             
-            const container = document.getElementById(targetContainerId);
-            if (!container) return;
+            // Find the main content area to insert the warning between tabs and form
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
             
             const warningHtml = `
                 <div class="duplicate-warning" id="duplicateWarning">
-                    <h4>Potential Duplicate Drivers Found</h4>
-                    <p>The information you entered matches existing drivers. Please review before continuing:</p>
+                    <h4>⚠️ Potential Duplicate Drivers Found</h4>
+                    <p><strong>Warning:</strong> The information you entered matches existing drivers in our database. Please review the matches below:</p>
                     <div class="potential-duplicates">
                         ${potentialDuplicates.map(duplicate => {
                             const participant = duplicate.participant;
                             const reasons = duplicate.matchReasons;
+                            const confidence = Math.round(duplicate.confidence * 100);
                             return `
                                 <div class="potential-duplicate-item" onclick="selectExistingDriver('${participant.id}')">
                                     <div class="duplicate-match-info">
                                         <div>
                                             <div class="duplicate-driver-name">${participant.name}${participant.nickname ? ` (${participant.nickname})` : ''}</div>
                                             <div class="duplicate-match-reasons">
+                                                <span class="match-confidence">${confidence}% match</span>
                                                 ${reasons.map(reason => `<span class="match-reason">${reason}</span>`).join('')}
                                             </div>
-                                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
-                                                Email: ${participant.contact?.email || participant.contactEmail || 'N/A'} | 
-                                                Phone: ${participant.contact?.phone || participant.contactPhone || 'N/A'}
+                                            <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
+                                                📧 ${participant.contact?.email || participant.contactEmail || 'N/A'} | 
+                                                📞 ${participant.contact?.phone || participant.contactPhone || 'N/A'}
                                             </div>
                                         </div>
                                         <button class="use-existing-btn" onclick="event.stopPropagation(); selectExistingDriver('${participant.id}')">
-                                            Use This Driver
+                                            <i class="fas fa-user-plus"></i> Use This Driver
                                         </button>
                                     </div>
                                 </div>
                             `;
                         }).join('')}
                     </div>
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd; font-size: 0.9rem; color: var(--text-secondary);">
-                        <strong>Continue anyway?</strong> If you're sure this is a new driver, you can continue with the registration.
-                        <button onclick="removeDuplicateWarnings()" style="margin-left: 1rem; padding: 0.25rem 0.5rem; background: var(--secondary); color: white; border: none; border-radius: 4px; cursor: pointer;">
-                            Continue as New Driver
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 193, 7, 0.15); border-radius: 6px; border-left: 4px solid #ff9800; color: #333;">
+                        <strong style="color: #d84315;">💡 What should you do?</strong>
+                        <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0; color: #424242;">
+                            <li>If this is the same driver, click "Use This Driver" to add them to the current event</li>
+                            <li>If this is a different driver with similar information, you can continue with registration</li>
+                            <li>You can edit the existing driver's information after selecting them</li>
+                        </ul>
+                        <button onclick="removeDuplicateWarnings()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                            <i class="fas fa-plus"></i> Continue as New Driver
                         </button>
                     </div>
                 </div>
             `;
             
-            // Insert warning at the top of the form
-            container.insertAdjacentHTML('afterbegin', warningHtml);
+            // Insert warning between tabs and form content
+            const tabs = document.querySelector('.tabs');
+            if (tabs && tabs.nextSibling) {
+                // Insert after tabs
+                tabs.parentNode.insertBefore(document.createRange().createContextualFragment(warningHtml), tabs.nextSibling);
+            } else {
+                // Fallback: insert at the beginning of main content
+                mainContent.insertAdjacentHTML('afterbegin', warningHtml);
+            }
+            
+            // Scroll to the warning
+            setTimeout(() => {
+                const warning = document.getElementById('duplicateWarning');
+                if (warning) {
+                    warning.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
         }
         
         // Remove duplicate warnings
@@ -2489,26 +2771,28 @@
         
         // Set up form monitoring for duplicate detection
         function setupDuplicateDetection() {
-            // This will be called when the registration form is loaded
-            // We'll monitor key fields for changes
-            const monitorFields = [
-                { name: 'name', selector: 'input[name="name"]' },
-                { name: 'email', selector: 'input[name="contact.email"]' },
-                { name: 'phone', selector: 'input[name="contact.phone"]' },
-                { name: 'dob', selector: 'input[name="dob"]' }
-            ];
+            console.log('🔍 Setting up duplicate detection...');
             
-            monitorFields.forEach(field => {
-                const element = document.querySelector(field.selector);
-                if (element) {
-                    element.addEventListener('blur', function() {
-                        checkFormForDuplicates();
-                    });
-                    console.log(`✅ Set up duplicate detection for ${field.name} field`);
-                } else {
-                    console.log(`⚠️ Field not found for duplicate detection: ${field.selector}`);
-                }
-            });
+            // Debounced version for input events - 1.5 second delay to reduce spam
+            const debouncedCheckFormForDuplicates = Helpers.debounce(checkFormForDuplicates, 1500);
+            
+            // Only monitor the name field - that's the most important one
+            const nameField = document.querySelector('input[name="name"]');
+            if (nameField) {
+                // Remove any existing listeners to prevent duplicates
+                nameField.removeEventListener('blur', checkFormForDuplicates);
+                nameField.removeEventListener('input', debouncedCheckFormForDuplicates);
+                
+                // Add listeners only to name field with reasonable delays
+                nameField.addEventListener('blur', checkFormForDuplicates);
+                nameField.addEventListener('input', debouncedCheckFormForDuplicates);
+                
+                console.log('✅ Set up duplicate detection for name field only');
+            } else {
+                console.log('⚠️ Name field not found for duplicate detection');
+            }
+            
+            console.log('🔍 Duplicate detection setup complete (name field only)');
         }
         
         // Check current form data for duplicates
@@ -2517,26 +2801,40 @@
                 const formData = gatherCurrentFormData();
                 console.log('🔍 Checking for duplicates with form data:', formData);
                 
-                // Only check if we have enough data to make a meaningful comparison
-                if (!formData.name && !formData.email) {
-                    console.log('🔍 Not enough data for duplicate check');
+                // Check if we have at least a name (most important field) - require more characters
+                if (!formData.name || formData.name.length < 3) {
+                    console.log('🔍 Not enough data for duplicate check (need at least 3 characters in name)');
                     removeDuplicateWarnings();
                     return;
                 }
                 
-                const potentialDuplicates = checkForDuplicateDrivers(formData);
-                console.log('🔍 Found potential duplicates:', potentialDuplicates);
-                
-                if (potentialDuplicates.length > 0) {
-                    showDuplicateWarning(potentialDuplicates);
-                } else {
-                    removeDuplicateWarnings();
-                }
+                checkForDuplicateDrivers(formData).then(potentialDuplicates => {
+                    console.log('🔍 Found potential duplicates:', potentialDuplicates);
+                    
+                    if (potentialDuplicates.length > 0) {
+                        showDuplicateWarning(potentialDuplicates);
+                    } else {
+                        removeDuplicateWarnings();
+                    }
+                }).catch(error => {
+                    console.error('Error in duplicate check:', error);
+                });
                 
             } catch (error) {
                 console.error('Error checking for duplicates:', error);
             }
         }
+
+        // Make duplicate detection functions globally available
+        window.checkFormForDuplicates = checkFormForDuplicates;
+        window.removeDuplicateWarnings = removeDuplicateWarnings;
+        window.showDuplicateWarning = showDuplicateWarning;
+
+        // Manual trigger for duplicate detection (can be called from registration form)
+        window.triggerDuplicateCheck = function() {
+            console.log('🔍 Manual duplicate check triggered');
+            checkFormForDuplicates();
+        };
         
         // Gather current form data
         function gatherCurrentFormData() {
