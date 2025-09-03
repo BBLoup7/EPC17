@@ -178,6 +178,8 @@ class EventManager {
         const event = isEdit ? dataManager.getEvent(eventId) : null;
         const series = dataManager.getAllSeries();
         const title = isEdit ? 'Edit Event' : 'Create New Event';
+        const isCompleted = isEdit && event && (event.status === 'completed' || event.status === 'finished');
+        const lockSettings = isCompleted;
 
         const formHtml = `
             <form id="event-form" class="event-form">
@@ -196,6 +198,12 @@ class EventManager {
                         <input type="text" name="location" id="location" required 
                                placeholder="e.g., Frozen Lake Speedway"
                                value="${isEdit ? Helpers.sanitizeHtml(event.location) : ''}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventDate">Event Date *</label>
+                        <input type="date" name="eventDate" id="eventDate" required 
+                               value="${isEdit && event.date ? event.date : ''}">
                     </div>
 
                     <div class="form-group">
@@ -229,20 +237,62 @@ class EventManager {
                         
                         <div class="form-group">
                             <label for="eliminationType">Elimination Type *</label>
-                            <select name="eliminationType" id="eliminationType" required>
+                            <select name="eliminationType" id="eliminationType" required ${lockSettings ? 'disabled' : ''}>
                                 <option value="single" ${isEdit && event.eliminationType === 'single' ? 'selected' : ''}>
                                     Single Elimination
                                 </option>
                                 <option value="double" ${isEdit && event.eliminationType === 'double' ? 'selected' : ''}>
                                     Double Elimination
                                 </option>
+                                 <option value="double_random" ${isEdit && event.eliminationType === 'double_random' ? 'selected' : ''}>
+                                     Double Elimination (Random, no bracket)
+                                 </option>
+                                 <option value="custom" ${isEdit && event.eliminationType === 'custom' ? 'selected' : ''}>
+                                     Custom Outcomes per Position
+                                 </option>
                             </select>
+                            ${lockSettings ? '<small class="form-help text-warning">⚠️ Cannot change elimination type for completed events</small>' : ''}
                         </div>
                     </div>
 
                     <div class="track-preview" id="track-preview">
                         <h5>Race Format Preview</h5>
                         <div id="track-visualization"></div>
+                    </div>
+                    
+                    <div class="form-group" id="custom-outcomes-container" style="display:none;">
+                        <h5>Custom Elimination Settings</h5>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="customLossLimit">Loss Limit</label>
+                                <input type="number" id="customLossLimit" min="1" max="10" value="${isEdit && event.customLossLimit ? event.customLossLimit : 2}" style="max-width:100px;" ${lockSettings ? 'disabled' : ''}>
+                                <small>Number of losses before elimination</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="customUseBrackets">Bracket System</label>
+                                <select id="customUseBrackets" style="max-width:200px;" ${lockSettings ? 'disabled' : ''}>
+                                    <option value="false" ${isEdit && event.customUseBrackets === false ? 'selected' : ''}>No Brackets (Random pairing)</option>
+                                    <option value="true" ${isEdit && event.customUseBrackets === true ? 'selected' : ''}>Use Brackets (Structured)</option>
+                                </select>
+                                <small>How to organize matchups</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="customFinalType">Final Type</label>
+                                <select id="customFinalType" style="max-width:200px;" ${lockSettings ? 'disabled' : ''}>
+                                    <option value="unique" ${isEdit && event.customFinalType === 'unique' ? 'selected' : ''}>Unique Final (Standard)</option>
+                                    <option value="complete" ${isEdit && event.customFinalType === 'complete' ? 'selected' : ''}>Complete Elimination</option>
+                                </select>
+                                <small>How to determine final standings</small>
+                            </div>
+                        </div>
+                        ${lockSettings ? '<div class="form-help text-warning">⚠️ Tournament settings are locked for completed events to prevent data corruption</div>' : ''}
+                        
+                        <div class="form-group">
+                            <label>Outcomes per Finishing Position</label>
+                            <div id="custom-outcomes-rows"></div>
+                            <small>For each finishing position, choose the outcome: Win (no loss), Lose (adds a loss, continues), Eliminated (out of event).</small>
+                        </div>
                     </div>
                 </div>
 
@@ -273,6 +323,16 @@ class EventManager {
                     <h4>Advanced Settings</h4>
                     
                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="driverMeetingTime">Driver Meeting Time</label>
+                            <input type="time" name="driverMeetingTime" id="driverMeetingTime" 
+                                   value="${isEdit && event.driverMeetingTime ? event.driverMeetingTime : '08:00'}">
+                        </div>
+                        <div class="form-group">
+                            <label for="maxParticipants">Max Participants</label>
+                            <input type="number" name="maxParticipants" id="maxParticipants" min="1" 
+                                   value="${isEdit && event.maxParticipants ? event.maxParticipants : ''}" required>
+                        </div>
                         <div class="form-group">
                             <label for="trackSurface">Track Surface</label>
                             <select name="trackSurface" id="trackSurface">
@@ -316,6 +376,18 @@ class EventManager {
         `;
 
         Helpers.showModal(title, formHtml);
+
+        // Set eventId in form dataset for edit mode
+        if (isEdit && eventId) {
+            const form = document.getElementById('event-form');
+            if (form) {
+                form.dataset.eventId = eventId;
+                // Also set custom outcomes if they exist
+                if (event && Array.isArray(event.customOutcomes)) {
+                    form.dataset.customOutcomes = JSON.stringify(event.customOutcomes);
+                }
+            }
+        }
 
         // Bind form interactions
         this.bindFormInteractions(eventId);
@@ -371,7 +443,7 @@ class EventManager {
             </div>
         `).join('');
 
-        tracksContainer.innerHTML = `
+        const baseHtml = `
             <div class="race-format-display">
                 <div class="participants-per-race">
                     <h6>Race Format</h6>
@@ -379,15 +451,76 @@ class EventManager {
                         ${lanesHtml}
                     </div>
                 </div>
+                ${eliminationType === 'custom' ? `
+                <div class="race-result">
+                    <div class="winner-indicator">Customize outcomes below for each finishing position.</div>
+                </div>` : `
                 <div class="race-result">
                     <div class="winner-indicator">🏆 1st Place = Winner</div>
-                    <div class="loser-indicator">❌ 2nd-${numberOfTracks}th Place = Eliminated</div>
-                </div>
+                    <div class="loser-indicator">❌ 2nd-${numberOfTracks}th Place = ${eliminationType === 'double' || eliminationType === 'double_random' ? 'Loss (may continue)' : 'Eliminated'}</div>
+                </div>`}
             </div>
             <div class="layout-info">
                 <strong>Format:</strong> ${numberOfTracks} participants per race, ${eliminationType} elimination tournament
             </div>
         `;
+
+        tracksContainer.innerHTML = baseHtml;
+
+        // Handle custom outcomes display
+        const customContainer = document.getElementById('custom-outcomes-container');
+        const customRowsContainer = document.getElementById('custom-outcomes-rows');
+        
+        if (eliminationType === 'custom') {
+            if (customContainer) customContainer.style.display = 'block';
+            
+            if (customRowsContainer) {
+                // Get current values from edit form if available
+                const form = document.getElementById('event-form');
+                const isEdit = form && form.querySelector('input[name="eventName"]')?.value;
+                const isLocked = form && form.querySelector('select[name="eliminationType"]')?.disabled;
+                const current = (() => {
+                    try {
+                        if (isEdit) {
+                            // Try to get from existing event data first, then form dataset
+                            const eventId = form?.dataset?.eventId;
+                            if (eventId) {
+                                const event = dataManager.getEvent(eventId);
+                                if (event && Array.isArray(event.customOutcomes)) {
+                                    return event.customOutcomes;
+                                }
+                            }
+                            const raw = form?.dataset?.customOutcomes || '';
+                            return raw ? JSON.parse(raw) : [];
+                        }
+                        return [];
+                    } catch { return []; }
+                })();
+                
+                const options = ['win','lose','eliminated'];
+                const rows = Array.from({ length: numberOfTracks }, (_, idx) => {
+                    const pos = idx + 1;
+                    const sel = (current[idx] || (idx === 0 ? 'win' : 'eliminated')).toLowerCase();
+                    const opts = options.map(o => `<option value="${o}" ${sel===o?'selected':''}>${o.charAt(0).toUpperCase()+o.slice(1)}</option>`).join('');
+                    return `<div class="form-row"><label>Position ${pos}</label><select class="custom-outcome" data-position="${pos}" ${isLocked ? 'disabled' : ''}>${opts}</select></div>`;
+                }).join('');
+                
+                customRowsContainer.innerHTML = rows;
+                
+                // Persist custom selections back into the form dataset
+                if (form) {
+                    const selects = customRowsContainer.querySelectorAll('select.custom-outcome');
+                    const outcomes = Array.from(selects).map(s => s.value);
+                    form.dataset.customOutcomes = JSON.stringify(outcomes);
+                    selects.forEach(s => s.addEventListener('change', () => {
+                        const newer = Array.from(customRowsContainer.querySelectorAll('select.custom-outcome')).map(x => x.value);
+                        form.dataset.customOutcomes = JSON.stringify(newer);
+                    }));
+                }
+            }
+        } else {
+            if (customContainer) customContainer.style.display = 'none';
+        }
     }
 
     /**
@@ -406,19 +539,42 @@ class EventManager {
             // Get class settings from form
             const classSettings = this.getEventClassSettings();
 
+            // Check if this is a completed event (settings should be locked)
+            const currentEvent = isEdit ? dataManager.getEvent(eventId) : null;
+            const isCompleted = currentEvent && (currentEvent.status === 'completed' || currentEvent.status === 'finished');
+            
             const eventData = {
                 name: formData.get('eventName'),
                 location: formData.get('location'),
+                date: formData.get('eventDate'),
                 seriesId: formData.get('seriesId') || null,
                 seasonId: formData.get('seasonId') || null, // Add season support
-                numberOfTracks: parseInt(formData.get('numberOfTracks')),
-                eliminationType: formData.get('eliminationType'),
+                driverMeetingTime: formData.get('driverMeetingTime') || '08:00',
+                maxParticipants: parseInt(formData.get('maxParticipants')),
+                // Only update tournament settings if event is not completed
+                ...(isCompleted ? {} : {
+                    numberOfTracks: parseInt(formData.get('numberOfTracks')),
+                    eliminationType: formData.get('eliminationType'),
+                    customOutcomes: (() => { try { return JSON.parse(document.getElementById('event-form')?.dataset?.customOutcomes || '[]'); } catch { return []; } })(),
+                    customLossLimit: (() => {
+                        const input = document.getElementById('customLossLimit');
+                        return parseInt(input?.value || '2', 10);
+                    })(),
+                    customUseBrackets: (() => {
+                        const select = document.getElementById('customUseBrackets');
+                        return (select?.value || 'false') === 'true';
+                    })(),
+                    customFinalType: (() => {
+                        const select = document.getElementById('customFinalType');
+                        return select?.value || 'unique';
+                    })(),
+                    freeRunEnabled: formData.get('freeRunEnabled') === 'on'
+                }),
                 classSettings: classSettings,
                 registrationOpen: formData.get('registrationOpen') === 'on',
                 description: formData.get('eventDescription') || '',
                 trackSurface: formData.get('trackSurface') || 'snow',
-                requiresClassSeparation: formData.get('requiresClassSeparation') === 'on',
-                freeRunEnabled: formData.get('freeRunEnabled') === 'on'
+                requiresClassSeparation: formData.get('requiresClassSeparation') === 'on'
             };
 
             let result;
@@ -966,10 +1122,5 @@ class EventManager {
     }
 }
 
-// Initialize event manager when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Wait for app initialization
-    setTimeout(() => {
-        window.eventManager = new EventManager();
-    }, 100);
-}); 
+// Export EventManager class for global use
+window.EventManager = EventManager; 

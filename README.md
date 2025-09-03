@@ -1,249 +1,156 @@
-# 🏁 EPC17 - Professional Racing Event Management System
+
+# EPC17 — Professional Racing Event Management System
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
 
-> **EPC Technology - Project 17**  
-> A comprehensive racing event management system designed for professional drag racing events with network-accessible architecture.
+> EPC Technology — Project 17
+> Professional racing event management focused on reliable results, reproducible pairings, and real-time operations.
 
-## 🚀 Quick Start
+## Overview
 
-### Prerequisites
-- Python 3.8 or higher
-- Modern web browser
-- Network access (for multi-computer setup)
+EPC17 is a lightweight, network-accessible system for running professional drag-racing events. It prioritizes correctness, state persistence, deterministic pairing logic, and testability over visual flashiness. The repo includes a Flask backend, a modular JavaScript frontend, and a versioned prompt library for any LLM-driven features (race recaps, voice lines). See `/llm/prompts` for prompt specs.
 
-### Installation
+This README is concise and action-oriented. For development workflow and prompt specs consult `EPC17_WORKFLOW.md` and `EPC17_PROMPTS.md` in the repository root.
+
+## Quick start
+
+### Requirements
+- Python 3.8+
+- Node (optional, for frontend build tooling)
+- Modern browser
+- Local network access for multi-machine setups
+
+### Install and run (dev)
 ```bash
-# Clone the repository
+# clone
 git clone https://github.com/your-username/EPC17.git
 cd EPC17
 
-# Install Python dependencies
+# python env (venv or pipenv recommended)
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# Start the server
+# start server (dev)
+export FLASK_ENV=development
 python server.py
+# or: flask --app server run --port 5000
 ```
 
-### Access the Application
-- **Local Access**: `http://localhost:5000`
-- **Network Access**: `http://[your-ip]:5000` (accessible from other computers)
+Open: `http://localhost:5000` or `http://<host-ip>:5000` for network access.
 
-## 🎯 Features
+## Project layout (short)
 
-### 🏆 Event Management
-- **Series Management**: Create and manage racing series with multiple events
-- **Event Configuration**: Set up individual racing events with custom tracks and elimination types
-- **Participant Registration**: Complete registration system with payment tracking
-- **Advanced Pairing**: Smart bracket generation avoiding rematches and optimizing track usage
-
-### 🏁 Race Operations
-- **Bracket Generation**: Single and double elimination brackets with winner/loser paths
-- **Real-time Results**: Instant race result entry and standings updates
-- **Track Assignment**: Optimized track rotation to ensure fair competition
-- **Live Display**: Real-time race information display for spectators
-
-### 📊 Analytics & Reporting
-- **Standings Tracking**: Real-time championship standings and points
-- **Performance Analytics**: Driver statistics and performance metrics
-- **Event Summaries**: Comprehensive event reports and results
-- **Data Export**: Export functionality for backup and analysis
-
-### 🌐 Network Architecture
-- **Multi-Computer Access**: Centralized server accessible from multiple computers
-- **Thread-Safe Operations**: Concurrent access protection for multiple users
-- **Automatic Backups**: Data backup system with version control
-- **Health Monitoring**: Server status and performance monitoring
-
-## 🏗️ Architecture
-
-### Backend (Python Flask)
-```python
-# Core server with REST API
-server.py              # Main Flask application
-requirements.txt       # Python dependencies
 ```
-
-### Frontend (HTML/CSS/JavaScript)
+/app
+  /client        # frontend code (components, views, styles)
+  /server        # Flask app, API endpoints, services
+  /llm           # Prompt specs, examples, evaluators
+  /data          # JSON storage + automatic backups
+  /testing       # Unit/integration/perf tests
+README.md
+EPC17_WORKFLOW.md
+EPC17_PROMPTS.md
+PATCHNOTES.txt
 ```
-js/                    # Core JavaScript modules
-├── app.js            # Main application logic
-├── mobile-nav.js     # Mobile navigation
-└── race-ui.js        # Race interface components
+Refer to `EPC17_WORKFLOW.md` for detailed branch, CI, and testing guidance. Refer to `EPC17_PROMPTS.md` for LLM prompt standards and examples.
 
-modules/               # Business logic modules
-├── registration.js   # Participant registration
-├── series.js         # Series management
-├── event.js          # Event operations
-├── race.js           # Race management
-└── pairing-engine.js # Advanced pairing logic
+## Core features (concise)
 
-utils/                 # Utility modules
-├── data-manager.js   # API client and data operations
-├── event-bus.js      # Event-driven communication
-├── helpers.js        # Helper functions
-└── validation.js     # Form validation
-```
+- Registration: participant CRUD, validations, tech sheets
+- Series & Event Management: configure series, events, and classes
+- Pairing Engine: rematch avoidance, lane optimization, free-run handling
+- Race Management: real-time race input, false-start handling, crash recovery
+- Live Display: spectator view with live updates via WebSocket/SSE
+- Analytics: standings, driver stats, exportable reports
+- Persistence: UUID-based IDs, JSON-backed prototype storage with backups
+- LLM Integration: prompt-driven race recap generator and future voice features (controlled via `llm/prompts`)
 
-### Data Storage
-```
-data/                  # JSON-based data storage
-├── participants.json  # Participant registrations
-├── series.json       # Racing series data
-├── events.json       # Event configurations
-├── races.json        # Race results and brackets
-└── achievements.json # Achievement system data
-```
+## API (representative endpoints)
 
-## 🔧 API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/participants` | GET/POST | Participant management |
+| Path | Method | Description |
+|------|--------|-------------|
+| `/api/participants` | GET/POST/PUT/DELETE | Manage participants |
 | `/api/series` | GET/POST | Series management |
-| `/api/events` | GET/POST | Event management |
-| `/api/races` | GET/POST | Race results |
-| `/api/standings` | GET | Calculate standings |
-| `/api/health` | GET | Server health check |
+| `/api/events` | GET/POST/PUT | Event operations |
+| `/api/races` | GET/POST | Bracket generation, results |
+| `/api/standings` | GET | Compute standings |
+| `/api/health` | GET | Health & metrics |
 
-## 📱 User Interface
+All endpoints validate input server-side and return structured JSON errors when validation fails.
 
-### Modern Design
-- **Responsive Layout**: Works seamlessly on desktop, tablet, and mobile
-- **Clean Interface**: Professional racing event aesthetic
-- **Intuitive Navigation**: Easy-to-use navigation with mobile support
-- **Real-time Updates**: Live data updates without page refresh
+## Development notes & standards
 
-### Key Pages
-- **Home**: Application overview and quick access
-- **Registration**: Participant registration and management
-- **Series**: Racing series creation and management
-- **Events**: Individual event setup and configuration
-- **Races**: Race brackets, results, and live updates
-- **Analytics**: Performance metrics and standings
-- **Live Display**: Real-time race information display
+- JavaScript: ES6 modules, JSDoc header required in each module
+- Python: PEP8, Flask with blueprints for modular APIs
+- Accessibility: semantic HTML, ARIA where applicable, keyboard focus flows
+- Testing: aim for high coverage on pairing and analytics logic
+- Performance targets: initial load <2s, UI actions <100ms
+- Error handling: structured logging, scrub PII from logs, persist prompt version per LLM call
 
-## 🚀 Advanced Features
+## Pairing engine summary (practical)
 
-### Smart Pairing Engine
-- **Rematch Avoidance**: Prevents drivers from racing the same opponent repeatedly
-- **Track Optimization**: Assigns tracks based on least-used algorithm
-- **Bracket Management**: Handles both single and double elimination formats
-- **Fair Competition**: Ensures balanced matchups and fair racing
+- Deterministic pairing preferred; use seeded randomness only for tie-breaking in tests
+- Avoid rematches until all pairings exhausted per class
+- Assign lanes by least-used + recency tie-breaker; maintain lane diversity across heats
+- Persist pairing state after each operation for crash recovery and auditability
 
-### Network Scalability
-- **Multi-User Support**: Multiple computers can access the same event data
-- **Concurrent Operations**: Thread-safe data operations for simultaneous users
-- **Real-time Synchronization**: All connected computers see live updates
-- **Offline Recovery**: Graceful handling of network interruptions
+## Prompt-driven features (short)
 
-### Data Management
-- **Automatic Backups**: Every save operation creates backup files
-- **Export Functionality**: Data export for analysis and backup
-- **UUID-based IDs**: Collision-free identification system
-- **Validation**: Comprehensive data validation and error handling
+LLM-driven features must follow the PromptSpec pattern in `EPC17_PROMPTS.md`. Key rules:
 
-## 🛠️ Development
+- Strict return formats (prefer JSON)
+- Grounding: never invent missing data; set `needs_data: true` when required fields are absent
+- Low temperature for factual generation (≤0.3)
+- Log prompt version and inputs (PII redacted) for traceability
 
-### Project Structure
-```
-EPC17/
-├── server.py              # Flask server application
-├── requirements.txt       # Python dependencies
-├── README.md              # This file
-├── LICENSE.txt            # MIT License
-├── data/                  # JSON data storage
-├── modules/               # Business logic modules
-├── utils/                 # Utility modules
-├── components/            # Reusable UI components
-├── js/                    # Core JavaScript files
-├── styles/                # CSS styling
-└── *.html                 # Page templates
-```
+If you plan to modify prompts, update the PromptSpec and attach a gold example and evaluation score as described in `EPC17_PROMPTS.md`.
 
-### Development Setup
+## Testing & CI
+
+- Local test command (example):
 ```bash
-# Install development dependencies
-pip install -r requirements.txt
+# run unit tests
+pytest -q
 
-# Start development server
-python server.py
-
-# Access development environment
-# http://localhost:5000
+# run a specific test file
+pytest testing/pairing_test.py::test_even_participants -q
 ```
+- CI pipeline (recommended): lint → unit tests → integration → perf smoke → deploy staging
+- Performance tests should include 1,000+ synthetic participants to validate pairing scalability
 
-### Code Standards
-- **ES6+ JavaScript**: Modern JavaScript with modules
-- **Semantic HTML5**: Accessible and semantic markup
-- **CSS3**: Modern styling with responsive design
-- **Python PEP 8**: Clean, readable Python code
-- **API-First Design**: All data operations through REST API
+## Deployment & backups
 
-## 🚨 Troubleshooting
+- For production, replace JSON storage with a transactional DB (Postgres recommended) and add proper backups and migrations
+- Use secrets manager for API keys (LLM or voice TTS)
+- Schedule periodic backups and test restore process in staging before production
 
-### Common Issues
+## Troubleshooting (common)
 
-**Server won't start**
-```bash
-# Check Python version
-python --version
+- Server fails to start: check Python version, dependencies, and port conflicts
+- Data not persisting: verify filesystem permissions and backup writes in `/data/backups`
+- Network access issues: ensure host uses `0.0.0.0` and firewall allows port
 
-# Verify dependencies
-pip list | grep Flask
+## Contributing
 
-# Check port availability
-netstat -an | grep 5000
-```
+1. Fork → create feature branch `feature/<ticket>-desc`
+2. Implement tests and code; update docs (PromptSpec if LLM changes)
+3. Open PR with description, test plan, and screenshots/sample outputs
+4. Ensure CI passes and reviewers approve
 
-**Network access not working**
-- Ensure firewall allows port 5000
-- Verify server starts with `host='0.0.0.0'`
-- Use actual IP address from other computers
+## License
 
-**Data not persisting**
-- Check file permissions in `data/` directory
-- Review server console for error messages
-- Verify automatic backup files are created
+MIT. See `LICENSE.txt` for details.
 
-## 📈 Performance
-
-### Optimizations
-- **Parallel Data Loading**: Efficient data retrieval
-- **Minimal Client State**: Server-side data management
-- **Caching**: Smart caching for frequently accessed data
-- **Background Processing**: Non-blocking operations
-
-### Scalability
-- **Large Event Support**: Handles hundreds of participants
-- **Memory Efficient**: Optimized for resource usage
-- **Fast Response Times**: Quick API responses
-- **Concurrent Users**: Multiple simultaneous users supported
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
-
-## 🏆 About EPC Technology
-
-**EPC17** is developed by EPC Technology as part of Project 17, designed to revolutionize racing event management with modern technology and professional-grade features.
-
-### Contact
-- **Project**: EPC17 - Racing Event Management System
-- **Company**: EPC Technology
-- **Internal Name**: Project 17
+## Next steps & suggestions (practical)
+- Add `pairing-engine` unit tests with canonical scenarios (even/odd/multi-class)
+- Create a `PromptExample` directory with gold input/output pairs for race recaps
+- Replace JSON storage with Postgres when moving to production
+- Add a lightweight monitoring dashboard that surfaces pairing health and queue lengths
 
 ---
-
-**Ready to revolutionize your racing events?** 🏁  
-Start with EPC17 today and experience professional-grade event management. 
+If you want, I will:
+- commit this README into the repo file `EPC17_README.md`, and
+- generate a starter `PromptExample` and `pairing_engine` test stub now.

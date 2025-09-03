@@ -1,114 +1,204 @@
 <template id="registration-form">
     <form id="participantRegistrationForm" class="registration-form">
-        <div class="form-section">
-            <h3>Driver Information</h3>
-            <div class="form-group">
-                <label class="form-label">Full Name *</label>
-                <input type="text" class="form-control" name="name" required>
+        <!-- Horizontal Layout - All sections side by side -->
+        <div class="form-horizontal-layout">
+            <!-- Left Column: Driver Information + Actions -->
+            <div class="form-column">
+                <div class="form-section">
+                    <h3>Driver Information</h3>
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nickname</label>
+                        <input type="text" class="form-control" name="nickname" placeholder="Racing nickname">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Racing Number *</label>
+                        <input type="text" class="form-control" name="racingNumber" required pattern="[A-Za-z0-9]+" placeholder="e.g., 1, 1A, 99B" title="Racing number can contain numbers and letters">
+                        <small class="form-text">Required. Can contain numbers and letters. Must be unique per class in this event.</small>
+                        <div id="racingNumberWarning" class="warning-message" style="display: none; margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="warningText"></span>
+                        </div>
+                        <div id="racingNumberSuggestions" class="suggestions" style="display: none; margin-top: 0.5rem;">
+                            <small class="text-muted">Suggested available numbers: <span id="suggestedNumbers"></span></small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth *</label>
+                        <input type="date" class="form-control" name="dob" required>
+                    </div>
+                </div>
+
+                <!-- Form Actions - Under Driver Information -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Submit Registration</button>
+                    <button type="reset" class="btn btn-secondary">Reset Form</button>
+                </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Nickname (Optional)</label>
-                <input type="text" class="form-control" name="nickname" placeholder="Racing nickname">
+
+            <!-- Middle Column: Contact Information + Sponsors -->
+            <div class="form-column">
+                <div class="form-section">
+                    <h3>Contact Information</h3>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="contact.email" placeholder="your.email@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-control" name="contact.phone" placeholder="(555) 123-4567">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Emergency Contact</label>
+                        <input type="text" class="form-control" name="contact.emergency" placeholder="Emergency contact name and phone">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Sponsors</h3>
+                    <div class="form-group">
+                        <div class="sponsor-input-container">
+                            <input type="text" class="form-control sponsor-input" id="sponsorInput" placeholder="Enter sponsor name and press Enter">
+                            <button type="button" class="btn btn-secondary sponsor-add-btn" onclick="addSponsor()">Add</button>
+                        </div>
+                        <div class="sponsor-tags" id="sponsorTags">
+                            <!-- Sponsor tags will be added here -->
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Racing Number (Optional)</label>
-                <input type="number" class="form-control" name="racingNumber" min="1" max="999" placeholder="Preferred racing number">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Date of Birth *</label>
-                <input type="date" class="form-control" name="dob" required>
+
+            <!-- Right Column: Racing Classes & Payment Summary -->
+            <div class="form-column">
+                <div class="form-section">
+                    <h3>Racing Classes *</h3>
+                    <div class="form-group">
+                        <div id="sledClassesContainer" class="classes-container">
+                            <!-- Classes will be populated dynamically from series data -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section payment-summary">
+                    <h3>Payment Summary</h3>
+                    <div class="payment-details">
+                        <div class="payment-breakdown" id="paymentBreakdown">
+                            <!-- Payment breakdown will be populated here -->
+                        </div>
+                        <div class="payment-total">
+                            <strong>Total Amount: $<span id="totalAmount">0.00</span></strong>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="form-section">
-            <h3>Sponsors (Optional)</h3>
-            <div class="form-group">
-                <label class="form-label">Add Sponsors</label>
-                <div class="sponsor-input-container">
-                    <input type="text" class="form-control sponsor-input" id="sponsorInput" placeholder="Enter sponsor name and press Enter">
-                    <button type="button" class="btn btn-secondary sponsor-add-btn" onclick="addSponsor()">Add</button>
-                </div>
-                <div class="sponsor-tags" id="sponsorTags">
-                    <!-- Sponsor tags will be added here -->
-                </div>
-                <p class="help-text">Add multiple sponsors by typing and pressing Enter or clicking Add. Click on a sponsor tag to remove it.</p>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <h3>Contact Information (Optional)</h3>
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-control" name="contact.email" placeholder="your.email@example.com">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Phone</label>
-                <input type="tel" class="form-control" name="contact.phone" placeholder="(555) 123-4567">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Emergency Contact</label>
-                <input type="text" class="form-control" name="contact.emergency" placeholder="Emergency contact name and phone">
-            </div>
-        </div>
-
-        <div class="form-section">
-            <h3>Racing Classes & Vehicle Information *</h3>
-            <div class="form-group">
-                <label class="form-label">Select Classes and Configure Vehicles</label>
-                <div id="sledClassesContainer" class="classes-container">
-                    <!-- Classes will be populated dynamically from series data -->
-                </div>
-                <p class="help-text">Select all classes you want to compete in and configure vehicle information for each class.</p>
-            </div>
-            
-            <div id="sledConfigContainer" class="sled-config-container">
-                <!-- Vehicle configurations for selected classes will appear here -->
-            </div>
-        </div>
-
-        <div class="form-section payment-summary">
-            <h3>Payment Summary</h3>
-            <div class="payment-details">
-                <div class="payment-breakdown" id="paymentBreakdown">
-                    <!-- Payment breakdown will be populated here -->
-                </div>
-                <div class="payment-total">
-                    <strong>Total Amount: $<span id="totalAmount">0.00</span></strong>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Submit Registration</button>
-            <button type="reset" class="btn btn-secondary">Reset Form</button>
+        <!-- Vehicle Configurations - Full Width Below -->
+        <div id="sledConfigContainer" class="sled-config-container">
+            <!-- Vehicle configurations for selected classes will appear here -->
         </div>
     </form>
 </template>
 
 <style>
 .registration-form {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-primary);
 }
 
-.form-section {
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
+        
+
+        /* Compact Form Sections */
+        .form-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
 
 .form-section h3 {
     color: var(--text-primary);
     margin-bottom: 1rem;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
+        .form-section h3:before {
+            content: "🏁";
+            font-size: 1rem;
+        }
+
+        /* Horizontal Layout - 3 columns side by side */
+        .form-horizontal-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Responsive Grid Layouts */
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+.form-group {
+    margin-bottom: 0.75rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    display: block;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+/* Compact Classes Container */
 .classes-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
     margin-top: 0.5rem;
 }
 
@@ -118,15 +208,16 @@
     justify-content: space-between;
     background: var(--bg-primary);
     padding: 0.75rem;
-    border-radius: 4px;
+    border-radius: 6px;
     border: 1px solid var(--border-color);
     transition: all 0.2s ease;
     cursor: pointer;
 }
 
 .class-option:hover {
-    background: var(--bg-tertiary, var(--bg-primary));
+    background: var(--bg-tertiary);
     border-color: var(--accent-primary);
+    transform: translateY(-1px);
 }
 
 .class-option.selected {
@@ -136,8 +227,8 @@
 }
 
 .class-option input[type="checkbox"] {
-    width: 1.2rem;
-    height: 1.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
     margin-right: 0.5rem;
 }
 
@@ -148,30 +239,32 @@
     flex: 1;
     display: flex;
     align-items: center;
+    font-size: 0.9rem;
 }
 
 .class-fee {
     color: inherit;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
+/* Compact Vehicle Config */
 .vehicle-config-container {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
 }
 
 .vehicle-config {
     background: var(--bg-primary);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
     border: 2px solid var(--accent-primary);
 }
 
 .vehicle-config h4 {
     color: var(--accent-primary);
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -179,10 +272,11 @@
 
 .vehicle-config-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
 }
 
+/* Compact Payment Summary */
 .payment-summary {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
@@ -194,20 +288,21 @@
 
 .payment-details {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 1rem;
+    border-radius: 6px;
+    padding: 0.75rem;
 }
 
 .payment-breakdown {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .payment-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0;
+    padding: 0.4rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.9rem;
 }
 
 .payment-item:last-child {
@@ -216,25 +311,18 @@
 
 .payment-total {
     text-align: center;
-    font-size: 1.3rem;
-    padding: 1rem;
+    font-size: 1.1rem;
+    padding: 0.75rem;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    margin-top: 1rem;
+    margin-top: 0.75rem;
 }
 
-.help-text {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-    font-style: italic;
-}
-
-/* Sponsor Section Styles */
+/* Compact Sponsor Section */
 .sponsor-input-container {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .sponsor-input {
@@ -243,7 +331,9 @@
 
 .sponsor-add-btn {
     white-space: nowrap;
-    min-width: 80px;
+    min-width: 70px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
 }
 
 .sponsor-tags {
@@ -256,13 +346,13 @@
 .sponsor-tag {
     background: var(--accent-primary);
     color: white;
-    padding: 0.5rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     cursor: pointer;
     transition: all 0.2s ease;
     border: none;
@@ -272,11 +362,11 @@
 .sponsor-tag:hover {
     background: var(--accent-secondary);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .sponsor-tag .remove-icon {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: bold;
     line-height: 1;
     opacity: 0.8;
@@ -286,58 +376,140 @@
     opacity: 1;
 }
 
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
+        /* Compact Form Actions */
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+.form-actions button {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    min-width: 140px;
 }
 
-@media (max-width: 768px) {
-    .registration-form {
-        padding: 1rem;
-    }
-
-    .classes-container {
-        grid-template-columns: 1fr;
-    }
-
-    .sled-config-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .sponsor-input-container {
-        flex-direction: column;
-    }
-
-    .sponsor-add-btn {
-        width: 100%;
-    }
-
-    .form-actions {
-        flex-direction: column;
-    }
-
-            .form-actions button {
-            width: 100%;
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .registration-form {
+                padding: 1rem;
+            }
+            
+            .form-horizontal-layout {
+                gap: 0.75rem;
+            }
+            
+            .form-grid-2 {
+                gap: 0.75rem;
+            }
+            
+            .classes-container {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 0.5rem;
+            }
+            
+            .vehicle-config-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 0.5rem;
+            }
         }
-    }
 
-    .btn-outline {
-        background: transparent;
-        border: 2px solid var(--accent-primary);
-        color: var(--accent-primary);
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
+        @media (max-width: 768px) {
+            .registration-form {
+                padding: 0.75rem;
+            }
+            
+            .form-horizontal-layout {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .form-grid-2 {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .classes-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .vehicle-config-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sponsor-input-container {
+                flex-direction: column;
+            }
+            
+            .sponsor-add-btn {
+                width: 100%;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .form-actions button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
 
-    .btn-outline:hover {
-        background: var(--accent-primary);
-        color: white;
-    }
+        @media (max-width: 480px) {
+            .form-section {
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .form-horizontal-layout {
+                gap: 0.5rem;
+            }
+        }
+
+/* Button Styles */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--border-color);
+    transform: translateY(-1px);
+}
+
+/* Help Text */
+.help-text {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    font-style: italic;
+    opacity: 0.8;
+}
 </style>
 
 <script>
@@ -449,11 +621,29 @@ function handleClassSelection(className, isSelected) {
 function updateClassOptionStyles() {
     document.querySelectorAll('.class-option').forEach(option => {
         const checkbox = option.querySelector('input[type="checkbox"]');
-        if (checkbox.checked) {
-            option.classList.add('selected');
+        let isSelected = false;
+
+        if (checkbox) {
+            // Standard component rendering includes a checkbox
+            isSelected = !!checkbox.checked;
         } else {
-            option.classList.remove('selected');
+            // Fallback for pages that render class options without checkboxes
+            // Try to infer selection from the local selectedClasses Set or existing class
+            try {
+                const label = option.querySelector('label');
+                const inferredName = label ? (label.textContent || '').trim() : option.getAttribute('data-class-name');
+                if (inferredName && typeof selectedClasses !== 'undefined' && selectedClasses instanceof Set) {
+                    isSelected = selectedClasses.has(inferredName);
+                } else {
+                    // Last resort: keep current selected state if present
+                    isSelected = option.classList.contains('selected');
+                }
+            } catch (e) {
+                isSelected = option.classList.contains('selected');
+            }
         }
+
+        option.classList.toggle('selected', isSelected);
     });
 }
 
@@ -613,6 +803,20 @@ function setupEventListeners() {
         try {
             const formData = new FormData(e.target);
             
+            // Validate racing number
+            const racingNumber = formData.get('racingNumber');
+            if (!racingNumber || racingNumber.trim() === '') {
+                alert('Racing number is required');
+                return;
+            }
+            
+            // Validate racing number format
+            const racingNumberRegex = /^[A-Za-z0-9]+$/;
+            if (!racingNumberRegex.test(racingNumber.trim())) {
+                alert('Racing number can only contain letters and numbers');
+                return;
+            }
+            
             // Collect vehicle information for each selected class
             const vehicleConfigurations = {};
             selectedClasses.forEach(className => {
@@ -627,7 +831,7 @@ function setupEventListeners() {
             const participantData = {
                 name: formData.get('name'),
                 nickname: formData.get('nickname') || '',
-                racingNumber: formData.get('racingNumber') || null,
+                racingNumber: formData.get('racingNumber'),
                 dob: formData.get('dob'),
                 contact: {
                     email: formData.get('contact.email') || '',
@@ -678,6 +882,13 @@ function setupEventListeners() {
         updateClassOptionStyles();
     });
     
+    // Add racing number validation and duplicate name checking
+    const racingNumberInput = form.querySelector('input[name="racingNumber"]');
+    if (racingNumberInput) {
+        racingNumberInput.addEventListener('input', () => checkRacingNumberAndDuplicates());
+        racingNumberInput.addEventListener('blur', () => checkRacingNumberAndDuplicates());
+    }
+    
     // Mark that event listeners have been attached
     form.setAttribute('data-listeners-attached', 'true');
     console.log('✅ Event listeners attached to registration form');
@@ -690,6 +901,93 @@ if (document.readyState === 'loading') {
 } else {
     // DOM is already loaded, initialize immediately
     initializeRegistrationForm();
+}
+
+// Function to check for duplicate names and racing number conflicts
+async function checkRacingNumberAndDuplicates() {
+    const nameInput = document.querySelector('input[name="name"]');
+    const racingNumberInput = document.querySelector('input[name="racingNumber"]');
+    const warningDiv = document.getElementById('racingNumberWarning');
+    const suggestionsDiv = document.getElementById('racingNumberSuggestions');
+    const warningText = document.getElementById('warningText');
+    const suggestedNumbers = document.getElementById('suggestedNumbers');
+    
+    if (!nameInput || !racingNumberInput || !warningDiv || !suggestionsDiv) return;
+    
+    const name = nameInput.value.trim();
+    const racingNumber = racingNumberInput.value.trim();
+    
+    // Hide warnings initially
+    warningDiv.style.display = 'none';
+    suggestionsDiv.style.display = 'none';
+    
+    if (!name || !racingNumber) return;
+    
+    try {
+        // Get current event ID from the page context
+        const currentEventId = window.currentEventId || getCurrentEventId();
+        if (!currentEventId) return;
+        
+        // Get all participants for this event
+        const allParticipants = window.allParticipants || [];
+        const eventParticipants = allParticipants.filter(p => p.eventId === currentEventId);
+        
+        // Check for duplicate names
+        const duplicateNames = eventParticipants.filter(p => 
+            p.name && p.name.toLowerCase() === name.toLowerCase()
+        );
+        
+        if (duplicateNames.length > 0) {
+            // Show warning about duplicate names
+            warningDiv.style.display = 'block';
+            warningText.textContent = `Another driver with the name "${name}" is already registered for this event. A unique racing number is required to distinguish between drivers.`;
+            
+            // Check if racing number is already taken
+            const numberTaken = eventParticipants.some(p => 
+                p.racingNumber && p.racingNumber.toString().toUpperCase() === racingNumber.toUpperCase()
+            );
+            
+            if (numberTaken) {
+                warningText.textContent += ` Racing number ${racingNumber} is already taken.`;
+                
+                // Show suggestions
+                if (window.Helpers && window.Helpers.suggestRacingNumbers) {
+                    const suggestions = window.Helpers.suggestRacingNumbers(
+                        Array.from(selectedClasses), 
+                        currentEventId, 
+                        allParticipants, 
+                        5
+                    );
+                    
+                    if (suggestions.length > 0) {
+                        suggestionsDiv.style.display = 'block';
+                        suggestedNumbers.textContent = suggestions.join(', ');
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking duplicates:', error);
+    }
+}
+
+// Helper function to get current event ID
+function getCurrentEventId() {
+    // Try to get from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('eventId');
+    
+    if (eventId) return eventId;
+    
+    // Try to get from page context
+    if (window.currentEvent && window.currentEvent.id) return window.currentEvent.id;
+    
+    // Try to get from registration manager
+    if (window.registrationManager && window.registrationManager.currentEventId) {
+        return window.registrationManager.currentEventId;
+    }
+    
+    return null;
 }
 
 // Export functions for external use

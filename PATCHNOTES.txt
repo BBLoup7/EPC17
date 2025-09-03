@@ -1,3 +1,18 @@
+2025-09-02 Auth & Permissions Rebuild (Beta)
+- Backend: Replaced legacy auth with minimal session-based auth. Default Admin (Admin/Admin321) auto-created. Admin is immutable and has all permissions. // Rule: EPC17_WORKFLOW.md
+- Permissions: Categories only [series, events, registration, races, drivers profile, analytics, live display]; stored as array of strings in users.json. // Rule: README.md
+- Enforcement: Server gates all HTML routes and API endpoints by category; Admin bypass. Frontend hides gated UI and shows Access Denied. // Rule: EPC17_WORKFLOW.md
+- Frontend: Reworked utils/auth.js (login overlay, session handling, logout on all pages, Admin nav link). // Rule: EPC17_WORKFLOW.md
+- Admin UI: New Users & Permissions page (users.html) with checkbox-based permission editing and create/delete. Shows success/error feedback.
+
+2025-09-02 - Added minimal authentication and permissions system
+- New data file: data/users.json with default Admin (Admin/Admin321)
+- Backend: /api/auth/login, /api/auth/logout, /api/auth/me, /api/users CRUD (Admin-only)
+- Simple in-memory sessions with Bearer token; permissions enforced on create/edit/delete endpoints
+- Frontend: utils/auth.js adds login overlay at startup and permission helper (user.hasPermission)
+- Admin-only Users & Permissions page at users.html (hidden; link appears for Admin)
+- Pages now include auth bootstrap and will show Access Denied for restricted actions
+- Rule: EPC17_WORKFLOW.md - lightweight JSON storage & feature notes recorded
 # EPC17 Patch Notes
 
 ## Version 25W32a09 (Current Development)
@@ -25,4 +40,23 @@
 - Improved mobile navigation and responsive design
 - Comprehensive testing suite implementation
 - Advanced performance monitoring and memory management
-- Updated documentation and development guidelines 
+- Updated documentation and development guidelines
+
+## Version 0.9.2a26 - Racing Number Requirements & Duplicate Name Handling
+- **Racing Number Requirements**: Made racing number mandatory for all participants
+- **Alphanumeric Support**: Racing numbers now support both numbers and letters (e.g., 1, 1A, 99B)
+- **Duplicate Name Handling**: When multiple drivers have the same name in an event, racing numbers are displayed beside names
+- **Unique Number Enforcement**: Racing numbers must be unique per class per event
+- **Smart Validation**: Added real-time validation with warnings for duplicate names and taken numbers
+- **Number Suggestions**: System suggests available racing numbers when conflicts occur
+- **Enhanced Display**: Racing numbers are prominently displayed with color coding (blue for valid, red for missing)
+- **Form Updates**: Registration and edit forms updated with new validation and requirements
+- **Rule**: EPC17_WORKFLOW.md - updated validation and display logic for participant management
+
+## Version 0.9.2a27 - Navigation Consistency & Permission-Based Visibility
+- **Full Navigation Restored**: Restored complete navigation with all 8 main pages (Home, Registration, Series, Events, Races, Drivers, Analytics, Live Display)
+- **Consistent Navigation**: All pages now show the same navigation bar with proper active states
+- **Permission-Based Visibility**: Navigation items automatically hide/show based on user permissions using existing auth system
+- **Theme Consistency**: Maintained EPC17 app theme colors and styling across all navigation elements
+- **Proper Active States**: Each page correctly highlights its corresponding navigation item
+- **Rule**: EPC17_WORKFLOW.md - consistent navigation experience with automatic permission enforcement 

@@ -590,6 +590,43 @@
             color: var(--text-primary);
         }
 
+        /* Results tab class filter */
+        .results-controls { 
+            position: relative; 
+            margin: 0 0 1rem 0; 
+            display: inline-block; 
+        }
+        .class-filter-dropdown { 
+            position: absolute; 
+            top: 42px; 
+            left: 0; 
+            background: var(--bg-secondary); 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            padding: 0.75rem; 
+            min-width: 220px; 
+            z-index: 10; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+        }
+        .class-filter-dropdown .checkbox { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            margin-bottom: 0.5rem; 
+        }
+        .class-filter-options { 
+            max-height: 240px; 
+            overflow: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.35rem; 
+        }
+        .class-filter-options label { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+        }
+
         .modal-actions {
             display: flex;
             gap: 1rem;
@@ -797,6 +834,95 @@
                 flex-direction: column;
             }
         }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .modal-wrapper {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 800px;
+            margin: 2rem auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .modal-header h2 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .modal-body {
+            padding: 2rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .modal-wrapper {
+                margin: 1rem;
+                width: calc(100% - 2rem);
+                max-width: none;
+            }
+            
+            .modal-header {
+                padding: 1rem 1.5rem;
+            }
+            
+            .modal-body {
+                padding: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -812,16 +938,16 @@
             </div>
         </div>
         
-        <!-- Desktop Navigation -->
+                <!-- Desktop Navigation -->
         <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registr.</a></li>
+            <li><a href="registration.html">Registration</a></li>
             <li><a href="series.html">Series</a></li>
             <li><a href="events.html">Events</a></li>
             <li class="active"><a href="races.html">Races</a></li>
             <li><a href="driver-profile.html">Drivers</a></li>
             <li><a href="analytics.html">Analytics</a></li>
-                            <li><a href="live-display.html">Live Display</a></li>
+            <li><a href="live-display.html">Live Display</a></li>
         </ul>
         
         <!-- Mobile Hamburger Menu -->
@@ -1024,6 +1150,18 @@
                     <div class="results-header">
                         <h3>Race Results & Tournament Progress</h3>
                     </div>
+                    <div class="results-controls">
+                        <button class="btn btn-secondary" id="class-filter-toggle">
+                            <i class="fas fa-filter"></i> Filter Classes
+                        </button>
+                        <div class="class-filter-dropdown" id="class-filter-dropdown" style="display: none;">
+                            <label class="checkbox">
+                                <input type="checkbox" id="class-filter-select-all" checked>
+                                <span>Select All</span>
+                            </label>
+                            <div class="class-filter-options" id="class-filter-options"></div>
+                        </div>
+                    </div>
                     <div class="results-container" id="results-container">
                         <!-- Results will be rendered here -->
                     </div>
@@ -1039,6 +1177,18 @@
                         <h3>Final Tournament Results</h3>
                         <p class="subtitle">Comprehensive standings with proper tie handling for eliminated drivers</p>
                     </div>
+                    <div class="results-controls">
+                        <button class="btn btn-secondary" id="final-class-filter-toggle">
+                            <i class="fas fa-filter"></i> Filter Classes
+                        </button>
+                        <div class="class-filter-dropdown" id="final-class-filter-dropdown" style="display: none;">
+                            <label class="checkbox">
+                                <input type="checkbox" id="final-class-filter-select-all" checked>
+                                <span>Select All</span>
+                            </label>
+                            <div class="class-filter-options" id="final-class-filter-options"></div>
+                        </div>
+                    </div>
                     <div class="final-results-container" id="final-results-container">
                         <!-- Final results will be rendered here -->
                     </div>
@@ -1051,6 +1201,19 @@
             </section>
         </div>
     </main>
+
+    <!-- Modal for forms -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-wrapper">
+            <div class="modal-header">
+                <h2 id="modal-title">Modal Title</h2>
+                <button class="modal-close" onclick="Helpers.hideModal()">&times;</button>
+            </div>
+            <div id="modal-content" class="modal-body">
+                <!-- Modal content will be inserted here -->
+            </div>
+        </div>
+    </div>
 
     <!-- Race Result Modal -->
     <div class="modal" id="race-result-modal" style="display: none;">
@@ -1074,6 +1237,7 @@
     <script src="utils/performance-monitor.js"></script>
     <script src="utils/helpers.js"></script>
     <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
     <script src="utils/validation.js"></script>
     <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
     <script src="utils/event-bus.js"></script>
@@ -1082,13 +1246,13 @@
     <script src="utils/migration-utils.js?v=1.2"></script>
     <script src="modules/pairing-engine.js?v=1.2"></script>
     <script src="modules/race.js?v=1.2"></script>
-    <script src="modules/achievement-manager.js?v=1.2"></script>
+    <script src="modules/event.js?v=1.2"></script>
     <script src="js/race-ui.js?v=1.2"></script>
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
     <script>
         // Initialize the race management system
-        let dataManager, pairingEngine, raceManager, raceUI;
+        let dataManager, pairingEngine, raceManager, raceUI, eventManager;
 
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('Initializing Race Management System...');
@@ -1096,6 +1260,7 @@
             try {
                 // Initialize core modules
                 dataManager = new DataManager();
+                eventManager = new EventManager();
                 
                 // Wait for data to load before initializing UI
                 await dataManager.loadFromStorage();
@@ -1106,6 +1271,14 @@
                 
                 // Set up real-time event listeners
                 setupEventListeners();
+                
+                // Initialize events data for races page
+                const allEvents = dataManager.getEventsArray();
+                window.allRacesEventsData = [...allEvents];
+                window.filteredRacesEventsData = [...allEvents];
+                
+                // Initial render of events
+                filterRacesEvents();
                 
                 console.log('Race Management System initialized successfully');
                 console.log('📊 Statistics Manager:', dataManager.statisticsManager ? 'Active' : 'Not Available');
@@ -1242,6 +1415,8 @@
             }
         }
 
+        // Removed per-heat view logic helper (no longer used)
+
         function resetCompletedHeatFromModal(heatId) {
             if (window.raceUI) {
                 closeHeatResultsModal();
@@ -1355,6 +1530,7 @@
         // Export functions for global access
         window.raceManager = null;
         window.raceUI = null;
+        window.eventManager = null;
         window.showToast = showToast;
         window.closeRaceResultModal = closeRaceResultModal;
 
@@ -1363,6 +1539,7 @@
             setTimeout(() => {
                 window.raceManager = raceManager;
                 window.raceUI = raceUI;
+                window.eventManager = eventManager;
                 
                 // Add reload data button listener
                 const reloadBtn = document.getElementById('reload-data-btn');
@@ -1897,7 +2074,14 @@
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Elimination:</span>
-                                <span class="detail-value">${event.eliminationType === 'single' ? 'Single' : 'Double'}</span>
+                                <span class="detail-value">${(() => {
+                                    const t = String(event.eliminationType || 'single').toLowerCase();
+                                    if (t === 'single') return 'Single';
+                                    if (t === 'double') return 'Double';
+                                    if (t === 'double_random') return 'Double (Random)';
+                                    if (t === 'custom') return 'Custom';
+                                    return t;
+                                })()}</span>
                             </div>
                         </div>
                         <div class="event-actions">
@@ -1908,6 +2092,10 @@
                             <button class="btn btn-secondary" onclick="viewEventDetails('${event.id}')">
                                 <i class="fas fa-eye"></i>
                                 View Details
+                            </button>
+                            <button class="btn btn-warning" onclick="editEventFromRaces('${event.id}')">
+                                <i class="fas fa-edit"></i>
+                                Edit
                             </button>
                         </div>
                     </div>
@@ -1945,9 +2133,13 @@
             updateRacesResultsCount();
         }
 
-        function getEventStatus(event) {
-            return event.status || 'upcoming';
-        }
+            function getEventStatus(event) {
+                // Prefer persisted status when available
+                if (event && typeof event.status === 'string') {
+                    return event.status.toLowerCase();
+                }
+                return 'upcoming';
+            }
 
         // 🔄 Refresh the event selection grid when event status changes
         async function refreshEventSelectionGrid() {
@@ -1979,6 +2171,21 @@
         function viewEventDetails(eventId) {
             // Navigate to events page to view details
             window.location.href = `events.html?event=${eventId}`;
+        }
+
+        function editEventFromRaces(eventId) {
+            const event = dataManager.getEvent(eventId);
+            if (!event) {
+                alert('Event not found');
+                return;
+            }
+            
+            // Use EventManager to show edit form with all options and locking logic
+            if (window.eventManager) {
+                window.eventManager.showEventForm(eventId);
+            } else {
+                alert('Event manager not available');
+            }
         }
         
         function changeRacesPage(page) {

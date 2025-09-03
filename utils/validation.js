@@ -98,6 +98,67 @@ class Validator {
      * @param {string} fieldName - Field name for error message
      * @returns {Object} Validation result
      */
+    
+    /**
+     * Validate racing number format
+     * @param {string} value - Racing number to validate
+     * @returns {Object} Validation result
+     */
+    static racingNumber(value) {
+        if (!value || value.toString().trim() === '') {
+            return { isValid: false, message: 'Racing number is required' };
+        }
+        
+        const racingNumberRegex = /^[A-Za-z0-9]+$/;
+        const isValid = racingNumberRegex.test(value.toString().trim());
+        return {
+            isValid,
+            message: isValid ? '' : 'Racing number can only contain letters and numbers'
+        };
+    }
+    
+    /**
+     * Validate racing number uniqueness per class per event
+     * @param {string} racingNumber - Racing number to validate
+     * @param {string} participantId - Current participant ID (for updates)
+     * @param {Array} selectedClasses - Selected racing classes
+     * @param {string} eventId - Event ID
+     * @param {Array} allParticipants - All participants to check against
+     * @returns {Object} Validation result
+     */
+    static async validateRacingNumberUniqueness(racingNumber, participantId, selectedClasses, eventId, allParticipants) {
+        if (!racingNumber || !selectedClasses || selectedClasses.length === 0) {
+            return { isValid: false, message: 'Racing number and classes are required' };
+        }
+        
+        try {
+            // Get participants in the same event and classes
+            const eventParticipants = allParticipants.filter(p => 
+                p.eventId === eventId && 
+                p.id !== participantId && // Exclude current participant for updates
+                p.selectedClasses && 
+                p.selectedClasses.some(c => selectedClasses.includes(c))
+            );
+            
+            // Check for duplicate racing numbers in the same classes
+            const duplicateFound = eventParticipants.some(p => 
+                p.racingNumber && 
+                p.racingNumber.toString().toUpperCase() === racingNumber.toString().toUpperCase()
+            );
+            
+            if (duplicateFound) {
+                return { 
+                    isValid: false, 
+                    message: `Racing number ${racingNumber} is already taken by another driver in one of your selected classes for this event` 
+                };
+            }
+            
+            return { isValid: true, message: '' };
+        } catch (error) {
+            console.error('Error validating racing number uniqueness:', error);
+            return { isValid: false, message: 'Error validating racing number uniqueness' };
+        }
+    }
     static numeric(value, fieldName = 'Field') {
         if (!value || value.toString().trim() === '') {
             return { isValid: true, message: '' }; // Empty is valid (use required separately)
@@ -357,7 +418,7 @@ class Validator {
             ],
             eliminationType: [
                 (value) => this.required(value, 'Elimination type'),
-                (value) => this.oneOf(value, ['single', 'double'], 'Elimination type')
+                (value) => this.oneOf(value, ['single', 'double', 'custom', 'double_random'], 'Elimination type')
             ],
             entryFee: [
                 (value) => this.positiveNumber(value, 'Entry fee')

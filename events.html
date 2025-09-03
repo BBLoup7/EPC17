@@ -722,13 +722,13 @@
         <!-- Desktop Navigation -->
         <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registr.</a></li>
+            <li><a href="registration.html">Registration</a></li>
             <li><a href="series.html">Series</a></li>
             <li class="active"><a href="events.html">Events</a></li>
             <li><a href="races.html">Races</a></li>
             <li><a href="driver-profile.html">Drivers</a></li>
             <li><a href="analytics.html">Analytics</a></li>
-                            <li><a href="live-display.html">Live Display</a></li>
+            <li><a href="live-display.html">Live Display</a></li>
         </ul>
         
         <!-- Mobile Hamburger Menu -->
@@ -914,7 +914,40 @@
                     <select class="form-control" name="eliminationType" required>
                         <option value="single">Single Elimination</option>
                         <option value="double">Double Elimination</option>
+                        <option value="double_random">Double Elimination (Random, no bracket)</option>
+                        <option value="custom">Custom Outcomes per Position</option>
                     </select>
+                </div>
+                <div class="form-group" id="customOutcomesContainer" style="display:none;">
+                    <label class="form-label">Custom Elimination Settings</label>
+                    
+                    <div class="form-row" style="display:flex; gap:20px; margin-bottom:15px;">
+                        <div style="flex:1;">
+                            <label class="form-label" style="margin-bottom:5px;">Loss Limit</label>
+                            <input type="number" class="form-control" id="customLossLimit" min="1" max="10" value="2" style="max-width:100px;">
+                            <small class="form-text text-muted">Number of losses before elimination</small>
+                        </div>
+                        <div style="flex:1;">
+                            <label class="form-label" style="margin-bottom:5px;">Bracket System</label>
+                            <select class="form-control" id="customUseBrackets" style="max-width:200px;">
+                                <option value="false">No Brackets (Random pairing)</option>
+                                <option value="true">Use Brackets (Structured)</option>
+                            </select>
+                            <small class="form-text text-muted">How to organize matchups</small>
+                        </div>
+                        <div style="flex:1;">
+                            <label class="form-label" style="margin-bottom:5px;">Final Type</label>
+                            <select class="form-control" id="customFinalType" style="max-width:200px;">
+                                <option value="unique">Unique Final (Standard)</option>
+                                <option value="complete">Complete Elimination</option>
+                            </select>
+                            <small class="form-text text-muted">How to determine final standings</small>
+                        </div>
+                    </div>
+                    
+                    <label class="form-label">Outcomes per Finishing Position</label>
+                    <div id="customOutcomesRows"></div>
+                    <small class="form-text text-muted">For each finishing position, choose the outcome: Win (no loss), Lose (adds a loss, continues), Eliminated (out of event).</small>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Driver Meeting Time</label>
@@ -948,6 +981,7 @@
     <script src="utils/performance-monitor.js"></script>
     <script src="utils/helpers.js"></script>
     <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
     <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
     <script src="utils/event-bus.js"></script>
     <script src="modules/statistics-manager.js"></script>
@@ -2278,6 +2312,8 @@
         async function showNewEventModal() {
             document.getElementById('newEventModal').classList.add('active');
             await loadSeriesOptions();
+            // Initialize custom outcomes UI after modal is shown
+            setTimeout(initCustomOutcomesUI, 100);
         }
 
         function hideNewEventModal() {
@@ -2332,7 +2368,56 @@
             }
         }
 
+        // Custom Outcomes UI logic
+        function initCustomOutcomesUI(){
+            const form = document.getElementById('newEventForm');
+            if (!form) return; // Form not ready yet
+            
+            const elimSelect = form.querySelector('select[name="eliminationType"]');
+            const lanesInput = form.querySelector('input[name="numberOfTracks"]');
+            const container = document.getElementById('customOutcomesContainer');
+            const rowsHolder = document.getElementById('customOutcomesRows');
+
+            if (!elimSelect || !lanesInput || !container || !rowsHolder) return; // Elements not ready
+
+            function renderRows(){
+                const type = (elimSelect.value || '').toLowerCase();
+                if (type !== 'custom') { 
+                    container.style.display = 'none'; 
+                    rowsHolder.innerHTML = ''; 
+                    return; 
+                }
+                container.style.display = 'block';
+                const lanes = Math.max(1, parseInt(lanesInput.value || '3', 10));
+                const opts = [
+                    {v:'win', t:'Win'},
+                    {v:'lose', t:'Lose'},
+                    {v:'eliminated', t:'Eliminated'}
+                ];
+                const rowHtml = Array.from({length: lanes}, (_, i) => {
+                    const pos = i + 1;
+                    const selected = i === 0 ? 'win' : 'eliminated';
+                    const optionsHtml = opts.map(o => `<option value="${o.v}" ${o.v===selected?'selected':''}>${o.t}</option>`).join('');
+                    return `<div class="form-row" style="display:flex; align-items:center; gap:12px; margin:6px 0;">
+                        <div style="min-width:120px;">Position ${pos}</div>
+                        <select class="form-control custom-outcome-select" data-position="${pos}" style="max-width:220px;">${optionsHtml}</select>
+                    </div>`;
+                }).join('');
+                rowsHolder.innerHTML = rowHtml;
+            }
+
+            // Remove existing listeners to avoid duplicates
+            elimSelect.removeEventListener('change', renderRows);
+            lanesInput.removeEventListener('input', renderRows);
+            
+            // Add listeners
+            elimSelect.addEventListener('change', renderRows);
+            lanesInput.addEventListener('input', renderRows);
+            renderRows();
+        }
+
         // Handle form submission
+
         document.getElementById('newEventForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -2358,6 +2443,26 @@
                     seasonId: selectedSeasonId || null,
                     numberOfTracks: parseInt(eventData.numberOfTracks),
                     eliminationType: eventData.eliminationType,
+                    customOutcomes: (() => {
+                        if ((eventData.eliminationType || '').toLowerCase() !== 'custom') return [];
+                        const selects = document.querySelectorAll('#customOutcomesRows .custom-outcome-select');
+                        return Array.from(selects).map(s => s.value);
+                    })(),
+                    customLossLimit: (() => {
+                        if ((eventData.eliminationType || '').toLowerCase() !== 'custom') return 2;
+                        const input = document.getElementById('customLossLimit');
+                        return parseInt(input?.value || '2', 10);
+                    })(),
+                    customUseBrackets: (() => {
+                        if ((eventData.eliminationType || '').toLowerCase() !== 'custom') return false;
+                        const select = document.getElementById('customUseBrackets');
+                        return (select?.value || 'false') === 'true';
+                    })(),
+                    customFinalType: (() => {
+                        if ((eventData.eliminationType || '').toLowerCase() !== 'custom') return 'unique';
+                        const select = document.getElementById('customFinalType');
+                        return select?.value || 'unique';
+                    })(),
                     classSettings: selectedClasses,
                     classOrder: classOrder.map(cls => cls.classId), // Store class order
                     registrationOpen: true,
@@ -2995,7 +3100,7 @@
                                             
                                             return `
                                                 <div class="participant-item">
-                                                    <div class="participant-name">${p.name}</div>
+                                                    <div class="participant-name">${window.Helpers ? window.Helpers.generateDisplayName(p, window.allParticipants || [], eventId) : p.name}</div>
                                                     <div class="participant-classes">${classesText}</div>
                                                     ${p.team ? `<div class="participant-team">${p.team}</div>` : ''}
                                                     ${p.racingNumber ? `<div class="participant-number">#${p.racingNumber}</div>` : ''}
@@ -3195,9 +3300,19 @@
                 
                 const series = dataManager.getAllSeries();
                 
+                const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                const lockMessage = isCompleted ? `
+                    <div class="alert alert-warning" style="margin-bottom: 1rem; padding: 1rem; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+                        <strong>🔒 COMPLETED EVENT - LIMITED EDITING</strong><br>
+                        Only basic information (name, date, location, description, meeting time, max participants) can be edited.<br>
+                        Tournament settings are locked to prevent data corruption.
+                    </div>
+                ` : '';
+                
                 const editFormHtml = `
                     <div class="event-edit-modal">
-                        <h3>Edit Event</h3>
+                        <h3>Edit Event ${isCompleted ? '(🔒 Completed)' : ''}</h3>
+                        ${lockMessage}
                         
                         <form id="editEventForm" class="edit-form">
                             <div class="form-group">
@@ -3270,6 +3385,92 @@
                                 <input type="number" class="form-control" name="maxParticipants" min="1" required
                                        value="${event.maxParticipants}">
                             </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Driver Meeting Time</label>
+                                <input type="time" class="form-control" name="driverMeetingTime"
+                                       value="${event.driverMeetingTime || '08:00'}">
+                            </div>
+
+                            <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--text-primary);">Race Configuration</h4>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Number of Tracks/Lanes</label>
+                                <input type="number" class="form-control" name="numberOfTracks" min="1" max="10" value="${parseInt(event.numberOfTracks || 3, 10)}" ${(() => {
+                                    const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                                    return isCompleted ? 'disabled' : '';
+                                })()} required>
+                                ${(() => {
+                                    const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                                    return isCompleted ? '<small class="text-warning">⚠️ Cannot change for completed events</small>' : '';
+                                })()}
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Elimination Type</label>
+                                <select class="form-control" name="eliminationType" required ${(() => {
+                                    const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                                    return isCompleted ? 'disabled' : '';
+                                })()}>
+                                    <option value="single" ${event.eliminationType === 'single' ? 'selected' : ''}>Single Elimination</option>
+                                    <option value="double" ${event.eliminationType === 'double' ? 'selected' : ''}>Double Elimination</option>
+                                    <option value="double_random" ${event.eliminationType === 'double_random' ? 'selected' : ''}>Double Elimination (Random, no bracket)</option>
+                                    <option value="custom" ${event.eliminationType === 'custom' ? 'selected' : ''}>Custom Outcomes per Position</option>
+                                </select>
+                                ${(() => {
+                                    const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                                    return isCompleted ? '<small class="text-warning">⚠️ Cannot change for completed events</small>' : '';
+                                })()}
+                            </div>
+
+                            <div class="form-group" id="customEliminationSettings" style="display: ${event.eliminationType === 'custom' ? 'block' : 'none'};">
+                                <h5>Custom Elimination Settings</h5>
+                                
+                                <div class="form-row" style="display: flex; gap: 1rem;">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label class="form-label">Loss Limit</label>
+                                        <input type="number" class="form-control" name="customLossLimit" min="1" max="10" 
+                                               value="${event.customLossLimit || 2}" ${(() => {
+                                                   const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                                                   return isCompleted ? 'disabled' : '';
+                                               })()}>
+                                        <small>Number of losses before elimination</small>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label class="form-label">Bracket System</label>
+                                        <select class="form-control" name="customUseBrackets" ${(() => {
+                                            const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                                            return isCompleted ? 'disabled' : '';
+                                        })()}>
+                                            <option value="false" ${event.customUseBrackets === false ? 'selected' : ''}>No Brackets (Random pairing)</option>
+                                            <option value="true" ${event.customUseBrackets === true ? 'selected' : ''}>Use Brackets (Structured)</option>
+                                        </select>
+                                        <small>How to organize matchups</small>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label class="form-label">Final Type</label>
+                                        <select class="form-control" name="customFinalType" ${(() => {
+                                            const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                                            return isCompleted ? 'disabled' : '';
+                                        })()}>
+                                            <option value="unique" ${event.customFinalType === 'unique' ? 'selected' : ''}>Unique Final (Standard)</option>
+                                            <option value="complete" ${event.customFinalType === 'complete' ? 'selected' : ''}>Complete Elimination</option>
+                                        </select>
+                                        <small>How to determine final standings</small>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" id="customOutcomesContainer">
+                                    <label class="form-label">Outcomes per Finishing Position</label>
+                                    <div id="customOutcomesRows"></div>
+                                    <small>For each finishing position, choose the outcome: Win (no loss), Lose (adds a loss, continues), Eliminated (out of event).</small>
+                                </div>
+
+                                ${(() => {
+                                    const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                                    return isCompleted ? '<div class="text-warning">⚠️ Tournament settings are locked for completed events to prevent data corruption</div>' : '';
+                                })()}
+                            </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Free Run Mode</label>
@@ -3289,7 +3490,9 @@
                             <input type="hidden" name="status" value="active">
                             
                             <div class="form-actions">
-                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                <button type="submit" class="btn btn-primary">
+                                    ${isCompleted ? '🔒 Save Basic Info Only' : 'Save Changes'}
+                                </button>
                                 <button type="button" class="btn btn-secondary" onclick="hideEventModal()">Cancel</button>
                             </div>
                         </form>
@@ -3370,6 +3573,69 @@
                     await loadSeriesClassesEdit(event.seriesId, eventId);
                 }
                 
+                // Initialize elimination type change handler
+                const eliminationSelect = document.querySelector('select[name="eliminationType"]');
+                const customSettings = document.getElementById('customEliminationSettings');
+                const tracksInput = document.querySelector('input[name="numberOfTracks"]');
+                
+                console.log('🔧 Edit form elements found:', {
+                    eliminationSelect: !!eliminationSelect,
+                    customSettings: !!customSettings,
+                    tracksInput: !!tracksInput
+                });
+                
+                function updateCustomOutcomes() {
+                    const eliminationType = (eliminationSelect?.value || '').toLowerCase();
+                    const numberOfTracks = Math.max(1, parseInt(tracksInput?.value || '3', 10));
+                    const customOutcomesRows = document.getElementById('customOutcomesRows');
+                    
+                    console.log('🔧 updateCustomOutcomes called:', {
+                        eliminationType,
+                        numberOfTracks,
+                        customSettings: !!customSettings,
+                        customOutcomesRows: !!customOutcomesRows
+                    });
+                    
+                    if (eliminationType === 'custom' && customOutcomesRows) {
+                        // Show custom settings
+                        console.log('🔧 Showing custom settings for elimination type:', eliminationType);
+                        customSettings.style.display = 'block';
+                        
+                        // Get existing custom outcomes
+                        const existingOutcomes = Array.isArray(event.customOutcomes) ? event.customOutcomes : [];
+                        
+                        // Generate position outcome selectors
+                        const rows = Array.from({ length: numberOfTracks }, (_, idx) => {
+                            const pos = idx + 1;
+                            const currentValue = existingOutcomes[idx] || (idx === 0 ? 'win' : 'eliminated');
+                            const isCompleted = event && (event.status === 'completed' || event.status === 'finished');
+                            
+                            return `
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                    <label style="min-width: 80px;">Position ${pos}:</label>
+                                    <select name="customOutcome_${pos}" class="form-control custom-outcome-select" data-position="${pos}" style="max-width: 220px;" ${isCompleted ? 'disabled' : ''}>
+                                        <option value="win" ${currentValue === 'win' ? 'selected' : ''}>Win</option>
+                                        <option value="lose" ${currentValue === 'lose' ? 'selected' : ''}>Lose</option>
+                                        <option value="eliminated" ${currentValue === 'eliminated' ? 'selected' : ''}>Eliminated</option>
+                                    </select>
+                                </div>
+                            `;
+                        }).join('');
+                        
+                        customOutcomesRows.innerHTML = rows;
+                    } else {
+                        console.log('🔧 Hiding custom settings for elimination type:', eliminationType);
+                        customSettings.style.display = 'none';
+                    }
+                }
+                
+                // Set up event listeners
+                if (eliminationSelect) eliminationSelect.addEventListener('change', updateCustomOutcomes);
+                if (tracksInput) tracksInput.addEventListener('input', updateCustomOutcomes);
+                
+                // Initial setup
+                updateCustomOutcomes();
+                
             } catch (error) {
                 console.error('Error editing event:', error);
                 alert('Error loading event for editing');
@@ -3407,6 +3673,53 @@
                 const classOrderToSave = editClassOrder.map(cls => cls.classId);
                 console.log('📝 classOrder that will be saved:', classOrderToSave);
                 
+                // Check if event is completed (settings should be locked)
+                const isCompleted = existingEvent && (existingEvent.status === 'completed' || existingEvent.status === 'finished');
+                
+                // PREVENT SAVING TOURNAMENT SETTINGS FOR COMPLETED EVENTS
+                if (isCompleted) {
+                    // Only allow editing basic event info (name, date, location, description) for completed events
+                    console.log('🔒 Event is completed - only allowing basic info updates, blocking tournament settings');
+                    
+                    const allowedUpdates = {
+                        name: formData.get('eventName'),
+                        date: formData.get('date'),
+                        location: formData.get('location'),
+                        description: formData.get('description'),
+                        driverMeetingTime: formData.get('driverMeetingTime'),
+                        maxParticipants: parseInt(formData.get('maxParticipants')),
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    console.log('🔒 Updating completed event with limited data:', allowedUpdates);
+                    const success = await dataManager.updateEvent(eventId, allowedUpdates);
+                    
+                    if (success) {
+                        alert('✅ Event basic information updated successfully!\n\n⚠️ Tournament settings (tracks, elimination, classes) cannot be changed for completed events to prevent data corruption.');
+                        hideEventModal();
+                        await loadEvents();
+                    } else {
+                        alert('❌ Failed to update event');
+                    }
+                    return; // Exit early for completed events
+                }
+                
+                // CONTINUE WITH FULL UPDATE FOR NON-COMPLETED EVENTS
+                // Collect custom outcomes if elimination type is custom
+                const customOutcomes = (() => {
+                    if ((formData.get('eliminationType') || '').toLowerCase() !== 'custom') return [];
+                    const selects = document.querySelectorAll('#customOutcomesRows .custom-outcome-select');
+                    if (selects && selects.length) {
+                        return Array.from(selects).map(s => s.value);
+                    }
+                    const numberOfTracks = Math.max(1, parseInt(formData.get('numberOfTracks') || '3', 10));
+                    const fallback = [];
+                    for (let i = 1; i <= numberOfTracks; i++) {
+                        fallback.push(i === 1 ? 'win' : 'eliminated');
+                    }
+                    return fallback;
+                })();
+                
                 // Update event data
                 const updatedEventData = {
                     eventName: formData.get('eventName'),
@@ -3416,10 +3729,20 @@
                     location: formData.get('location'),
                     description: formData.get('description'),
                     maxParticipants: parseInt(formData.get('maxParticipants')),
+                    driverMeetingTime: formData.get('driverMeetingTime') || '08:00',
                     status: formData.get('status'),
                     classSettings: selectedClasses,
                     classOrder: classOrderToSave, // Store edit class order
                     freeRunEnabled: formData.get('freeRunEnabled') === 'true',
+                    // Only update tournament settings if event is not completed
+                    ...(isCompleted ? {} : {
+                        numberOfTracks: parseInt(formData.get('numberOfTracks')),
+                        eliminationType: formData.get('eliminationType'),
+                        customOutcomes: customOutcomes,
+                        customLossLimit: parseInt(formData.get('customLossLimit')) || 2,
+                        customUseBrackets: formData.get('customUseBrackets') === 'true',
+                        customFinalType: formData.get('customFinalType') || 'unique'
+                    }),
                     updatedAt: new Date().toISOString()
                 };
                 

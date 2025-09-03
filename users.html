@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Users & Permissions - EPC TECHNOLOGY</title>
+	<link rel="stylesheet" href="styles.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+	<nav class="main-nav">
+		<div class="nav-brand">
+			<div class="brand-icon"><i class="fas fa-cogs"></i></div>
+			<div class="brand-text">
+				<span class="brand-main">EPC TECHNOLOGY</span>
+				<span class="brand-sub">PROJECT 17</span>
+			</div>
+		</div>
+		<ul class="nav-links">
+			<li><a href="index.html">Home</a></li>
+		</ul>
+	</nav>
+
+	<main class="main-content">
+		<div class="page-header">
+			<div>
+				<h1>Users & Permissions</h1>
+				<p class="subtitle">Admin only</p>
+			</div>
+		</div>
+
+		<div class="card">
+			<h3 style="margin-bottom:1rem;">Create User</h3>
+			<div class="grid grid-3">
+				<div class="form-group">
+					<label class="form-label" for="u-username">Username</label>
+					<input id="u-username" class="form-control" type="text" />
+				</div>
+				<div class="form-group">
+					<label class="form-label" for="u-password">Password</label>
+					<input id="u-password" class="form-control" type="text" />
+				</div>
+				<div class="form-group">
+					<label class="form-label">Permissions</label>
+					<div id="u-perms-container"></div>
+				</div>
+				<div class="form-group">
+					<label class="form-label">Allowed Events</label>
+					<div id="u-allowed-events"></div>
+				</div>
+			</div>
+			<div style="margin-top:0.5rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+				<button id="u-create" class="btn btn-primary">Create</button>
+			</div>
+		</div>
+
+		<div class="card">
+			<h3 style="margin-bottom:1rem;">Users</h3>
+			<div class="table-wrapper">
+				<table>
+					<thead>
+						<tr>
+							<th>Username</th>
+							<th>Permissions</th>
+							<th style="width:200px;">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="users-body"></tbody>
+				</table>
+			</div>
+		</div>
+	</main>
+
+	<script src="utils/auth.js"></script>
+	<script>
+		// Central permissions registry for easy updates (categories only)
+		const ALL_PERMISSIONS = [
+			{ group: 'Pages', items: [
+				{ key: 'series', label: 'Series' },
+				{ key: 'events', label: 'Events' },
+				{ key: 'registration', label: 'Registration' },
+				{ key: 'races', label: 'Races' },
+				{ key: 'drivers profile', label: 'Drivers Profile' },
+				{ key: 'analytics', label: 'Analytics' },
+				{ key: 'live display', label: 'Live Display' }
+			]}
+		];
+
+		function renderPermissionCheckboxes(container, selected = []) {
+			container.innerHTML = '';
+			const wrap = document.createElement('div');
+			wrap.style.display = 'grid';
+			wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
+			wrap.style.gap = '0.5rem 1rem';
+			ALL_PERMISSIONS.forEach(group => {
+				const groupEl = document.createElement('div');
+				const title = document.createElement('div');
+				title.textContent = group.group;
+				title.style.fontWeight = '600';
+				title.style.margin = '0.5rem 0 0.25rem 0';
+				groupEl.appendChild(title);
+				group.items.forEach(item => {
+					const id = `perm_${item.key.replace(/[^a-z0-9_:\\-]/gi,'_')}_${Math.random().toString(36).slice(2,7)}`;
+					const row = document.createElement('label');
+					row.style.display = 'flex';
+					row.style.alignItems = 'center';
+					row.style.gap = '0.5rem';
+					const cb = document.createElement('input');
+					cb.type = 'checkbox';
+					cb.value = item.key;
+					cb.checked = selected.includes(item.key) || (selected.includes('*') && item.key !== '*');
+					cb.setAttribute('data-permission', item.key);
+					cb.id = id;
+					const lab = document.createElement('span');
+					lab.textContent = item.label;
+					row.appendChild(cb);
+					row.appendChild(lab);
+					groupEl.appendChild(row);
+				});
+				wrap.appendChild(groupEl);
+			});
+			container.appendChild(wrap);
+		}
+		async function loadUsers() {
+			if (!window.currentUser || window.currentUser.username !== 'Admin') {
+				alert('Access Denied');
+				return;
+			}
+			const res = await Auth.fetch('/api/users');
+			if (!res.ok) {
+				alert('Failed to load users');
+				return;
+			}
+			const users = await res.json();
+			renderUsers(users);
+		}
+
+		let EVENTS = [];
+
+		async function fetchEventsList() {
+			try {
+				const res = await Auth.fetch('/api/events');
+				if (!res.ok) return [];
+				const data = await res.json();
+				if (Array.isArray(data)) return data;
+				if (data && Array.isArray(data.events)) return data.events;
+				return [];
+			} catch (e) { return []; }
+		}
+
+		function buildEventSelector(container, selectedIds = []) {
+			container.innerHTML = '';
+			const allWrap = document.createElement('div');
+			allWrap.style.marginBottom = '0.5rem';
+			const allCb = document.createElement('input');
+			allCb.type = 'checkbox';
+			allCb.id = `ev_all_${Math.random().toString(36).slice(2,7)}`;
+			const allLab = document.createElement('label');
+			allLab.htmlFor = allCb.id;
+			allLab.textContent = 'All events';
+			allLab.style.marginLeft = '0.5rem';
+			allWrap.appendChild(allCb);
+			allWrap.appendChild(allLab);
+			container.appendChild(allWrap);
+
+			const list = document.createElement('div');
+			list.style.display = 'grid';
+			list.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
+			list.style.gap = '0.25rem 0.75rem';
+			EVENTS.forEach(ev => {
+				const row = document.createElement('label');
+				row.style.display = 'flex';
+				row.style.alignItems = 'center';
+				row.style.gap = '0.5rem';
+				const cb = document.createElement('input');
+				cb.type = 'checkbox';
+				cb.value = ev.id;
+				cb.checked = selectedIds && selectedIds.length > 0 ? selectedIds.includes(ev.id) : false;
+				const sp = document.createElement('span');
+				sp.textContent = ev.name || ev.id;
+				row.appendChild(cb);
+				row.appendChild(sp);
+				list.appendChild(row);
+			});
+			container.appendChild(list);
+
+			// Default: All when no selections
+			const anySelected = selectedIds && selectedIds.length > 0;
+			allCb.checked = !anySelected;
+			list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.disabled = allCb.checked);
+
+			allCb.addEventListener('change', () => {
+				const disabled = allCb.checked;
+				list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.disabled = disabled);
+				if (disabled) {
+					list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+				}
+			});
+
+			list.addEventListener('change', (e) => {
+				if (e.target && e.target.type === 'checkbox') {
+					// Uncheck All when any event is selected
+					const any = Array.from(list.querySelectorAll('input[type="checkbox"]')).some(c => c.checked);
+					if (any) allCb.checked = false;
+					// If none selected, revert to All
+					if (!any) allCb.checked = true;
+				}
+			});
+		}
+
+		function getSelectedEventIds(container) {
+			const allCb = container.querySelector('input[type="checkbox"]');
+			if (allCb && allCb.checked) return [];
+			return Array.from(container.querySelectorAll('div div input[type="checkbox"]'))
+				.filter(cb => cb.checked)
+				.map(cb => cb.value);
+		}
+
+		function renderUsers(users) {
+			const tbody = document.getElementById('users-body');
+			tbody.innerHTML = '';
+			users.forEach(u => {
+				const tr = document.createElement('tr');
+				tr.innerHTML = `
+					<td>${u.username}</td>
+					<td>
+						<div class="perms-grid" data-user-perms="${u.id}"></div>
+					</td>
+					<td>
+						<div style="display:flex;gap:0.5rem;align-items:center;">
+							<div class="event-select" data-user-events="${u.id}"></div>
+							<button class="btn btn-secondary" data-action="save" data-id="${u.id}">Save</button>
+							<button class="btn btn-danger" data-action="delete" data-id="${u.id}">Delete</button>
+						</div>
+					</td>
+				`;
+				tbody.appendChild(tr);
+				const container = tr.querySelector(`.perms-grid[data-user-perms="${u.id}"]`);
+				renderPermissionCheckboxes(container, u.permissions || []);
+				const evContainer = tr.querySelector(`.event-select[data-user-events="${u.id}"]`);
+				buildEventSelector(evContainer, u.allowedEvents || []);
+			});
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			document.getElementById('u-create').addEventListener('click', async () => {
+				const username = document.getElementById('u-username').value.trim();
+				const password = document.getElementById('u-password').value;
+				const perms = Array.from(document.querySelectorAll('#u-perms-container input[type="checkbox"]:checked')).map(cb => cb.value);
+				const allowedEvents = getSelectedEventIds(document.getElementById('u-allowed-events'));
+				if (!username || !password) { alert('username and password required'); return; }
+				const res = await Auth.fetch('/api/users', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ username, password, permissions: perms, allowedEvents })
+				});
+				if (!res.ok) {
+					let msg = 'Failed to create user';
+					try { const err = await res.json(); if (err && err.error) msg = err.error; } catch {}
+					showInlineMessage('user-create-msg', msg, 'error');
+					return;
+				}
+				showInlineMessage('user-create-msg', 'User created successfully', 'success');
+				loadUsers();
+			});
+
+			document.getElementById('users-body').addEventListener('click', async (e) => {
+				const btn = e.target.closest('button[data-action]');
+				if (!btn) return;
+				const id = btn.getAttribute('data-id');
+				if (btn.getAttribute('data-action') === 'delete') {
+					if (!confirm('Delete this user?')) return;
+					const res = await Auth.fetch(`/api/users/${id}`, { method: 'DELETE' });
+					if (!res.ok) { alert('Delete failed'); return; }
+					loadUsers();
+				} else if (btn.getAttribute('data-action') === 'save') {
+					const container = document.querySelector(`.perms-grid[data-user-perms="${id}"]`);
+					const perms = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+					const evContainer = document.querySelector(`.event-select[data-user-events="${id}"]`);
+					const allowedEvents = getSelectedEventIds(evContainer);
+					const res = await Auth.fetch(`/api/users/${id}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ permissions: perms, allowedEvents })
+					});
+					if (!res.ok) { alert('Save failed'); return; }
+					loadUsers();
+				}
+			});
+
+			// Wait for auth to initialize then load
+			// Render creation permissions grid now that DOM is ready
+			renderPermissionCheckboxes(document.getElementById('u-perms-container'), []);
+			injectMessageHost();
+			fetchEventsList().then(list => {
+				EVENTS = list;
+				buildEventSelector(document.getElementById('u-allowed-events'), []);
+				setTimeout(loadUsers, 50);
+			});
+		});
+
+		function injectMessageHost() {
+			let host = document.getElementById('user-create-msg');
+			if (!host) {
+				host = document.createElement('div');
+				host.id = 'user-create-msg';
+				host.style.margin = '0.5rem 0 0 0';
+				host.style.fontSize = '0.9rem';
+				document.querySelector('.card').appendChild(host);
+			}
+		}
+
+		function showInlineMessage(hostId, text, type) {
+			const host = document.getElementById(hostId);
+			if (!host) return;
+			host.textContent = text;
+			host.style.color = type === 'success' ? 'var(--success)' : 'var(--error)';
+		}
+	</script>
+</body>
+</html>
+
+

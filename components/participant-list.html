@@ -185,6 +185,24 @@ tr:hover {
 
 .status-rejected { background-color: var(--error); }
 
+.racing-number {
+    color: #007bff;
+    font-weight: bold;
+    background: #e3f2fd;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #2196f3;
+}
+
+.no-number {
+    color: #dc3545;
+    font-style: italic;
+    background: #f8d7da;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #dc3545;
+}
+
 
 
 .btn-sm {
@@ -749,10 +767,10 @@ function createOptimizedParticipantRow(participant, rowIndex = null) {
     // Build row HTML efficiently
     row.innerHTML = `
         <td>
-            <strong>${participant.name}</strong>
+            <strong>${window.Helpers ? window.Helpers.generateDisplayName(participant, window.allParticipants || [], participant.eventId) : participant.name}</strong>
             ${participant.nickname ? `<br><small>(${participant.nickname})</small>` : ''}
         </td>
-        <td>${participant.racingNumber ? `#${participant.racingNumber}` : 'N/A'}</td>
+        <td>${participant.racingNumber ? `<strong class="racing-number">#${participant.racingNumber}</strong>` : '<span class="no-number">Required</span>'}</td>
         <td>${classesText}</td>
         <td>${participant.totalFee ? `$${participant.totalFee.toFixed(2)}` : 'N/A'}</td>
         <td><span class="status-badge ${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
@@ -875,8 +893,9 @@ function createEditParticipantModal(participant) {
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Racing Number</label>
-                            <input type="number" class="form-control" id="editRacingNumber" value="${participant.racingNumber || ''}" min="1" max="999" placeholder="Preferred racing number">
+                            <label class="form-label">Racing Number *</label>
+                            <input type="text" class="form-control" id="editRacingNumber" value="${participant.racingNumber || ''}" required pattern="[A-Za-z0-9]+" placeholder="e.g., 1, 1A, 99B" title="Racing number can contain numbers and letters">
+                            <small class="form-text">Required. Can contain numbers and letters. Must be unique per class in this event.</small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Date of Birth *</label>
@@ -1761,10 +1780,24 @@ async function handleEditFormSubmit(event) {
         const sponsorTags = document.querySelectorAll('#editSponsorTags .sponsor-tag span:first-child');
         const sponsors = Array.from(sponsorTags).map(tag => tag.textContent);
         
+        // Validate racing number
+        const racingNumber = document.getElementById('editRacingNumber').value;
+        if (!racingNumber || racingNumber.trim() === '') {
+            alert('Racing number is required');
+            return;
+        }
+        
+        // Validate racing number format
+        const racingNumberRegex = /^[A-Za-z0-9]+$/;
+        if (!racingNumberRegex.test(racingNumber.trim())) {
+            alert('Racing number can only contain letters and numbers');
+            return;
+        }
+        
         const updatedData = {
             name: document.getElementById('editName').value.trim(),
             nickname: document.getElementById('editNickname').value.trim(),
-            racingNumber: document.getElementById('editRacingNumber').value ? parseInt(document.getElementById('editRacingNumber').value) : null,
+            racingNumber: racingNumber.trim(),
             dob: document.getElementById('editDob').value,
             contact: {
                 email: document.getElementById('editEmail').value.trim(),

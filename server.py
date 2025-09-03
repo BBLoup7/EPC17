@@ -4,7 +4,7 @@ EPC17 - Event Management System - Network Server
 Robust data management for multi-client access across local network
 """
 
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
 import os
 import json
@@ -12,6 +12,7 @@ import threading
 from datetime import datetime
 import uuid
 import ssl
+import secrets
 
 app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
 # Enable CORS for all origins with all methods and headers
@@ -21,6 +22,8 @@ CORS(app,
      allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
      supports_credentials=False)
 
+# Achievements removed
+
 # Clean server setup without custom logging
 
 # Data storage configuration
@@ -29,6 +32,42 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # Thread lock for concurrent access safety
 data_lock = threading.Lock()
+
+# In-memory session store for simple auth (no external libraries)
+# Rule: EPC17_WORKFLOW.md - lightweight local dev, no DB
+SESSIONS = {}
+
+# Centralized permission helpers
+ALL_CATEGORIES = [
+    'series',
+    'events',
+    'registration',
+    'races',
+    'drivers profile',
+    'analytics',
+    'live display',
+]
+
+def is_admin_session(session):
+    return bool(session) and session.get('username') == 'Admin'
+
+def has_permission(session, permission_or_list):
+    if not session:
+        return False
+    if is_admin_session(session):
+        return True
+    perms = session.get('permissions', []) or []
+    if isinstance(permission_or_list, (list, tuple, set)):
+        return any(p in perms for p in permission_or_list)
+    return permission_or_list in perms
+
+def require_permission(permission_or_list):
+    sess = get_session_from_request()
+    if not sess:
+        return False, ('Unauthorized', 401)
+    if has_permission(sess, permission_or_list):
+        return True, None
+    return False, ('Access Denied', 403)
 
 def create_self_signed_cert():
     """Create a self-signed certificate for HTTPS"""
@@ -150,6 +189,63 @@ def save_data(filename, data):
             print(f"Error saving {filename}: {e}")
             return False
 
+def load_users():
+    """Load users list from JSON file; ensure default Admin exists."""
+    users = load_data('users.json')
+    # Ensure default Admin exists
+    has_admin = any(u.get('username') == 'Admin' for u in users)
+    if not has_admin:
+        users.append({
+            'id': 'admin-default',
+            'username': 'Admin',
+            'password': 'Admin321',
+            'permissions': ALL_CATEGORIES[:]
+        })
+        save_data('users.json', users)
+    return users
+
+def save_users(users):
+    return save_data('users.json', users)
+
+def create_session(user_id, username, permissions, allowed_events=None):
+    token = secrets.token_hex(16)
+    SESSIONS[token] = {
+        'userId': user_id,
+        'username': username,
+        'permissions': permissions,
+        'allowedEvents': allowed_events or [],
+        'createdAt': datetime.now().isoformat()
+    }
+    return token
+
+def get_session_from_request():
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        token = auth_header.split(' ', 1)[1].strip()
+        return SESSIONS.get(token)
+    # Also allow token via query for simple local links
+    token = request.args.get('token')
+    if token:
+        return SESSIONS.get(token)
+    # Also check cookie for auth token so page loads carry session
+    cookie_token = request.cookies.get('auth_token')
+    if cookie_token:
+        return SESSIONS.get(cookie_token)
+    return None
+
+# Rule: EPC17_WORKFLOW.md - unify permission checks to category-only
+# Replace legacy fine-grained or wildcard permission model
+def require_permission(permission_or_list):
+    return_value = None
+    # Delegate to the normalized helper defined above
+    allowed, err = False, None
+    sess = get_session_from_request()
+    if not sess:
+        return False, ('Unauthorized', 401)
+    if has_permission(sess, permission_or_list):
+        return True, None
+    return False, ('Access Denied', 403)
+
 def generate_id():
     """Generate unique ID"""
     return str(uuid.uuid4())
@@ -161,41 +257,82 @@ def index():
 
 @app.route('/registration')
 def registration():
+    ok, err = require_permission(['registration'])
+    if not ok:
+        msg, code = err
+        return msg, code
     return render_template('registration.html')
 
 @app.route('/series')
 def series():
+    ok, err = require_permission(['series'])
+    if not ok:
+        msg, code = err
+        return msg, code
     return render_template('series.html')
 
 @app.route('/events')
 def events():
+    ok, err = require_permission(['events'])
+    if not ok:
+        msg, code = err
+        return msg, code
     return render_template('events.html')
 
 @app.route('/races')
 def races():
+    ok, err = require_permission(['races'])
+    if not ok:
+        msg, code = err
+        return msg, code
     return render_template('races.html')
 
 @app.route('/analytics')
 def analytics():
+    ok, err = require_permission(['analytics'])
+    if not ok:
+        msg, code = err
+        return msg, code
     return render_template('analytics.html')
 
 @app.route('/statistics')
 def statistics():
+    ok, err = require_permission(['analytics'])
+    if not ok:
+        msg, code = err
+        return msg, code
     return render_template('analytics.html')  # Redirect to analytics for backward compatibility
 
 @app.route('/big-screen.html')
 def big_screen_redirect():
+    ok, err = require_permission(['live display'])
+    if not ok:
+        msg, code = err
+        return msg, code
     return render_template('live-display.html')  # Redirect old big-screen.html to live-display.html
 
 @app.route('/network-test')
 def network_test():
     return render_template('network-test.html')
 
+# Admin-only Users & Permissions page
+@app.route('/users.html')
+def users_permissions_page():
+    sess = get_session_from_request()
+    if not sess or sess.get('username') != 'Admin':
+        return 'Access Denied', 403
+    return render_template('users.html')
+
 # API Endpoints
 @app.route('/api/participants', methods=['GET', 'POST'])
 def handle_participants():
     """Handle participant registration and retrieval with pagination"""
     if request.method == 'POST':
+        # Rule: EPC17_WORKFLOW.md - category-only permissions (registration)
+        ok, err = require_permission('registration')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         print(f"🔍 DEBUG - POST /api/participants called")
         print(f"🔍 DEBUG - Content-Type: {request.content_type}")
         print(f"🔍 DEBUG - Request data: {request.data}")
@@ -230,6 +367,10 @@ def handle_participants():
             return jsonify({'error': 'Failed to save participant'}), 500
     
     # GET request with pagination
+    ok, err = require_permission(['registration'])
+    if not ok:
+        msg, code = err
+        return jsonify({'error': msg}), code
     participants = load_data('participants.json')
     
     # Apply filters
@@ -281,6 +422,10 @@ def handle_participants():
 def handle_participant_by_id(participant_id):
     """Handle participant updates and deletion"""
     if request.method == 'PUT':
+        ok, err = require_permission('registration')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         """Update a specific participant"""
         try:
             data = request.json
@@ -315,6 +460,10 @@ def handle_participant_by_id(participant_id):
     elif request.method == 'DELETE':
         """Delete a specific participant"""
         try:
+            ok, err = require_permission('registration')
+            if not ok:
+                msg, code = err
+                return jsonify({'error': msg}), code
             participants = load_data('participants.json')
             events = load_data('events.json')
             series = load_data('series.json')
@@ -348,6 +497,10 @@ def handle_participant_by_id(participant_id):
 def handle_series():
     """Handle series management with pagination"""
     if request.method == 'POST':
+        ok, err = require_permission('series')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         data = request.json
         if not data or not data.get('name'):
             return jsonify({'error': 'Series name is required'}), 400
@@ -366,6 +519,11 @@ def handle_series():
             return jsonify({'error': 'Failed to save series'}), 500
     
     # GET request with pagination
+    # Allow registration users to read series for registration workflows
+    ok, err = require_permission(['series', 'registration'])
+    if not ok:
+        msg, code = err
+        return jsonify({'error': msg}), code
     series = load_data('series.json')
     
     # Apply filters
@@ -406,6 +564,10 @@ def handle_series_by_id(series_id):
     if request.method == 'PUT':
         """Update a specific series"""
         try:
+            ok, err = require_permission('series')
+            if not ok:
+                msg, code = err
+                return jsonify({'error': msg}), code
             print(f"📝 Processing PUT request for series {series_id}")
             data = request.json
             if not data or not data.get('name'):
@@ -441,6 +603,10 @@ def handle_series_by_id(series_id):
     elif request.method == 'DELETE':
         """Delete a specific series"""
         try:
+            ok, err = require_permission('series')
+            if not ok:
+                msg, code = err
+                return jsonify({'error': msg}), code
             series = load_data('series.json')
             participants = load_data('participants.json')
             
@@ -472,6 +638,10 @@ def handle_series_by_id(series_id):
 def handle_events():
     """Handle events with pagination"""
     if request.method == 'POST':
+        ok, err = require_permission('events')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         data = request.json
         if not data or not data.get('name'):
             return jsonify({'error': 'Event name is required'}), 400
@@ -491,7 +661,18 @@ def handle_events():
             return jsonify({'error': 'Failed to save event'}), 500
     
     # GET request with pagination
+    # Allow registration users to read events for registration workflows
+    ok, err = require_permission(['events', 'registration'])
+    if not ok:
+        msg, code = err
+        return jsonify({'error': msg}), code
     events = load_data('events.json')
+    # Admin sees all; non-admins may be scoped by allowedEvents
+    sess = get_session_from_request()
+    if sess and not is_admin_session(sess):
+        allowed = set(sess.get('allowedEvents', []) or [])
+        if allowed:
+            events = [e for e in events if e.get('id') in allowed]
     
     # Apply filters
     series_id = request.args.get('seriesId')
@@ -532,6 +713,10 @@ def handle_event_by_id(event_id):
     if request.method == 'PUT':
         """Update a specific event"""
         try:
+            ok, err = require_permission('events')
+            if not ok:
+                msg, code = err
+                return jsonify({'error': msg}), code
             print(f"🔍 DEBUG - PUT /api/events/{event_id} called")
             data = request.json
             print(f"🔍 DEBUG - Request data: {data}")
@@ -596,6 +781,10 @@ def handle_event_by_id(event_id):
     elif request.method == 'DELETE':
         """Delete a specific event"""
         try:
+            ok, err = require_permission('events')
+            if not ok:
+                msg, code = err
+                return jsonify({'error': msg}), code
             events = load_data('events.json')
             participants = load_data('participants.json')
             
@@ -626,6 +815,17 @@ def handle_event_by_id(event_id):
 @app.route('/api/events/<event_id>/participants', methods=['POST'])
 def register_participant_for_event(event_id):
     """Register a participant for a specific event"""
+    # Category-only enforcement: registration
+    ok, err = require_permission('registration')
+    if not ok:
+        msg, code = err
+        return jsonify({'error': msg}), code
+    # Enforce event scope for non-admin
+    sess = get_session_from_request()
+    if sess and not is_admin_session(sess):
+        allowed = set(sess.get('allowedEvents', []) or [])
+        if allowed and event_id not in allowed:
+            return jsonify({'error': 'Access Denied'}), 403
     data = request.json
     if not data or not data.get('participantId'):
         return jsonify({'error': 'Participant ID is required'}), 400
@@ -681,6 +881,10 @@ def register_participant_for_event(event_id):
 def handle_races():
     """Handle races with pagination"""
     if request.method == 'POST':
+        ok, err = require_permission('races')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         data = request.json
         data['id'] = generate_id()
         data['createdDate'] = datetime.now().isoformat()
@@ -694,7 +898,17 @@ def handle_races():
             return jsonify({'error': 'Failed to save race'}), 500
     
     # GET request with pagination
+    ok, err = require_permission(['races'])
+    if not ok:
+        msg, code = err
+        return jsonify({'error': msg}), code
     races = load_data('races.json')
+    # Scope by allowedEvents if not admin
+    sess = get_session_from_request()
+    if sess and not is_admin_session(sess):
+        allowed = set(sess.get('allowedEvents', []) or [])
+        if allowed:
+            races = [r for r in races if r.get('eventId') in allowed]
     
     # Apply filters
     event_id = request.args.get('eventId')
@@ -729,6 +943,10 @@ def handle_race_by_id(race_id):
     if request.method == 'PUT':
         """Update a specific race"""
         try:
+            ok, err = require_permission('races')
+            if not ok:
+                msg, code = err
+                return jsonify({'error': msg}), code
             data = request.json
             races = load_data('races.json')
             
@@ -758,6 +976,10 @@ def handle_race_by_id(race_id):
     elif request.method == 'DELETE':
         """Delete a specific race"""
         try:
+            ok, err = require_permission('races')
+            if not ok:
+                msg, code = err
+                return jsonify({'error': msg}), code
             races = load_data('races.json')
             
             # Find and remove the race
@@ -778,83 +1000,14 @@ def handle_race_by_id(race_id):
         except Exception as e:
             return jsonify({'error': f'Delete failed: {str(e)}'}), 500
 
-@app.route('/api/achievements', methods=['GET', 'POST'])
-def handle_achievements():
-    """Handle achievement data storage and retrieval"""
-    if request.method == 'POST':
-        data = request.json
-        if not data or not data.get('participantId') or not data.get('tagId'):
-            return jsonify({'error': 'Participant ID and tag ID are required'}), 400
-            
-        data['id'] = generate_id()
-        data['earnedDate'] = datetime.now().isoformat()
-        data['eventId'] = data.get('eventId', '')
-        
-        achievements = load_data('achievements.json')
-        
-        # Check if participant already has this achievement
-        existing = next((a for a in achievements if 
-                        a['participantId'] == data['participantId'] and 
-                        a['tagId'] == data['tagId']), None)
-        
-        if not existing:
-            achievements.append(data)
-            if save_data('achievements.json', achievements):
-                return jsonify(data), 201
-            else:
-                return jsonify({'error': 'Failed to save achievement'}), 500
-        else:
-            return jsonify({'message': 'Achievement already exists'}), 200
-    
-    # GET request
-    achievements = load_data('achievements.json')
-    participant_id = request.args.get('participantId')
-    
-    if participant_id:
-        achievements = [a for a in achievements if a['participantId'] == participant_id]
-    
-    return jsonify(achievements)
-
-@app.route('/api/calculate-achievements', methods=['POST'])
-def calculate_achievements():
-    """Calculate and award achievements for an event"""
-    data = request.json
-    if not data or not data.get('eventId'):
-        return jsonify({'error': 'Event ID is required'}), 400
-    
-    event_id = data['eventId']
-    
-    try:
-        # Load all necessary data
-        participants = load_data('participants.json')
-        races = load_data('races.json')
-        events = load_data('events.json')
-        achievements = load_data('achievements.json')
-        
-        # Calculate achievements for this event
-        new_achievements = calculate_event_achievements(event_id, participants, races, events, achievements)
-        
-        # Save new achievements
-        if new_achievements:
-            all_achievements = load_data('achievements.json')
-            all_achievements.extend(new_achievements)
-            if save_data('achievements.json', all_achievements):
-                return jsonify({
-                    'success': True,
-                    'newAchievements': len(new_achievements),
-                    'achievements': new_achievements
-                })
-            else:
-                return jsonify({'error': 'Failed to save achievements'}), 500
-        else:
-            return jsonify({'success': True, 'newAchievements': 0, 'achievements': []})
-            
-    except Exception as e:
-        return jsonify({'error': f'Achievement calculation failed: {str(e)}'}), 500
 
 @app.route('/api/standings')
 def get_standings():
     """Calculate and return standings"""
+    ok, err = require_permission(['analytics'])
+    if not ok:
+        msg, code = err
+        return jsonify({'error': msg}), code
     series_id = request.args.get('seriesId')
     event_id = request.args.get('eventId')
     
@@ -900,269 +1053,19 @@ def get_standings():
     standings.sort(key=lambda x: x['points'], reverse=True)
     return jsonify(standings)
 
-def calculate_event_achievements(event_id, participants, races, events, existing_achievements):
-    """
-    Calculate achievements for participants based on event performance
-    """
-    new_achievements = []
-    
-    # Achievement definitions
-    achievement_tags = {
-        'lane-bias-index': {
-            'title': '🧨 Lane Bias Index',
-            'description': 'Which lane wins more than it should? Assigned if a driver wins primarily from a lane that statistically underperforms'
-        },
-        'anti-social-racer': {
-            'title': '🧍‍♂️ Anti-Social Racer',
-            'description': 'Fewest unique opponents - This driver keeps drawing the same people round after round'
-        },
-        'bracket-comeback': {
-            'title': '🎯 Bracket Comeback of the Day',
-            'description': 'Deepest lower-bracket run - Dropped early, then climbed all the way to the final'
-        },
-        'rematch-count': {
-            'title': '🔁 Rematch Count',
-            'description': 'Most rematches in a single event - They just couldn\'t get away from their rivals'
-        },
-        'silent-killer': {
-            'title': '🔪 Silent Killer',
-            'description': 'Most eliminations, no podium - Took out a lot of racers without placing'
-        },
-        'lane-loyalty-violation': {
-            'title': '😬 Lane Loyalty Violation',
-            'description': 'Never raced in the same lane twice - Switched lanes every single heat'
-        },
-        'clean-sweep': {
-            'title': '🧹 Clean Sweep',
-            'description': 'Perfect upper-bracket run - Won every match without ever dropping'
-        },
-        'unbreakable-wall': {
-            'title': '🧱 Unbreakable Wall',
-            'description': 'Eliminated the most opponents - Statistically the biggest threat on the bracket'
-        },
-        'luckiest-draw': {
-            'title': '🍀 Luckiest Draw',
-            'description': 'No rematches + preferred lane usage - Had the smoothest possible bracket run'
-        }
-    }
-    
-    # Load bracket data to extract race results
-    print(f"🏆 Calculating achievements for event {event_id}")
-    try:
-        brackets_data = load_data('race_brackets.json')
-        event_bracket = None
-        
-        # Find the bracket for this event
-        for bracket in brackets_data:
-            if bracket.get('eventId') == event_id:
-                event_bracket = bracket
-                break
-        
-        if not event_bracket:
-            print(f"❌ No bracket found for event {event_id}")
-            return new_achievements
-            
-        print(f"📊 Found bracket for event {event_id}")
-        
-        # Extract race results from bracket structure
-        event_races = []
-        if 'classes' in event_bracket:
-            for class_name, class_bracket in event_bracket['classes'].items():
-                if 'rounds' in class_bracket:
-                    for round_data in class_bracket['rounds']:
-                        if 'heats' in round_data:
-                            for heat in round_data['heats']:
-                                if 'results' in heat and 'lanes' in heat:
-                                    # Process each result in this heat
-                                    for result in heat['results']:
-                                        if 'participantId' in result:
-                                            # Find lane info for this participant
-                                            participant_lane = next((lane for lane in heat['lanes'] 
-                                                                   if lane.get('participant', {}).get('id') == result['participantId']), None)
-                                            
-                                            if participant_lane:
-                                                race_record = {
-                                                    'eventId': event_id,
-                                                    'participantId': result['participantId'],
-                                                    'position': result.get('position'),
-                                                    'lane': participant_lane.get('lane'),
-                                                    'round': round_data.get('roundNumber'),
-                                                    'bracketType': round_data.get('bracketType', 'upper'),
-                                                    'heatId': heat.get('id'),
-                                                    'opponents': [lane.get('participant', {}).get('id') for lane in heat['lanes'] 
-                                                                if lane.get('participant', {}).get('id') != result['participantId']]
-                                                }
-                                                event_races.append(race_record)
-        
-        print(f"📊 Extracted {len(event_races)} race results from bracket data")
-        
-        if not event_races:
-            print("❌ No race results found in bracket data")
-            return new_achievements
-    
-    except Exception as e:
-        print(f"❌ Error loading bracket data: {e}")
-        return new_achievements
-    
-    # Get event participants - look in both events array and participants array
-    event_participants = []
-    for participant in participants:
-        # Check if participant is in this event
-        if (event_id in participant.get('events', []) or 
-            event_id == participant.get('eventId') or
-            any(race['participantId'] == participant['id'] for race in event_races)):
-            event_participants.append(participant)
-    
-    print(f"👥 Found {len(event_participants)} participants for event")
-    
-    # Analysis data structures
-    participant_stats = {}
-    lane_stats = {}
-    
-    # Initialize participant tracking
-    for participant in event_participants:
-        participant_stats[participant['id']] = {
-            'lanes_used': set(),
-            'opponents_faced': set(),
-            'wins': 0,
-            'total_races': 0,
-            'eliminations_caused': 0,
-            'lane_wins': {},
-            'bracket_performance': {'upper': 0, 'lower': 0, 'wins_upper': 0, 'wins_lower': 0},
-            'rematches': 0
-        }
-    
-    # Analyze race data
-    for race in event_races:
-        participant_id = race.get('participantId')
-        if not participant_id or participant_id not in participant_stats:
-            continue
-            
-        lane_num = race.get('lane', 0)
-        position = race.get('position')
-        bracket_type = race.get('bracketType', 'upper')
-        opponents = race.get('opponents', [])
-        
-        # Update participant stats
-        participant_stats[participant_id]['lanes_used'].add(lane_num)
-        participant_stats[participant_id]['total_races'] += 1
-        
-        # Track lane statistics globally
-        if lane_num not in lane_stats:
-            lane_stats[lane_num] = {'wins': 0, 'total': 0}
-        lane_stats[lane_num]['total'] += 1
-        
-        # Track opponents and rematches
-        for opponent_id in opponents:
-            if opponent_id:
-                if opponent_id in participant_stats[participant_id]['opponents_faced']:
-                    participant_stats[participant_id]['rematches'] += 1
-                participant_stats[participant_id]['opponents_faced'].add(opponent_id)
-        
-        # Track wins and performance
-        if position == 1:
-            participant_stats[participant_id]['wins'] += 1
-            lane_stats[lane_num]['wins'] += 1
-            
-            if lane_num not in participant_stats[participant_id]['lane_wins']:
-                participant_stats[participant_id]['lane_wins'][lane_num] = 0
-            participant_stats[participant_id]['lane_wins'][lane_num] += 1
-            
-            # Track bracket performance
-            if bracket_type == 'upper':
-                participant_stats[participant_id]['bracket_performance']['wins_upper'] += 1
-            else:
-                participant_stats[participant_id]['bracket_performance']['wins_lower'] += 1
-        
-        # Track bracket rounds for performance analysis
-        participant_stats[participant_id]['bracket_performance'][bracket_type] += 1
-    
-    # Calculate achievements
-    for participant_id, stats in participant_stats.items():
-        participant = next((p for p in event_participants if p['id'] == participant_id), None)
-        if not participant:
-            continue
-            
-        # Check if participant already has achievements (avoid duplicates)
-        existing_tags = {a['tagId'] for a in existing_achievements if a.get('participantId') == participant_id}
-        
-        # 🧨 Lane Bias Index - wins primarily from underperforming lane
-        if stats['wins'] > 0 and stats['lane_wins']:
-            primary_lane = max(stats['lane_wins'], key=stats['lane_wins'].get)
-            if primary_lane in lane_stats:
-                lane_win_rate = lane_stats[primary_lane]['wins'] / max(lane_stats[primary_lane]['total'], 1)
-                overall_win_rate = sum(ls['wins'] for ls in lane_stats.values()) / max(sum(ls['total'] for ls in lane_stats.values()), 1)
-                
-                if lane_win_rate < overall_win_rate * 0.8 and 'lane-bias-index' not in existing_tags:
-                    new_achievements.append({
-                        'participantId': participant_id,
-                        'tagId': 'lane-bias-index',
-                        'eventId': event_id,
-                        'earnedDate': datetime.now().isoformat(),
-                        'details': f'Won primarily from lane {primary_lane} (underperforming lane)'
-                    })
-        
-        # 🧍‍♂️ Anti-Social Racer - fewest unique opponents
-        if stats['total_races'] > 2:
-            avg_opponents = sum(len(s['opponents_faced']) for s in participant_stats.values()) / len([s for s in participant_stats.values() if s['total_races'] > 0])
-            if len(stats['opponents_faced']) < avg_opponents * 0.7 and 'anti-social-racer' not in existing_tags:
-                new_achievements.append({
-                    'participantId': participant_id,
-                    'tagId': 'anti-social-racer',
-                    'eventId': event_id,
-                    'earnedDate': datetime.now().isoformat(),
-                    'details': f'Faced only {len(stats["opponents_faced"])} unique opponents'
-                })
-        
-        # 🔁 Rematch Count - most rematches
-        if stats['rematches'] > 0:
-            max_rematches = max((s['rematches'] for s in participant_stats.values()), default=0)
-            if stats['rematches'] == max_rematches and max_rematches >= 3 and 'rematch-count' not in existing_tags:
-                new_achievements.append({
-                    'participantId': participant_id,
-                    'tagId': 'rematch-count',
-                    'eventId': event_id,
-                    'earnedDate': datetime.now().isoformat(),
-                    'details': f'Had {stats["rematches"]} rematches in a single event'
-                })
-        
-        # 😬 Lane Loyalty Violation - never used same lane twice
-        if len(stats['lanes_used']) == stats['total_races'] and stats['total_races'] >= 3 and 'lane-loyalty-violation' not in existing_tags:
-            new_achievements.append({
-                'participantId': participant_id,
-                'tagId': 'lane-loyalty-violation',
-                'eventId': event_id,
-                'earnedDate': datetime.now().isoformat(),
-                'details': f'Used {len(stats["lanes_used"])} different lanes in {stats["total_races"]} races'
-            })
-        
-        # 🧹 Clean Sweep - perfect upper bracket run (simplified check)
-        if stats['bracket_performance']['wins_upper'] >= 3 and stats['wins'] == stats['bracket_performance']['wins_upper'] and 'clean-sweep' not in existing_tags:
-            new_achievements.append({
-                'participantId': participant_id,
-                'tagId': 'clean-sweep',
-                'eventId': event_id,
-                'earnedDate': datetime.now().isoformat(),
-                'details': f'Perfect upper bracket run with {stats["wins"]} consecutive wins'
-            })
-        
-        # 🍀 Luckiest Draw - no rematches + good lane usage
-        if stats['rematches'] == 0 and stats['total_races'] >= 3 and len(stats['opponents_faced']) == stats['total_races'] and 'luckiest-draw' not in existing_tags:
-            new_achievements.append({
-                'participantId': participant_id,
-                'tagId': 'luckiest-draw',
-                'eventId': event_id,
-                'earnedDate': datetime.now().isoformat(),
-                'details': 'Perfect bracket draw with no rematches'
-            })
-    
-    return new_achievements
+def calculate_event_achievements(*args, **kwargs):
+    """Achievements removed: return no achievements."""
+    return []
 
 # Clear all data endpoint (DANGER!)
 @app.route('/api/clear-all', methods=['DELETE', 'POST'])
 def clear_all_data():
     """DANGER: Clear all data permanently - use with extreme caution"""
     try:
+        # Admin only
+        sess = get_session_from_request()
+        if not is_admin_session(sess):
+            return jsonify({'error': 'Access Denied'}), 403
         # List of all data files to clear
         data_files = [
             'participants.json',
@@ -1217,7 +1120,18 @@ def clear_all_data():
 def get_race_brackets():
     """Get all race brackets"""
     try:
+        # Allow registration users to read race brackets for registration workflows
+        ok, err = require_permission(['races', 'registration'])
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         brackets = load_data('race_brackets.json')
+        # Scope by allowedEvents if not admin
+        sess = get_session_from_request()
+        if sess and not is_admin_session(sess):
+            allowed = set(sess.get('allowedEvents', []) or [])
+            if allowed:
+                brackets = [b for b in brackets if b.get('eventId') in allowed]
         return jsonify(brackets)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -1226,8 +1140,19 @@ def get_race_brackets():
 def get_race_bracket(bracket_id):
     """Get a specific race bracket"""
     try:
+        # Allow registration users to read race brackets for registration workflows
+        ok, err = require_permission(['races', 'registration'])
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         brackets = load_data('race_brackets.json')
         bracket = next((b for b in brackets if b.get('id') == bracket_id), None)
+        # Scope check for non-admin
+        sess = get_session_from_request()
+        if bracket and sess and not is_admin_session(sess):
+            allowed = set(sess.get('allowedEvents', []) or [])
+            if allowed and bracket.get('eventId') not in allowed:
+                return jsonify({'error': 'Access Denied'}), 403
         if bracket:
             return jsonify(bracket)
         return jsonify({'error': 'Race bracket not found'}), 404
@@ -1238,6 +1163,10 @@ def get_race_bracket(bracket_id):
 def create_race_bracket():
     """Create a new race bracket"""
     try:
+        ok, err = require_permission('races')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         bracket_data = request.get_json()
         if not bracket_data:
             return jsonify({'error': 'No data provided'}), 400
@@ -1269,6 +1198,10 @@ def create_race_bracket():
 def update_race_bracket(bracket_id):
     """Update an existing race bracket"""
     try:
+        ok, err = require_permission('races')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         bracket_data = request.get_json()
         if not bracket_data:
             return jsonify({'error': 'No data provided'}), 400
@@ -1300,6 +1233,10 @@ def update_race_bracket(bracket_id):
 def delete_race_bracket(bracket_id):
     """Delete a race bracket"""
     try:
+        ok, err = require_permission('race:edit')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
         brackets = load_data('race_brackets.json')
         
         # Find and remove bracket
@@ -1329,7 +1266,6 @@ def health_check():
             'series': len(load_data('series.json')),
             'events': len(load_data('events.json')),
             'races': len(load_data('races.json')),
-            'achievements': len(load_data('achievements.json')),
             'race_brackets': len(load_data('race_brackets.json'))
         }
     })
@@ -1339,7 +1275,29 @@ def health_check():
 def serve_static(filename):
     """Serve static files with cache-busting for development"""
     from flask import make_response
-    
+    # Gate HTML files by permissions (except index.html and login overlay dependency)
+    if filename.endswith('.html'):
+        if filename == 'index.html':
+            return render_template('index.html')
+        page_perm_map = {
+            'registration.html': ['registration'],
+            'series.html': ['series'],
+            'events.html': ['events'],
+            'races.html': ['races'],
+            'analytics.html': ['analytics'],
+            'driver-profile.html': ['drivers profile'],
+            'live-display.html': ['live display'],
+            'users.html': ['*'],
+        }
+        required = page_perm_map.get(filename)
+        if required:
+            ok, err = require_permission(required)
+            if not ok:
+                msg, code = err
+                return msg, code
+        else:
+            # Deny any other .html pages not explicitly allowed
+            return 'Access Denied', 403
     response = make_response(send_from_directory('.', filename))
     
     # Add cache-busting headers for JavaScript files to prevent caching issues
@@ -1349,6 +1307,129 @@ def serve_static(filename):
         response.headers['Expires'] = '0'
     
     return response
+
+# -------------------- AUTH ENDPOINTS --------------------
+# Rule: EPC17_WORKFLOW.md - simple JSON storage, no external libs
+# Rule: EPC17_PROMPTS.md not applicable here; feature is backend auth
+
+@app.route('/api/auth/login', methods=['POST'])
+def auth_login():
+    data = request.get_json() or {}
+    username = data.get('username', '')
+    password = data.get('password', '')
+    users = load_users()
+    user = next((u for u in users if u.get('username') == username and u.get('password') == password), None)
+    if not user:
+        return jsonify({'error': 'Invalid credentials'}), 401
+    # Ensure Admin invariants: Admin always has all categories
+    if user.get('username') == 'Admin':
+        if set(user.get('permissions', [])) != set(ALL_CATEGORIES):
+            user['permissions'] = ALL_CATEGORIES[:]
+        save_users(users)
+    token = create_session(
+        user.get('id'),
+        user.get('username'),
+        user.get('permissions', []),
+        user.get('allowedEvents', [])
+    )
+    resp = jsonify({'token': token, 'username': user.get('username'), 'permissions': user.get('permissions', []), 'allowedEvents': user.get('allowedEvents', [])})
+    # Set cookie so subsequent page GETs include auth
+    resp.set_cookie('auth_token', token, httponly=False, samesite='Lax')
+    return resp
+
+@app.route('/api/auth/logout', methods=['POST'])
+def auth_logout():
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        token = auth_header.split(' ', 1)[1].strip()
+        SESSIONS.pop(token, None)
+    resp = jsonify({'success': True})
+    # Clear auth cookie
+    resp.set_cookie('auth_token', '', expires=0)
+    return resp
+
+@app.route('/api/auth/me', methods=['GET'])
+def auth_me():
+    sess = get_session_from_request()
+    if not sess:
+        return jsonify({'authenticated': False}), 200
+    return jsonify({'authenticated': True, 'username': sess['username'], 'permissions': sess['permissions'], 'allowedEvents': sess.get('allowedEvents', [])})
+
+def ensure_admin(sess):
+    if not sess or sess.get('username') != 'Admin':
+        return False
+    return True
+
+@app.route('/api/users', methods=['GET', 'POST'])
+def users_collection():
+    sess = get_session_from_request()
+    if not ensure_admin(sess):
+        return jsonify({'error': 'Access Denied'}), 403
+    if request.method == 'GET':
+        return jsonify(load_users())
+    data = request.get_json() or {}
+    if not data.get('username') or not data.get('password'):
+        return jsonify({'error': 'username and password are required'}), 400
+    users = load_users()
+    if any(u.get('username') == data['username'] for u in users):
+        return jsonify({'error': 'Username already exists'}), 400
+    new_user = {
+        'id': generate_id(),
+        'username': data['username'],
+        'password': data['password'],
+        'permissions': [p for p in (data.get('permissions', []) or []) if p in ALL_CATEGORIES],
+        'allowedEvents': data.get('allowedEvents', [])
+    }
+    # Prevent creation of another Admin username
+    if new_user['username'] == 'Admin':
+        return jsonify({'error': 'Cannot create another Admin user'}), 400
+    users.append(new_user)
+    save_users(users)
+    return jsonify(new_user), 201
+
+@app.route('/api/users/<user_id>', methods=['PUT', 'DELETE'])
+def users_item(user_id):
+    sess = get_session_from_request()
+    if not ensure_admin(sess):
+        return jsonify({'error': 'Access Denied'}), 403
+    users = load_users()
+    idx = next((i for i, u in enumerate(users) if u.get('id') == user_id), None)
+    if idx is None:
+        return jsonify({'error': 'User not found'}), 404
+    # Disallow modifying Admin permissions or deleting Admin
+    if users[idx].get('username') == 'Admin':
+        if request.method == 'DELETE':
+            return jsonify({'error': 'Cannot delete Admin user'}), 400
+        if request.method == 'PUT':
+            data = request.get_json() or {}
+            # Admin username/password can be changed? Keep it simple: disallow username change; allow password change if desired
+            if 'username' in data and data['username'] != 'Admin':
+                return jsonify({'error': 'Cannot change Admin username'}), 400
+            # Force keep wildcard permissions
+            users[idx]['permissions'] = ALL_CATEGORIES[:]
+            if 'password' in data:
+                users[idx]['password'] = data['password']
+            save_users(users)
+            return jsonify(users[idx])
+    if request.method == 'PUT':
+        data = request.get_json() or {}
+        if 'username' in data:
+            # prevent duplicate username
+            if any(u.get('username') == data['username'] and u.get('id') != user_id for u in users):
+                return jsonify({'error': 'Username already exists'}), 400
+            users[idx]['username'] = data['username']
+        if 'password' in data:
+            users[idx]['password'] = data['password']
+        if 'permissions' in data:
+            users[idx]['permissions'] = [p for p in (data.get('permissions', []) or []) if p in ALL_CATEGORIES]
+        if 'allowedEvents' in data:
+            users[idx]['allowedEvents'] = list({e for e in (data.get('allowedEvents', []) or []) if isinstance(e, str) and e})
+        save_users(users)
+        return jsonify(users[idx])
+    else:
+        deleted = users.pop(idx)
+        save_users(users)
+        return jsonify({'success': True, 'deletedId': deleted.get('id')})
 
 if __name__ == '__main__':
     print("🏁 Starting EPC17 Event Management System Server")
