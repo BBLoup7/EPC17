@@ -37,7 +37,7 @@ class EventManager {
         if (!container) return;
 
         try {
-            const result = await dataManager.getEvents();
+            const result = await dataManager.getEvents({}, 1, 1000);
             const events = result.events || result; // Handle both paginated and direct array responses
             
             if (events.length === 0) {
@@ -757,7 +757,7 @@ class EventManager {
     /**
      * Generate race bracket for event
      */
-    generateBracket(eventId) {
+    async generateBracket(eventId) {
         const event = dataManager.getEvent(eventId);
         if (!event) {
             Helpers.showToast('Event not found', 'error');
@@ -773,6 +773,15 @@ class EventManager {
             const bracket = dataManager.createRaceBracket(eventId);
             
             if (bracket) {
+                // Update event status to 'active' when bracket is generated
+                try {
+                    await dataManager.updateEventStatus(eventId, 'active');
+                    console.log(`✅ Event ${eventId} status updated to 'active' after bracket generation`);
+                } catch (statusError) {
+                    console.error('Warning: Failed to update event status:', statusError);
+                    // Don't fail the bracket generation if status update fails
+                }
+                
                 Helpers.showToast('Race bracket generated successfully!', 'success');
                 Helpers.hideModal();
                 
@@ -801,7 +810,7 @@ class EventManager {
      */
     async getEventSummary() {
         try {
-            const result = await dataManager.getEvents();
+            const result = await dataManager.getEvents({}, 1, 1000);
             const allEvents = result.events || result; // Handle both paginated and direct array responses
             const now = new Date();
             

@@ -9,23 +9,39 @@ window.MigrationUtils = {
      * Fix existing participants with missing eventId fields
      */
     async fixParticipantEventIds() {
-        console.log('🔄 Starting participant eventId migration...');
+        if (window.debugLogger) {
+            window.debugLogger.info('MigrationUtils', 'Starting participant eventId migration');
+        } else {
+            console.log('🔄 Starting participant eventId migration...');
+        }
         
         if (!window.dataManager) {
-            console.error('❌ DataManager not available. Please ensure you\'re on a page with dataManager loaded.');
+            if (window.debugLogger) {
+                window.debugLogger.error('MigrationUtils', 'DataManager not available. Please ensure you\'re on a page with dataManager loaded.');
+            } else {
+                console.error('❌ DataManager not available. Please ensure you\'re on a page with dataManager loaded.');
+            }
             return;
         }
         
         try {
             const fixedCount = await window.dataManager.migrateParticipantEventIds();
-            console.log(`✅ Migration complete: Fixed ${fixedCount} participants`);
+            if (window.debugLogger) {
+                window.debugLogger.success('MigrationUtils', `Migration complete: Fixed ${fixedCount} participants`);
+            } else {
+                console.log(`✅ Migration complete: Fixed ${fixedCount} participants`);
+            }
             
             // Show results
             this.showParticipantEventMapping();
             
             return fixedCount;
         } catch (error) {
-            console.error('❌ Migration failed:', error);
+            if (window.debugLogger) {
+                window.debugLogger.error('MigrationUtils', 'Migration failed', error);
+            } else {
+                console.error('❌ Migration failed:', error);
+            }
             throw error;
         }
     },

@@ -238,4 +238,3 @@ This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.t
 ---
 
 **Ready to revolutionize your racing events?** 🏁  
-Start with EPC17 today and experience professional-grade event management. 

@@ -1,19 +1,40 @@
 // Initialize core systems first
-console.log('🏁 Initializing EPC17 Event Management System (SIMPLIFIED)...');
+if (window.debugLogger) {
+    window.debugLogger.init('App', 'Initializing EPC17 Event Management System');
+} else {
+    console.log('🏁 Initializing EPC17 Event Management System...');
+}
 
 // Initialize performance monitor first (with fallback)
 let performanceMonitor;
 try {
     performanceMonitor = window.performanceMonitor || new PerformanceMonitor();
 } catch (error) {
-    console.warn('⚠️ PerformanceMonitor not available, creating fallback:', error);
+    if (window.debugLogger) {
+        window.debugLogger.warn('App', 'PerformanceMonitor not available, creating fallback', error);
+    } else {
+        console.warn('⚠️ PerformanceMonitor not available, creating fallback:', error);
+    }
     // Create a simple fallback performance monitor
     performanceMonitor = {
         trackOperation: (name, operation) => operation(),
-        startMonitoring: () => console.log('📊 Performance monitoring not available'),
-        stopMonitoring: () => console.log('📊 Performance monitoring not available'),
+        startMonitoring: () => {
+            if (window.debugLogger) {
+                window.debugLogger.performance('Performance monitoring not available');
+            }
+        },
+        stopMonitoring: () => {
+            if (window.debugLogger) {
+                window.debugLogger.performance('Performance monitoring not available');
+            }
+        },
         getPerformanceReport: () => ({ status: 'not available' }),
-        logPerformanceSummary: () => console.log('📊 Performance monitoring not available')
+        getLastOperationStats: () => null,
+        logPerformanceSummary: () => {
+            if (window.debugLogger) {
+                window.debugLogger.performance('Performance monitoring not available');
+            }
+        }
     };
 }
 
@@ -38,9 +59,15 @@ window.statisticsManager = statisticsManager;
 window.eventBus = eventBus;
 window.performanceMonitor = performanceMonitor;
 
-console.log('📊 Statistics Manager:', statisticsManager ? 'Ready' : 'Not Available');
-console.log('📡 Event Bus:', eventBus ? 'Ready' : 'Not Available');
-console.log('📊 Performance Monitor:', performanceMonitor ? 'Ready' : 'Not Available');
+if (window.debugLogger) {
+    window.debugLogger.info('App', 'Statistics Manager: ' + (statisticsManager ? 'Ready' : 'Not Available'));
+    window.debugLogger.info('App', 'Event Bus: ' + (eventBus ? 'Ready' : 'Not Available'));
+    window.debugLogger.info('App', 'Performance Monitor: ' + (performanceMonitor ? 'Ready' : 'Not Available'));
+} else {
+    console.log('📊 Statistics Manager:', statisticsManager ? 'Ready' : 'Not Available');
+    console.log('📡 Event Bus:', eventBus ? 'Ready' : 'Not Available');
+    console.log('📊 Performance Monitor:', performanceMonitor ? 'Ready' : 'Not Available');
+}
 
 // Performance monitoring functions
 window.getPerformanceReport = function() {
@@ -67,7 +94,11 @@ class App {
         // Initialize performance monitoring
         this.initializePerformanceMonitoring();
         
-        console.log('🚀 App initialized with performance optimizations');
+        if (window.debugLogger) {
+            window.debugLogger.success('App', 'App initialized with performance optimizations');
+        } else {
+            console.log('🚀 App initialized with performance optimizations');
+        }
     }
 
     /**
@@ -75,7 +106,9 @@ class App {
      */
     initializePerformanceMonitoring() {
         if (window.performanceMonitor) {
-            console.log('📊 Starting performance monitoring...');
+            if (window.debugLogger) {
+                window.debugLogger.performance('Starting performance monitoring');
+            }
             window.performanceMonitor.startMonitoring();
             
             // Set up periodic performance checks

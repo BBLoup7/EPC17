@@ -137,7 +137,121 @@
             margin-bottom: 1rem;
         }
         
+        /* Search and Sort Controls Styles */
+        .search-sort-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            color: var(--text-secondary);
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-search:hover {
+            color: var(--text-primary);
+            background: var(--bg-primary);
+        }
+
+        .sort-container, .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sort-label, .filter-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .sort-select, .filter-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sort-select:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .sort-select option, .filter-select option {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
         @media (max-width: 768px) {
+            .search-sort-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .search-container {
+                min-width: auto;
+            }
+
+            .sort-container, .filter-container {
+                justify-content: space-between;
+            }
+
             .events-grid {
                 grid-template-columns: 1fr;
                 gap: 1rem;
@@ -171,7 +285,8 @@
 
         .class-config-item.selected {
             border-color: var(--accent-primary);
-            background: rgba(74, 144, 226, 0.1);
+            background: rgba(74, 144, 226, 0.2);
+            box-shadow: 0 0 0 1px var(--accent-primary);
         }
 
         .class-info {
@@ -338,6 +453,20 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
+        .order-number {
+            background: var(--accent-primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         .drag-handle:active {
             cursor: grabbing;
             transform: scale(0.95);
@@ -358,9 +487,9 @@
 
         /* Unified Class Interface Styles */
         .unified-class-item.selected {
-            background: #e8f5e8;
-            border-color: #28a745;
-            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+            background: rgba(74, 144, 226, 0.2);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 1px var(--accent-primary);
         }
 
         .unified-class-item.dragging {
@@ -370,8 +499,8 @@
         }
 
         .unified-class-item.drag-over {
-            border-color: #007bff;
-            background: rgba(0, 123, 255, 0.1);
+            border-color: var(--accent-primary);
+            background: rgba(74, 144, 226, 0.15);
             transform: scale(1.02);
         }
 
@@ -383,9 +512,9 @@
             justify-content: center;
             font-family: monospace;
             font-size: 16px;
-            color: #ccc;
-            background: #f8f9fa;
-            border: 1px dashed #dee2e6;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            border: 1px dashed var(--border-color);
             border-radius: 4px;
             cursor: default;
         }
@@ -399,8 +528,8 @@
             font-family: monospace;
             font-size: 16px;
             color: white;
-            background: #007bff;
-            border: 1px solid #0056b3;
+            background: var(--accent-primary);
+            border: 1px solid var(--accent-secondary);
             border-radius: 4px;
             cursor: grab;
             transition: all 0.2s ease;
@@ -411,7 +540,7 @@
         }
 
         .unified-class-item .drag-handle:hover {
-            background: #0056b3;
+            background: var(--accent-hover);
             transform: scale(1.1);
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
@@ -636,7 +765,7 @@
                 <li><a href="live-display.html">🖥️ Live Display</a></li>
             </ul>
             <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">v1.0.0</div>
+                <div class="mobile-nav-version">25W32a09</div>
             </div>
         </div>
         
@@ -663,6 +792,41 @@
                         <i class="fas fa-trash-alt"></i> Clear All Data
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Search and Sort Controls -->
+        <div class="search-sort-controls">
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="eventsSearch" class="search-input" placeholder="Search events by name..." oninput="filterEvents()">
+                    <button class="clear-search" id="clearEventsSearch" onclick="clearEventsSearch()" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="sort-container">
+                <label for="eventsSort" class="sort-label">Sort by:</label>
+                <select id="eventsSort" class="sort-select" onchange="sortEvents()">
+                    <option value="date-desc">Date (Newest First)</option>
+                    <option value="date-asc">Date (Oldest First)</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="location-asc">Location (A-Z)</option>
+                    <option value="location-desc">Location (Z-A)</option>
+                    <option value="participants-desc">Participants (High-Low)</option>
+                    <option value="participants-asc">Participants (Low-High)</option>
+                </select>
+            </div>
+            <div class="filter-container">
+                <label for="eventsStatusFilter" class="filter-label">Status:</label>
+                <select id="eventsStatusFilter" class="filter-select" onchange="filterEvents()">
+                    <option value="">All Status</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                </select>
             </div>
         </div>
 
@@ -719,12 +883,14 @@
                         <p class="help-text">
                             <strong>💡 How to set class racing order:</strong><br>
                             1. Check the classes you want in this event<br>
-                            2. Selected classes will move to the top and show <span style="font-family: monospace; background: #007bff; color: white; padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> drag handles<br>
+                            2. Selected classes will move to the top and show <span style="font-family: monospace; background: var(--accent-primary); color: white; padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> drag handles<br>
                             3. Drag the handles to reorder classes<br>
-                                                        4. This order determines how classes appear in races!
+                            4. This order determines how classes appear in races!
                         </p>
+                    </div>
                 </div>
-                </div>
+
+
                 
 
                 <div class="form-group">
@@ -907,12 +1073,34 @@
             
             const eventClassSettings = event.classSettings || [];
             
-            const classesHtml = series.sledClasses.map(cls => {
+            // Create ordered list of classes based on event's classOrder
+            const orderedClasses = [];
+            const usedClassIds = new Set();
+            
+            // First, add classes in the event's saved order
+            if (event.classOrder && Array.isArray(event.classOrder)) {
+                event.classOrder.forEach(classId => {
+                    const seriesClass = series.sledClasses.find(c => c.id === classId);
+                    if (seriesClass) {
+                        orderedClasses.push(seriesClass);
+                        usedClassIds.add(classId);
+                    }
+                });
+            }
+            
+            // Then add any remaining classes from series that weren't in the saved order
+            series.sledClasses.forEach(cls => {
+                if (!usedClassIds.has(cls.id)) {
+                    orderedClasses.push(cls);
+                }
+            });
+            
+            const classesHtml = orderedClasses.map(cls => {
                 const existingClass = eventClassSettings.find(ec => ec.classId === cls.id);
                 const isSelected = !!existingClass;
                 const price = existingClass ? existingClass.fee : (cls.defaultFee || '');
                 
-                console.log('🔍 Rendering class:', cls.name, 'isSelected:', isSelected, 'price:', price);
+                console.log('🔍 Rendering class in saved order:', cls.name, 'isSelected:', isSelected, 'price:', price);
                 
                 return `
                     <div class="class-config-item unified-class-item ${isSelected ? 'selected' : ''}" 
@@ -954,8 +1142,9 @@
             // Load existing class order for editing
             loadExistingClassOrderForEdit(event);
             
-            // Bind simple edit drag events
+            // Update the edit class ordering section
             setTimeout(() => {
+                updateEditClassOrderSection();
                 bindSimpleEditDragEvents();
             }, 100);
         }
@@ -989,10 +1178,20 @@
         }
         
         function toggleClassSelection(classId) {
+            console.log('🔍 toggleClassSelection called with classId:', classId);
+            
             const checkbox = document.getElementById(`checkbox-${classId}`);
             const priceInput = document.getElementById(`price-${classId}`);
             const classItem = document.getElementById(`class-${classId}`);
-            const dragHandlePlaceholder = classItem.querySelector('.drag-handle-placeholder');
+            const dragHandlePlaceholder = classItem ? classItem.querySelector('.drag-handle-placeholder, .drag-handle') : null;
+            
+            console.log('🔍 Found elements:', {
+                checkbox: checkbox ? 'YES' : 'NO',
+                priceInput: priceInput ? 'YES' : 'NO',
+                classItem: classItem ? 'YES' : 'NO',
+                dragHandlePlaceholder: dragHandlePlaceholder ? 'YES' : 'NO',
+                isChecked: checkbox ? checkbox.checked : 'N/A'
+            });
             
             if (checkbox.checked) {
                 priceInput.disabled = false;
@@ -1000,21 +1199,91 @@
                 classItem.draggable = true;
                 
                 // Convert placeholder to active drag handle
-                dragHandlePlaceholder.className = 'drag-handle';
-                dragHandlePlaceholder.style.opacity = '1';
-                dragHandlePlaceholder.title = 'Drag to reorder';
+                if (dragHandlePlaceholder) {
+                    dragHandlePlaceholder.className = 'drag-handle';
+                    dragHandlePlaceholder.style.opacity = '1';
+                    dragHandlePlaceholder.title = 'Drag to reorder';
+                }
                 
                 priceInput.focus();
+                
+                // Add to classOrder if not already there
+                const existingIndex = classOrder.findIndex(cls => cls.classId === classId);
+                console.log('🔍 Existing index in classOrder:', existingIndex);
+                
+                if (existingIndex === -1) {
+                    // Get series class info - try combo box approach first, then fallback to select
+                    let seriesInput = document.querySelector('#seriesId-input');
+                    let seriesId = null;
+                    
+                    if (seriesInput) {
+                        seriesId = seriesInput.getAttribute('data-selected-value');
+                        console.log('🔍 Series selection (combo box):', {
+                            seriesInput: 'FOUND',
+                            seriesId: seriesId
+                        });
+                    } else {
+                        // Fallback to select elements
+                        let seriesSelect = document.querySelector('#newEventForm select[name="seriesId"]');
+                        if (!seriesSelect) {
+                            seriesSelect = document.querySelector('select[name="seriesId"]');
+                        }
+                        seriesId = seriesSelect ? seriesSelect.value : null;
+                        console.log('🔍 Series selection (select fallback):', {
+                            seriesSelect: seriesSelect ? 'FOUND' : 'NOT FOUND',
+                            seriesId: seriesId,
+                            newEventFormSelect: document.querySelector('#newEventForm select[name="seriesId"]') ? 'FOUND' : 'NOT FOUND',
+                            allSeriesSelects: document.querySelectorAll('select[name="seriesId"]').length
+                        });
+                    }
+                    
+                    if (seriesId) {
+                        const series = dataManager.getSeries(seriesId);
+                        console.log('🔍 Series data:', series ? 'FOUND' : 'NOT FOUND');
+                        
+                        const seriesClass = series ? series.sledClasses.find(c => c.id === classId) : null;
+                        console.log('🔍 Found seriesClass for ID', classId, ':', seriesClass ? seriesClass.name : 'NOT FOUND');
+                        
+                        if (seriesClass) {
+                            const newClassData = {
+                                classId: classId,
+                                className: seriesClass.name,
+                                fee: parseFloat(priceInput.value) || 0,
+                                description: seriesClass.description
+                            };
+                            classOrder.push(newClassData);
+                            console.log('🔍 Added to classOrder:', newClassData);
+                        } else {
+                            console.log('🔍 ERROR: Could not find seriesClass for classId:', classId);
+                        }
+                    } else {
+                        console.log('🔍 ERROR: No seriesId found');
+                    }
+                }
             } else {
                 priceInput.disabled = true;
                 classItem.classList.remove('selected');
                 classItem.draggable = false;
                 
                 // Convert back to placeholder
-                dragHandlePlaceholder.className = 'drag-handle-placeholder';
-                dragHandlePlaceholder.style.opacity = '0.3';
-                dragHandlePlaceholder.title = '';
+                if (dragHandlePlaceholder) {
+                    dragHandlePlaceholder.className = 'drag-handle-placeholder';
+                    dragHandlePlaceholder.style.opacity = '0.3';
+                    dragHandlePlaceholder.title = '';
+                }
+                
+                // Remove from classOrder
+                const existingIndex = classOrder.findIndex(cls => cls.classId === classId);
+                if (existingIndex !== -1) {
+                    classOrder.splice(existingIndex, 1);
+                    console.log('🔍 Removed from classOrder:', classId);
+                }
             }
+            
+            console.log('🔍 Updated classOrder:', classOrder.map(c => c.className));
+            
+            // 🔧 FIX: Update the class order based on actual DOM order to ensure consistency
+            updateClassOrderFromDOM();
             
             // Simple update - just bind drag events to container
             bindSimpleDragEvents();
@@ -1110,6 +1379,12 @@
             }
             
             console.log('🔍 Updated editClassOrder:', editClassOrder.map(c => c.className));
+            
+            // Update edit class order section
+            updateEditClassOrderSection();
+            
+            // 🔧 FIX: Update the class order based on actual DOM order to ensure consistency
+            updateEditClassOrderFromDOM();
             
             // Simple update - just bind drag events to container
             bindSimpleEditDragEvents();
@@ -1236,156 +1511,125 @@
             const container = document.getElementById('availableClasses');
             if (!container) return;
 
-            classOrder = [];
-            const classItems = container.querySelectorAll('.unified-class-item.selected');
+            console.log('🔧 ================= UPDATE CLASS ORDER FROM DOM (CREATE MODE) =================');
             
-            classItems.forEach(item => {
+            // Get all selected class items in their current DOM order
+            const selectedClassItems = Array.from(container.querySelectorAll('.unified-class-item.selected'));
+            console.log('🔧 Found', selectedClassItems.length, 'selected class items in DOM');
+            
+            const newClassOrder = [];
+            let seriesInput = document.querySelector('#seriesId-input');
+            let seriesId = null;
+            
+            if (seriesInput) {
+                seriesId = seriesInput.getAttribute('data-selected-value');
+                console.log('🔧 Series ID (combo box):', seriesId);
+            } else {
+                // Fallback to select elements
+                let seriesSelect = document.querySelector('#newEventForm select[name="seriesId"]');
+                if (!seriesSelect) {
+                    seriesSelect = document.querySelector('select[name="seriesId"]');
+                }
+                seriesId = seriesSelect ? seriesSelect.value : null;
+                console.log('🔧 Series ID (select fallback):', seriesId);
+            }
+            
+            if (!seriesId) {
+                console.log('🔧 ❌ No series selected, cannot update class order');
+                console.log('🔧 Debug selectors:', {
+                    seriesInput: seriesInput ? 'FOUND' : 'NOT FOUND',
+                    newEventFormSelect: document.querySelector('#newEventForm select[name="seriesId"]') ? 'FOUND' : 'NOT FOUND',
+                    generalSelect: document.querySelector('select[name="seriesId"]') ? 'FOUND' : 'NOT FOUND',
+                    allSelects: document.querySelectorAll('select[name="seriesId"]').length
+                });
+                return;
+            }
+            
+            const series = dataManager.getSeries(seriesId);
+            if (!series) {
+                console.log('🔧 ❌ Series not found:', seriesId);
+                return;
+            }
+            
+            // Process each selected item in DOM order
+            selectedClassItems.forEach((item, index) => {
                 const classId = item.dataset.classId;
                 const checkbox = document.getElementById(`checkbox-${classId}`);
-                const priceInput = document.getElementById(`price-${classId}`);
+                
+                console.log(`🔧 Processing DOM item ${index + 1}: classId=${classId}, checked=${checkbox?.checked}`);
                 
                 if (checkbox && checkbox.checked) {
-            const seriesSelect = document.querySelector('select[name="seriesId"]');
-            const seriesId = seriesSelect.value;
-                    const series = dataManager.getSeries(seriesId);
-                    const seriesClass = series ? series.sledClasses.find(c => c.id === classId) : null;
+                    const priceInput = document.getElementById(`price-${classId}`);
+                    const seriesClass = series.sledClasses.find(c => c.id === classId);
                     
                     if (seriesClass) {
-                        classOrder.push({
+                        const classData = {
                             classId: classId,
                             className: seriesClass.name,
-                            fee: parseFloat(priceInput.value) || 0,
+                            fee: parseFloat(priceInput?.value) || 0,
                             description: seriesClass.description
-                        });
+                        };
+                        
+                        newClassOrder.push(classData);
+                        console.log(`🔧 ✅ Added to position ${newClassOrder.length}: ${seriesClass.name}`);
+                    } else {
+                        console.log(`🔧 ❌ Warning: Class ID ${classId} not found in series classes`);
                     }
                 }
             });
             
-            console.log('🔧 Updated classOrder from DOM:', classOrder.map(c => c.className));
+            // Update the global classOrder array
+            classOrder = newClassOrder;
+            console.log('🔧 🎯 Final updated classOrder:', classOrder.map(c => c.className));
+            console.log('🔧 Final updated classOrder IDs:', classOrder.map(c => c.classId));
+            console.log('🔧 ================= END UPDATE CLASS ORDER FROM DOM (CREATE MODE) =================');
         }
 
-        function renderClassOrderList() {
-            const orderList = document.getElementById('classOrderList');
-            
-            if (classOrder.length === 0) {
-                orderList.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">🎯</div>
-                        <p><strong>Select classes above to set their racing order.</strong></p>
-                        <p>Once selected, you'll see draggable items with <span style="font-family: monospace; background: var(--bg-secondary); padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> handles here.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            orderList.innerHTML = classOrder.map((cls, index) => `
-                <div class="class-order-item" data-class-id="${cls.classId}" draggable="true">
-                    <div class="drag-handle">
-                        ⋮⋮
-                    </div>
-                    <div class="order-number">${index + 1}</div>
-                    <div class="class-order-info">
-                        <div class="class-order-name">${cls.className}</div>
-                        <div class="class-order-fee">Entry Fee: $${cls.fee}</div>
-                    </div>
-                </div>
-            `).join('');
-            
-            // Bind drag and drop events
-            bindDragAndDropEvents();
-        }
 
-        function bindDragAndDropEvents() {
-            const orderItems = document.querySelectorAll('.class-order-item');
-            
-            orderItems.forEach(item => {
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragover', handleDragOver);
-                item.addEventListener('drop', handleDrop);
-                item.addEventListener('dragend', handleDragEnd);
-                item.addEventListener('dragenter', handleDragEnter);
-                item.addEventListener('dragleave', handleDragLeave);
-            });
-        }
-
-        function handleDragStart(e) {
-            draggedElement = e.target;
-            e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', e.target.outerHTML);
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        }
-
-        function handleDragEnter(e) {
-            e.target.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            e.target.classList.remove('drag-over');
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            
-            // Find the closest class-order-item (in case we drop on a child element)
-            const targetItem = e.target.closest('.class-order-item');
-            const draggedItem = draggedElement.closest('.class-order-item');
-            
-            // Remove drag-over from all items
-            document.querySelectorAll('.class-order-item').forEach(item => {
-                item.classList.remove('drag-over');
-            });
-            
-            if (draggedItem && targetItem && draggedItem !== targetItem) {
-                const draggedClassId = draggedItem.dataset.classId;
-                const targetClassId = targetItem.dataset.classId;
-                
-                // Find indices
-                const draggedIndex = classOrder.findIndex(cls => cls.classId === draggedClassId);
-                const targetIndex = classOrder.findIndex(cls => cls.classId === targetClassId);
-                
-                if (draggedIndex !== -1 && targetIndex !== -1) {
-                    // Reorder the array
-                    const draggedClass = classOrder.splice(draggedIndex, 1)[0];
-                    classOrder.splice(targetIndex, 0, draggedClass);
-                    
-                    // Re-render the list
-                    renderClassOrderList();
-                    
-                    console.log('🔧 Reordered classes:', classOrder.map(c => c.className));
-                }
-            }
-        }
-
-        function handleDragEnd(e) {
-            e.target.classList.remove('dragging');
-            // Remove drag-over class from all items
-            document.querySelectorAll('.class-order-item').forEach(item => {
-                item.classList.remove('drag-over');
-            });
-            draggedElement = null;
-        }
 
         function getSelectedClasses() {
             console.log('🔍 getSelectedClasses called, classOrder:', classOrder);
             
             // Always read from DOM checkboxes to get current user selections
             const selectedClasses = [];
-            const seriesSelect = document.querySelector('select[name="seriesId"]');
-            const seriesId = seriesSelect ? seriesSelect.value : null;
-            console.log('🔍 getSelectedClasses - Series selection:', {
-                seriesSelect: seriesSelect ? 'FOUND' : 'NOT FOUND',
-                seriesId: seriesId
-            });
+            let seriesInput = document.querySelector('#seriesId-input');
+            let seriesId = null;
             
-            if (!seriesId) return selectedClasses;
+            if (seriesInput) {
+                seriesId = seriesInput.getAttribute('data-selected-value');
+                console.log('🔍 getSelectedClasses - Series selection (combo box):', {
+                    seriesInput: 'FOUND',
+                    seriesId: seriesId
+                });
+            } else {
+                // Fallback to select elements
+                let seriesSelect = document.querySelector('#newEventForm select[name="seriesId"]');
+                if (!seriesSelect) {
+                    seriesSelect = document.querySelector('select[name="seriesId"]');
+                }
+                seriesId = seriesSelect ? seriesSelect.value : null;
+                console.log('🔍 getSelectedClasses - Series selection (select fallback):', {
+                    seriesSelect: seriesSelect ? 'FOUND' : 'NOT FOUND',
+                    seriesId: seriesId,
+                    newEventFormSelect: document.querySelector('#newEventForm select[name="seriesId"]') ? 'FOUND' : 'NOT FOUND',
+                    allSeriesSelects: document.querySelectorAll('select[name="seriesId"]').length
+                });
+            }
+            
+            console.log('🔍 Series input element:', seriesInput);
+            console.log('🔍 Series input data-selected-value:', seriesInput ? seriesInput.getAttribute('data-selected-value') : 'N/A');
+            
+            if (!seriesId) {
+                console.log('🔍 No series ID found, returning empty array');
+                return selectedClasses;
+            }
             
             const series = dataManager.getSeries(seriesId);
-            if (!series || !series.sledClasses) return selectedClasses;
+            console.log('🔍 Found series:', series);
+            if (!series || !series.sledClasses) {
+                console.log('🔍 No series or no sled classes found, returning empty array');
+                return selectedClasses;
+            }
             
             // Build selected classes array from DOM checkboxes
             const selectedClassesMap = new Map();
@@ -1431,17 +1675,93 @@
             return selectedClasses;
         }
 
+
+
+        // Update the DOM order in the main container to match the classOrder array
+        function updateMainContainerDOMOrder() {
+            const container = document.getElementById('availableClasses');
+            if (!container) return;
+            
+            console.log('🔧 Updating main container DOM order to match classOrder');
+            
+            // Get all class items
+            const allItems = Array.from(container.querySelectorAll('.unified-class-item'));
+            
+            // Create a map for quick lookup
+            const itemsMap = new Map();
+            allItems.forEach(item => {
+                itemsMap.set(item.dataset.classId, item);
+            });
+            
+            // Reorder the DOM elements based on classOrder
+            classOrder.forEach(cls => {
+                const item = itemsMap.get(cls.classId);
+                if (item) {
+                    container.appendChild(item); // This moves the item to the end
+                }
+            });
+            
+            // Add any remaining items that aren't in classOrder at the end
+            allItems.forEach(item => {
+                if (!classOrder.find(cls => cls.classId === item.dataset.classId)) {
+                    container.appendChild(item);
+                }
+            });
+        }
+
+        // Update the DOM order in the edit container to match the editClassOrder array
+        function updateEditContainerDOMOrder() {
+            const container = document.getElementById('editAvailableClasses');
+            if (!container) return;
+            
+            console.log('🔧 Updating edit container DOM order to match editClassOrder');
+            
+            // Get all class items
+            const allItems = Array.from(container.querySelectorAll('.unified-class-item'));
+            
+            // Create a map for quick lookup
+            const itemsMap = new Map();
+            allItems.forEach(item => {
+                itemsMap.set(item.dataset.classId, item);
+            });
+            
+            // Reorder the DOM elements based on editClassOrder
+            editClassOrder.forEach(cls => {
+                const item = itemsMap.get(cls.classId);
+                if (item) {
+                    container.appendChild(item); // This moves the item to the end
+                }
+            });
+            
+            // Add any remaining items that aren't in editClassOrder at the end
+            allItems.forEach(item => {
+                if (!editClassOrder.find(cls => cls.classId === item.dataset.classId)) {
+                    container.appendChild(item);
+                }
+            });
+        }
+
         // Debug function to help troubleshoot class ordering
         function debugClassOrdering() {
             console.log('🔧 === CLASS ORDERING DEBUG ===');
             
-            const seriesSelect = document.querySelector('select[name="seriesId"]');
-            const seriesId = seriesSelect ? seriesSelect.value : 'NOT_FOUND';
-            console.log('🔧 Series ID:', seriesId);
+            let seriesInput = document.querySelector('#seriesId-input');
+            let seriesId = null;
             
-            const orderingSection = document.getElementById('classOrderingSection');
-            console.log('🔧 Ordering section:', orderingSection ? 'FOUND' : 'NOT_FOUND');
-            console.log('🔧 Ordering section display:', orderingSection ? orderingSection.style.display : 'N/A');
+            if (seriesInput) {
+                seriesId = seriesInput.getAttribute('data-selected-value');
+                console.log('🔧 Series ID (combo box):', seriesId);
+            } else {
+                // Fallback to select elements
+                let seriesSelect = document.querySelector('#newEventForm select[name="seriesId"]');
+                if (!seriesSelect) {
+                    seriesSelect = document.querySelector('select[name="seriesId"]');
+                }
+                seriesId = seriesSelect ? seriesSelect.value : 'NOT_FOUND';
+                console.log('🔧 Series ID (select fallback):', seriesId);
+            }
+            
+
             
             if (typeof seriesManager !== 'undefined' && seriesManager) {
                 const allSeries = seriesManager.getAllSeries();
@@ -1468,56 +1788,9 @@
             
             console.log('🔧 Current classOrder:', classOrder);
             console.log('🔧 === END DEBUG ===');
-            
-            // Force update
-            updateClassOrderSection();
         }
 
-        // Test function to show what class ordering looks like
-        function testClassOrdering() {
-            console.log('🎯 Showing test class ordering example');
-            const orderingSection = document.getElementById('classOrderingSection');
-            const orderList = document.getElementById('classOrderList');
-            
-            // Force show the section
-            orderingSection.style.display = 'block';
-            
-            // Show test classes
-            const testClasses = [
-                { classId: 'test1', className: 'Pro Class', fee: 100 },
-                { classId: 'test2', className: 'Sport Class', fee: 75 },
-                { classId: 'test3', className: 'Stock Class', fee: 50 }
-            ];
-            
-            orderList.innerHTML = testClasses.map((cls, index) => `
-                <div class="class-order-item" data-class-id="${cls.classId}" draggable="true" style="position: relative;">
-                    <div class="drag-handle" style="background: #ff6b6b; color: white; font-weight: bold;">
-                        ⋮⋮
-                    </div>
-                    <div class="order-number">${index + 1}</div>
-                    <div class="class-order-info">
-                        <div class="class-order-name">${cls.className}</div>
-                        <div class="class-order-fee">Entry Fee: $${cls.fee}</div>
-                    </div>
-                    <div style="position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; padding: 2px 4px; border-radius: 3px;">TEST</div>
-                </div>
-            `).join('');
-            
-            // Add a note
-            const note = document.createElement('div');
-            note.style.cssText = 'margin-top: 1rem; padding: 1rem; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404;';
-            note.innerHTML = `
-                <strong>⚠️ This is a TEST example!</strong><br>
-                This shows what the drag-and-drop interface will look like when you select real classes.<br>
-                Try dragging the ⋮⋮ handles to reorder the test classes above.
-            `;
-            orderList.appendChild(note);
-            
-            // Bind events for the test
-            bindDragAndDropEvents();
-            
-            alert('📋 Test example loaded! Scroll down to see the Class Racing Order section with draggable test classes.');
-        }
+
 
 
         
@@ -1615,7 +1888,7 @@
                     <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
                         <div style="font-size: 2rem; margin-bottom: 1rem;">🎯</div>
                         <p><strong>Select classes above to set their racing order.</strong></p>
-                        <p>Once selected, you'll see draggable items with <span style="font-family: monospace; background: var(--bg-secondary); padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> handles here.</p>
+                        <p>Once selected, you'll see draggable items with <span style="font-family: monospace; background: var(--accent-primary); color: white; padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> handles here.</p>
                     </div>
                 `;
                 return;
@@ -1699,6 +1972,9 @@
                     // Re-render the list
                     renderEditClassOrderList();
                     
+                    // Also update the DOM order in the main edit container to keep them in sync
+                    updateEditContainerDOMOrder();
+                    
                     console.log('🔧 Reordered edit classes:', editClassOrder.map(c => c.className));
                 }
             }
@@ -1717,7 +1993,7 @@
         function debugEditClassOrdering() {
             console.log('🔧 === EDIT CLASS ORDERING DEBUG ===');
             
-            const seriesSelect = document.querySelector('select[name="seriesId"]');
+            const seriesSelect = document.querySelector('#editEventForm select[name="seriesId"]');
             const seriesId = seriesSelect ? seriesSelect.value : 'NOT_FOUND';
             console.log('🔧 Edit Series ID:', seriesId);
             
@@ -1935,34 +2211,59 @@
             const container = document.getElementById('editAvailableClasses');
             if (!container) return;
 
-            editClassOrder = [];
-            const classItems = container.querySelectorAll('.unified-class-item.selected');
+            console.log('🔧 ================= UPDATE EDIT CLASS ORDER FROM DOM =================');
             
-            classItems.forEach(item => {
+            // Get all selected class items in their current DOM order
+            const selectedClassItems = Array.from(container.querySelectorAll('.unified-class-item.selected'));
+            console.log('🔧 Found', selectedClassItems.length, 'selected class items in DOM');
+            
+            const newEditClassOrder = [];
+            const seriesSelect = document.querySelector('#editEventForm select[name="seriesId"]');
+            const seriesId = seriesSelect ? seriesSelect.value : null;
+            
+            if (!seriesId) {
+                console.log('🔧 ❌ No series selected, cannot update class order');
+                return;
+            }
+            
+            const series = dataManager.getSeries(seriesId);
+            if (!series) {
+                console.log('🔧 ❌ Series not found:', seriesId);
+                return;
+            }
+            
+            // Process each selected item in DOM order
+            selectedClassItems.forEach((item, index) => {
                 const classId = item.dataset.classId;
                 const checkbox = document.getElementById(`edit-checkbox-${classId}`);
-                const priceInput = document.getElementById(`edit-price-${classId}`);
                 
-                console.log(`🔍 Checking class ${classId}: checkbox=${checkbox?.checked}, price=${priceInput?.value}`);
+                console.log(`🔧 Processing DOM item ${index + 1}: classId=${classId}, checked=${checkbox?.checked}`);
                 
                 if (checkbox && checkbox.checked) {
-                    const seriesSelect = document.querySelector('select[name="seriesId"]');
-                    const seriesId = seriesSelect ? seriesSelect.value : null;
-                    const series = dataManager.getSeries(seriesId);
-                    const seriesClass = series ? series.sledClasses.find(c => c.id === classId) : null;
+                    const priceInput = document.getElementById(`edit-price-${classId}`);
+                    const seriesClass = series.sledClasses.find(c => c.id === classId);
                     
                     if (seriesClass) {
-                        editClassOrder.push({
+                        const classData = {
                             classId: classId,
                             className: seriesClass.name,
-                            fee: parseFloat(priceInput.value) || 0,
+                            fee: parseFloat(priceInput?.value) || 0,
                             description: seriesClass.description
-                        });
+                        };
+                        
+                        newEditClassOrder.push(classData);
+                        console.log(`🔧 ✅ Added to position ${newEditClassOrder.length}: ${seriesClass.name}`);
+                    } else {
+                        console.log(`🔧 ❌ Warning: Class ID ${classId} not found in series classes`);
                     }
                 }
             });
             
-            console.log('🔧 Updated editClassOrder from DOM:', editClassOrder.map(c => c.className));
+            // Update the global editClassOrder array
+            editClassOrder = newEditClassOrder;
+            console.log('🔧 🎯 Final updated editClassOrder:', editClassOrder.map(c => c.className));
+            console.log('🔧 Final updated editClassOrder IDs:', editClassOrder.map(c => c.classId));
+            console.log('🔧 ================= END UPDATE EDIT CLASS ORDER FROM DOM =================');
         }
 
         // Simple debug function (call from console)
@@ -2010,6 +2311,9 @@
                         label: s.name
                     }));
                     
+                    // Clean up existing combo box before recreating
+                    UIComponents.cleanupComboBox('seriesSelect');
+                    
                     seriesSelectContainer.innerHTML = UIComponents.createComboBox(
                         'seriesSelect',
                         seriesOptions,
@@ -2043,6 +2347,7 @@
             try {
                 // Get selected classes with pricing and ordering
                 const selectedClasses = getSelectedClasses();
+                console.log('🔍 Selected classes for new event:', selectedClasses);
                 
                 // Use DataManager to create event
                 const newEvent = {
@@ -2066,8 +2371,9 @@
                     freeRunEnabled: eventData.freeRunEnabled === 'true'
                 };
                 
+                console.log('🔍 Creating event with data:', newEvent);
                 const createdEvent = await dataManager.addEvent(newEvent);
-                console.log('Event created:', createdEvent);
+                console.log('✅ Event created successfully:', createdEvent);
                 
                 hideNewEventModal();
                 await loadEvents();
@@ -2081,14 +2387,286 @@
             }
         });
 
-        // All events are active - no automatic status calculation
+        // Return proper event status
         function getEventStatus(event) {
-            return event.status || 'active';
+            return event.status || 'upcoming';
         }
 
-        // Pagination variables for events
+        // Search and Sort Variables
+        let allEventsData = [];
+        let filteredEventsData = [];
+        let currentSortOption = 'date-desc';
+        let currentSearchTerm = '';
+        let currentStatusFilter = '';
+        
+        // Pagination Variables for Events Page
         let currentEventsPage = 1;
-        const eventsPerPage = 24; // 24 events per page as requested
+        const eventsPerPage = 21; // Changed from 12 to 21 per page
+
+        // Search and Sort Functions
+        function filterEvents() {
+            const searchTerm = document.getElementById('eventsSearch').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('eventsStatusFilter').value;
+            const clearButton = document.getElementById('clearEventsSearch');
+            
+            // Update clear button visibility
+            if (clearButton) {
+                clearButton.style.display = searchTerm ? 'block' : 'none';
+            }
+            
+            // Store current filters
+            currentSearchTerm = searchTerm;
+            currentStatusFilter = statusFilter;
+            
+            // Reset to first page when filtering
+            currentEventsPage = 1;
+            
+            // Apply filters
+            filteredEventsData = allEventsData.filter(event => {
+                // Search filter
+                if (searchTerm) {
+                    const nameMatch = event.name && event.name.toLowerCase().includes(searchTerm);
+                    const locationMatch = event.location && event.location.toLowerCase().includes(searchTerm);
+                    if (!nameMatch && !locationMatch) {
+                        return false;
+                    }
+                }
+                
+                // Status filter
+                if (statusFilter) {
+                    const eventStatus = getEventStatus(event);
+                    if (eventStatus !== statusFilter) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Apply current sort
+            sortEventsData();
+            
+            // Render filtered events with pagination
+            renderEventsGrid(filteredEventsData);
+            
+            // Update results count
+            updateEventsResultsCount();
+        }
+
+        function sortEvents() {
+            const sortOption = document.getElementById('eventsSort').value;
+            currentSortOption = sortOption;
+            
+            // Reset to first page when sorting
+            currentEventsPage = 1;
+            
+            sortEventsData();
+            renderEventsGrid(filteredEventsData);
+        }
+
+        function sortEventsData() {
+            filteredEventsData.sort((a, b) => {
+                switch (currentSortOption) {
+                    case 'date-desc':
+                        return new Date(b.date) - new Date(a.date);
+                    case 'date-asc':
+                        return new Date(a.date) - new Date(b.date);
+                    case 'name-asc':
+                        return (a.name || '').localeCompare(b.name || '');
+                    case 'name-desc':
+                        return (b.name || '').localeCompare(a.name || '');
+                    case 'location-asc':
+                        return (a.location || '').localeCompare(b.location || '');
+                    case 'location-desc':
+                        return (b.location || '').localeCompare(a.location || '');
+                    case 'participants-desc':
+                        return (b.participants?.length || 0) - (a.participants?.length || 0);
+                    case 'participants-asc':
+                        return (a.participants?.length || 0) - (b.participants?.length || 0);
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        function clearEventsSearch() {
+            document.getElementById('eventsSearch').value = '';
+            document.getElementById('clearEventsSearch').style.display = 'none';
+            filterEvents();
+        }
+
+        function updateEventsResultsCount() {
+            const totalCount = allEventsData.length;
+            const filteredCount = filteredEventsData.length;
+            
+            // You can add a results counter element if needed
+            console.log(`Events: Showing ${filteredCount} of ${totalCount} events`);
+        }
+
+        function renderEventsGrid(events) {
+            const eventsGrid = document.getElementById('eventsGrid');
+            const series = dataManager.getAllSeries();
+            
+            if (!events || events.length === 0) {
+                eventsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <h3>No Events Found</h3>
+                        <p>${currentSearchTerm || currentStatusFilter ? 'No events match your current filters. Try adjusting your search criteria.' : 'Get started by creating your first racing event. Events are the foundation of your tournament system.'}</p>
+                        ${currentSearchTerm || currentStatusFilter ? `
+                            <button class="btn btn-secondary" onclick="clearAllFilters()">
+                                <i class="fas fa-times"></i>
+                                Clear Filters
+                            </button>
+                        ` : `
+                            <button class="btn btn-primary" onclick="showNewEventModal()">
+                                <i class="fas fa-plus"></i>
+                                Create First Event
+                            </button>
+                        `}
+                    </div>
+                `;
+                
+                // Hide pagination when no events
+                const pagination = document.getElementById('eventsPagination');
+                if (pagination) {
+                    pagination.style.display = 'none';
+                }
+                return;
+            }
+            
+            // Calculate pagination
+            const totalEvents = events.length;
+            const totalPages = Math.ceil(totalEvents / eventsPerPage);
+            
+            // Ensure current page is within bounds
+            if (currentEventsPage > totalPages) {
+                currentEventsPage = totalPages || 1;
+            }
+            
+            // Get events for current page
+            const startIndex = (currentEventsPage - 1) * eventsPerPage;
+            const endIndex = startIndex + eventsPerPage;
+            const pageEvents = events.slice(startIndex, endIndex);
+            
+            const eventsHtml = pageEvents.map(event => {
+                // Find the series name and season
+                const eventSeries = series.find(s => s.id === event.seriesId);
+                const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
+                const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
+                
+                // Calculate participant count correctly by filtering participants with this eventId
+                const allParticipants = dataManager.getParticipantsArray();
+                const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
+                const participantCount = eventParticipants.length;
+                const eventStatus = getEventStatus(event);
+                
+                return `
+                    <div class="card event-card ${eventStatus.toLowerCase()}">
+                        <div class="event-header">
+                            <h3>${event.name}</h3>
+                        </div>
+                        <div class="event-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Series:</span>
+                                <span class="detail-value">${seriesName}</span>
+                            </div>
+                            ${season ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Season:</span>
+                                    <span class="detail-value season-badge">${season.name}</span>
+                                </div>
+                            ` : ''}
+                            <div class="detail-item">
+                                <span class="detail-label">Date:</span>
+                                <span class="detail-value">${new Date(event.date).toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Location:</span>
+                                <span class="detail-value">${event.location}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Participants:</span>
+                                <span class="detail-value">${participantCount}/${event.maxParticipants || 'Unlimited'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Tracks:</span>
+                                <span class="detail-value">${event.numberOfTracks} lanes</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Elimination:</span>
+                                <span class="detail-value">${event.eliminationType}</span>
+                            </div>
+                            ${event.description ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Description:</span>
+                                    <span class="detail-value">${event.description}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn btn-primary" onclick="viewEvent('${event.id}')">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </button>
+                            <button class="btn btn-secondary" onclick="editEvent('${event.id}')">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteEvent('${event.id}')">
+                                <i class="fas fa-trash"></i>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            eventsGrid.innerHTML = eventsHtml;
+            
+            // Render pagination
+            const pagination = document.getElementById('eventsPagination');
+            if (pagination && totalPages > 1) {
+                pagination.style.display = 'block';
+                pagination.innerHTML = UIComponents.createPagination(
+                    currentEventsPage, 
+                    totalPages, 
+                    totalEvents, 
+                    eventsPerPage, 
+                    'changeEventsPage'
+                );
+            } else if (pagination) {
+                pagination.style.display = 'none';
+            }
+        }
+
+        function clearAllFilters() {
+            document.getElementById('eventsSearch').value = '';
+            document.getElementById('eventsStatusFilter').value = '';
+            document.getElementById('clearEventsSearch').style.display = 'none';
+            currentSearchTerm = '';
+            currentStatusFilter = '';
+            currentEventsPage = 1; // Reset to first page
+            filteredEventsData = [...allEventsData];
+            sortEventsData();
+            renderEventsGrid(filteredEventsData);
+            updateEventsResultsCount();
+        }
+        
+        function changeEventsPage(page) {
+            currentEventsPage = page;
+            renderEventsGrid(filteredEventsData);
+            
+            // Scroll to top of events grid
+            const eventsGrid = document.getElementById('eventsGrid');
+            if (eventsGrid) {
+                eventsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Pagination variables for events (already declared above)
+        // let currentEventsPage = 1;
+        // const eventsPerPage = 21; // Match server pagination limit
         
         // Load events data
         async function loadEvents() {
@@ -2099,118 +2677,75 @@
                 // Simulate loading delay for better UX
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                const eventsResult = dataManager ? await dataManager.getEvents() : { events: [] };
-                const allEvents = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
+                // Get all events without pagination for search/sort functionality
+                let eventsResult;
+                if (dataManager) {
+                    // Try to get all events by using a very high limit
+                    eventsResult = await dataManager.getEvents({}, 1, 10000);
+                    
+                    // If we still don't get all events, try using getEventsArray() as fallback
+                    if (eventsResult.total && eventsResult.events.length < eventsResult.total) {
+                        console.log('🔍 Not all events returned, using getEventsArray() as fallback');
+                        const allEventsArray = dataManager.getEventsArray();
+                        eventsResult = {
+                            events: allEventsArray,
+                            total: allEventsArray.length,
+                            page: 1,
+                            limit: allEventsArray.length,
+                            totalPages: 1
+                        };
+                    }
+                } else {
+                    eventsResult = { events: [] };
+                }
+                
+                // Handle server-side pagination properly
+                let allEvents, totalEvents, totalPages;
+                if (eventsResult.total !== undefined) {
+                    // Server returned paginated data
+                    allEvents = eventsResult.events || [];
+                    totalEvents = eventsResult.total;
+                    totalPages = eventsResult.totalPages || Math.ceil(totalEvents / eventsPerPage);
+                    console.log('🔍 Server pagination detected:', { total: totalEvents, totalPages, currentPage: eventsResult.page, eventsReturned: allEvents.length });
+                } else {
+                    // Server returned all events (no pagination)
+                    allEvents = eventsResult.events || eventsResult;
+                    totalEvents = allEvents.length;
+                    totalPages = Math.ceil(totalEvents / eventsPerPage);
+                }
+                
                 const series = dataManager.getAllSeries();
                 
-                console.log('Loading events:', allEvents);
+                console.log('🔍 Loading events - Result:', eventsResult);
+                console.log('🔍 All events array:', allEvents);
+                console.log('🔍 Total events count:', allEvents.length);
+                console.log('🔍 Total events in system:', totalEvents);
+                console.log('🔍 Events per page setting:', eventsPerPage);
+                console.log('🔍 Expected total pages:', totalPages);
                 
-                const eventsGrid = document.getElementById('eventsGrid');
-                const skeleton = document.getElementById('eventsSkeleton');
-                const pagination = document.getElementById('eventsPagination');
+                // Debug: Check if we have all events
+                if (totalEvents > 0 && allEvents.length < totalEvents) {
+                    console.warn('⚠️ WARNING: Not all events loaded!', {
+                        loaded: allEvents.length,
+                        total: totalEvents,
+                        missing: totalEvents - allEvents.length
+                    });
+                }
+                
+                // Store all events data for search/sort
+                allEventsData = allEvents;
+                filteredEventsData = [...allEvents];
+                
+                // Apply initial sort
+                sortEventsData();
                 
                 hideEventsSkeletonLoading();
                 
-                if (allEvents.length === 0) {
-                    eventsGrid.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🏁</div>
-                            <h3>No Events Created</h3>
-                            <p>Create your first racing event to get started. Events are part of a racing series and can have multiple participants.</p>
-                            <button class="btn btn-primary" onclick="showNewEventModal()">
-                                Create First Event
-                            </button>
-                        </div>
-                    `;
-                    if (pagination) pagination.style.display = 'none';
-                    return;
-                }
+                // Render events grid with filtered data
+                renderEventsGrid(filteredEventsData);
                 
-                // Calculate pagination
-                const totalPages = Math.ceil(allEvents.length / eventsPerPage);
-                const startIndex = (currentEventsPage - 1) * eventsPerPage;
-                const endIndex = startIndex + eventsPerPage;
-                const currentPageEvents = allEvents.slice(startIndex, endIndex);
-                
-                console.log(`📄 Events Page ${currentEventsPage} of ${totalPages} (showing ${currentPageEvents.length} of ${allEvents.length} events)`);
-                
-                eventsGrid.innerHTML = currentPageEvents.map(event => {
-                    // Find the series name and season
-                    const eventSeries = series.find(s => s.id === event.seriesId);
-                    const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
-                    const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
-                    
-                    // Calculate participant count correctly by filtering participants with this eventId
-                    const allParticipants = dataManager.getParticipantsArray();
-                    const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
-                    const participantCount = eventParticipants.length;
-                    const eventStatus = getEventStatus(event);
-                    
-                    return `
-                        <div class="card event-card ${eventStatus.toLowerCase()}">
-                            <div class="event-header">
-                                <h3>${event.name}</h3>
-                            </div>
-                            <div class="event-details">
-                                <div class="detail-item">
-                                    <span class="detail-label">Series:</span>
-                                    <span class="detail-value">${seriesName}</span>
-                                </div>
-                                ${season ? `
-                                    <div class="detail-item">
-                                        <span class="detail-label">Season:</span>
-                                        <span class="detail-value season-badge">${season.name}</span>
-                                    </div>
-                                ` : ''}
-                                <div class="detail-item">
-                                    <span class="detail-label">Date:</span>
-                                    <span class="detail-value">${new Date(event.date).toLocaleDateString()}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Location:</span>
-                                    <span class="detail-value">${event.location}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Participants:</span>
-                                    <span class="detail-value">${participantCount}/${event.maxParticipants || 'Unlimited'}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Tracks:</span>
-                                    <span class="detail-value">${event.numberOfTracks} lanes</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Elimination:</span>
-                                    <span class="detail-value">${event.eliminationType}</span>
-                                </div>
-                                ${event.description ? `
-                                    <div class="detail-item">
-                                        <span class="detail-label">Description:</span>
-                                        <span class="detail-value">${event.description}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <div class="event-actions">
-                                <button class="btn btn-primary" onclick="viewEvent('${event.id}')">View Details</button>
-                                <button class="btn btn-secondary" onclick="editEvent('${event.id}')">Edit</button>
-                                <button class="btn-delete-subtle" onclick="deleteEvent('${event.id}')">Delete</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                
-                // Render pagination
-                if (pagination && totalPages > 1) {
-                    pagination.style.display = 'block';
-                    pagination.innerHTML = UIComponents.createPagination(
-                        currentEventsPage, 
-                        totalPages, 
-                        allEvents.length, 
-                        eventsPerPage, 
-                        'changeEventsPage'
-                    );
-                } else if (pagination) {
-                    pagination.style.display = 'none';
-                }
+                // Update results count
+                updateEventsResultsCount();
             } catch (error) {
                 console.error('Error loading events:', error);
                 hideEventsSkeletonLoading();
@@ -2325,16 +2860,26 @@
         }
 
         // Change events page
-        function changeEventsPage(page) {
+        async function changeEventsPage(page) {
             if (page < 1) return;
             
-            const eventsResult = dataManager ? dataManager.getEvents() : { events: [] };
-            const allEvents = eventsResult.events || eventsResult;
-            const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+            // Get current pagination info to validate the page number
+            const eventsResult = dataManager ? await dataManager.getEvents({}, 1, eventsPerPage) : { events: [] };
+            let totalPages;
+            
+            if (eventsResult.total !== undefined) {
+                // Server pagination
+                totalPages = eventsResult.totalPages || Math.ceil(eventsResult.total / eventsPerPage);
+            } else {
+                // Client pagination
+                const allEvents = eventsResult.events || eventsResult;
+                totalPages = Math.ceil(allEvents.length / eventsPerPage);
+            }
+            
             if (page > totalPages) return;
             
             currentEventsPage = page;
-            loadEvents();
+            await loadEvents();
             
             // Scroll to top of events
             const eventsSection = document.querySelector('.events-grid');
@@ -2435,7 +2980,9 @@
                                 <h4>Registered Participants (${allEventParticipants.length})</h4>
                                 <div class="participants-list">
                                     ${allEventParticipants.length > 0 ? 
-                                        allEventParticipants.map(p => {
+                                        allEventParticipants
+                                            .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+                                            .map(p => {
                                             // Handle different class formats
                                             let classesText = 'N/A';
                                             if (p.selectedClasses && Array.isArray(p.selectedClasses)) {
@@ -2680,7 +3227,23 @@
                                 <div class="form-help">
                                     <p class="help-text">
                                         <strong>💡 How to reorder classes:</strong><br>
-                                        Selected classes will show <span style="font-family: monospace; background: #007bff; color: white; padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> drag handles. Drag to reorder!
+                                        Selected classes will show <span style="font-family: monospace; background: var(--accent-primary); color: white; padding: 0.2rem 0.4rem; border-radius: 3px;">⋮⋮</span> drag handles. Drag to reorder!
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Edit Class Racing Order Section -->
+                            <div class="form-group" id="editClassOrderingSection" style="display: none;">
+                                <label class="form-label">Class Racing Order</label>
+                                <div class="class-ordering-section">
+                                    <div id="editClassOrderList">
+                                        <!-- Class order list will be populated here -->
+                                    </div>
+                                </div>
+                                <div class="form-help">
+                                    <p class="help-text">
+                                        <strong>📋 Class Racing Order:</strong><br>
+                                        Classes will race in the order shown below. This order determines the sequence of race numbers across all classes.
                                     </p>
                                 </div>
                             </div>
@@ -2834,6 +3397,16 @@
                 const selectedClasses = getSelectedClassesEdit();
                 console.log('🔍 Selected classes from getSelectedClassesEdit:', selectedClasses);
                 
+                console.log('📝 ================= EVENT EDIT SAVE DEBUG =================');
+                console.log('📝 Current editClassOrder array:', editClassOrder);
+                console.log('📝 editClassOrder class names:', editClassOrder.map(cls => cls.className));
+                console.log('📝 editClassOrder class IDs:', editClassOrder.map(cls => cls.classId));
+                console.log('📝 selectedClasses count:', selectedClasses.length);
+                console.log('📝 selectedClasses class names:', selectedClasses.map(cls => cls.className));
+                
+                const classOrderToSave = editClassOrder.map(cls => cls.classId);
+                console.log('📝 classOrder that will be saved:', classOrderToSave);
+                
                 // Update event data
                 const updatedEventData = {
                     eventName: formData.get('eventName'),
@@ -2845,10 +3418,14 @@
                     maxParticipants: parseInt(formData.get('maxParticipants')),
                     status: formData.get('status'),
                     classSettings: selectedClasses,
-                    classOrder: editClassOrder.map(cls => cls.classId), // Store edit class order
+                    classOrder: classOrderToSave, // Store edit class order
                     freeRunEnabled: formData.get('freeRunEnabled') === 'true',
                     updatedAt: new Date().toISOString()
                 };
+                
+                console.log('📝 Complete updatedEventData.classOrder:', updatedEventData.classOrder);
+                console.log('📝 Complete updatedEventData.classSettings:', updatedEventData.classSettings?.map(cs => ({ id: cs.classId, name: cs.className })));
+                console.log('📝 ================= END EVENT EDIT SAVE DEBUG =================');
                 
                 console.log('Updating event with data:', updatedEventData);
                 const success = await dataManager.updateEvent(eventId, updatedEventData);
@@ -3044,6 +3621,9 @@
                         label: s.name
                     }));
                     
+                    // Clean up existing combo box before recreating
+                    UIComponents.cleanupComboBox('seriesSelect');
+                    
                     seriesSelectContainer.innerHTML = UIComponents.createComboBox(
                         'seriesSelect',
                         seriesOptions,
@@ -3092,6 +3672,9 @@
                         label: 'No Season (General Event)'
                     });
                     
+                    // Clean up existing combo box before recreating
+                    UIComponents.cleanupComboBox('seasonSelect');
+                    
                     seasonSelectContainer.innerHTML = UIComponents.createComboBox(
                         'seasonSelect',
                         seasonOptions,
@@ -3135,6 +3718,18 @@
                     
                     dataManager.eventBus.on('participant-removed', (data) => {
                         console.log('🔄 Participant removed, refreshing events list:', data);
+                        loadEvents(); // Refresh the events list
+                    });
+                    
+                    // Listen for event status updates
+                    dataManager.eventBus.on('eventStatusUpdated', (data) => {
+                        console.log('🔄 Event status updated, refreshing events list:', data);
+                        loadEvents(); // Refresh the events list
+                    });
+                    
+                    // Listen for event completion
+                    dataManager.eventBus.on('eventCompleted', (data) => {
+                        console.log('🏁 Event completed, refreshing events list:', data);
                         loadEvents(); // Refresh the events list
                     });
                 }

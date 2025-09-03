@@ -1,9 +1,28 @@
-added skeleton screen for all pages.
-Changed the Home page from functionality to ads and app description
+# EPC17 Patch Notes
 
+## Version 25W32a09 (Current Development)
+- Updated comprehensive rule set in epcrules.mdc
+- Created detailed development guide (DEVELOPMENT_GUIDE.md)
+- Implemented versioning system with beta code format
+- Updated version numbers across all HTML pages
+- Enhanced documentation standards and commit message format
 
-Bug fixes
+## Recent Improvements
+- existing driver pop up added back
+- cleanup the console
+- performance optimization
+- Alphabetic order
+- class order fixe
+- 21 events per page
+- add search option in event and races pages
+- event status automated
+- Added automatic event status update when all races are completed
+- Added manual "Mark Event Complete" button in race management interface
+- Fix corupted events
 
-Fix the incapacity to click on any other page when in the analytics page.
-Fixed live display refresh bug.
-Fixed some live display Race UI errors.
+## Next Release: 0.9.2a25
+- Enhanced pairing engine with performance optimizations
+- Improved mobile navigation and responsive design
+- Comprehensive testing suite implementation
+- Advanced performance monitoring and memory management
+- Updated documentation and development guidelines 

@@ -8,7 +8,11 @@ class EventBus {
         this.listeners = new Map(); // event -> array of callback functions
         this.history = []; // Keep history of recent events for debugging
         this.maxHistorySize = 100;
-        console.log('📡 EventBus initialized');
+        if (window.debugLogger) {
+            window.debugLogger.init('EventBus', 'EventBus initialized');
+        } else {
+            console.log('📡 EventBus initialized');
+        }
     }
 
     /**
@@ -27,7 +31,11 @@ class EventBus {
         const listeners = this.listeners.get(eventName);
         listeners.push(callback);
 
-        console.log(`📡 Subscribed to event: ${eventName} (${listeners.length} listeners)`);
+        if (window.debugLogger) {
+            window.debugLogger.debug('EventBus', `Subscribed to event: ${eventName} (${listeners.length} listeners)`);
+        } else {
+            console.log(`📡 Subscribed to event: ${eventName} (${listeners.length} listeners)`);
+        }
 
         // Return unsubscribe function
         return () => this.off(eventName, callback);
@@ -46,7 +54,11 @@ class EventBus {
         
         if (index > -1) {
             listeners.splice(index, 1);
+            if (window.debugLogger) {
+            window.debugLogger.debug('EventBus', `Unsubscribed from event: ${eventName} (${listeners.length} listeners remaining)`);
+        } else {
             console.log(`📡 Unsubscribed from event: ${eventName} (${listeners.length} listeners remaining)`);
+        }
             return true;
         }
 
@@ -82,11 +94,19 @@ class EventBus {
         const listeners = this.listeners.get(eventName) || [];
         
         if (listeners.length === 0) {
+            if (window.debugLogger) {
+            window.debugLogger.debug('EventBus', `Event emitted with no listeners: ${eventName}`);
+        } else {
             console.log(`📡 Event emitted with no listeners: ${eventName}`);
+        }
             return;
         }
 
-        console.log(`📡 Emitting event: ${eventName} to ${listeners.length} listeners`, data);
+        if (window.debugLogger) {
+            window.debugLogger.debug('EventBus', `Emitting event: ${eventName} to ${listeners.length} listeners`, data);
+        } else {
+            console.log(`📡 Emitting event: ${eventName} to ${listeners.length} listeners`, data);
+        }
 
         // Call all listeners
         let successCount = 0;

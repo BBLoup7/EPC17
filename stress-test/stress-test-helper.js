@@ -67,7 +67,7 @@ class StressTestHelper {
             const events = this.dataManager.getEventsArray();
             const series = this.dataManager.getAllSeries();
             
-            console.log(`📊 Data loaded:`);
+            console.log('📊 Data loaded:');
             console.log(`   - Participants: ${participants.length}`);
             console.log(`   - Events: ${events.length}`);
             console.log(`   - Series: ${series.length}`);

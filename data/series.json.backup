@@ -1,117 +1,290 @@
 [
   {
-    "createdAt": "2025-07-05T09:02:35.232Z",
-    "createdDate": "2025-07-05T05:02:35.239520",
-    "description": "",
-    "events": [],
-    "id": "ac34ff11-c15a-49db-8a91-495f78ee41fe",
-    "name": "Series 1",
-    "standings": [],
-    "status": "upcoming",
-    "updatedAt": "2025-07-05T05:09:00.225704",
-    "registrationFee": 0,
-    "pointsSystem": "standard",
-    "seasonStartDate": null,
-    "seasonEndDate": null,
-    "rules": "",
-    "sledClasses": [
-      {
-        "id": "class_1751706536829_x7ohc1ntp",
-        "name": "1",
-        "defaultFee": 12,
-        "description": "1 class racing"
-      },
-      {
-        "id": "class_1751706538860_ksriog5z8",
-        "name": "2",
-        "defaultFee": 23,
-        "description": "2 class racing"
-      }
-    ]
-  },
-  {
-    "name": "TSR",
-    "description": "",
+    "id": "cd33210e-ed9d-4acc-9a92-69893d351990",
+    "name": "Stress Test Series 1",
+    "description": "Performance stress test series 1 with high volume data",
     "status": "active",
-    "registrationFee": 0,
-    "seasons": [
-      {
-        "id": "season_1751979436251_rwx2b5v5a",
-        "name": "Hiver 2025-2026",
-        "startDate": "2025-12-01",
-        "endDate": "2026-04-01",
-        "status": "active",
-        "createdAt": "2025-07-08T12:57:16.251Z"
-      },
-      {
-        "id": "season_1751979436251_x0zqag5qz",
-        "name": "Hiver 2026-2027",
-        "startDate": "2026-12-01",
-        "endDate": "2027-04-01",
-        "status": "upcoming",
-        "createdAt": "2025-07-08T12:57:16.251Z"
-      }
-    ],
+    "registrationFee": 8,
+    "pointsSystem": "standard",
+    "seasonStartDate": "2025-01-01",
+    "seasonEndDate": "2025-12-31",
+    "rules": "Standard racing rules apply",
     "sledClasses": [
       {
-        "id": "class_1751979436251_1oroniehp",
+        "id": "367a27e2-365f-4db1-bfda-b71ee5d0cb40",
         "name": "600 Stock",
-        "defaultFee": 50,
+        "defaultFee": 200,
         "description": "600 Stock class racing"
       },
       {
-        "id": "class_1751979436251_aqz1dslsy",
+        "id": "ddcbac7c-2f70-4a44-a72d-4e1889e130eb",
         "name": "600 Improve",
-        "defaultFee": 100,
+        "defaultFee": 200,
         "description": "600 Improve class racing"
       },
       {
-        "id": "class_1751979436251_8pw5q4asb",
+        "id": "255ec872-8b63-4361-8c8e-729e6eec8fbf",
         "name": "800 Stock",
-        "defaultFee": 50,
+        "defaultFee": 100,
         "description": "800 Stock class racing"
       },
       {
-        "id": "class_1751979436251_e4wuwrji4",
+        "id": "3ad54f05-c8ac-4649-8d29-c3878ec26a2c",
         "name": "800 Improve",
         "defaultFee": 100,
         "description": "800 Improve class racing"
       },
       {
-        "id": "class_1751979436251_5h1rbujg3",
+        "id": "84e9db56-8256-49e5-8c83-4f9fa4cb2a80",
+        "name": "1000 Stock",
+        "defaultFee": 50,
+        "description": "1000 Stock class racing"
+      },
+      {
+        "id": "64ca8278-8315-40d5-8ed2-cf78c13d24cd",
+        "name": "1000 Improve",
+        "defaultFee": 400,
+        "description": "1000 Improve class racing"
+      },
+      {
+        "id": "9832983c-9978-4cd9-9881-dc513a69a42e",
+        "name": "4 temps",
+        "defaultFee": 400,
+        "description": "4 temps class racing"
+      },
+      {
+        "id": "fa378167-1f73-4661-ac8b-56c9fbf16bd6",
+        "name": "Pro-Max",
+        "defaultFee": 100,
+        "description": "Pro-Max class racing"
+      },
+      {
+        "id": "3226a6ef-6b5a-410a-8b14-ae84cd274df6",
+        "name": "Outlaw",
+        "defaultFee": 100,
+        "description": "Outlaw class racing"
+      },
+      {
+        "id": "ef8df0ae-356f-46d8-8f8e-2a024bdc933c",
+        "name": "Sport",
+        "defaultFee": 100,
+        "description": "Sport class racing"
+      }
+    ],
+    "events": [],
+    "standings": [],
+    "createdAt": "2025-07-28T19:11:38.787Z",
+    "updatedAt": "2025-07-28T19:11:38.787Z",
+    "createdDate": "2025-07-28"
+  },
+  {
+    "id": "59177e16-b5da-403b-8376-07f72ba566f1",
+    "name": "Stress Test Series 2",
+    "description": "Performance stress test series 2 with high volume data",
+    "status": "active",
+    "registrationFee": 234,
+    "pointsSystem": "standard",
+    "seasonStartDate": "2025-01-01",
+    "seasonEndDate": "2025-12-31",
+    "rules": "Standard racing rules apply",
+    "sledClasses": [
+      {
+        "id": "2f1f70d9-9dee-4ff4-ac3e-1c1df9cb4425",
+        "name": "600 Stock",
+        "defaultFee": 200,
+        "description": "600 Stock class racing"
+      },
+      {
+        "id": "a7e6a3d2-0e64-49f4-949a-a0d37fb534bf",
+        "name": "600 Improve",
+        "defaultFee": 50,
+        "description": "600 Improve class racing"
+      },
+      {
+        "id": "3bd3f184-e718-445c-b8f3-32eb2a6cc65e",
+        "name": "800 Stock",
+        "defaultFee": 200,
+        "description": "800 Stock class racing"
+      },
+      {
+        "id": "6a317f35-436b-4f53-b86f-6e4bf1c190f5",
+        "name": "800 Improve",
+        "defaultFee": 50,
+        "description": "800 Improve class racing"
+      },
+      {
+        "id": "086382e7-a25e-4538-b238-eba95b126c43",
         "name": "1000 Stock",
         "defaultFee": 100,
         "description": "1000 Stock class racing"
       },
       {
-        "id": "class_1751979436251_w5ibw72qw",
+        "id": "614e197f-ee0c-4cef-a4a8-fe1ccaeece53",
         "name": "1000 Improve",
-        "defaultFee": 150,
+        "defaultFee": 100,
         "description": "1000 Improve class racing"
       },
       {
-        "id": "class_1751979436251_jeqw190kf",
+        "id": "54fa11dc-552a-4eb5-9824-04e802341a70",
         "name": "4 temps",
-        "defaultFee": 250,
+        "defaultFee": 100,
         "description": "4 temps class racing"
       },
       {
-        "id": "class_1751979436251_0hywr2ry0",
+        "id": "83641456-5aa6-4252-8eb4-c9dd346dc114",
         "name": "Pro-Max",
-        "defaultFee": 500,
+        "defaultFee": 400,
         "description": "Pro-Max class racing"
       },
       {
-        "id": "class_1751979436251_1pqtyjd1z",
+        "id": "6d290c88-911e-465f-968e-ad2497a38a3c",
         "name": "Outlaw",
-        "defaultFee": 1000,
+        "defaultFee": 200,
         "description": "Outlaw class racing"
+      },
+      {
+        "id": "41b66859-f51e-4b30-8008-2ab664e26e32",
+        "name": "Sport",
+        "defaultFee": 200,
+        "description": "Sport class racing"
       }
     ],
-    "id": "fc55b1e1-d9fc-442c-bdab-9bb7874660c2",
-    "createdAt": "2025-07-08T12:57:16.251Z",
-    "updatedAt": "2025-07-08T12:57:16.251Z",
-    "createdDate": "2025-07-08T08:57:16.258510",
-    "events": []
+    "events": [],
+    "standings": [],
+    "createdAt": "2025-07-28T19:11:38.787Z",
+    "updatedAt": "2025-07-28T19:11:38.787Z",
+    "createdDate": "2025-07-28"
+  },
+  {
+    "id": "c66ab8c9-3e12-44cc-bf49-64d52003b178",
+    "name": "Stress Test Series 3",
+    "description": "Performance stress test series 3 with high volume data",
+    "status": "active",
+    "registrationFee": 242,
+    "pointsSystem": "standard",
+    "seasonStartDate": "2025-01-01",
+    "seasonEndDate": "2025-12-31",
+    "rules": "Standard racing rules apply",
+    "sledClasses": [
+      {
+        "id": "b88b06c8-7893-4a69-ac8c-5fa78f2b057a",
+        "name": "600 Stock",
+        "defaultFee": 200,
+        "description": "600 Stock class racing"
+      },
+      {
+        "id": "1c1b67c6-9204-44b5-a13c-5ebfa5982872",
+        "name": "600 Improve",
+        "defaultFee": 100,
+        "description": "600 Improve class racing"
+      },
+      {
+        "id": "3960fa30-3e23-4eda-a400-9cb3b8c6d302",
+        "name": "800 Stock",
+        "defaultFee": 400,
+        "description": "800 Stock class racing"
+      },
+      {
+        "id": "4a79ae68-5837-4e10-91ab-21764fa5c8be",
+        "name": "800 Improve",
+        "defaultFee": 50,
+        "description": "800 Improve class racing"
+      },
+      {
+        "id": "0e46c78e-ad54-439d-baf9-c3ffd3b94a85",
+        "name": "1000 Stock",
+        "defaultFee": 100,
+        "description": "1000 Stock class racing"
+      },
+      {
+        "id": "66d6d465-02bb-433e-9ecb-773122ef356b",
+        "name": "1000 Improve",
+        "defaultFee": 100,
+        "description": "1000 Improve class racing"
+      }
+    ],
+    "events": [],
+    "standings": [],
+    "createdAt": "2025-07-28T19:11:38.787Z",
+    "updatedAt": "2025-07-28T19:11:38.787Z",
+    "createdDate": "2025-07-28"
+  },
+  {
+    "id": "0e8d6de0-f54c-4422-97be-41d6d17aae7d",
+    "name": "Stress Test Series 4",
+    "description": "Performance stress test series 4 with high volume data",
+    "status": "active",
+    "registrationFee": 71,
+    "pointsSystem": "standard",
+    "seasonStartDate": "2025-01-01",
+    "seasonEndDate": "2025-12-31",
+    "rules": "Standard racing rules apply",
+    "sledClasses": [
+      {
+        "id": "06b1409c-27e9-4e68-b1aa-d5daa544eabc",
+        "name": "600 Stock",
+        "defaultFee": 50,
+        "description": "600 Stock class racing"
+      },
+      {
+        "id": "0facea3b-dcd5-44f6-b866-d0e046b28aa8",
+        "name": "600 Improve",
+        "defaultFee": 100,
+        "description": "600 Improve class racing"
+      },
+      {
+        "id": "58f6aacb-69a2-46bb-8e8f-87f9d48b57a1",
+        "name": "800 Stock",
+        "defaultFee": 200,
+        "description": "800 Stock class racing"
+      },
+      {
+        "id": "63ea7b13-d43b-4350-9ce3-e814f82e6a89",
+        "name": "800 Improve",
+        "defaultFee": 100,
+        "description": "800 Improve class racing"
+      },
+      {
+        "id": "062597bc-96e6-4ca9-b270-12a72c915ae0",
+        "name": "1000 Stock",
+        "defaultFee": 100,
+        "description": "1000 Stock class racing"
+      },
+      {
+        "id": "cb1dcc54-0e92-4ece-b6f2-b8acc192be25",
+        "name": "1000 Improve",
+        "defaultFee": 200,
+        "description": "1000 Improve class racing"
+      },
+      {
+        "id": "c06ea38b-8c23-4235-a3ed-0dcd265173d7",
+        "name": "4 temps",
+        "defaultFee": 200,
+        "description": "4 temps class racing"
+      },
+      {
+        "id": "4b40dcac-c9ae-45ba-849a-5ec3f6bb31d1",
+        "name": "Pro-Max",
+        "defaultFee": 200,
+        "description": "Pro-Max class racing"
+      },
+      {
+        "id": "825f8c95-a7d7-49d4-a64b-8516db6cc9b3",
+        "name": "Outlaw",
+        "defaultFee": 400,
+        "description": "Outlaw class racing"
+      },
+      {
+        "id": "467ba6e1-f94f-4c1b-ba0e-f314fdd59a56",
+        "name": "Sport",
+        "defaultFee": 200,
+        "description": "Sport class racing"
+      }
+    ],
+    "events": [],
+    "standings": [],
+    "createdAt": "2025-07-28T19:11:38.787Z",
+    "updatedAt": "2025-07-28T19:11:38.787Z",
+    "createdDate": "2025-07-28"
   }
 ]

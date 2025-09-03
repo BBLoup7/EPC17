@@ -197,7 +197,7 @@ class RegistrationManager {
         if (!select) return;
 
         try {
-            const result = await dataManager.getEvents();
+            const result = await dataManager.getEvents({}, 1, 1000);
             const events = result.events || result; // Handle both paginated and direct array responses
             select.innerHTML = '<option value="">Select an event...</option>';
             
@@ -410,7 +410,12 @@ class RegistrationManager {
         const filters = this.getActiveFilters();
         const participants = dataManager.getParticipants(filters);
 
-        if (participants.length === 0) {
+        // Sort participants alphabetically by name
+        const sortedParticipants = participants.sort((a, b) => 
+            a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        );
+
+        if (sortedParticipants.length === 0) {
             container.innerHTML = `
                 <div class="no-data">
                     <p>No participants found${this.isSeasonRegistration ? ' for season registration' : ''}.</p>
@@ -422,13 +427,13 @@ class RegistrationManager {
             return;
         }
 
-        const participantHtml = participants.map(participant => 
+        const participantHtml = sortedParticipants.map(participant => 
             this.generateParticipantItemHtml(participant)
         ).join('');
 
         container.innerHTML = `
             <div class="participant-count">
-                <p><strong>${participants.length}</strong> participant${participants.length !== 1 ? 's' : ''} found</p>
+                <p><strong>${sortedParticipants.length}</strong> participant${sortedParticipants.length !== 1 ? 's' : ''} found</p>
             </div>
             ${participantHtml}
         `;

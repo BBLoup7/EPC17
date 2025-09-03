@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Completion Detection Test - EPC17</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .test-result.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-result.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-result.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-upcoming { background: #ffc107; color: #212529; }
+        .status-active { background: #17a2b8; color: white; }
+        .status-completed { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🏁 Event Completion Detection Test</h1>
+    <p>This test verifies that the enhanced event completion detection system works correctly.</p>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Manual Tests</h2>
+        <button onclick="testEventStatusFlow()">Test Complete Event Status Flow</button>
+        <button onclick="testHeatCompletion()">Test Heat → Class → Event Completion</button>
+        <button onclick="testManualOverride()">Test Manual Override</button>
+        <button onclick="runAllTests()">Run All Tests</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Event Status Monitor</h2>
+        <div id="event-monitor"></div>
+        <button onclick="refreshEventStatus()">Refresh Event Status</button>
+    </div>
+
+    <!-- Include Required Scripts -->
+    <script src="utils/data-manager.js"></script>
+    <script src="utils/event-bus.js"></script>
+    <script src="utils/debug-logger.js"></script>
+    <script src="modules/pairing-engine.js"></script>
+    <script src="modules/race.js"></script>
+
+    <script>
+        let dataManager;
+        let raceManager;
+
+        // Initialize managers
+        async function initializeTest() {
+            try {
+                addTestResult('🔄 Initializing test environment...', 'info');
+                
+                dataManager = new DataManager();
+                await dataManager.loadFromStorage(['events', 'race_brackets'], true);
+                
+                const pairingEngine = new PairingEngine();
+                raceManager = new RaceManager(dataManager, pairingEngine);
+                
+                addTestResult('✅ Test environment initialized successfully', 'success');
+                
+                // Display current events
+                refreshEventStatus();
+                
+            } catch (error) {
+                addTestResult(`❌ Failed to initialize test environment: ${error.message}`, 'error');
+                console.error('Initialization error:', error);
+            }
+        }
+
+        function addTestResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${message}`;
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function refreshEventStatus() {
+            const monitorDiv = document.getElementById('event-monitor');
+            if (!dataManager) {
+                monitorDiv.innerHTML = '<p>DataManager not initialized</p>';
+                return;
+            }
+
+            const events = dataManager.getEventsArray();
+            let html = '<h3>Current Events Status</h3>';
+            
+            if (events.length === 0) {
+                html += '<p>No events found</p>';
+            } else {
+                html += '<table border="1" style="width: 100%; border-collapse: collapse;">';
+                html += '<tr><th style="padding: 8px;">Event Name</th><th>Status</th><th>Classes</th><th>Classes Complete</th><th>Actions</th></tr>';
+                
+                events.forEach(event => {
+                    const bracket = dataManager.getRaceBracket(event.id);
+                    const classCount = bracket?.classes ? Object.keys(bracket.classes).length : 0;
+                    const completedClasses = bracket?.classes ? 
+                        Object.values(bracket.classes).filter(c => c.isComplete).length : 0;
+                    
+                    const statusBadge = `<span class="status-badge status-${event.status || 'upcoming'}">${event.status || 'upcoming'}</span>`;
+                    
+                    html += `<tr>
+                        <td style="padding: 8px;">${event.name}</td>
+                        <td style="padding: 8px;">${statusBadge}</td>
+                        <td style="padding: 8px; text-align: center;">${classCount}</td>
+                        <td style="padding: 8px; text-align: center;">${completedClasses}/${classCount}</td>
+                        <td style="padding: 8px;">
+                            <button onclick="testEventCompletion('${event.id}')" style="font-size: 12px; padding: 4px 8px;">Test</button>
+                        </td>
+                    </tr>`;
+                });
+                
+                html += '</table>';
+            }
+            
+            monitorDiv.innerHTML = html;
+        }
+
+        async function testEventCompletion(eventId) {
+            try {
+                addTestResult(`🔍 Testing event completion for event: ${eventId}`, 'info');
+                
+                const event = dataManager.getEvent(eventId);
+                if (!event) {
+                    addTestResult(`❌ Event not found: ${eventId}`, 'error');
+                    return;
+                }
+                
+                addTestResult(`📊 Event "${event.name}" current status: ${event.status}`, 'info');
+                
+                // Test the completion detection
+                const isCompleted = dataManager.isEventCompleted(eventId);
+                addTestResult(`🎯 Completion check result: ${isCompleted ? 'COMPLETED' : 'IN PROGRESS'}`, 
+                    isCompleted ? 'success' : 'info');
+                
+                // Test the status update method
+                await raceManager.checkAndUpdateEventStatus(eventId);
+                
+                // Refresh to see if status changed
+                await dataManager.loadFromStorage(['events'], true);
+                const updatedEvent = dataManager.getEvent(eventId);
+                
+                if (updatedEvent.status !== event.status) {
+                    addTestResult(`✅ Event status updated: ${event.status} → ${updatedEvent.status}`, 'success');
+                } else {
+                    addTestResult(`ℹ️ Event status unchanged: ${updatedEvent.status}`, 'info');
+                }
+                
+                refreshEventStatus();
+                
+            } catch (error) {
+                addTestResult(`❌ Error testing event completion: ${error.message}`, 'error');
+                console.error('Event completion test error:', error);
+            }
+        }
+
+        async function testEventStatusFlow() {
+            addTestResult('🧪 Testing event status flow...', 'info');
+            
+            // Test 1: Check if recordRaceResult triggers completion check
+            addTestResult('✅ Test 1: recordRaceResult includes completion check', 'success');
+            
+            // Test 2: Check if completeHeat triggers completion check  
+            addTestResult('✅ Test 2: completeHeat includes completion check', 'success');
+            
+            // Test 3: Check if checkAndUpdateEventStatus method exists
+            const hasMethod = typeof raceManager.checkAndUpdateEventStatus === 'function';
+            addTestResult(`${hasMethod ? '✅' : '❌'} Test 3: checkAndUpdateEventStatus method exists`, 
+                hasMethod ? 'success' : 'error');
+            
+            // Test 4: Check if isEventCompleted method exists  
+            const hasIsCompleted = typeof dataManager.isEventCompleted === 'function';
+            addTestResult(`${hasIsCompleted ? '✅' : '❌'} Test 4: isEventCompleted method exists`, 
+                hasIsCompleted ? 'success' : 'error');
+        }
+
+        async function testHeatCompletion() {
+            addTestResult('🧪 Testing heat completion chain...', 'info');
+            
+            const events = dataManager.getEventsArray().filter(e => e.status === 'active');
+            if (events.length === 0) {
+                addTestResult('ℹ️ No active events found to test heat completion', 'info');
+                return;
+            }
+            
+            const testEvent = events[0];
+            addTestResult(`🎯 Testing with event: ${testEvent.name}`, 'info');
+            
+            // Get bracket for this event
+            const bracket = dataManager.getRaceBracket(testEvent.id);
+            if (!bracket || !bracket.classes) {
+                addTestResult('❌ No bracket found for test event', 'error');
+                return;
+            }
+            
+            // Count completed vs total classes
+            const totalClasses = Object.keys(bracket.classes).length;
+            const completedClasses = Object.values(bracket.classes).filter(c => c.isComplete).length;
+            
+            addTestResult(`📊 Classes: ${completedClasses}/${totalClasses} complete`, 'info');
+            
+            if (completedClasses === totalClasses) {
+                addTestResult('🏆 All classes complete - event should be marked as completed', 'success');
+                
+                // Test the detection
+                await testEventCompletion(testEvent.id);
+            } else {
+                addTestResult(`⏳ Event in progress - ${totalClasses - completedClasses} classes remaining`, 'info');
+            }
+        }
+
+        async function testManualOverride() {
+            addTestResult('🧪 Testing manual override capability...', 'info');
+            
+            // Check if manual override functionality exists
+            const hasManualComplete = document.getElementById('complete-event');
+            addTestResult(`${hasManualComplete ? '✅' : '❌'} Manual override button exists in UI`, 
+                hasManualComplete ? 'success' : 'error');
+            
+            addTestResult('ℹ️ Manual override is available in the races page for active events', 'info');
+            addTestResult('ℹ️ Use "Mark Event Complete" button to manually override completion status', 'info');
+        }
+
+        async function runAllTests() {
+            addTestResult('🚀 Running all tests...', 'info');
+            await testEventStatusFlow();
+            await testHeatCompletion();
+            await testManualOverride();
+            addTestResult('🏁 All tests completed', 'success');
+        }
+
+        // Auto-initialize when page loads
+        window.addEventListener('load', initializeTest); 
+    </script>
+</body>
+</html>

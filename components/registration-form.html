@@ -318,10 +318,26 @@
         flex-direction: column;
     }
 
-    .form-actions button {
-        width: 100%;
+            .form-actions button {
+            width: 100%;
+        }
     }
-}
+
+    .btn-outline {
+        background: transparent;
+        border: 2px solid var(--accent-primary);
+        color: var(--accent-primary);
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline:hover {
+        background: var(--accent-primary);
+        color: white;
+    }
 </style>
 
 <script>
@@ -568,6 +584,23 @@ function setupEventListeners() {
             }
         });
     }
+    
+         // Add duplicate detection only to name field (most important)
+     const nameField = form.querySelector('input[name="name"]');
+     if (nameField) {
+         nameField.addEventListener('input', () => {
+             setTimeout(() => {
+                 if (window.checkFormForDuplicates) {
+                     window.checkFormForDuplicates();
+                 }
+             }, 1500); // 1.5 second delay to reduce spam
+         });
+         nameField.addEventListener('blur', () => {
+             if (window.checkFormForDuplicates) {
+                 window.checkFormForDuplicates();
+             }
+         });
+     }
     
     form.addEventListener('submit', async (e) => {
         e.preventDefault();

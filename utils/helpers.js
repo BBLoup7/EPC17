@@ -74,7 +74,7 @@ class Helpers {
         
         const cloned = {};
         for (let key in obj) {
-            if (obj.hasOwnProperty(key)) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
                 cloned[key] = this.deepClone(obj[key]);
             }
         }
@@ -655,7 +655,7 @@ window.fixParticipantEventSync = async function() {
         console.log('🔄 Refreshing data from server...');
         const result = await window.dataManager.syncParticipantEventData();
         
-        console.log(`✅ DATA REFRESHED!`);
+        console.log('✅ DATA REFRESHED!');
         console.log('🔄 Refresh the events page to see the updated participant counts!');
         
         return result;
@@ -675,7 +675,7 @@ window.cleanupDuplicateEvents = async function() {
         
         console.log('🧹 Starting duplicate event cleanup...');
         
-        const result = await window.dataManager.getEvents();
+        const result = await window.dataManager.getEvents({}, 1, 1000);
         const events = result.events || result; // Handle both paginated and direct array responses
         const seen = new Map();
         const duplicates = [];
