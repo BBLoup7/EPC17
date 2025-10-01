@@ -106,7 +106,7 @@ class SidebarNavigation {
                 </ul>
             </nav>
             <div class="sidebar-footer">
-                <div class="sidebar-version">25W32a09</div>
+                <div class="sidebar-version">0.9.5</div>
             </div>
         `;
         
