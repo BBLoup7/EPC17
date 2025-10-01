@@ -1,69 +1,113 @@
 <template id="series-details">
     <div class="series-details">
-        <div class="series-header">
-            <div class="header-content">
-                <h2 id="seriesName">Series Name</h2>
-                <div class="series-meta">
-                    <span class="status-badge" id="seriesStatus">Status</span>
-                    <span class="date-range" id="dateRange">Date Range</span>
+        <!-- Hero Header -->
+        <div class="series-hero">
+            <div class="hero-content">
+                <div class="hero-info">
+                    <h1 id="seriesName" class="series-title">Series Name</h1>
+                    <div class="series-meta">
+                        <span class="status-badge" id="seriesStatus">Status</span>
+                        <span class="date-range" id="dateRange">Date Range</span>
+                    </div>
+                    <p id="seriesDescription" class="series-description">No description available.</p>
                 </div>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-secondary" id="editBtn">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-primary" id="addEventBtn">
-                    <i class="fas fa-plus"></i> Add Event
-                </button>
+                <div class="hero-actions">
+                    <button class="btn btn-secondary" id="editBtn">
+                        <i class="fas fa-edit"></i> Edit Series
+                    </button>
+                    <button class="btn btn-primary" id="addEventBtn">
+                        <i class="fas fa-plus"></i> Add Event
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="series-content">
-            <div class="content-section">
-                <h3>Description</h3>
-                <p id="seriesDescription">No description available.</p>
-            </div>
-
-            <div class="content-section">
-                <h3>Rules & Regulations</h3>
-                <div id="seriesRules" class="rules-content">
-                    No rules specified.
-                </div>
-            </div>
-
-            <div class="content-section">
-                <h3>Points System</h3>
-                <div class="points-table" id="pointsTable">
-                    <!-- Points table will be dynamically inserted here -->
-                </div>
-            </div>
-
+        <!-- Content Sections -->
+        <div class="content-sections">
+            <!-- Rules Section -->
             <div class="content-section">
                 <div class="section-header">
-                    <h3>Events</h3>
-                    <div class="event-filters">
-                        <select id="eventStatus">
-                            <option value="all">All Events</option>
-                            <option value="upcoming">Upcoming</option>
-                            <option value="active">Active</option>
-                            <option value="completed">Completed</option>
-                        </select>
+                    <h3>
+                        <i class="fas fa-book"></i>
+                        Rules & Regulations
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div id="seriesRules" class="rules-content">
+                        <div class="empty-content">
+                            <i class="fas fa-gavel"></i>
+                            <p>No rules specified for this series.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="events-list" id="eventsList">
-                    <!-- Events will be dynamically inserted here -->
+            </div>
+
+            <!-- Points System Section -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-chart-line"></i>
+                        Points System
+                    </h3>
+                </div>
+                <div class="section-content">
+                    <div class="points-table" id="pointsTable">
+                        <div class="empty-content">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>Points system not configured yet.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Events Section -->
             <div class="content-section">
                 <div class="section-header">
-                    <h3>Standings</h3>
-                    <button class="btn btn-secondary" id="exportStandingsBtn">
-                        <i class="fas fa-download"></i> Export
-                    </button>
+                    <h3>
+                        <i class="fas fa-calendar-alt"></i>
+                        Events
+                    </h3>
+                    <div class="section-actions">
+                        <div class="event-filters">
+                            <select id="eventStatus" class="filter-select">
+                                <option value="all">All Events</option>
+                                <option value="upcoming">Upcoming</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <div class="standings-table" id="standingsTable">
-                    <!-- Standings table will be dynamically inserted here -->
+                <div class="section-content">
+                    <div class="events-list" id="eventsList">
+                        <div class="empty-content">
+                            <i class="fas fa-calendar"></i>
+                            <p>No events scheduled for this series.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standings Section -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-trophy"></i>
+                        Standings
+                    </h3>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" id="exportStandingsBtn">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="standings-table" id="standingsTable">
+                        <div class="empty-content">
+                            <i class="fas fa-medal"></i>
+                            <p>Standings will appear here once events are completed.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -71,225 +115,326 @@
 
     <style>
         .series-details {
-            padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0;
         }
 
-        .series-header {
+        /* Hero Section */
+        .series-hero {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+
+        .hero-content {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+            gap: 2rem;
         }
 
-        .header-content h2 {
-            margin: 0 0 10px;
-            color: #333;
+        .hero-info {
+            flex: 1;
+        }
+
+        .series-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0 0 0.75rem 0;
+            line-height: 1.2;
         }
 
         .series-meta {
             display: flex;
-            gap: 15px;
+            gap: 1rem;
             align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .status-badge {
-            padding: 4px 12px;
+            padding: 0.5rem 1rem;
             border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .status-badge.upcoming {
-            background: #e3f2fd;
-            color: #1976d2;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
         }
 
         .status-badge.active {
-            background: #e8f5e9;
-            color: #2e7d32;
+            background: var(--accent-orange-warm);
+            box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
+        }
+
+        .status-badge.upcoming {
+            background: var(--accent-warning);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(214, 158, 46, 0.3);
         }
 
         .status-badge.completed {
-            background: #f5f5f5;
-            color: #616161;
+            background: var(--accent-info);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .date-range {
-            color: #666;
-            font-size: 14px;
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
-        .header-actions {
+        .series-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin: 0;
+            max-width: 600px;
+        }
+
+        .hero-actions {
             display: flex;
-            gap: 10px;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .hero-actions .btn {
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .hero-actions .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .hero-actions .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-primary));
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
+        }
+
+        .hero-actions .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4);
+        }
+
+        .hero-actions .btn-secondary:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Content Sections */
+        .content-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
 
         .content-section {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .content-section h3 {
-            margin: 0 0 15px;
-            color: #333;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
         }
 
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            padding: 1rem 1.5rem;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .rules-content {
-            white-space: pre-line;
-            color: #666;
-            line-height: 1.5;
-        }
-
-        .points-table {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-        }
-
-        .point-item {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .point-position {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .point-value {
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .events-list {
-            display: grid;
-            gap: 15px;
-        }
-
-        .event-card {
-            background: #f8f9fa;
-            border-radius: 4px;
-            padding: 15px;
+        .section-header h3 {
             display: flex;
-            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section-header i {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 1rem;
             align-items: center;
         }
 
-        .event-info h4 {
-            margin: 0 0 5px;
-            color: #333;
-        }
-
-        .event-meta {
-            display: flex;
-            gap: 15px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .event-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .standings-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .standings-table th,
-        .standings-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        .standings-table th {
-            background: #f8f9fa;
-            font-weight: 500;
-            color: #333;
-        }
-
-        .standings-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .position-cell {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .points-cell {
-            font-weight: 500;
-            color: #007bff;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
 
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
+        .section-content {
+            padding: 1.5rem;
         }
 
-        .btn-primary {
-            background: #007bff;
-            color: white;
+        .empty-content {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-content i {
+            font-size: 2rem;
+            color: var(--accent-secondary);
+            margin-bottom: 0.75rem;
+            opacity: 0.5;
+        }
+
+        .empty-content p {
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* Rules Content */
+        .rules-content {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            min-height: 80px;
+        }
+
+        /* Points Table */
+        .points-table {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            min-height: 80px;
+        }
+
+        /* Events List */
+        .events-list {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            min-height: 80px;
+        }
+
+        /* Standings Table */
+        .standings-table {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            min-height: 80px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .series-title {
+                font-size: 2.5rem;
+            }
         }
 
         @media (max-width: 768px) {
-            .series-header {
+            .series-hero {
+                padding: 2rem 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .hero-content {
                 flex-direction: column;
-                gap: 15px;
+                gap: 1.5rem;
             }
 
-            .header-actions {
+            .series-title {
+                font-size: 2rem;
+            }
+
+            .series-description {
+                font-size: 1rem;
+            }
+
+            .hero-actions {
                 width: 100%;
+                justify-content: stretch;
             }
 
-            .header-actions .btn {
+            .hero-actions .btn {
                 flex: 1;
+                justify-content: center;
             }
 
-            .points-table {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            }
-
-            .event-card {
+            .section-header {
                 flex-direction: column;
-                gap: 10px;
+                gap: 1rem;
+                align-items: stretch;
             }
 
-            .event-actions {
-                width: 100%;
+            .section-actions {
+                justify-content: center;
             }
 
-            .event-actions .btn {
-                flex: 1;
+            .section-content {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .series-hero {
+                padding: 1.5rem 1rem;
+            }
+
+            .series-title {
+                font-size: 1.75rem;
+            }
+
+            .series-meta {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status-badge,
+            .date-range {
+                text-align: center;
+            }
+
+            .section-content {
+                padding: 1rem;
+            }
+
+            .empty-content {
+                padding: 2rem 1rem;
+            }
+
+            .empty-content i {
+                font-size: 2rem;
             }
         }
     </style>

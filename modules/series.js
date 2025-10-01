@@ -9,7 +9,53 @@ class SeriesManager {
         this.currentSeries = null;
         this.currentSeriesId = null;
         this.storageKey = 'epc17_racing_series';
+        this.initialized = false;
+        // Don't initialize immediately - wait for authentication
+        this.initAfterAuth();
+    }
+
+    /**
+     * Initialize after authentication is complete
+     */
+    async initAfterAuth() {
+        console.log('🔐 SeriesManager: Waiting for authentication...');
+        
+        // Wait for authentication to complete
+        await this.waitForAuthentication();
+        
+        // Now initialize normally
         this.init();
+        this.initialized = true;
+        console.log('✅ SeriesManager: Initialized after authentication');
+    }
+
+    /**
+     * Wait for authentication to complete
+     */
+    async waitForAuthentication() {
+        // Wait for Auth to be available and initialized
+        let attempts = 0;
+        while (!window.Auth && attempts < 100) { // Max 5 seconds
+            await new Promise(resolve => setTimeout(resolve, 50));
+            attempts++;
+        }
+        
+        if (!window.Auth) {
+            console.warn('🔐 SeriesManager: Auth system not available after waiting');
+            return false;
+        }
+        
+        // Wait a bit more for session restoration to complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Check if we have a valid session
+        if (!window.currentUser) {
+            console.log('🔐 SeriesManager: No current user, authentication failed');
+            return false;
+        }
+        
+        console.log('🔐 SeriesManager: Authentication complete');
+        return true;
     }
 
     /**
@@ -481,12 +527,12 @@ class SeriesManager {
                 console.log('✅ Series created locally:', series);
             }
             
-            alert('Series created successfully!');
+            Helpers.showToast('Series created successfully!', 'success');
             this.loadSeriesContent();
             
         } catch (error) {
             console.error('❌ Error creating series:', error);
-            alert('Error creating series: ' + error.message);
+            Helpers.showToast('Error creating series: ' + error.message, 'error');
         }
     }
 
@@ -680,9 +726,12 @@ class SeriesManager {
      * Delete series
      */
     async deleteSeries(seriesId) {
-        if (!confirm('Are you sure you want to delete this series? This action cannot be undone.')) {
-            return;
-        }
+        const confirmed = await window.confirmDelete('this series', async () => {
+            await this.performSeriesDeletion(seriesId);
+        });
+    }
+
+    async performSeriesDeletion(seriesId) {
         
         try {
             if (window.dataManager) {
@@ -695,12 +744,12 @@ class SeriesManager {
                 console.log('✅ Series deleted locally');
             }
             
-            alert('Series deleted successfully!');
+            Helpers.showToast('Series deleted successfully!', 'success');
             this.loadSeriesContent();
             
         } catch (error) {
             console.error('❌ Error deleting series:', error);
-            alert('Error deleting series: ' + error.message);
+            Helpers.showToast('Error deleting series: ' + error.message, 'error');
         }
     }
 
@@ -977,11 +1026,11 @@ class SeriesManager {
         
         if (!sledClass) return;
         
-        if (confirm(`Remove class "${sledClass.name}"? This cannot be undone.`)) {
+        window.confirmDelete(`class "${sledClass.name}"`, () => {
             classes.splice(index, 1);
             this.updateSeriesClassesList(classes);
             Helpers.showToast(`Class "${sledClass.name}" removed`, 'success');
-        }
+        });
     }
 
     /**
@@ -1131,15 +1180,37 @@ class SeriesManager {
     /**
      * Get series statistics for the dashboard
      */
-    getSeriesStats() {
+    async getSeriesStats() {
         const allSeries = this.getAllSeries();
         const activeSeries = allSeries.filter(series => this.isSeriesActive(series));
         let totalEvents = 0;
         
-        allSeries.forEach(series => {
-            const events = this.getEvents({ seriesId: series.id });
-            totalEvents += events.length;
-        });
+        // Get events from DataManager directly for accurate count
+        try {
+            if (window.dataManager) {
+                // Try multiple methods to get events count
+                let allEvents = [];
+                if (typeof window.dataManager.getEventsArray === 'function') {
+                    allEvents = window.dataManager.getEventsArray();
+                } else if (typeof window.dataManager.getEvents === 'function') {
+                    allEvents = await window.dataManager.getEvents({}, 1, 10000);
+                }
+                
+                totalEvents = allEvents.length;
+                console.log('📊 Events from DataManager:', allEvents.length);
+                console.log('📊 DataManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.dataManager)));
+            } else {
+                // Fallback: count events from series
+                for (const series of allSeries) {
+                    const events = await this.getEvents({ seriesId: series.id });
+                    totalEvents += events.length;
+                }
+                console.log('📊 Events from series fallback:', totalEvents);
+            }
+        } catch (error) {
+            console.warn('Error getting events count:', error);
+            totalEvents = 0;
+        }
         
         return {
             total: allSeries.length,

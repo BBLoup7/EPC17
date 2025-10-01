@@ -8,7 +8,53 @@ class RegistrationManager {
         this.registrations = new Map();
         this.currentEvent = null;
         this.currentEventId = null;
+        this.initialized = false;
+        // Don't initialize immediately - wait for authentication
+        this.initAfterAuth();
+    }
+
+    /**
+     * Initialize after authentication is complete
+     */
+    async initAfterAuth() {
+        console.log('🔐 RegistrationManager: Waiting for authentication...');
+        
+        // Wait for authentication to complete
+        await this.waitForAuthentication();
+        
+        // Now initialize normally
         this.init();
+        this.initialized = true;
+        console.log('✅ RegistrationManager: Initialized after authentication');
+    }
+
+    /**
+     * Wait for authentication to complete
+     */
+    async waitForAuthentication() {
+        // Wait for Auth to be available and initialized
+        let attempts = 0;
+        while (!window.Auth && attempts < 100) { // Max 5 seconds
+            await new Promise(resolve => setTimeout(resolve, 50));
+            attempts++;
+        }
+        
+        if (!window.Auth) {
+            console.warn('🔐 RegistrationManager: Auth system not available after waiting');
+            return false;
+        }
+        
+        // Wait a bit more for session restoration to complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Check if we have a valid session
+        if (!window.currentUser) {
+            console.log('🔐 RegistrationManager: No current user, authentication failed');
+            return false;
+        }
+        
+        console.log('🔐 RegistrationManager: Authentication complete');
+        return true;
     }
 
     /**
@@ -315,9 +361,14 @@ class RegistrationManager {
                     return;
                 }
                 
+                // Initialize event-specific class tracking
+                const eventClasses = {};
+                eventClasses[eventId] = selectedClasses;
+                
                 const participantData = {
                     name: formData.get('participantName'),
-                    selectedClasses: selectedClasses,
+                    selectedClasses: selectedClasses, // All classes (for new participant, same as first event)
+                    eventClasses: eventClasses, // Event-specific class mapping: { eventId: [classes] }
                     team: formData.get('teamName') || '',
                     racingNumber: racingNumber.trim(),
                     contact: {

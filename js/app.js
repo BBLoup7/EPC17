@@ -409,15 +409,53 @@ class App {
     }
 }
 
+// Wait for authentication to complete before loading data
+async function waitForAuthentication() {
+    console.log('🔐 Waiting for authentication to complete...');
+    
+    // Wait for Auth to be available and initialized
+    let attempts = 0;
+    while (!window.Auth && attempts < 100) { // Max 5 seconds
+        await new Promise(resolve => setTimeout(resolve, 50));
+        attempts++;
+    }
+    
+    if (!window.Auth) {
+        console.warn('🔐 Auth system not available after waiting, proceeding without authentication');
+        return false;
+    }
+    
+    // Wait a bit more for session restoration to complete
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Check if we have a valid session
+    if (!window.currentUser) {
+        console.log('🔐 No current user, authentication failed');
+        return false;
+    }
+    
+    console.log('🔐 Authentication complete, proceeding with data load');
+    return true;
+}
+
 // Initialize data loading on app start with performance tracking
 async function initializeApp() {
     console.log('🚀 Initializing application (SIMPLIFIED)...');
     
     try {
+        // Wait for authentication to complete before loading data
+        await waitForAuthentication();
+        
         // Track initialization performance
         await performanceMonitor.trackOperation('app_initialization', async () => {
             // Load essential data first (series, events, participants, and race brackets)
             await dataManager.loadFromStorage(['series', 'events', 'participants', 'race-brackets']);
+            
+            // Initialize RaceUI after authentication and data loading
+            if (raceUI && typeof raceUI.init === 'function') {
+                console.log('🔐 Initializing RaceUI after authentication...');
+                await raceUI.init();
+            }
             
             // Load other data types in background
             setTimeout(async () => {

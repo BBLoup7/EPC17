@@ -18,8 +18,15 @@
 	async function authFetch(url, options = {}) {
 		const headers = options.headers || {};
 		const token = getToken();
-		if (token) headers['Authorization'] = 'Bearer ' + token;
+		console.log('🔐 authFetch called for:', url, 'token exists:', !!token);
+		if (token) {
+			headers['Authorization'] = 'Bearer ' + token;
+			console.log('🔐 Authorization header set');
+		} else {
+			console.log('🔐 No token available for request');
+		}
 		const response = await fetch(url, { ...options, headers });
+		console.log('🔐 Response status for', url, ':', response.status);
 		if (response.status === 401) {
 			showLoginOverlay('Your session expired. Please log in.');
 		}
@@ -68,7 +75,9 @@
 	}
 
 	function showAccessDenied() {
-		alert('Access Denied');
+		// Show a more informative access denied message
+		const message = 'Access Denied\n\nYou do not have permission to access this feature. Please contact an administrator if you believe this is an error.';
+		alert(message);
 	}
 
 	function ensureAdminLink() {
@@ -184,16 +193,27 @@
 
 	async function restoreSession() {
 		const token = getToken();
+		console.log('🔐 Restoring session, token exists:', !!token);
 		if (!token) return false;
 		try {
 			const res = await authFetch('/api/auth/me');
-			if (!res.ok) return false;
+			console.log('🔐 Auth /me response status:', res.status);
+			if (!res.ok) {
+				console.log('🔐 Auth /me failed, status:', res.status);
+				return false;
+			}
 			const data = await res.json();
-			if (!data.authenticated) return false;
+			console.log('🔐 Auth /me data:', data);
+			if (!data.authenticated) {
+				console.log('🔐 Not authenticated according to server');
+				return false;
+			}
 			session = { username: data.username, permissions: data.permissions, allowedEvents: data.allowedEvents || [] };
 			setCurrentUser();
+			console.log('🔐 Session restored successfully');
 			return true;
 		} catch (e) {
+			console.log('🔐 Error restoring session:', e);
 			return false;
 		}
 	}
@@ -219,11 +239,17 @@
 	}
 
 	async function initAuth() {
+		console.log('🔐 Initializing authentication...');
 		const ok = await restoreSession();
 		if (!ok) {
+			console.log('🔐 No valid session found, showing login overlay');
 			showLoginOverlay();
 			return;
 		}
+		console.log('🔐 Session restored successfully:', { username: session?.username, permissions: session?.permissions });
+		console.log('🔐 User permissions:', session?.permissions);
+		console.log('🔐 Has events permission:', session?.permissions?.includes('events'));
+		console.log('🔐 Has registration permission:', session?.permissions?.includes('registration'));
 		applyPermissionGates();
 		ensureAdminLink();
 		ensureLogoutButton();
@@ -237,17 +263,27 @@
 			'/analytics.html': ['analytics'],
 			'/driver-profile.html': ['drivers profile'],
 			'/live-display.html': ['live display'],
+			// Rule: EPC17_WORKFLOW.md - add animator page gating
+			'/animator.html': ['animator'],
 			'/users.html': ['__admin__']
 		};
 		const path = window.location.pathname;
 		if (pagePermMap[path]) {
 			const perms = session.permissions || [];
-			const allowed = pagePermMap[path].some(p => p === '__admin__' ? (session && session.username === 'Admin') : perms.includes(p));
+			// Admin bypass: Admin has access to all pages
+			const isAdmin = !!(session && session.username === 'Admin');
+			const allowed = isAdmin || pagePermMap[path].some(p => p === '__admin__' ? isAdmin : perms.includes(p));
+			console.log('🔐 Page access check:', { path, perms, isAdmin, allowed });
 			if (!allowed) {
+				console.log('🔐 Access denied for page:', path);
 				alert('Access Denied');
 				showLoginOverlay('Access Denied');
+				// Prevent further page loading by redirecting to home
+				window.location.href = '/';
+				return;
 			}
 		}
+		console.log('🔐 Authentication initialization complete');
 	}
 
 	window.Auth = {

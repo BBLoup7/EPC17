@@ -2,14 +2,15 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration for stress test
+// Rule: EPC17_WORKFLOW.md v1 - align generator with requested stress profile
 const STRESS_TEST_CONFIG = {
-    seriesCount: 4, // Doubled from 2
-    eventsPerSeries: 10, // 40 total events (doubled from 20)
-    driversPerEvent: { min: 100, max: 350 }, // Increased max to 350
+    seriesCount: 3, // 3 series as requested
+    eventsPerSeries: 20, // 60 total events
+    driversPerEvent: { min: 60, max: 300 }, // 60 to 300 per event
     driverEventsRange: { min: 1, max: 10 }, // drivers participate in 1-10 events
-    classesPerEvent: { min: 3, max: 7 },
-    classesPerDriver: { min: 1, max: 3 },
-    totalDriversNeeded: 12000 // Increased for 40 events with 100-350 drivers each
+    classesPerEvent: { min: 4, max: 6 }, // 4 to 6 classes per event
+    classesPerDriver: { min: 1, max: 3 }, // 1 to 3 classes per driver
+    totalDriversNeeded: 10000 // minimum 10k total drivers
 };
 
 // Sample data for realistic generation
@@ -286,7 +287,7 @@ function generateEvents(series) {
                 date: eventDate,
                 location: randomFromArray(LOCATIONS),
                 seriesId: seriesData.id,
-                numberOfTracks: randomInt(2, 4), // 2, 3, or 4 lanes as requested
+                numberOfTracks: randomInt(2, 3), // Constrain to 2 or 3 lanes
                 eliminationType: 'double', // Always double elimination as requested
                 trackSurface: randomFromArray(TRACK_SURFACES),
                 weatherContingency: randomFromArray(WEATHER_CONTINGENCIES),
@@ -319,6 +320,7 @@ function generateEvents(series) {
 }
 
 // Generate drivers data
+// Rule: EPC17_WORKFLOW.md v1 - generate drivers with event-valid classes and multi-event participation
 function generateDrivers(events) {
     const drivers = [];
     const driverIds = new Set();
@@ -334,31 +336,40 @@ function generateDrivers(events) {
         const createdAt = generateTimestamp();
         const dob = new Date(1980 + randomInt(0, 40), randomInt(0, 11), randomInt(1, 28)).toISOString().split('T')[0];
         
-        // Determine which events this driver participates in
-        const eventsToParticipate = randomInt(STRESS_TEST_CONFIG.driverEventsRange.min, STRESS_TEST_CONFIG.driverEventsRange.max);
-        const selectedEvents = [];
-        const availableEvents = [...events];
+        // Choose a primary event
+        const primaryEvent = events[randomInt(0, events.length - 1)];
         
-        for (let j = 0; j < eventsToParticipate && availableEvents.length > 0; j++) {
-            const eventIndex = randomInt(0, availableEvents.length - 1);
-            const selectedEvent = availableEvents.splice(eventIndex, 1)[0];
-            selectedEvents.push(selectedEvent);
-        }
-        
-        // Ensure driver is assigned to at least one event
-        if (selectedEvents.length === 0 && events.length > 0) {
-            selectedEvents.push(events[randomInt(0, events.length - 1)]);
-        }
-        
-        // Select classes for this driver (1-3 classes)
+        // Select classes for this driver (1-3) from the primary event's available classes
         const classCount = randomInt(STRESS_TEST_CONFIG.classesPerDriver.min, STRESS_TEST_CONFIG.classesPerDriver.max);
-        const availableClasses = [...CLASS_NAMES];
+        const eventClassNames = (primaryEvent.classSettings && primaryEvent.classSettings.length)
+            ? primaryEvent.classSettings.map(c => c.className || c.name).filter(Boolean)
+            : [];
+        const availableClasses = [...eventClassNames];
         const selectedClasses = [];
-        
         for (let j = 0; j < classCount && availableClasses.length > 0; j++) {
             const classIndex = randomInt(0, availableClasses.length - 1);
             selectedClasses.push(availableClasses.splice(classIndex, 1)[0]);
         }
+        // Fallback safety: if event has no classes for some reason, pick from global list
+        if (selectedClasses.length === 0) {
+            const fallbackPool = [...CLASS_NAMES];
+            for (let j = 0; j < classCount && fallbackPool.length > 0; j++) {
+                const classIndex = randomInt(0, fallbackPool.length - 1);
+                selectedClasses.push(fallbackPool.splice(classIndex, 1)[0]);
+            }
+        }
+
+        // Determine multi-event participation: only include events that contain ALL selected classes
+        const eventsToParticipate = randomInt(STRESS_TEST_CONFIG.driverEventsRange.min, STRESS_TEST_CONFIG.driverEventsRange.max);
+        const compatibleEvents = events.filter(e => {
+            const eClasses = (e.classSettings || []).map(c => c.className || c.name);
+            return selectedClasses.every(cn => eClasses.includes(cn));
+        });
+        // Ensure primary event is included
+        if (!compatibleEvents.find(e => e.id === primaryEvent.id)) compatibleEvents.push(primaryEvent);
+        // Randomly choose up to eventsToParticipate unique events from compatible set
+        const shuffled = compatibleEvents.sort(() => Math.random() - 0.5);
+        const selectedEvents = shuffled.slice(0, Math.max(1, Math.min(eventsToParticipate, shuffled.length)));
         
         const driverData = {
             id: driverId,
@@ -367,6 +378,7 @@ function generateDrivers(events) {
             dob: dob,
             racingNumber: randomInt(0, 2) === 0 ? randomInt(1, 999).toString() : null,
             eventId: selectedEvents.length > 0 ? selectedEvents[0].id : null,
+            eventIds: selectedEvents.map(e => e.id),
             registrationType: 'event',
             registrationDate: new Date(createdAt).toISOString().split('T')[0],
             paymentStatus: randomFromArray(['pending', 'paid', 'waived']),
@@ -435,17 +447,33 @@ function updateEventsWithParticipants(events, drivers) {
     
     // First, ensure each driver is assigned to at least one event
     drivers.forEach(driver => {
-        if (driver.eventId) {
-            if (!driverParticipation.has(driver.eventId)) {
-                driverParticipation.set(driver.eventId, []);
+        // Support multi-event registration via eventIds, fallback to single eventId
+        const targetEventIds = Array.isArray(driver.eventIds) && driver.eventIds.length > 0
+            ? driver.eventIds
+            : (driver.eventId ? [driver.eventId] : []);
+        targetEventIds.forEach(eid => {
+            if (!driverParticipation.has(eid)) {
+                driverParticipation.set(eid, []);
             }
-            driverParticipation.get(driver.eventId).push(driver.id);
-        }
+            driverParticipation.get(eid).push(driver.id);
+        });
     });
     
     // Update each event with its participants
     updatedEvents.forEach(event => {
-        const participants = driverParticipation.get(event.id) || [];
+        let participants = driverParticipation.get(event.id) || [];
+
+        // Enforce per-event capacity constraints
+        const minPerEvent = STRESS_TEST_CONFIG.driversPerEvent.min;
+        const maxPerEvent = STRESS_TEST_CONFIG.driversPerEvent.max;
+        if (participants.length > maxPerEvent) {
+            // Shuffle and cap
+            participants = participants
+                .map(p => [Math.random(), p])
+                .sort((a, b) => a[0] - b[0])
+                .map(x => x[1])
+                .slice(0, maxPerEvent);
+        }
         event.participants = participants;
         event.currentParticipants = participants.length;
         
@@ -528,8 +556,9 @@ function generateStressTestData() {
     console.log('💾 Writing data to files...');
     
     // Backup existing files
-    const dataDir = path.join(__dirname, 'data');
-    const backupDir = path.join(__dirname, 'data', 'stress-test-backup');
+    // Write to project data directory (one level up)
+    const dataDir = path.join(__dirname, '..', 'data');
+    const backupDir = path.join(__dirname, '..', 'data', 'stress-test-backup');
     
     if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir, { recursive: true });

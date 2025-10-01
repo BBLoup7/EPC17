@@ -71,6 +71,40 @@ class PairingEngine {
     }
 
     /**
+     * Validate that a race number hasn't been used before
+     * Rule: EPC17_WORKFLOW.md v1 - prevent race number conflicts
+     */
+    validateRaceNumber(eventId, raceNumber) {
+        if (!Number.isFinite(raceNumber) || raceNumber <= 0) {
+            console.warn(`⚠️ Invalid race number: ${raceNumber}`);
+            return false;
+        }
+
+        // Check if this race number is already in use
+        const currentNext = this.getNextRaceNumber(eventId);
+        if (raceNumber >= currentNext) {
+            console.warn(`⚠️ Race number ${raceNumber} conflicts with next available number ${currentNext}`);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get all used race numbers for an event (for validation)
+     */
+    getUsedRaceNumbers(eventId) {
+        // This would need to be implemented with access to the race data
+        // For now, we'll use a simple approach based on the next race number
+        const nextNumber = this.getNextRaceNumber(eventId);
+        const usedNumbers = [];
+        for (let i = 1; i < nextNumber; i++) {
+            usedNumbers.push(i);
+        }
+        return usedNumbers;
+    }
+
+    /**
      * Generate heats for a round using multi-lane logic with Free Run support and performance optimizations
      */
     async generateHeats(participants, numberOfLanes, roundNumber = 1, eventId = null, freeRunEnabled = false) {

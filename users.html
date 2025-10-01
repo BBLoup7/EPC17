@@ -5,21 +5,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Users & Permissions - EPC TECHNOLOGY</title>
 	<link rel="stylesheet" href="styles.css">
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+	    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-	<nav class="main-nav">
-		<div class="nav-brand">
-			<div class="brand-icon"><i class="fas fa-cogs"></i></div>
-			<div class="brand-text">
-				<span class="brand-main">EPC TECHNOLOGY</span>
-				<span class="brand-sub">PROJECT 17</span>
-			</div>
-		</div>
-		<ul class="nav-links">
-			<li><a href="index.html">Home</a></li>
-		</ul>
-	</nav>
+	<!-- Navigation is now handled by sidebar-nav.js -->
 
 	<main class="main-content">
 		<div class="page-header">
@@ -72,6 +62,7 @@
 	</main>
 
 	<script src="utils/auth.js"></script>
+	<script src="js/sidebar-nav.js"></script>
 	<script>
 		// Central permissions registry for easy updates (categories only)
 		const ALL_PERMISSIONS = [
@@ -82,7 +73,9 @@
 				{ key: 'races', label: 'Races' },
 				{ key: 'drivers profile', label: 'Drivers Profile' },
 				{ key: 'analytics', label: 'Analytics' },
-				{ key: 'live display', label: 'Live Display' }
+				{ key: 'live display', label: 'Live Display' },
+				// Rule: EPC17_WORKFLOW.md - add Animator/Commentator permission
+				{ key: 'animator', label: 'Animator / Commentator' }
 			]}
 		];
 
@@ -150,6 +143,7 @@
 
 		function buildEventSelector(container, selectedIds = []) {
 			container.innerHTML = '';
+			// All events toggle (kept for semantics)
 			const allWrap = document.createElement('div');
 			allWrap.style.marginBottom = '0.5rem';
 			const allCb = document.createElement('input');
@@ -163,56 +157,147 @@
 			allWrap.appendChild(allLab);
 			container.appendChild(allWrap);
 
+			// Searchable multi-select combo
+			const combo = document.createElement('div');
+			combo.className = 'events-combo';
+			combo.style.position = 'relative';
+			combo.style.display = 'inline-block';
+			combo.style.minWidth = '260px';
+
+			const display = document.createElement('button');
+			display.type = 'button';
+			display.style.width = '100%';
+			display.style.textAlign = 'left';
+			display.style.padding = '0.5rem 0.75rem';
+			display.style.border = '1px solid var(--border-color)';
+			display.style.borderRadius = '6px';
+			display.style.background = 'var(--bg-primary)';
+			display.style.color = 'var(--text-primary)';
+			display.style.cursor = 'pointer';
+			display.textContent = 'Select events...';
+
+			const panel = document.createElement('div');
+			panel.style.position = 'absolute';
+			panel.style.top = 'calc(100% + 6px)';
+			panel.style.left = '0';
+			panel.style.zIndex = '20';
+			panel.style.minWidth = '320px';
+			panel.style.maxHeight = '280px';
+			panel.style.overflow = 'auto';
+			panel.style.background = 'var(--bg-secondary)';
+			panel.style.border = '1px solid var(--border-color)';
+			panel.style.borderRadius = '8px';
+			panel.style.boxShadow = '0 10px 20px rgba(0,0,0,0.25)';
+			panel.style.display = 'none';
+
+			const searchWrap = document.createElement('div');
+			searchWrap.style.padding = '0.5rem';
+			const search = document.createElement('input');
+			search.type = 'text';
+			search.placeholder = 'Search events...';
+			search.style.width = '100%';
+			search.style.padding = '0.5rem 0.75rem';
+			search.style.border = '1px solid var(--border-color)';
+			search.style.borderRadius = '6px';
+			search.style.background = 'var(--bg-primary)';
+			search.style.color = 'var(--text-primary)';
+			searchWrap.appendChild(search);
+
 			const list = document.createElement('div');
 			list.style.display = 'grid';
-			list.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
-			list.style.gap = '0.25rem 0.75rem';
-			EVENTS.forEach(ev => {
-				const row = document.createElement('label');
-				row.style.display = 'flex';
-				row.style.alignItems = 'center';
-				row.style.gap = '0.5rem';
-				const cb = document.createElement('input');
-				cb.type = 'checkbox';
-				cb.value = ev.id;
-				cb.checked = selectedIds && selectedIds.length > 0 ? selectedIds.includes(ev.id) : false;
-				const sp = document.createElement('span');
-				sp.textContent = ev.name || ev.id;
-				row.appendChild(cb);
-				row.appendChild(sp);
-				list.appendChild(row);
-			});
-			container.appendChild(list);
+			list.style.gridTemplateColumns = '1fr';
+			list.style.gap = '0';
+			list.style.padding = '0.25rem 0';
 
-			// Default: All when no selections
+			function updateDisplayText() {
+				const checked = list.querySelectorAll('input[type="checkbox"][data-event-id]:checked');
+				if (allCb.checked) { display.textContent = 'All events'; return; }
+				if (checked.length === 0) { display.textContent = 'Select events...'; return; }
+				if (checked.length === 1) {
+					const one = checked[0];
+					display.textContent = EVENTS.find(e => String(e.id) === String(one.value))?.name || one.value;
+					return;
+				}
+				display.textContent = `${checked.length} events selected`;
+			}
+
+			function renderList(filterText = '') {
+				list.innerHTML = '';
+				const f = filterText.trim().toLowerCase();
+				EVENTS.forEach(ev => {
+					const name = ev.name || ev.id;
+					if (f && !(String(name).toLowerCase().includes(f))) return;
+					const row = document.createElement('label');
+					row.style.display = 'flex';
+					row.style.alignItems = 'center';
+					row.style.gap = '0.5rem';
+					row.style.padding = '0.4rem 0.6rem';
+					row.style.cursor = 'pointer';
+					row.style.borderBottom = '1px solid var(--border-color)';
+					const cb = document.createElement('input');
+					cb.type = 'checkbox';
+					cb.value = ev.id;
+					cb.setAttribute('data-event-id', ev.id);
+					cb.checked = selectedIds && selectedIds.length > 0 ? selectedIds.includes(ev.id) : false;
+					const sp = document.createElement('span');
+					sp.textContent = name;
+					row.appendChild(cb);
+					row.appendChild(sp);
+					list.appendChild(row);
+				});
+			}
+
+			function setDisabled(disabled) {
+				display.disabled = disabled;
+				display.style.opacity = disabled ? '0.6' : '1';
+				panel.style.display = disabled ? 'none' : panel.style.display;
+			}
+
+			// Initial state
 			const anySelected = selectedIds && selectedIds.length > 0;
 			allCb.checked = !anySelected;
-			list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.disabled = allCb.checked);
+			renderList('');
+			updateDisplayText();
+			setDisabled(allCb.checked);
 
+			// Wire events
+			display.addEventListener('click', (e) => {
+				e.stopPropagation();
+				panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+				search.focus();
+			});
+			search.addEventListener('input', () => {
+				renderList(search.value);
+			});
+			list.addEventListener('change', () => {
+				// Uncheck All when any event is selected
+				const any = Array.from(list.querySelectorAll('input[type="checkbox"][data-event-id]')).some(c => c.checked);
+				if (any) allCb.checked = false;
+				if (!any) allCb.checked = true;
+				setDisabled(allCb.checked);
+				updateDisplayText();
+			});
 			allCb.addEventListener('change', () => {
 				const disabled = allCb.checked;
-				list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.disabled = disabled);
-				if (disabled) {
-					list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-				}
+				list.querySelectorAll('input[type="checkbox"][data-event-id]').forEach(cb => { cb.checked = false; });
+				setDisabled(disabled);
+				updateDisplayText();
 			});
+			document.addEventListener('click', () => { panel.style.display = 'none'; });
+			panel.addEventListener('click', (e) => e.stopPropagation());
 
-			list.addEventListener('change', (e) => {
-				if (e.target && e.target.type === 'checkbox') {
-					// Uncheck All when any event is selected
-					const any = Array.from(list.querySelectorAll('input[type="checkbox"]')).some(c => c.checked);
-					if (any) allCb.checked = false;
-					// If none selected, revert to All
-					if (!any) allCb.checked = true;
-				}
-			});
+			// Compose panel
+			panel.appendChild(searchWrap);
+			panel.appendChild(list);
+			combo.appendChild(display);
+			combo.appendChild(panel);
+			container.appendChild(combo);
 		}
 
 		function getSelectedEventIds(container) {
 			const allCb = container.querySelector('input[type="checkbox"]');
 			if (allCb && allCb.checked) return [];
-			return Array.from(container.querySelectorAll('div div input[type="checkbox"]'))
-				.filter(cb => cb.checked)
+			return Array.from(container.querySelectorAll('input[type="checkbox"][data-event-id]:checked'))
 				.map(cb => cb.value);
 		}
 
@@ -269,22 +354,50 @@
 				if (!btn) return;
 				const id = btn.getAttribute('data-id');
 				if (btn.getAttribute('data-action') === 'delete') {
-					if (!confirm('Delete this user?')) return;
-					const res = await Auth.fetch(`/api/users/${id}`, { method: 'DELETE' });
-					if (!res.ok) { alert('Delete failed'); return; }
-					loadUsers();
+					window.confirmDelete('this user', async () => {
+						const res = await Auth.fetch(`/api/users/${id}`, { method: 'DELETE' });
+						if (!res.ok) { 
+							Helpers.showToast('Delete failed', 'error'); 
+							return; 
+						}
+						loadUsers();
+					});
 				} else if (btn.getAttribute('data-action') === 'save') {
 					const container = document.querySelector(`.perms-grid[data-user-perms="${id}"]`);
 					const perms = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
 					const evContainer = document.querySelector(`.event-select[data-user-events="${id}"]`);
 					const allowedEvents = getSelectedEventIds(evContainer);
-					const res = await Auth.fetch(`/api/users/${id}`, {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ permissions: perms, allowedEvents })
-					});
-					if (!res.ok) { alert('Save failed'); return; }
-					loadUsers();
+					
+					// Show loading state
+					const originalText = btn.textContent;
+					btn.textContent = 'Saving...';
+					btn.disabled = true;
+					
+					try {
+						const res = await Auth.fetch(`/api/users/${id}`, {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ permissions: perms, allowedEvents })
+						});
+						
+						if (!res.ok) { 
+							let errorMsg = 'Save failed';
+							try {
+								const errorData = await res.json();
+								if (errorData && errorData.error) errorMsg = errorData.error;
+							} catch {}
+							showSaveMessage(btn, errorMsg, 'error');
+							return; 
+						}
+						
+						showSaveMessage(btn, 'Saved successfully!', 'success');
+						loadUsers();
+					} catch (error) {
+						showSaveMessage(btn, 'Network error: ' + error.message, 'error');
+					} finally {
+						btn.textContent = originalText;
+						btn.disabled = false;
+					}
 				}
 			});
 
@@ -315,6 +428,27 @@
 			if (!host) return;
 			host.textContent = text;
 			host.style.color = type === 'success' ? 'var(--success)' : 'var(--error)';
+		}
+
+		function showSaveMessage(button, text, type) {
+			// Create or find message element next to the button
+			let msgEl = button.parentElement.querySelector('.save-message');
+			if (!msgEl) {
+				msgEl = document.createElement('div');
+				msgEl.className = 'save-message';
+				msgEl.style.fontSize = '0.8rem';
+				msgEl.style.marginLeft = '0.5rem';
+				msgEl.style.fontWeight = '500';
+				button.parentElement.appendChild(msgEl);
+			}
+			
+			msgEl.textContent = text;
+			msgEl.style.color = type === 'error' ? '#dc2626' : '#16a34a';
+			
+			// Clear message after 3 seconds
+			setTimeout(() => {
+				if (msgEl) msgEl.textContent = '';
+			}, 3000);
 		}
 	</script>
 </body>

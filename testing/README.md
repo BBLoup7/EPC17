@@ -42,6 +42,16 @@ This directory contains comprehensive test files for validating various componen
   - Performance validation
 - **Usage**: Open in browser to test sorting and filtering
 
+#### `commentator-test.html`
+- **Purpose**: Tests the new Animator/Commentator page functionality
+- **Features**:
+  - Driver card animations (slide in/out, transitions)
+  - Race timer functionality
+  - Toast notification system
+  - Animation performance testing
+  - Multiple transition stress testing
+- **Usage**: Open in browser to test commentator animations and features
+
 ### JavaScript Test Files
 
 #### `participant-loading-test.js`

@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Final Results (Project 17)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/race.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Hero Section Styles - Consistent with other pages */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Final Results Styles */
+        .final-results-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .final-results-header h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .final-results-header p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .final-results-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+        }
+
+        .results-class {
+            margin-bottom: 3rem;
+        }
+
+        .results-class:last-child {
+            margin-bottom: 0;
+        }
+
+        .results-class h4 {
+            color: var(--accent-primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .results-table {
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        .results-table table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table th {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .results-table td {
+            color: var(--text-primary);
+        }
+
+        .results-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .position-1 {
+            background: linear-gradient(135deg, #ffd700, #ffed4e) !important;
+            color: #000 !important;
+            font-weight: 700;
+        }
+
+        .position-2 {
+            background: linear-gradient(135deg, #c0c0c0, #e5e5e5) !important;
+            color: #000 !important;
+            font-weight: 600;
+        }
+
+        .position-3 {
+            background: linear-gradient(135deg, #cd7f32, #daa520) !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+
+        .no-results {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 3rem;
+        }
+
+        .no-results h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .no-results p {
+            margin-bottom: 2rem;
+        }
+
+        /* Event Selection Styles */
+        .event-selection {
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .event-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .event-header h3 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .event-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-completed {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+
+        .status-active {
+            background: var(--warning);
+            color: var(--bg-primary);
+        }
+
+        .status-upcoming {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        .event-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .event-actions .btn {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        /* Search and Sort Controls */
+        .search-sort-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            color: var(--text-secondary);
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-search:hover {
+            color: var(--text-primary);
+            background: var(--bg-primary);
+        }
+
+        .sort-container, .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sort-label, .filter-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .sort-select, .filter-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sort-select:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .sort-select option, .filter-select option {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .search-sort-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .search-container {
+                min-width: auto;
+            }
+
+            .sort-container, .filter-container {
+                justify-content: space-between;
+            }
+
+            .events-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .event-details {
+                grid-template-columns: 1fr;
+            }
+
+            .event-actions {
+                flex-direction: column;
+            }
+
+            .event-actions .btn {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation is handled by sidebar-nav.js -->
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1 class="hero-title">
+                            <i class="fas fa-trophy"></i>
+                            Final Results & Standings
+                        </h1>
+                        <p class="hero-subtitle">EPC Technology - View final results and overall standings for completed events</p>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-hero" onclick="refreshResults()">
+                            <i class="fas fa-sync"></i> Refresh Results
+                        </button>
+                        <button class="btn btn-outline" onclick="exportResults()">
+                            <i class="fas fa-download"></i> Export Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Selection Section -->
+            <section class="event-selection" id="event-selection">
+                <div class="section-header">
+                    <h2>Select Event</h2>
+                    <p>Choose a completed event to view final results and standings</p>
+                </div>
+                
+                <!-- Search and Sort Controls -->
+                <div class="search-sort-controls">
+                    <div class="search-container">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="resultsSearch" class="search-input" placeholder="Search events by name..." oninput="filterResultsEvents()">
+                            <button class="clear-search" id="clearResultsSearch" onclick="clearResultsSearch()" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="sort-container">
+                        <label for="resultsSort" class="sort-label">Sort by:</label>
+                        <select id="resultsSort" class="sort-select" onchange="sortResultsEvents()">
+                            <option value="date-desc">Date (Newest First)</option>
+                            <option value="date-asc">Date (Oldest First)</option>
+                            <option value="name-asc">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                            <option value="location-asc">Location (A-Z)</option>
+                            <option value="location-desc">Location (Z-A)</option>
+                        </select>
+                    </div>
+                    <div class="filter-container">
+                        <label for="resultsStatusFilter" class="filter-label">Status:</label>
+                        <select id="resultsStatusFilter" class="filter-select" onchange="filterResultsEvents()">
+                            <option value="">All Status</option>
+                            <option value="completed">Completed Only</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="events-grid" id="events-grid">
+                    <!-- Events will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Final Results Section -->
+            <section class="final-results" id="final-results" style="display: none;">
+                <div class="final-results-header">
+                    <h3 id="selected-event-name">Event Name</h3>
+                    <p id="selected-event-details">Event Details</p>
+                </div>
+                
+                <div class="final-results-container" id="final-results-container">
+                    <!-- Final results will be populated here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="utils/performance-monitor.js"></script>
+    <script src="utils/helpers.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
+    <script src="utils/validation.js"></script>
+    <script src="utils/event-bus.js"></script>
+    <script src="modules/statistics-manager.js"></script>
+    <script src="utils/data-manager.js?v=1.2"></script>
+    <script src="utils/migration-utils.js?v=1.2"></script>
+    <script src="modules/pairing-engine.js?v=1.2"></script>
+    <script src="modules/race.js?v=1.2"></script>
+    <script src="modules/event.js?v=1.2"></script>
+    <!-- Mobile Navigation -->
+    <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
+    <script>
+        // Initialize the final results system
+        let dataManager, eventManager;
+
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🏆 Final Results page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🏆 Final Results page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🏆 Final Results page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🏆 Final Results page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🏆 FINAL RESULTS PAGE: Initializing Final Results System...');
+            
+            try {
+                // Wait for authentication before initializing
+                await waitForAuthentication();
+                
+                // Initialize core modules
+                dataManager = new DataManager();
+                eventManager = new EventManager();
+                
+                // Wait for data to load before initializing UI
+                await dataManager.loadFromStorage();
+                
+                // Initialize events data for results page
+                const allEvents = dataManager.getEventsArray();
+                window.allResultsEventsData = [...allEvents];
+                window.filteredResultsEventsData = [...allEvents];
+                
+                // Load and display events
+                loadEvents();
+                
+                console.log('🏆 FINAL RESULTS PAGE: Final Results System initialized successfully');
+                
+            } catch (error) {
+                console.error('Error initializing Final Results System:', error);
+                showToast('Error initializing final results system', 'error');
+            }
+        });
+
+        // Global utility functions
+        function showToast(message, type = 'info') {
+            if (typeof Helpers !== 'undefined' && Helpers.showToast) {
+                Helpers.showToast(message, type);
+            } else {
+                // Fallback if Helpers is not available
+                console.log(`Toast (${type}): ${message}`);
+                alert(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+
+        // Load events for selection
+        function loadEvents() {
+            const eventsGrid = document.getElementById('events-grid');
+            if (!eventsGrid) return;
+
+            // Filter to show only completed events by default
+            const completedEvents = window.allResultsEventsData.filter(event => {
+                return event.status === 'completed' || getEventStatus(event) === 'completed';
+            });
+
+            if (completedEvents.length === 0) {
+                eventsGrid.innerHTML = `
+                    <div class="no-results">
+                        <h3>No Completed Events</h3>
+                        <p>There are no completed events to show final results for.</p>
+                        <button class="btn btn-primary" onclick="showAllEvents()">
+                            <i class="fas fa-eye"></i> Show All Events
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const eventsHtml = completedEvents.map(event => {
+                const eventStatus = getEventStatus(event);
+                
+                return `
+                    <div class="event-card ${eventStatus.toLowerCase()}" data-event-id="${event.id}">
+                        <div class="event-header">
+                            <h3>${event.name}</h3>
+                            <span class="event-status status-${eventStatus}">${eventStatus}</span>
+                        </div>
+                        <div class="event-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Date:</span>
+                                <span class="detail-value">${new Date(event.date).toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Location:</span>
+                                <span class="detail-value">${event.location}</span>
+                            </div>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn btn-primary" onclick="viewFinalResults('${event.id}')">
+                                <i class="fas fa-trophy"></i>
+                                View Results
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            eventsGrid.innerHTML = eventsHtml;
+        }
+
+        function getEventStatus(event) {
+            // Prefer persisted status when available
+            if (event && typeof event.status === 'string') {
+                return event.status.toLowerCase();
+            }
+            return 'upcoming';
+        }
+
+        function viewFinalResults(eventId) {
+            const event = dataManager.getEvent(eventId);
+            if (!event) {
+                showToast('Event not found', 'error');
+                return;
+            }
+
+            // Hide event selection and show results
+            document.getElementById('event-selection').style.display = 'none';
+            document.getElementById('final-results').style.display = 'block';
+
+            // Update header
+            document.getElementById('selected-event-name').textContent = event.name;
+            document.getElementById('selected-event-details').textContent = 
+                `${event.location} • ${new Date(event.date).toLocaleDateString()}`;
+
+            // Load and display final results
+            loadFinalResults(eventId);
+        }
+
+        function loadFinalResults(eventId) {
+            const container = document.getElementById('final-results-container');
+            if (!container) return;
+
+            // Get race bracket data
+            const bracket = dataManager.getRaceBracket(eventId);
+            if (!bracket || !bracket.classes) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <h3>No Results Available</h3>
+                        <p>No race results are available for this event.</p>
+                        <button class="btn btn-secondary" onclick="goBackToEvents()">
+                            <i class="fas fa-arrow-left"></i> Back to Events
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Generate final results for each class
+            let resultsHtml = '';
+            
+            Object.entries(bracket.classes).forEach(([className, classData]) => {
+                const classResults = generateClassResults(className, classData);
+                if (classResults.length > 0) {
+                    resultsHtml += `
+                        <div class="results-class">
+                            <h4>${className}</h4>
+                            <div class="results-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Position</th>
+                                            <th>Driver</th>
+                                            <th>Team</th>
+                                            <th>Points</th>
+                                            <th>Wins</th>
+                                            <th>Races</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${classResults.map((result, index) => `
+                                            <tr class="position-${index + 1}">
+                                                <td>${index + 1}</td>
+                                                <td>${result.driverName}</td>
+                                                <td>${result.team || 'N/A'}</td>
+                                                <td>${result.points}</td>
+                                                <td>${result.wins}</td>
+                                                <td>${result.races}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (resultsHtml === '') {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <h3>No Results Available</h3>
+                        <p>No completed races found for this event.</p>
+                        <button class="btn btn-secondary" onclick="goBackToEvents()">
+                            <i class="fas fa-arrow-left"></i> Back to Events
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = resultsHtml;
+            }
+        }
+
+        function generateClassResults(className, classData) {
+            const results = [];
+            const participantStats = {};
+
+            // Process all rounds and heats to calculate statistics
+            if (classData.rounds) {
+                classData.rounds.forEach(round => {
+                    if (round.heats) {
+                        round.heats.forEach(heat => {
+                            if (heat.results && heat.results.length > 0) {
+                                heat.results.forEach(result => {
+                                    const participantId = result.participantId;
+                                    
+                                    if (!participantStats[participantId]) {
+                                        // Get participant details
+                                        const participant = dataManager.getParticipant(participantId);
+                                        participantStats[participantId] = {
+                                            driverName: participant ? participant.name : 'Unknown Driver',
+                                            team: participant ? participant.team : null,
+                                            points: 0,
+                                            wins: 0,
+                                            races: 0
+                                        };
+                                    }
+
+                                    participantStats[participantId].races++;
+                                    
+                                    // Award points based on position (simple scoring system)
+                                    if (result.position === 1) {
+                                        participantStats[participantId].wins++;
+                                        participantStats[participantId].points += 10;
+                                    } else if (result.position === 2) {
+                                        participantStats[participantId].points += 7;
+                                    } else if (result.position === 3) {
+                                        participantStats[participantId].points += 5;
+                                    } else if (result.position === 4) {
+                                        participantStats[participantId].points += 3;
+                                    } else if (result.position === 5) {
+                                        participantStats[participantId].points += 2;
+                                    } else {
+                                        participantStats[participantId].points += 1;
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Convert to array and sort by points (descending)
+            Object.values(participantStats).forEach(stats => {
+                results.push(stats);
+            });
+
+            return results.sort((a, b) => b.points - a.points);
+        }
+
+        function goBackToEvents() {
+            document.getElementById('event-selection').style.display = 'block';
+            document.getElementById('final-results').style.display = 'none';
+        }
+
+        function showAllEvents() {
+            // Show all events instead of just completed ones
+            const eventsGrid = document.getElementById('events-grid');
+            if (!eventsGrid) return;
+
+            const eventsHtml = window.allResultsEventsData.map(event => {
+                const eventStatus = getEventStatus(event);
+                
+                return `
+                    <div class="event-card ${eventStatus.toLowerCase()}" data-event-id="${event.id}">
+                        <div class="event-header">
+                            <h3>${event.name}</h3>
+                            <span class="event-status status-${eventStatus}">${eventStatus}</span>
+                        </div>
+                        <div class="event-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Date:</span>
+                                <span class="detail-value">${new Date(event.date).toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Location:</span>
+                                <span class="detail-value">${event.location}</span>
+                            </div>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn btn-primary" onclick="viewFinalResults('${event.id}')" ${eventStatus !== 'completed' ? 'disabled' : ''}>
+                                <i class="fas fa-trophy"></i>
+                                View Results
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            eventsGrid.innerHTML = eventsHtml;
+        }
+
+        function refreshResults() {
+            showToast('Refreshing results...', 'info');
+            // Reload data and refresh display
+            dataManager.loadFromStorage().then(() => {
+                const allEvents = dataManager.getEventsArray();
+                window.allResultsEventsData = [...allEvents];
+                window.filteredResultsEventsData = [...allEvents];
+                loadEvents();
+                showToast('Results refreshed successfully!', 'success');
+            }).catch(error => {
+                console.error('Error refreshing results:', error);
+                showToast('Error refreshing results', 'error');
+            });
+        }
+
+        function exportResults() {
+            showToast('Export functionality coming soon!', 'info');
+        }
+
+        // Search and filter functions
+        function filterResultsEvents() {
+            const searchTerm = document.getElementById('resultsSearch').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('resultsStatusFilter').value;
+            const clearButton = document.getElementById('clearResultsSearch');
+            
+            // Update clear button visibility
+            if (clearButton) {
+                clearButton.style.display = searchTerm ? 'block' : 'none';
+            }
+            
+            // Apply filters
+            window.filteredResultsEventsData = window.allResultsEventsData.filter(event => {
+                // Search filter
+                if (searchTerm) {
+                    const nameMatch = event.name && event.name.toLowerCase().includes(searchTerm);
+                    const locationMatch = event.location && event.location.toLowerCase().includes(searchTerm);
+                    if (!nameMatch && !locationMatch) {
+                        return false;
+                    }
+                }
+                
+                // Status filter
+                if (statusFilter) {
+                    const eventStatus = getEventStatus(event);
+                    if (eventStatus !== statusFilter) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Re-render events
+            const eventsGrid = document.getElementById('events-grid');
+            if (eventsGrid) {
+                const eventsHtml = window.filteredResultsEventsData.map(event => {
+                    const eventStatus = getEventStatus(event);
+                    
+                    return `
+                        <div class="event-card ${eventStatus.toLowerCase()}" data-event-id="${event.id}">
+                            <div class="event-header">
+                                <h3>${event.name}</h3>
+                                <span class="event-status status-${eventStatus}">${eventStatus}</span>
+                            </div>
+                            <div class="event-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Date:</span>
+                                    <span class="detail-value">${new Date(event.date).toLocaleDateString()}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Location:</span>
+                                    <span class="detail-value">${event.location}</span>
+                                </div>
+                            </div>
+                            <div class="event-actions">
+                                <button class="btn btn-primary" onclick="viewFinalResults('${event.id}')" ${eventStatus !== 'completed' ? 'disabled' : ''}>
+                                    <i class="fas fa-trophy"></i>
+                                    View Results
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                eventsGrid.innerHTML = eventsHtml;
+            }
+        }
+
+        function sortResultsEvents() {
+            const sortOption = document.getElementById('resultsSort').value;
+            
+            window.filteredResultsEventsData.sort((a, b) => {
+                switch (sortOption) {
+                    case 'date-desc':
+                        return new Date(b.date) - new Date(a.date);
+                    case 'date-asc':
+                        return new Date(a.date) - new Date(b.date);
+                    case 'name-asc':
+                        return (a.name || '').localeCompare(b.name || '');
+                    case 'name-desc':
+                        return (b.name || '').localeCompare(a.name || '');
+                    case 'location-asc':
+                        return (a.location || '').localeCompare(b.location || '');
+                    case 'location-desc':
+                        return (b.location || '').localeCompare(a.location || '');
+                    default:
+                        return 0;
+                }
+            });
+            
+            filterResultsEvents();
+        }
+
+        function clearResultsSearch() {
+            document.getElementById('resultsSearch').value = '';
+            document.getElementById('clearResultsSearch').style.display = 'none';
+            filterResultsEvents();
+        }
+
+        // Make functions globally available
+        window.dataManager = null;
+        window.eventManager = null;
+        window.showToast = showToast;
+        window.viewFinalResults = viewFinalResults;
+        window.goBackToEvents = goBackToEvents;
+        window.refreshResults = refreshResults;
+        window.exportResults = exportResults;
+        window.filterResultsEvents = filterResultsEvents;
+        window.sortResultsEvents = sortResultsEvents;
+        window.clearResultsSearch = clearResultsSearch;
+        window.showAllEvents = showAllEvents;
+
+        // Set global references after initialization
+        setTimeout(() => {
+            window.dataManager = dataManager;
+            window.eventManager = eventManager;
+        }, 100);
+    </script>
+</body>
+</html>

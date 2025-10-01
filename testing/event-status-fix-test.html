@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Status Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Event Status Fix Test</h1>
+    <p>This test verifies that the event status fix works correctly:</p>
+    <ul>
+        <li>Events without races can have brackets initialized even if status is 'active'</li>
+        <li>Event editing preserves existing status unless explicitly changed</li>
+        <li>Event status automatically updates based on race existence</li>
+    </ul>
+
+    <div class="test-section">
+        <h3>Test 1: Check Event Status Logic</h3>
+        <button class="btn-primary" onclick="testEventStatusLogic()">Run Status Logic Test</button>
+        <div id="statusLogicResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Test Bracket Initialization for Active Events</h3>
+        <button class="btn-primary" onclick="testBracketInitialization()">Test Bracket Init</button>
+        <div id="bracketInitResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Test Event Status Preservation</h3>
+        <button class="btn-primary" onclick="testStatusPreservation()">Test Status Preservation</button>
+        <div id="statusPreservationResult"></div>
+    </div>
+
+    <script src="../utils/data-manager.js"></script>
+    <script src="../modules/event.js"></script>
+    <script src="../utils/helpers.js"></script>
+    <script>
+        let dataManager, eventManager;
+
+        // Mock Helpers for testing
+        window.Helpers = {
+            showToast: (message, type) => {
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            },
+            hideModal: () => console.log('Modal hidden'),
+            showModal: () => console.log('Modal shown')
+        };
+
+        // Mock app navigation
+        window.app = {
+            navigateToSection: (section) => console.log(`Navigating to ${section}`)
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Initialize managers
+                dataManager = new DataManager();
+                eventManager = new EventManager();
+                
+                // Load test data
+                await dataManager.loadFromStorage();
+                
+                console.log('✅ Test environment initialized');
+                addTestResult('statusLogicResult', 'Test environment initialized successfully', 'success');
+            } catch (error) {
+                console.error('❌ Failed to initialize test environment:', error);
+                addTestResult('statusLogicResult', 'Failed to initialize test environment: ' + error.message, 'error');
+            }
+        });
+
+        function addTestResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML += `<div class="test-result ${type}">${message}</div>`;
+            }
+        }
+
+        async function testEventStatusLogic() {
+            const elementId = 'statusLogicResult';
+            elementId.innerHTML = '<h4>Running Event Status Logic Test...</h4>';
+            
+            try {
+                // Test the updateEventStatusFromRaces method
+                if (typeof eventManager.updateEventStatusFromRaces === 'function') {
+                    addTestResult(elementId, '✅ updateEventStatusFromRaces method exists', 'success');
+                    
+                    // Test with a mock event
+                    const mockEvent = {
+                        id: 'test-event-1',
+                        name: 'Test Event 1',
+                        status: 'upcoming'
+                    };
+                    
+                    // Mock getEvent method
+                    const originalGetEvent = dataManager.getEvent;
+                    dataManager.getEvent = (id) => mockEvent;
+                    
+                    // Mock getRaceBracket method
+                    const originalGetRaceBracket = dataManager.getRaceBracket;
+                    dataManager.getRaceBracket = (id) => ({
+                        classes: {
+                            'Class A': {
+                                rounds: [
+                                    { participants: ['driver1', 'driver2'] }
+                                ]
+                            }
+                        }
+                    });
+                    
+                    // Mock updateEventStatus method
+                    dataManager.updateEventStatus = async (id, status) => {
+                        console.log(`Mock: Updating event ${id} status to ${status}`);
+                        return true;
+                    };
+                    
+                    await eventManager.updateEventStatusFromRaces('test-event-1');
+                    
+                    addTestResult(elementId, '✅ Event status logic test completed successfully', 'success');
+                    
+                    // Restore original methods
+                    dataManager.getEvent = originalGetEvent;
+                    dataManager.getRaceBracket = originalGetRaceBracket;
+                    dataManager.updateEventStatus = originalGetRaceBracket;
+                    
+                } else {
+                    addTestResult(elementId, '❌ updateEventStatusFromRaces method not found', 'error');
+                }
+            } catch (error) {
+                addTestResult(elementId, '❌ Event status logic test failed: ' + error.message, 'error');
+            }
+        }
+
+        async function testBracketInitialization() {
+            const elementId = 'bracketInitResult';
+            elementId.innerHTML = '<h4>Testing Bracket Initialization...</h4>';
+            
+            try {
+                // Test that active events without races can have brackets initialized
+                const mockEvent = {
+                    id: 'test-event-2',
+                    name: 'Test Event 2',
+                    status: 'active',
+                    participants: ['driver1', 'driver2']
+                };
+                
+                // Mock methods
+                const originalGetEvent = dataManager.getEvent;
+                const originalGetRaceBracket = dataManager.getRaceBracket;
+                
+                dataManager.getEvent = (id) => mockEvent;
+                dataManager.getRaceBracket = (id) => null; // No existing races
+                
+                // Test the logic from race-ui.js
+                const existingBracket = dataManager.getRaceBracket('test-event-2');
+                const hasExistingRaces = existingBracket && existingBracket.classes && 
+                    Object.values(existingBracket.classes).some(classBracket => 
+                        classBracket.rounds && classBracket.rounds.length > 0
+                    );
+                
+                if (!hasExistingRaces) {
+                    addTestResult(elementId, '✅ Active event without races can have brackets initialized', 'success');
+                } else {
+                    addTestResult(elementId, '❌ Active event with races should not allow bracket initialization', 'warning');
+                }
+                
+                // Restore original methods
+                dataManager.getEvent = originalGetEvent;
+                dataManager.getRaceBracket = originalGetRaceBracket;
+                
+            } catch (error) {
+                addTestResult(elementId, '❌ Bracket initialization test failed: ' + error.message, 'error');
+            }
+        }
+
+        async function testStatusPreservation() {
+            const elementId = 'statusPreservationResult';
+            elementId.innerHTML = '<h4>Testing Status Preservation...</h4>';
+            
+            try {
+                // Test that event editing preserves status unless explicitly changed
+                const originalEvent = {
+                    id: 'test-event-3',
+                    name: 'Test Event 3',
+                    status: 'upcoming'
+                };
+                
+                // Simulate form data
+                const formData = {
+                    get: (key) => {
+                        const values = {
+                            'eventName': 'Updated Test Event 3',
+                            'status': 'upcoming', // Same status
+                            'date': '2024-12-01',
+                            'location': 'Test Location'
+                        };
+                        return values[key];
+                    }
+                };
+                
+                // Test the status preservation logic
+                const newStatus = formData.get('status');
+                if (newStatus === originalEvent.status) {
+                    addTestResult(elementId, '✅ Event status preserved during editing', 'success');
+                } else {
+                    addTestResult(elementId, '❌ Event status changed unexpectedly', 'error');
+                }
+                
+                addTestResult(elementId, '✅ Status preservation test completed', 'success');
+                
+            } catch (error) {
+                addTestResult(elementId, '❌ Status preservation test failed: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

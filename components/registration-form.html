@@ -49,7 +49,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Phone</label>
-                        <input type="tel" class="form-control" name="contact.phone" placeholder="(555) 123-4567">
+                        <input type="tel" class="form-control" name="contact.phone" id="phoneInput" placeholder="(555) 123-4567" maxlength="14" oninput="formatPhoneNumber(this)" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Emergency Contact</label>
@@ -101,13 +101,68 @@
             <!-- Vehicle configurations for selected classes will appear here -->
         </div>
     </form>
+    
+    <script>
+        // Phone number formatting function
+        function formatPhoneNumber(input) {
+            // Remove all non-digit characters
+            let value = input.value.replace(/\D/g, '');
+            
+            // Limit to 10 digits
+            if (value.length > 10) {
+                value = value.substring(0, 10);
+            }
+            
+            // Format the phone number
+            let formattedValue = '';
+            if (value.length > 0) {
+                formattedValue = '(' + value.substring(0, 3);
+                if (value.length > 3) {
+                    formattedValue += ') ' + value.substring(3, 6);
+                    if (value.length > 6) {
+                        formattedValue += '-' + value.substring(6, 10);
+                    }
+                }
+            }
+            
+            // Update the input value
+            input.value = formattedValue;
+        }
+        
+        // Make the function globally available
+        window.formatPhoneNumber = formatPhoneNumber;
+        
+        // Function to format phone number when loading existing data
+        function formatExistingPhoneNumber(phoneInput) {
+            if (phoneInput && phoneInput.value) {
+                // If the value is already formatted, don't reformat
+                if (phoneInput.value.includes('(') || phoneInput.value.includes('-')) {
+                    return;
+                }
+                // If it's just digits, format it
+                if (/^\d+$/.test(phoneInput.value)) {
+                    formatPhoneNumber(phoneInput);
+                }
+            }
+        }
+        
+        // Function to get clean phone number for form submission
+        function getCleanPhoneNumber(phoneInput) {
+            if (!phoneInput || !phoneInput.value) return '';
+            return phoneInput.value.replace(/\D/g, '');
+        }
+        
+        // Make additional functions globally available
+        window.formatExistingPhoneNumber = formatExistingPhoneNumber;
+        window.getCleanPhoneNumber = getCleanPhoneNumber;
+    </script>
 </template>
 
 <style>
 .registration-form {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 1.5rem;
+    padding: 1rem;
     background: var(--bg-primary);
 }
 
@@ -117,15 +172,15 @@
         .form-section {
             background: var(--bg-secondary);
             border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
             border: 1px solid var(--border-color);
         }
 
 .form-section h3 {
     color: var(--text-primary);
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
+    margin-bottom: 0.65rem;
+    font-size: 1rem;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -136,13 +191,31 @@
             content: "🏁";
             font-size: 1rem;
         }
+        
+        /* Phone number input styling */
+        #phoneInput {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+        }
+        
+        #phoneInput:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        /* Phone format hint styling */
+        .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
 
         /* Horizontal Layout - 3 columns side by side */
         .form-horizontal-layout {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
         }
 
         .form-column {
@@ -158,7 +231,7 @@
         }
 
 .form-group {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
 }
 
 .form-group.full-width {
@@ -169,18 +242,18 @@
     display: block;
     color: var(--text-secondary);
     font-weight: 500;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.875rem;
 }
 
 .form-control {
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.6rem;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     transition: all 0.2s ease;
 }
 
@@ -198,8 +271,8 @@
 .classes-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem;
-    margin-top: 0.5rem;
+    gap: 0.6rem;
+    margin-top: 0.35rem;
 }
 
 .class-option {
@@ -207,7 +280,7 @@
     align-items: center;
     justify-content: space-between;
     background: var(--bg-primary);
-    padding: 0.75rem;
+    padding: 0.6rem;
     border-radius: 6px;
     border: 1px solid var(--border-color);
     transition: all 0.2s ease;
@@ -250,21 +323,21 @@
 
 /* Compact Vehicle Config */
 .vehicle-config-container {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
 }
 
 .vehicle-config {
     background: var(--bg-primary);
     border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    margin-bottom: 0.6rem;
     border: 2px solid var(--accent-primary);
 }
 
 .vehicle-config h4 {
     color: var(--accent-primary);
-    margin-bottom: 0.75rem;
-    font-size: 1rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -273,7 +346,7 @@
 .vehicle-config-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 0.75rem;
+    gap: 0.6rem;
 }
 
 /* Compact Payment Summary */
@@ -289,20 +362,20 @@
 .payment-details {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    padding: 0.75rem;
+    padding: 0.6rem;
 }
 
 .payment-breakdown {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
 }
 
 .payment-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.4rem 0;
+    padding: 0.35rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
 }
 
 .payment-item:last-child {
@@ -311,18 +384,18 @@
 
 .payment-total {
     text-align: center;
-    font-size: 1.1rem;
-    padding: 0.75rem;
+    font-size: 1rem;
+    padding: 0.6rem;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    margin-top: 0.75rem;
+    margin-top: 0.6rem;
 }
 
 /* Compact Sponsor Section */
 .sponsor-input-container {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
 }
 
 .sponsor-input {
@@ -332,8 +405,8 @@
 .sponsor-add-btn {
     white-space: nowrap;
     min-width: 70px;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.875rem;
 }
 
 .sponsor-tags {
@@ -379,16 +452,16 @@
         /* Compact Form Actions */
         .form-actions {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             justify-content: center;
-            margin-top: 1rem;
+            margin-top: 0.75rem;
         }
 
 .form-actions button {
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
+    padding: 0.65rem 1.75rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    min-width: 140px;
+    min-width: 130px;
 }
 
         /* Responsive Design */
@@ -471,13 +544,13 @@
 
 /* Button Styles */
 .btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.6rem 1.25rem;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
     transition: all 0.2s ease;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
 }
 
 .btn-primary {
@@ -857,7 +930,7 @@ function setupEventListeners() {
             }
             
             // Show success message
-            alert(`Registration submitted successfully!\nTotal fee: $${participantData.totalFee.toFixed(2)}`);
+            Helpers.showToast(`Registration submitted successfully! Total fee: $${participantData.totalFee.toFixed(2)}`, 'success');
             
             // Reset form
             e.target.reset();
@@ -869,7 +942,7 @@ function setupEventListeners() {
             updateClassOptionStyles();
             
         } catch (error) {
-            alert(`Registration failed: ${error.message}`);
+            Helpers.showToast(`Registration failed: ${error.message}`, 'error');
         }
     });
     

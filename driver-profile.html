@@ -5,73 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Driver Profile (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="main-nav">
-        <div class="nav-brand">
-            <div class="brand-icon">
-                <i class="fas fa-cogs"></i>
-            </div>
-            <div class="brand-text">
-                <span class="brand-main">EPC TECHNOLOGY</span>
-                <span class="brand-sub">PROJECT 17</span>
-            </div>
-        </div>
-        
-                <!-- Desktop Navigation -->
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registration</a></li>
-            <li><a href="series.html">Series</a></li>
-            <li><a href="events.html">Events</a></li>
-            <li><a href="races.html">Races</a></li>
-            <li class="active"><a href="driver-profile.html">Drivers</a></li>
-            <li><a href="analytics.html">Analytics</a></li>
-            <li><a href="live-display.html">Live Display</a></li>
-        </ul>
-        
-        <!-- Mobile Hamburger Menu -->
-        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
-        
-        <!-- Mobile Navigation Menu -->
-        <div class="mobile-nav-menu">
-            <div class="mobile-nav-header">
-                <div class="mobile-nav-brand">
-                    <div class="brand-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <div class="brand-text">
-                        <span class="brand-main">EPC TECHNOLOGY</span>
-                        <span class="brand-sub">PROJECT 17</span>
-                    </div>
-                </div>
-                <button class="mobile-nav-close" aria-label="Close navigation menu">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <ul class="mobile-nav-links">
-                <li><a href="index.html">🏠 Home</a></li>
-                <li><a href="registration.html">📝 Registration</a></li>
-                <li><a href="series.html">🏆 Series</a></li>
-                <li><a href="events.html">📅 Events</a></li>
-                <li><a href="races.html">🏁 Races</a></li>
-                <li><a href="driver-profile.html" class="active">👥 Drivers</a></li>
-                <li><a href="analytics.html">📊 Analytics</a></li>
-                <li><a href="live-display.html">🖥️ Live Display</a></li>
-            </ul>
-            <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">25W32a09</div>
-            </div>
-        </div>
-        
-        <!-- Mobile Navigation Overlay -->
-        <div class="mobile-nav-overlay"></div>
-    </nav>
+    <!-- Navigation is now handled by sidebar-nav.js -->
 
     <main class="main-content">
         <!-- Performance Warning Banner -->
@@ -86,12 +24,14 @@
             </div>
         </div>
         
-        <div class="page-header">
-            <div>
-                <h1>Driver Profiles</h1>
-                <p class="subtitle">Select a driver to view their racing history and performance statistics</p>
-            </div>
-            <div class="header-actions">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">Driver Profiles</h1>
+                    <p class="hero-subtitle">Select a driver to view their racing history and performance statistics with professional insights</p>
+                </div>
+                <div class="hero-actions">
                 <div id="driverSelectContainer">
                     <!-- Combo box will be populated by JavaScript -->
                 </div>
@@ -113,6 +53,143 @@
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- Advanced Driver Filters -->
+        <div id="driverFilters" class="driver-filters" style="display: none;">
+            <div class="filters-header">
+                <div class="filters-title">
+                    <i class="fas fa-filter"></i>
+                    <span>Advanced Driver Filters</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="clearAllFilters()">
+                    <i class="fas fa-times"></i> Clear All
+                </button>
+            </div>
+            
+            <div class="filters-grid">
+                <!-- Statistics Filters -->
+                <div class="filter-section">
+                    <h4>Performance Statistics</h4>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="totalRacesMin">Total Races (Min):</label>
+                            <input type="number" id="totalRacesMin" class="form-control" min="0" placeholder="0">
+                        </div>
+                        <div class="filter-group">
+                            <label for="totalRacesMax">Total Races (Max):</label>
+                            <input type="number" id="totalRacesMax" class="form-control" min="0" placeholder="∞">
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="totalWinsMin">Total Wins (Min):</label>
+                            <input type="number" id="totalWinsMin" class="form-control" min="0" placeholder="0">
+                        </div>
+                        <div class="filter-group">
+                            <label for="totalWinsMax">Total Wins (Max):</label>
+                            <input type="number" id="totalWinsMax" class="form-control" min="0" placeholder="∞">
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="winRateMin">Win Rate % (Min):</label>
+                            <input type="number" id="winRateMin" class="form-control" min="0" max="100" placeholder="0">
+                        </div>
+                        <div class="filter-group">
+                            <label for="winRateMax">Win Rate % (Max):</label>
+                            <input type="number" id="winRateMax" class="form-control" min="0" max="100" placeholder="100">
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="winStreakMin">Win Streak (Min):</label>
+                            <input type="number" id="winStreakMin" class="form-control" min="0" placeholder="0">
+                        </div>
+                        <div class="filter-group">
+                            <label for="totalEventsMin">Total Events (Min):</label>
+                            <input type="number" id="totalEventsMin" class="form-control" min="0" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class and Series Filters -->
+                <div class="filter-section">
+                    <h4>Class & Series</h4>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="classFilter">Sled Class:</label>
+                            <select id="classFilter" class="form-control">
+                                <option value="">All Classes</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="seriesFilter">Registered Series:</label>
+                            <select id="seriesFilter" class="form-control">
+                                <option value="">All Series</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Attendance Filters -->
+                <div class="filter-section">
+                    <h4>Event Attendance</h4>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="eventAttendanceFilter">Attended Event:</label>
+                            <select id="eventAttendanceFilter" class="form-control">
+                                <option value="">Any Event</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="eventCountMin">Events Attended (Min):</label>
+                            <input type="number" id="eventCountMin" class="form-control" min="0" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team and Registration Filters -->
+                <div class="filter-section">
+                    <h4>Team & Registration</h4>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="teamFilter">Team:</label>
+                            <select id="teamFilter" class="form-control">
+                                <option value="">All Teams</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="registrationDateFrom">Registered From:</label>
+                            <input type="date" id="registrationDateFrom" class="form-control">
+                        </div>
+                        <div class="filter-group">
+                            <label for="registrationDateTo">Registered To:</label>
+                            <input type="date" id="registrationDateTo" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filters-actions">
+                <button class="btn btn-primary" onclick="applyFilters()">
+                    <i class="fas fa-search"></i> Apply Filters
+                </button>
+                <button class="btn btn-secondary" onclick="toggleFilters()">
+                    <i class="fas fa-chevron-up"></i> Hide Filters
+                </button>
+            </div>
+
+            <div id="filterSummary" class="filter-summary" style="display: none;">
+                <span id="filterSummaryText"></span>
+            </div>
+        </div>
+
+        <!-- Filter Toggle Button -->
+        <div class="filter-toggle-container">
+            <button id="filterToggleBtn" class="btn btn-secondary" onclick="toggleFilters()">
+                <i class="fas fa-filter"></i> Show Advanced Filters
+            </button>
         </div>
 
         <!-- Driver Selection Grid (shown when no driver selected) -->
@@ -266,7 +343,7 @@
                                 <th>Races</th>
                                 <th>Wins</th>
                                 <th>Win Rate</th>
-                                <th>Best Position</th>
+                                <th>Event Result</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -277,6 +354,245 @@
     </main>
 
     <style>
+        /* Hero Section Styles - Consistent with Series Page */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Advanced Driver Filters */
+        .driver-filters {
+            background: var(--bg-secondary, #2d2d2d);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .filters-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #ffffff);
+        }
+
+        .filters-title i {
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .filter-section {
+            background: var(--bg-primary, #1a1a1a);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .filter-section h4 {
+            margin: 0 0 16px 0;
+            color: var(--accent-primary, #4a90e2);
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            color: var(--text-secondary, #b3b3b3);
+            font-weight: 500;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            background: var(--bg-secondary, #2d2d2d);
+            color: var(--text-primary, #ffffff);
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary, #4a90e2);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .filter-group input::placeholder {
+            color: var(--text-secondary, #b3b3b3);
+        }
+
+        .filters-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .filter-toggle-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .filter-summary {
+            background: var(--bg-primary, #1a1a1a);
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-top: 16px;
+            border-left: 4px solid var(--accent-primary, #4a90e2);
+        }
+
+        .filter-summary span {
+            color: var(--text-secondary, #b3b3b3);
+            font-size: 14px;
+        }
+
         .driver-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1164,6 +1480,7 @@
     
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
     <script>
         let allData = { participants: [], events: [], races: [], series: [] };
         let currentDriverId = null;
@@ -1696,8 +2013,15 @@
                     </div>
                 `;
                 if (pagination) pagination.style.display = 'none';
+                // Hide filter toggle when no drivers
+                const filterToggle = document.querySelector('.filter-toggle-container');
+                if (filterToggle) filterToggle.style.display = 'none';
                 return;
             }
+
+            // Show filter toggle when drivers are available
+            const filterToggle = document.querySelector('.filter-toggle-container');
+            if (filterToggle) filterToggle.style.display = 'block';
 
             // Sort participants alphabetically by name
             const sortedParticipants = [...allData.participants].sort((a, b) => 
@@ -1724,7 +2048,7 @@
                             <div class="driver-card-info">
                                 <h3>${driver.name}</h3>
                                 <div class="driver-card-meta">
-                                    ${driver.sledClass || 'No class'} • ${driver.team || 'No team'}
+                                    ${driver.racingNumber ? `#${driver.racingNumber}` : 'No number'} • ${driver.team || 'No team'}
                                 </div>
                             </div>
                         </div>
@@ -1786,15 +2110,403 @@
             if (pagination) pagination.style.display = 'block';
         }
 
+        // Advanced Filtering System
+        let currentFilters = {
+            totalRaces: { min: null, max: null },
+            totalWins: { min: null, max: null },
+            winRate: { min: null, max: null },
+            winStreak: { min: null },
+            totalEvents: { min: null },
+            class: null,
+            series: null,
+            eventAttendance: null,
+            eventCount: { min: null },
+            team: null,
+            registrationDate: { from: null, to: null }
+        };
+
+        let filteredDrivers = [];
+
+        // Toggle filters visibility
+        function toggleFilters() {
+            const filters = document.getElementById('driverFilters');
+            const toggleBtn = document.getElementById('filterToggleBtn');
+            
+            if (filters.style.display === 'none') {
+                filters.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i> Hide Advanced Filters';
+                populateFilterOptions();
+            } else {
+                filters.style.display = 'none';
+                toggleBtn.innerHTML = '<i class="fas fa-filter"></i> Show Advanced Filters';
+            }
+        }
+
+        // Populate filter dropdown options
+        function populateFilterOptions() {
+            // Populate class filter
+            const classFilter = document.getElementById('classFilter');
+            const classes = [...new Set(allData.participants.map(p => p.sledClass).filter(Boolean))].sort();
+            classFilter.innerHTML = '<option value="">All Classes</option>' + 
+                classes.map(cls => `<option value="${cls}">${cls}</option>`).join('');
+
+            // Populate series filter
+            const seriesFilter = document.getElementById('seriesFilter');
+            const series = dataManager.getAllSeries();
+            seriesFilter.innerHTML = '<option value="">All Series</option>' + 
+                series.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+            // Populate event attendance filter
+            const eventFilter = document.getElementById('eventAttendanceFilter');
+            const events = allData.events.sort((a, b) => new Date(b.date) - new Date(a.date));
+            eventFilter.innerHTML = '<option value="">Any Event</option>' + 
+                events.map(e => `<option value="${e.id}">${e.name} (${new Date(e.date).toLocaleDateString()})</option>`).join('');
+
+            // Populate team filter
+            const teamFilter = document.getElementById('teamFilter');
+            const teams = [...new Set(allData.participants.map(p => p.team).filter(Boolean))].sort();
+            teamFilter.innerHTML = '<option value="">All Teams</option>' + 
+                teams.map(team => `<option value="${team}">${team}</option>`).join('');
+        }
+
+        // Apply filters to driver list
+        function applyFilters() {
+            console.log('🔍 Applying advanced filters...');
+            
+            // Collect filter values
+            currentFilters = {
+                totalRaces: {
+                    min: document.getElementById('totalRacesMin').value ? parseInt(document.getElementById('totalRacesMin').value) : null,
+                    max: document.getElementById('totalRacesMax').value ? parseInt(document.getElementById('totalRacesMax').value) : null
+                },
+                totalWins: {
+                    min: document.getElementById('totalWinsMin').value ? parseInt(document.getElementById('totalWinsMin').value) : null,
+                    max: document.getElementById('totalWinsMax').value ? parseInt(document.getElementById('totalWinsMax').value) : null
+                },
+                winRate: {
+                    min: document.getElementById('winRateMin').value ? parseFloat(document.getElementById('winRateMin').value) : null,
+                    max: document.getElementById('winRateMax').value ? parseFloat(document.getElementById('winRateMax').value) : null
+                },
+                winStreak: {
+                    min: document.getElementById('winStreakMin').value ? parseInt(document.getElementById('winStreakMin').value) : null
+                },
+                totalEvents: {
+                    min: document.getElementById('totalEventsMin').value ? parseInt(document.getElementById('totalEventsMin').value) : null
+                },
+                class: document.getElementById('classFilter').value || null,
+                series: document.getElementById('seriesFilter').value || null,
+                eventAttendance: document.getElementById('eventAttendanceFilter').value || null,
+                eventCount: {
+                    min: document.getElementById('eventCountMin').value ? parseInt(document.getElementById('eventCountMin').value) : null
+                },
+                team: document.getElementById('teamFilter').value || null,
+                registrationDate: {
+                    from: document.getElementById('registrationDateFrom').value || null,
+                    to: document.getElementById('registrationDateTo').value || null
+                }
+            };
+
+            // Filter drivers
+            filteredDrivers = allData.participants.filter(driver => {
+                const stats = calculateStatsFromRaceData(driver.id);
+                
+                // Check total races filter
+                if (currentFilters.totalRaces.min !== null && stats.totalRaces < currentFilters.totalRaces.min) return false;
+                if (currentFilters.totalRaces.max !== null && stats.totalRaces > currentFilters.totalRaces.max) return false;
+                
+                // Check total wins filter
+                if (currentFilters.totalWins.min !== null && stats.totalWins < currentFilters.totalWins.min) return false;
+                if (currentFilters.totalWins.max !== null && stats.totalWins > currentFilters.totalWins.max) return false;
+                
+                // Check win rate filter
+                if (currentFilters.winRate.min !== null && stats.winRate < currentFilters.winRate.min) return false;
+                if (currentFilters.winRate.max !== null && stats.winRate > currentFilters.winRate.max) return false;
+                
+                // Check win streak filter
+                if (currentFilters.winStreak.min !== null && stats.bestStreak < currentFilters.winStreak.min) return false;
+                
+                // Check total events filter
+                if (currentFilters.totalEvents.min !== null && stats.eventsParticipated < currentFilters.totalEvents.min) return false;
+                
+                // Check class filter
+                if (currentFilters.class && driver.sledClass !== currentFilters.class) return false;
+                
+                // Check team filter
+                if (currentFilters.team && driver.team !== currentFilters.team) return false;
+                
+                // Check series registration filter
+                if (currentFilters.series) {
+                    const driverRaces = allData.races.filter(race => race.participantId === driver.id);
+                    const driverEventIds = [...new Set(driverRaces.map(race => race.eventId))];
+                    const driverEvents = allData.events.filter(event => driverEventIds.includes(event.id));
+                    const isRegisteredInSeries = driverEvents.some(event => event.seriesId === currentFilters.series);
+                    if (!isRegisteredInSeries) return false;
+                }
+                
+                // Check event attendance filter
+                if (currentFilters.eventAttendance) {
+                    const driverRaces = allData.races.filter(race => race.participantId === driver.id);
+                    const attendedEvent = driverRaces.some(race => race.eventId === currentFilters.eventAttendance);
+                    if (!attendedEvent) return false;
+                }
+                
+                // Check event count filter
+                if (currentFilters.eventCount.min !== null) {
+                    const driverRaces = allData.races.filter(race => race.participantId === driver.id);
+                    const uniqueEvents = [...new Set(driverRaces.map(race => race.eventId))];
+                    if (uniqueEvents.length < currentFilters.eventCount.min) return false;
+                }
+                
+                // Check registration date filter
+                if (currentFilters.registrationDate.from) {
+                    const regDate = new Date(driver.registrationDate || driver.dateOfBirth);
+                    const fromDate = new Date(currentFilters.registrationDate.from);
+                    if (regDate < fromDate) return false;
+                }
+                if (currentFilters.registrationDate.to) {
+                    const regDate = new Date(driver.registrationDate || driver.dateOfBirth);
+                    const toDate = new Date(currentFilters.registrationDate.to);
+                    if (regDate > toDate) return false;
+                }
+                
+                return true;
+            });
+
+            // Update filter summary
+            updateFilterSummary();
+            
+            // Reset pagination and display filtered results
+            currentDriversPage = 1;
+            displayFilteredDriverGrid();
+            
+            console.log(`✅ Filters applied: ${filteredDrivers.length} drivers match criteria`);
+        }
+
+        // Display filtered driver grid
+        async function displayFilteredDriverGrid() {
+            const grid = document.getElementById('driverGrid');
+            const skeleton = document.getElementById('driverSkeleton');
+            const pagination = document.getElementById('driverPagination');
+            
+            // Show skeleton loading
+            showDriverSkeletonLoading();
+            
+            // Simulate loading delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            hideDriverSkeletonLoading();
+            
+            if (filteredDrivers.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>No Drivers Match Filters</h3>
+                        <p>Try adjusting your filter criteria to find more drivers.</p>
+                        <button class="btn btn-secondary" onclick="clearAllFilters()">
+                            <i class="fas fa-times"></i> Clear All Filters
+                        </button>
+                    </div>
+                `;
+                if (pagination) pagination.style.display = 'none';
+                return;
+            }
+
+            // Sort filtered participants alphabetically by name
+            const sortedParticipants = [...filteredDrivers].sort((a, b) => 
+                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+            );
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(sortedParticipants.length / driversPerPage);
+            const startIndex = (currentDriversPage - 1) * driversPerPage;
+            const endIndex = startIndex + driversPerPage;
+            const currentPageDrivers = sortedParticipants.slice(startIndex, endIndex);
+            
+            console.log(`📄 Filtered Drivers Page ${currentDriversPage} of ${totalPages} (showing ${currentPageDrivers.length} of ${filteredDrivers.length} drivers)`);
+
+            grid.innerHTML = currentPageDrivers.map(driver => {
+                // Calculate stats for grid display using extracted race data
+                const stats = calculateStatsFromRaceData(driver.id);
+                const initials = driver.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
+
+                return `
+                    <div class="driver-card" data-driver-id="${driver.id}" onclick="selectDriver('${driver.id}')">
+                        <div class="driver-card-header">
+                            <div class="driver-card-avatar">${initials}</div>
+                            <div class="driver-card-info">
+                                <h3>${driver.name}</h3>
+                                <div class="driver-card-meta">
+                                    ${driver.racingNumber ? `#${driver.racingNumber}` : 'No number'} • ${driver.team || 'No team'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="driver-card-stats">
+                            <div class="driver-card-stat">
+                                <span class="driver-card-stat-value">${stats.totalRaces}</span>
+                                <span class="driver-card-stat-label">Races</span>
+                            </div>
+                            <div class="driver-card-stat">
+                                <span class="driver-card-stat-value">${stats.totalWins}</span>
+                                <span class="driver-card-stat-label">Wins</span>
+                            </div>
+                            <div class="driver-card-stat">
+                                <span class="driver-card-stat-value">${stats.winRate}%</span>
+                                <span class="driver-card-stat-label">Win Rate</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Render pagination
+            if (pagination && totalPages > 1) {
+                pagination.style.display = 'block';
+                pagination.innerHTML = UIComponents.createPagination(
+                    currentDriversPage, 
+                    totalPages, 
+                    filteredDrivers.length, 
+                    driversPerPage, 
+                    'changeDriversPage'
+                );
+            } else if (pagination) {
+                pagination.style.display = 'none';
+            }
+        }
+
+        // Update filter summary display
+        function updateFilterSummary() {
+            const summary = document.getElementById('filterSummary');
+            const summaryText = document.getElementById('filterSummaryText');
+            
+            const activeFilters = [];
+            
+            if (currentFilters.totalRaces.min !== null || currentFilters.totalRaces.max !== null) {
+                const min = currentFilters.totalRaces.min || 0;
+                const max = currentFilters.totalRaces.max || '∞';
+                activeFilters.push(`Total Races: ${min}-${max}`);
+            }
+            
+            if (currentFilters.totalWins.min !== null || currentFilters.totalWins.max !== null) {
+                const min = currentFilters.totalWins.min || 0;
+                const max = currentFilters.totalWins.max || '∞';
+                activeFilters.push(`Total Wins: ${min}-${max}`);
+            }
+            
+            if (currentFilters.winRate.min !== null || currentFilters.winRate.max !== null) {
+                const min = currentFilters.winRate.min || 0;
+                const max = currentFilters.winRate.max || 100;
+                activeFilters.push(`Win Rate: ${min}%-${max}%`);
+            }
+            
+            if (currentFilters.winStreak.min !== null) {
+                activeFilters.push(`Win Streak: ≥${currentFilters.winStreak.min}`);
+            }
+            
+            if (currentFilters.totalEvents.min !== null) {
+                activeFilters.push(`Events: ≥${currentFilters.totalEvents.min}`);
+            }
+            
+            if (currentFilters.class) {
+                activeFilters.push(`Class: ${currentFilters.class}`);
+            }
+            
+            if (currentFilters.series) {
+                const series = dataManager.getAllSeries().find(s => s.id === currentFilters.series);
+                activeFilters.push(`Series: ${series ? series.name : 'Unknown'}`);
+            }
+            
+            if (currentFilters.eventAttendance) {
+                const event = allData.events.find(e => e.id === currentFilters.eventAttendance);
+                activeFilters.push(`Attended: ${event ? event.name : 'Unknown Event'}`);
+            }
+            
+            if (currentFilters.eventCount.min !== null) {
+                activeFilters.push(`Events Attended: ≥${currentFilters.eventCount.min}`);
+            }
+            
+            if (currentFilters.team) {
+                activeFilters.push(`Team: ${currentFilters.team}`);
+            }
+            
+            if (currentFilters.registrationDate.from || currentFilters.registrationDate.to) {
+                const from = currentFilters.registrationDate.from || 'Any';
+                const to = currentFilters.registrationDate.to || 'Any';
+                activeFilters.push(`Registered: ${from} to ${to}`);
+            }
+            
+            if (activeFilters.length > 0) {
+                summaryText.textContent = `Active Filters: ${activeFilters.join(' • ')}`;
+                summary.style.display = 'block';
+            } else {
+                summary.style.display = 'none';
+            }
+        }
+
+        // Clear all filters
+        function clearAllFilters() {
+            // Reset all filter inputs
+            document.getElementById('totalRacesMin').value = '';
+            document.getElementById('totalRacesMax').value = '';
+            document.getElementById('totalWinsMin').value = '';
+            document.getElementById('totalWinsMax').value = '';
+            document.getElementById('winRateMin').value = '';
+            document.getElementById('winRateMax').value = '';
+            document.getElementById('winStreakMin').value = '';
+            document.getElementById('totalEventsMin').value = '';
+            document.getElementById('classFilter').value = '';
+            document.getElementById('seriesFilter').value = '';
+            document.getElementById('eventAttendanceFilter').value = '';
+            document.getElementById('eventCountMin').value = '';
+            document.getElementById('teamFilter').value = '';
+            document.getElementById('registrationDateFrom').value = '';
+            document.getElementById('registrationDateTo').value = '';
+            
+            // Reset filter state
+            currentFilters = {
+                totalRaces: { min: null, max: null },
+                totalWins: { min: null, max: null },
+                winRate: { min: null, max: null },
+                winStreak: { min: null },
+                totalEvents: { min: null },
+                class: null,
+                series: null,
+                eventAttendance: null,
+                eventCount: { min: null },
+                team: null,
+                registrationDate: { from: null, to: null }
+            };
+            
+            filteredDrivers = [];
+            
+            // Hide filter summary
+            document.getElementById('filterSummary').style.display = 'none';
+            
+            // Reset pagination and show all drivers
+            currentDriversPage = 1;
+            displayDriverGrid();
+            
+            console.log('🧹 All filters cleared');
+        }
+
         // Change drivers page
         function changeDriversPage(page) {
             if (page < 1) return;
             
-            const totalPages = Math.ceil(allData.participants.length / driversPerPage);
+            // Check if we're showing filtered results or all drivers
+            const totalDrivers = filteredDrivers.length > 0 ? filteredDrivers.length : allData.participants.length;
+            const totalPages = Math.ceil(totalDrivers / driversPerPage);
             if (page > totalPages) return;
             
             currentDriversPage = page;
-            displayDriverGrid();
+            
+            // Display appropriate grid based on filter state
+            if (filteredDrivers.length > 0) {
+                displayFilteredDriverGrid();
+            } else {
+                displayDriverGrid();
+            }
             
             // Scroll to top of driver grid
             const driverGrid = document.querySelector('.driver-grid');
@@ -1847,7 +2559,7 @@
             const initials = driver.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
             document.getElementById('driverAvatar').textContent = initials;
             document.getElementById('driverName').textContent = driver.name;
-            document.getElementById('driverClass').textContent = driver.sledClass || 'No class';
+            document.getElementById('driverClass').textContent = driver.racingNumber ? `#${driver.racingNumber}` : 'No number';
             document.getElementById('driverTeam').textContent = driver.team || 'No team';
             document.getElementById('memberSince').textContent = `Member since: ${new Date(driver.registrationDate || driver.dateOfBirth).toLocaleDateString()}`;
 
@@ -2434,6 +3146,75 @@
             lanePerformanceDiv.innerHTML = laneStats;
         }
 
+        // Calculate event result/standing for a driver
+        function calculateEventResult(driverId, eventId) {
+            // Get all races for this driver in this event
+            const driverRaces = allData.races.filter(race => 
+                race.participantId === driverId && race.eventId === eventId
+            );
+            
+            if (driverRaces.length === 0) return 'N/A';
+            
+            // Calculate points based on race positions (lower position = more points)
+            let totalPoints = 0;
+            let racesWithPositions = 0;
+            
+            driverRaces.forEach(race => {
+                if (race.position && race.position > 0) {
+                    // Award points: 1st = 10, 2nd = 8, 3rd = 6, 4th = 4, 5th+ = 2
+                    const points = race.position === 1 ? 10 : 
+                                  race.position === 2 ? 8 : 
+                                  race.position === 3 ? 6 : 
+                                  race.position === 4 ? 4 : 2;
+                    totalPoints += points;
+                    racesWithPositions++;
+                }
+            });
+            
+            if (racesWithPositions === 0) return 'N/A';
+            
+            // Get all participants who raced in this event
+            const eventRaces = allData.races.filter(race => race.eventId === eventId);
+            const eventParticipants = [...new Set(eventRaces.map(race => race.participantId))];
+            
+            // Calculate standings for all participants
+            const standings = eventParticipants.map(participantId => {
+                const participantRaces = eventRaces.filter(race => race.participantId === participantId);
+                let participantPoints = 0;
+                let participantRacesWithPositions = 0;
+                
+                participantRaces.forEach(race => {
+                    if (race.position && race.position > 0) {
+                        const points = race.position === 1 ? 10 : 
+                                      race.position === 2 ? 8 : 
+                                      race.position === 3 ? 6 : 
+                                      race.position === 4 ? 4 : 2;
+                        participantPoints += points;
+                        participantRacesWithPositions++;
+                    }
+                });
+                
+                return {
+                    participantId,
+                    points: participantPoints,
+                    racesWithPositions
+                };
+            }).filter(standing => standing.racesWithPositions > 0);
+            
+            // Sort by points (descending), then by number of races (descending)
+            standings.sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                return b.racesWithPositions - a.racesWithPositions;
+            });
+            
+            // Find this driver's position
+            const driverStanding = standings.findIndex(standing => standing.participantId === driverId);
+            
+            if (driverStanding === -1) return 'N/A';
+            
+            return driverStanding + 1; // Convert 0-based index to 1-based position
+        }
+
         // Update event summary
         function updateEventSummary(driver) {
             let driverRaces = allData.races.filter(race => race.participantId === driver.id);
@@ -2458,16 +3239,13 @@
                     eventData[race.eventId] = {
                         races: [],
                         wins: 0,
-                        bestPosition: Infinity,
+                        eventResult: null,
                         classes: {}
                     };
                 }
                 eventData[race.eventId].races.push(race);
                 if (race.position === 1) {
                     eventData[race.eventId].wins++;
-                }
-                if (race.position && race.position < eventData[race.eventId].bestPosition) {
-                    eventData[race.eventId].bestPosition = race.position;
                 }
                 
                 // Group by class
@@ -2476,16 +3254,64 @@
                     eventData[race.eventId].classes[className] = {
                         races: [],
                         wins: 0,
-                        bestPosition: Infinity
+                        eventResult: null
                     };
                 }
                 eventData[race.eventId].classes[className].races.push(race);
                 if (race.position === 1) {
                     eventData[race.eventId].classes[className].wins++;
                 }
-                if (race.position && race.position < eventData[race.eventId].classes[className].bestPosition) {
-                    eventData[race.eventId].classes[className].bestPosition = race.position;
-                }
+            });
+
+            // Calculate event results for each event and class
+            Object.keys(eventData).forEach(eventId => {
+                eventData[eventId].eventResult = calculateEventResult(driver.id, eventId);
+                
+                Object.keys(eventData[eventId].classes).forEach(className => {
+                    // For class results, we need to calculate based on races in that specific class
+                    const classRaces = eventData[eventId].classes[className].races;
+                    if (classRaces.length > 0) {
+                        // Get all participants who raced in this class for this event
+                        const eventClassRaces = allData.races.filter(race => 
+                            race.eventId === eventId && race.className === className
+                        );
+                        const classParticipants = [...new Set(eventClassRaces.map(race => race.participantId))];
+                        
+                        // Calculate class standings
+                        const classStandings = classParticipants.map(participantId => {
+                            const participantRaces = eventClassRaces.filter(race => race.participantId === participantId);
+                            let participantPoints = 0;
+                            let participantRacesWithPositions = 0;
+                            
+                            participantRaces.forEach(race => {
+                                if (race.position && race.position > 0) {
+                                    const points = race.position === 1 ? 10 : 
+                                                  race.position === 2 ? 8 : 
+                                                  race.position === 3 ? 6 : 
+                                                  race.position === 4 ? 4 : 2;
+                                    participantPoints += points;
+                                    participantRacesWithPositions++;
+                                }
+                            });
+                            
+                            return {
+                                participantId,
+                                points: participantPoints,
+                                racesWithPositions: participantRacesWithPositions
+                            };
+                        }).filter(standing => standing.racesWithPositions > 0);
+                        
+                        // Sort by points
+                        classStandings.sort((a, b) => {
+                            if (b.points !== a.points) return b.points - a.points;
+                            return b.racesWithPositions - a.racesWithPositions;
+                        });
+                        
+                        // Find this driver's class position
+                        const driverClassStanding = classStandings.findIndex(standing => standing.participantId === driver.id);
+                        eventData[eventId].classes[className].eventResult = driverClassStanding === -1 ? 'N/A' : driverClassStanding + 1;
+                    }
+                });
             });
 
             const tbody = document.querySelector('#eventSummaryTable tbody');
@@ -2501,14 +3327,14 @@
                 const eventName = event ? event.name : 'Unknown Event';
                 const eventDate = event ? new Date(event.date).toLocaleDateString() : 'N/A';
                 const winRate = ((data.wins / data.races.length) * 100).toFixed(1);
-                const bestPos = data.bestPosition === Infinity ? 'N/A' : data.bestPosition;
+                const eventResult = data.eventResult || 'N/A';
                 const hasClasses = Object.keys(data.classes).length >= 1;
                 const classCount = Object.keys(data.classes).length;
 
                 // Generate class breakdown rows
                 const classBreakdown = Object.entries(data.classes).map(([className, classData]) => {
                     const classWinRate = ((classData.wins / classData.races.length) * 100).toFixed(1);
-                    const classBestPos = classData.bestPosition === Infinity ? 'N/A' : classData.bestPosition;
+                    const classEventResult = classData.eventResult || 'N/A';
                     
                     return `
                         <tr class="class-breakdown-row" data-event-id="${eventId}" style="display: none;">
@@ -2521,7 +3347,7 @@
                             <td>${classData.races.length}</td>
                             <td>${classData.wins}</td>
                             <td>${classWinRate}%</td>
-                            <td>${formatPositionBadge(classBestPos)}</td>
+                            <td>${formatPositionBadge(classEventResult)}</td>
                         </tr>
                     `;
                 }).join('');
@@ -2541,7 +3367,7 @@
                         <td>${data.races.length}</td>
                         <td>${data.wins}</td>
                         <td>${winRate}%</td>
-                        <td>${formatPositionBadge(bestPos)}</td>
+                        <td>${formatPositionBadge(eventResult)}</td>
                     </tr>
                     ${classBreakdown}
                 `;
@@ -2577,8 +3403,40 @@
             event.target.classList.add('active');
         }
 
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🔐 Driver Profile page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🔐 Driver Profile page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🔐 Driver Profile page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🔐 Driver Profile page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
         // Initialize page
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Wait for authentication before initializing
+            await waitForAuthentication();
+            
             loadAllData();
             
             // Refresh data when page becomes visible (user returns from another tab/page)

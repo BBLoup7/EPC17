@@ -929,10 +929,10 @@ class EventManager {
             const bracket = dataManager.createRaceBracket(eventId);
             
             if (bracket) {
-                // Update event status to 'active' when bracket is generated
+                // Automatically update event status based on race existence
                 try {
-                    await dataManager.updateEventStatus(eventId, 'active');
-                    console.log(`✅ Event ${eventId} status updated to 'active' after bracket generation`);
+                    await this.updateEventStatusFromRaces(eventId);
+                    console.log(`✅ Event ${eventId} status updated based on race brackets`);
                 } catch (statusError) {
                     console.error('Warning: Failed to update event status:', statusError);
                     // Don't fail the bracket generation if status update fails
@@ -1118,6 +1118,74 @@ class EventManager {
         const container = document.getElementById('eventClassesList');
         if (container) {
             container.innerHTML = this.generateEventClassesHtml([], seriesId);
+        }
+    }
+
+    /**
+     * Automatically update event status based on race brackets
+     * Rule: EPC17_WORKFLOW.md v1 - event status management
+     */
+    async updateEventStatusFromRaces(eventId) {
+        try {
+            const event = dataManager.getEvent(eventId);
+            if (!event) {
+                console.warn(`Event ${eventId} not found for status update`);
+                return;
+            }
+
+            const bracket = dataManager.getRaceBracket(eventId);
+            const hasRaces = bracket && bracket.classes && 
+                Object.values(bracket.classes).some(classBracket => 
+                    classBracket.rounds && classBracket.rounds.length > 0
+                );
+
+            let newStatus = event.status;
+            
+            if (hasRaces && event.status === 'upcoming') {
+                newStatus = 'active';
+                console.log(`🔄 Event ${eventId} has races - updating status from 'upcoming' to 'active'`);
+            } else if (!hasRaces && event.status === 'active') {
+                newStatus = 'upcoming';
+                console.log(`🔄 Event ${eventId} has no races - updating status from 'active' to 'upcoming'`);
+            }
+
+            if (newStatus !== event.status) {
+                await dataManager.updateEventStatus(eventId, newStatus);
+                console.log(`✅ Event ${eventId} status updated to '${newStatus}'`);
+            }
+        } catch (error) {
+            console.error(`Error updating event status from races for ${eventId}:`, error);
+        }
+    }
+
+    /**
+     * Delete race bracket for event and update status
+     * Rule: EPC17_WORKFLOW.md v1 - event status management
+     */
+    async deleteRaceBracket(eventId) {
+        try {
+            const event = dataManager.getEvent(eventId);
+            if (!event) {
+                Helpers.showToast('Event not found', 'error');
+                return false;
+            }
+
+            // Delete the race bracket
+            const success = dataManager.deleteRaceBracket(eventId);
+            if (success) {
+                // Update event status to 'upcoming' since no races exist
+                await dataManager.updateEventStatus(eventId, 'upcoming');
+                console.log(`✅ Race bracket deleted for event ${eventId}, status set to 'upcoming'`);
+                Helpers.showToast('Race bracket deleted successfully', 'success');
+                return true;
+            } else {
+                Helpers.showToast('Failed to delete race bracket', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error deleting race bracket:', error);
+            Helpers.showToast('Error deleting race bracket: ' + error.message, 'error');
+            return false;
         }
     }
 }

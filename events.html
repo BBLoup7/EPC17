@@ -5,8 +5,122 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Events Management (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Hero Section Styles - Consistent with Series Page */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         .events-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -708,78 +822,17 @@
     </style>
 </head>
 <body>
-    <nav class="main-nav">
-        <div class="nav-brand">
-            <div class="brand-icon">
-                <i class="fas fa-cogs"></i>
-            </div>
-            <div class="brand-text">
-                <span class="brand-main">EPC TECHNOLOGY</span>
-                <span class="brand-sub">PROJECT 17</span>
-            </div>
-        </div>
-        
-        <!-- Desktop Navigation -->
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registration</a></li>
-            <li><a href="series.html">Series</a></li>
-            <li class="active"><a href="events.html">Events</a></li>
-            <li><a href="races.html">Races</a></li>
-            <li><a href="driver-profile.html">Drivers</a></li>
-            <li><a href="analytics.html">Analytics</a></li>
-            <li><a href="live-display.html">Live Display</a></li>
-        </ul>
-        
-        <!-- Mobile Hamburger Menu -->
-        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
-        
-        <!-- Mobile Navigation Menu -->
-        <div class="mobile-nav-menu">
-            <div class="mobile-nav-header">
-                <div class="mobile-nav-brand">
-                    <div class="brand-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <div class="brand-text">
-                        <span class="brand-main">EPC TECHNOLOGY</span>
-                        <span class="brand-sub">PROJECT 17</span>
-                    </div>
-                </div>
-                <button class="mobile-nav-close" aria-label="Close navigation menu">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <ul class="mobile-nav-links">
-                <li><a href="index.html">🏠 Home</a></li>
-                <li><a href="registration.html">📝 Registration</a></li>
-                <li><a href="series.html">🏆 Series</a></li>
-                <li><a href="events.html" class="active">📅 Events</a></li>
-                <li><a href="races.html">🏁 Races</a></li>
-                <li><a href="driver-profile.html">👥 Drivers</a></li>
-                <li><a href="analytics.html">📊 Analytics</a></li>
-                <li><a href="live-display.html">🖥️ Live Display</a></li>
-            </ul>
-            <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">25W32a09</div>
-            </div>
-        </div>
-        
-        <!-- Mobile Navigation Overlay -->
-        <div class="mobile-nav-overlay"></div>
-    </nav>
+    <!-- Navigation is now handled by sidebar-nav.js -->
 
     <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1>Events Management</h1>
-                <p class="subtitle">Create and manage racing events</p>
-            </div>
-            <div class="header-actions">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">Events Management</h1>
+                    <p class="hero-subtitle">Create and manage racing events with professional organization and real-time tracking</p>
+                </div>
+                <div class="hero-actions">
                 <button class="btn btn-primary" onclick="showNewEventModal()">
                     New Event
                 </button>
@@ -989,6 +1042,7 @@
     <script src="modules/series.js"></script>
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
     
     <script>
         let seriesManager;
@@ -996,8 +1050,40 @@
         let selectedSeriesId = '';
         let selectedSeasonId = '';
         
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🔐 Events page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🔐 Events page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🔐 Events page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🔐 Events page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', async () => {
+            // Wait for authentication before initializing
+            await waitForAuthentication();
+            
             // Initialize data manager and load data
             dataManager = new DataManager();
             await dataManager.loadFromStorage();
@@ -2484,11 +2570,11 @@
                 await loadEvents();
                 
                 // Show success message
-                alert('Event created successfully!');
+                Helpers.showToast('Event created successfully!', 'success');
                 
             } catch (error) {
                 console.error('Error creating event:', error);
-                alert('Error creating event: ' + error.message);
+                Helpers.showToast('Error creating event: ' + error.message, 'error');
             }
         });
 
@@ -2585,9 +2671,9 @@
                     case 'location-desc':
                         return (b.location || '').localeCompare(a.location || '');
                     case 'participants-desc':
-                        return (b.participants?.length || 0) - (a.participants?.length || 0);
+                        return (dataManager.getEventParticipantStats(b.id)?.uniqueDrivers || 0) - (dataManager.getEventParticipantStats(a.id)?.uniqueDrivers || 0);
                     case 'participants-asc':
-                        return (a.participants?.length || 0) - (b.participants?.length || 0);
+                        return (dataManager.getEventParticipantStats(a.id)?.uniqueDrivers || 0) - (dataManager.getEventParticipantStats(b.id)?.uniqueDrivers || 0);
                     default:
                         return 0;
                 }
@@ -2660,10 +2746,11 @@
                 const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
                 const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
                 
-                // Calculate participant count correctly by filtering participants with this eventId
-                const allParticipants = dataManager.getParticipantsArray();
-                const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
-                const participantCount = eventParticipants.length;
+                // Calculate participant statistics using the new data manager function
+                let participantStats = { uniqueDrivers: 0, totalRegistrations: 0 };
+                if (dataManager && dataManager.getEventParticipantStats) {
+                    participantStats = dataManager.getEventParticipantStats(event.id);
+                }
                 const eventStatus = getEventStatus(event);
                 
                 return `
@@ -2690,9 +2777,13 @@
                                 <span class="detail-label">Location:</span>
                                 <span class="detail-value">${event.location}</span>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Participants:</span>
-                                <span class="detail-value">${participantCount}/${event.maxParticipants || 'Unlimited'}</span>
+                            <div class="detail-item drivers">
+                                <span class="detail-label">Drivers:</span>
+                                <span class="detail-value">${participantStats.uniqueDrivers} driver${participantStats.uniqueDrivers !== 1 ? 's' : ''}</span>
+                            </div>
+                            <div class="detail-item registrations">
+                                <span class="detail-label">Registrations:</span>
+                                <span class="detail-value">${participantStats.totalRegistrations} ${participantStats.totalRegistrations === 1 ? 'entry' : 'entries'}</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Tracks:</span>
@@ -3489,6 +3580,22 @@
                             <!-- Status field removed - all events are active by default -->
                             <input type="hidden" name="status" value="active">
                             
+                            <!-- Status field - preserve original event status -->
+                            <div class="form-group">
+                                <label class="form-label">Event Status</label>
+                                <select class="form-control" name="status" ${isCompleted ? 'disabled' : ''}>
+                                    <option value="upcoming" ${event.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+                                    <option value="active" ${event.status === 'active' ? 'selected' : ''}>Active</option>
+                                    <option value="completed" ${event.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="finished" ${event.status === 'finished' ? 'selected' : ''}>Finished</option>
+                                </select>
+                                <small class="help-text">
+                                    <strong>Upcoming:</strong> Event is planned but not started<br>
+                                    <strong>Active:</strong> Event is in progress with races<br>
+                                    <strong>Completed/Finished:</strong> Event has finished all races
+                                </small>
+                            </div>
+                            
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary">
                                     ${isCompleted ? '🔒 Save Basic Info Only' : 'Save Changes'}
@@ -3720,7 +3827,7 @@
                     return fallback;
                 })();
                 
-                // Update event data
+                // Update event data - preserve existing race brackets and participants
                 const updatedEventData = {
                     eventName: formData.get('eventName'),
                     name: formData.get('eventName'), // Support both name formats
@@ -3734,6 +3841,9 @@
                     classSettings: selectedClasses,
                     classOrder: classOrderToSave, // Store edit class order
                     freeRunEnabled: formData.get('freeRunEnabled') === 'true',
+                    // Preserve existing data that shouldn't be overwritten
+                    participants: existingEvent.participants || [],
+                    currentParticipants: existingEvent.currentParticipants || 0,
                     // Only update tournament settings if event is not completed
                     ...(isCompleted ? {} : {
                         numberOfTracks: parseInt(formData.get('numberOfTracks')),
@@ -3756,6 +3866,22 @@
                 console.log('Update result:', success);
                 
                 if (success) {
+                    // Check if event status changed and update race brackets accordingly
+                    const newStatus = formData.get('status');
+                    const oldStatus = existingEvent.status;
+                    
+                    if (newStatus !== oldStatus) {
+                        console.log(`🔄 Event status changed from '${oldStatus}' to '${newStatus}'`);
+                        
+                        // If status changed to 'upcoming' and there are existing races, warn user
+                        if (newStatus === 'upcoming' && existingEvent.participants && existingEvent.participants.length > 0) {
+                            const hasRaces = await dataManager.getRaceBracket(eventId);
+                            if (hasRaces) {
+                                console.log('⚠️ Event has existing races but status changed to upcoming');
+                            }
+                        }
+                    }
+                    
                     alert('Event updated successfully!');
                     hideEventModal();
                     await loadEvents(); // Refresh the events list

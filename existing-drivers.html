@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Existing Drivers (Project 17)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Hero Section Styles - Compact Version */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Event Selection Section */
+        .event-selection-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .event-selector {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .event-selector .combo-box-container {
+            width: 100%;
+            position: relative;
+        }
+
+        .event-selector .combo-box-input {
+            width: 100%;
+            min-width: 300px;
+        }
+
+        .event-selector .combo-box-dropdown {
+            width: 100%;
+            min-width: 400px;
+            max-width: 800px;
+            position: absolute;
+            z-index: 1000;
+            top: 100%;
+            left: 0;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            gap: 1rem;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            display: none; /* Hide subtitle to save space */
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 3px 10px rgba(255, 140, 66, 0.3) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(255, 140, 66, 0.4) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .event-selection-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .event-selector .combo-box-input {
+                min-width: 250px;
+            }
+
+            .event-selector .combo-box-dropdown {
+                min-width: 300px;
+                max-width: 100%;
+                left: 0;
+                right: 0;
+            }
+        }
+
+        /* Driver Selection Interface */
+        .driver-selection-interface {
+            display: grid;
+            grid-template-columns: 1fr 280px 280px;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .driver-search-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+        }
+
+        .search-header {
+            margin-bottom: 0.75rem;
+        }
+
+        .search-header h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .search-controls {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-controls input {
+            width: 100%;
+            padding: 0.5rem 0.75rem 0.5rem 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-controls input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .search-controls .btn {
+            position: absolute;
+            right: 6px;
+            padding: 0.25rem;
+            min-width: auto;
+        }
+
+        .drivers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.5rem;
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 0.25rem;
+        }
+
+        .driver-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.6rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .driver-card:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+            transform: translateY(-1px);
+        }
+
+        .driver-card.selected {
+            border-color: var(--accent-primary);
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .driver-card.selected .driver-name,
+        .driver-card.selected .driver-details {
+            color: white;
+        }
+
+        .driver-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        .driver-details {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        .driver-details div {
+            margin-bottom: 0.15rem;
+        }
+
+        /* Registration Summary Sidebar */
+        .registration-summary-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .summary-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+        }
+
+        .summary-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .selected-driver-summary {
+            background: transparent;
+            border-radius: 0;
+            padding: 0;
+            border: none;
+        }
+
+        .driver-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .driver-info-header h4 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .btn-edit-driver {
+            background: none;
+            border: none;
+            color: var(--accent-primary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit-driver:hover {
+            background: var(--bg-secondary);
+        }
+
+        .driver-summary-content {
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+
+        .driver-summary-content div {
+            margin-bottom: 0.3rem;
+        }
+
+        .driver-summary-content .label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Class Selection */
+        .class-selection-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .class-selection-section h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .class-options-compact {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .class-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .class-option:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .class-option.selected {
+            border-color: var(--accent-primary);
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .class-option input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            accent-color: var(--accent-primary);
+        }
+
+        .class-option.selected input[type="checkbox"] {
+            accent-color: white;
+        }
+
+        .class-info {
+            flex: 1;
+        }
+
+        .class-name {
+            font-weight: 600;
+            margin-bottom: 0.1rem;
+            font-size: 0.85rem;
+        }
+
+        .class-price {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* Pricing Summary */
+        .pricing-summary-compact {
+            background: transparent;
+            border-radius: 0;
+            border: none;
+            padding: 0;
+            margin-top: 0;
+        }
+
+        .pricing-header h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .pricing-breakdown-compact {
+            color: var(--text-primary);
+            font-size: 0.8rem;
+        }
+
+        .pricing-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+
+        .pricing-total {
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.3rem;
+            margin-top: 0.3rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+            justify-content: center;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+            margin: 2rem auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .modal-header h3 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .edit-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .driver-selection-interface {
+                grid-template-columns: 1fr 250px 250px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .driver-selection-interface {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .registration-summary-sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .edit-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .drivers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin: 1rem;
+                width: calc(100% - 2rem);
+            }
+
+            .modal-header {
+                padding: 1rem 1.5rem;
+            }
+
+            .modal-body {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation is handled by sidebar-nav.js -->
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1 class="hero-title">
+                            <i class="fas fa-user-plus"></i>
+                            Add Existing Driver
+                        </h1>
+                        <p class="hero-subtitle">EPC Technology - Register existing drivers for events with class selection and pricing</p>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-hero" onclick="refreshDrivers()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                        <button class="btn btn-outline" onclick="goToRegistration()">
+                            <i class="fas fa-plus"></i> New Registration
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Selection Section -->
+            <div class="event-selection-section">
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.95rem;">
+                    <i class="fas fa-calendar-alt"></i> Select Event
+                </h3>
+                <div class="event-selector">
+                    <div id="eventSelectContainer">
+                        <!-- Event combo box will be created here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Driver Selection Interface -->
+            <div class="driver-selection-interface">
+                <!-- Driver Search Section -->
+                <div class="driver-search-section">
+                    <div class="search-header">
+                        <h3>Select Driver</h3>
+                        <div class="search-controls">
+                            <input type="text" id="driverSearch" placeholder="Search drivers by name, email, or phone..." oninput="filterDrivers()">
+                            <button type="button" class="btn btn-secondary" onclick="clearDriverSearch()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Drivers Grid -->
+                    <div id="existingDriversList" class="drivers-grid">
+                        <!-- Drivers will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Class Selection Column (Middle) -->
+                <div class="summary-card">
+                    <div class="class-selection-section">
+                        <h3>Racing Classes</h3>
+                        <div id="classOptions" class="class-options-compact">
+                            <!-- Class options will appear here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Registration Summary Column (Right) -->
+                <div class="registration-summary-sidebar">
+                    <!-- Selected Driver Info -->
+                    <div class="summary-card">
+                        <h3>Selected Driver</h3>
+                        <div id="selectedDriverSummary" class="selected-driver-summary" style="display: none;">
+                            <div class="driver-info-header">
+                                <h4>Driver Info</h4>
+                                <button type="button" class="btn-edit-driver" onclick="editDriverInfo()">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div id="driverSummaryContent">
+                                <!-- Driver summary will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Summary -->
+                    <div class="summary-card">
+                        <div class="pricing-summary-compact" id="pricingSummary" style="display: none;">
+                            <div class="pricing-header">
+                                <h4>Total Cost</h4>
+                            </div>
+                            <div id="pricingBreakdown" class="pricing-breakdown-compact">
+                                <!-- Pricing breakdown will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="summary-card">
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-outline" onclick="editDriverInfo()" id="editDriverBtn" style="display: none;">
+                                <i class="fas fa-edit"></i> Edit Driver
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="completeAddExisting()" id="completeBtn" disabled>
+                                <i class="fas fa-check"></i> Complete Registration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Driver Edit Modal -->
+    <div id="driverEditModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Driver Information</h3>
+                <button type="button" class="modal-close" onclick="closeDriverEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="edit-form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="editDriverName" name="editDriverName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nickname</label>
+                        <input type="text" class="form-control" id="editDriverNickname" name="editDriverNickname">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Racing Number</label>
+                        <input type="number" class="form-control" id="editDriverNumber" name="editDriverNumber" min="1" max="999">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editDriverEmail" name="editDriverEmail">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="editDriverPhone" name="editDriverPhone">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Team</label>
+                        <input type="text" class="form-control" id="editDriverTeam" name="editDriverTeam">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="editDriverNotes" name="editDriverNotes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeDriverEditModal()">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveDriverEdit()">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="utils/performance-monitor.js"></script>
+    <script src="utils/helpers.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
+    <script src="utils/validation.js"></script>
+    <script src="utils/event-bus.js"></script>
+    <script src="modules/statistics-manager.js"></script>
+    <script src="utils/data-manager.js?v=1.2"></script>
+    <script src="utils/migration-utils.js?v=1.2"></script>
+    <script src="modules/registration.js?v=1.2"></script>
+    <!-- Mobile Navigation -->
+    <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
+    <script>
+        // Initialize the existing drivers system
+        let dataManager, registrationManager;
+        let selectedDriver = null;
+        let selectedClasses = [];
+        let currentEvent = null;
+        let selectedEventId = null;
+
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('👤 Existing Drivers page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('👤 Existing Drivers page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('👤 Existing Drivers page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('👤 Existing Drivers page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('👤 EXISTING DRIVERS PAGE: Initializing Existing Drivers System...');
+            
+            try {
+                // Wait for authentication before initializing
+                await waitForAuthentication();
+                
+                // Initialize core modules
+                dataManager = new DataManager();
+                registrationManager = new RegistrationManager(dataManager);
+                
+                // Wait for data to load before initializing UI
+                await dataManager.loadFromStorage();
+                
+                // Initialize UI
+                loadDriversList();
+                await loadEvents();
+                loadClassOptions();
+                
+                // Check for edit mode from URL parameters
+                await handleEditMode();
+                
+                console.log('👤 EXISTING DRIVERS PAGE: Existing Drivers System initialized successfully');
+                
+            } catch (error) {
+                console.error('Error initializing Existing Drivers System:', error);
+                showToast('Error initializing existing drivers system', 'error');
+            }
+        });
+
+        // Global utility functions
+        function showToast(message, type = 'info') {
+            if (typeof Helpers !== 'undefined' && Helpers.showToast) {
+                Helpers.showToast(message, type);
+            } else {
+                // Fallback if Helpers is not available
+                console.log(`Toast (${type}): ${message}`);
+                alert(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+
+        // Handle URL parameters (driver, event, edit)
+        async function handleEditMode() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const driverParam = urlParams.get('driver');
+                const eventParam = urlParams.get('event');
+                const editParticipantId = urlParams.get('edit');
+                
+                // Handle event parameter first
+                if (eventParam) {
+                    console.log('🎯 Event parameter detected:', eventParam);
+                    
+                    // Wait for events to be loaded
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Set the event in the combo box
+                    const eventInput = document.getElementById('eventSelect-input');
+                    if (eventInput) {
+                        // Get event details
+                        const event = dataManager.getEvent(eventParam);
+                        if (event) {
+                            const series = dataManager.getAllSeries().find(s => s.id === event.seriesId);
+                            const seriesName = series ? series.name : 'Unknown Series';
+                            const season = event.seasonId && series ? series.seasons?.find(s => s.id === event.seasonId) : null;
+                            const seasonName = season ? season.name : 'General';
+                            const eventLabel = `${event.name} - ${seriesName} (${seasonName}) - ${new Date(event.date).toLocaleDateString()}`;
+                            
+                            eventInput.value = eventLabel;
+                            eventInput.setAttribute('data-selected-value', eventParam);
+                            
+                            // Trigger the event selection
+                            onEventSelect(eventParam, eventLabel);
+                            
+                            console.log('✅ Event pre-selected:', eventLabel);
+                            showToast(`Event selected: ${event.name}`, 'success');
+                        } else {
+                            console.error('❌ Event not found:', eventParam);
+                            showToast('Event not found', 'error');
+                        }
+                    }
+                }
+                
+                // Handle driver parameter
+                if (driverParam) {
+                    console.log('👤 Driver parameter detected:', driverParam);
+                    
+                    // Wait a bit longer to ensure event selection is complete
+                    await new Promise(resolve => setTimeout(resolve, 700));
+                    
+                    // Get the participant data
+                    const participant = dataManager.getParticipant(driverParam);
+                    if (!participant) {
+                        console.error('❌ Participant not found:', driverParam);
+                        showToast('Driver not found', 'error');
+                        return;
+                    }
+                    
+                    console.log('✅ Found participant:', participant.name);
+                    
+                    // Select the driver
+                    selectDriver(driverParam);
+                    
+                    // Show success message
+                    showToast(`Driver selected: ${participant.name}`, 'success');
+                }
+                
+                // Handle edit parameter (legacy support)
+                if (editParticipantId) {
+                    console.log('📝 Edit mode detected for participant:', editParticipantId);
+                    
+                    // Get the participant data
+                    const participant = dataManager.getParticipant(editParticipantId);
+                    if (!participant) {
+                        console.error('❌ Participant not found for edit:', editParticipantId);
+                        showToast('Participant not found for editing', 'error');
+                        return;
+                    }
+                    
+                    console.log('✅ Found participant for editing:', participant.name);
+                    
+                    // Pre-populate the form with participant data
+                    await populateEditForm(participant);
+                    
+                    // Show success message
+                    showToast(`Editing participant: ${participant.name}`, 'info');
+                }
+            } catch (error) {
+                console.error('❌ Error handling URL parameters:', error);
+                showToast('Error loading page parameters', 'error');
+            }
+        }
+
+        // Populate the edit form with participant data
+        async function populateEditForm(participant) {
+            try {
+                console.log('📝 Populating edit form for:', participant.name);
+                
+                // Set the selected driver ID
+                window.selectedDriverId = participant.id;
+                
+                // Find and select the driver card
+                const driverCards = document.querySelectorAll('.driver-card');
+                driverCards.forEach(card => {
+                    const cardDriverId = card.dataset.driverId;
+                    if (cardDriverId === participant.id) {
+                        card.classList.add('selected');
+                        
+                        // Show the driver summary
+                        showDriverSummary(participant);
+                        
+                        // Don't pre-select classes - let user choose which classes to register for this event
+                        // Classes remain interactive and user can select them manually
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+                
+                console.log('✅ Edit form populated successfully');
+                
+            } catch (error) {
+                console.error('❌ Error populating edit form:', error);
+                showToast('Error populating edit form', 'error');
+            }
+        }
+
+        // Load drivers list
+        function loadDriversList() {
+            const container = document.getElementById('existingDriversList');
+            if (!container) return;
+
+            const drivers = dataManager.getParticipantsArray();
+            
+            if (drivers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <h3>No Drivers Found</h3>
+                        <p>No existing drivers found in the system.</p>
+                        <button class="btn btn-primary" onclick="goToRegistration()">
+                            <i class="fas fa-plus"></i> Add New Driver
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const driversHtml = drivers.map(driver => `
+                <div class="driver-card" data-driver-id="${driver.id}" onclick="selectDriver('${driver.id}')">
+                    <div class="driver-name">${driver.name}</div>
+                    <div class="driver-details">
+                        <div><strong>Email:</strong> ${driver.email || 'N/A'}</div>
+                        <div><strong>Phone:</strong> ${driver.phone || 'N/A'}</div>
+                        <div><strong>Team:</strong> ${driver.team || 'N/A'}</div>
+                        <div><strong>Racing #:</strong> ${driver.racingNumber || 'N/A'}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = driversHtml;
+        }
+
+        // Load events for selection
+        async function loadEvents() {
+            try {
+                const eventsResult = dataManager ? await dataManager.getEvents({}, 1, 1000) : { events: [] };
+                const events = eventsResult.events || eventsResult; // Handle both paginated and direct array responses
+                const eventSelectContainer = document.getElementById('eventSelectContainer');
+                
+                console.log('Loading events for existing drivers:', events);
+                
+                if (events.length === 0) {
+                    eventSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No events available - Create events first" disabled></div>';
+                } else {
+                    // Create flat array of events with series information
+                    const series = dataManager.getAllSeries();
+                    const eventOptions = [];
+                    
+                    events.forEach(event => {
+                        const eventSeries = series.find(s => s.id === event.seriesId);
+                        const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
+                        const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
+                        const seasonName = season ? season.name : 'General';
+                        
+                        eventOptions.push({
+                            value: event.id,
+                            label: `${event.name} - ${seriesName} (${seasonName}) - ${new Date(event.date).toLocaleDateString()}`
+                        });
+                    });
+                    
+                    eventSelectContainer.innerHTML = UIComponents.createComboBox(
+                        'eventSelect',
+                        eventOptions,
+                        'Select Event',
+                        'onEventSelect',
+                        ''
+                    );
+                    
+                    // Initialize the combo box
+                    UIComponents.initComboBox('eventSelect');
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                document.getElementById('eventSelectContainer').innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Error loading events" disabled></div>';
+            }
+        }
+
+        // Event selection callback
+        function onEventSelect(eventId, eventLabel) {
+            console.log('Event selected:', eventId, eventLabel);
+            if (eventId) {
+                selectedEventId = eventId;
+                currentEvent = dataManager.getEvent(eventId);
+                
+                // Update class options based on selected event
+                loadClassOptionsForEvent(eventId);
+                
+                // Clear any previous driver selection since event changed
+                if (selectedDriver) {
+                    document.querySelectorAll('.driver-card').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                    document.getElementById('selectedDriverSummary').style.display = 'none';
+                    document.getElementById('editDriverBtn').style.display = 'none';
+                    selectedDriver = null;
+                    selectedClasses = [];
+                    updatePricingSummary();
+                    updateCompleteButtonState();
+                }
+                
+                showToast(`Event selected: ${eventLabel}`, 'success');
+            }
+        }
+
+        // Load class options for specific event - only show classes activated for this event
+        function loadClassOptionsForEvent(eventId) {
+            const container = document.getElementById('classOptions');
+            if (!container) return;
+
+            let classes = [];
+            
+            if (!eventId || !currentEvent) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 1rem;">Please select an event first</p>';
+                return;
+            }
+            
+            // Get classes from the event's series
+            const series = dataManager.getSeries(currentEvent.seriesId);
+            if (!series || !series.sledClasses) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 1rem;">No classes configured for this event\'s series</p>';
+                return;
+            }
+            
+            // Check if event has specific class settings (which classes are enabled for this event)
+            const enabledClasses = currentEvent.classSettings?.filter(cs => cs.enabled) || [];
+            
+            if (enabledClasses.length > 0) {
+                // Use only the classes that are enabled for this specific event
+                console.log(`📋 Loading ${enabledClasses.length} activated classes for event ${currentEvent.name}`);
+                classes = enabledClasses.map(classSetting => {
+                    const seriesClass = series.sledClasses.find(sc => sc.id === classSetting.classId);
+                    if (!seriesClass) return null;
+                    
+                    return {
+                        name: seriesClass.name,
+                        price: classSetting.price || seriesClass.defaultFee
+                    };
+                }).filter(Boolean);
+            } else {
+                // Fallback: If no class settings configured, show all series classes with warning
+                console.warn(`⚠️ Event ${currentEvent.name} has no class settings configured, showing all series classes`);
+                classes = series.sledClasses.map(sledClass => ({
+                    name: sledClass.name,
+                    price: sledClass.defaultFee
+                }));
+            }
+            
+            if (classes.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 1rem;">No classes available for this event</p>';
+                return;
+            }
+
+            const classHtml = classes.map(cls => `
+                <div class="class-option" onclick="toggleClass('${cls.name}', ${cls.price})">
+                    <input type="checkbox" id="class-${cls.name}" value="${cls.name}">
+                    <div class="class-info">
+                        <div class="class-name">${cls.name}</div>
+                        <div class="class-price">$${cls.price}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = classHtml;
+            console.log(`✅ Loaded ${classes.length} class options for event ${currentEvent.name}`);
+        }
+
+        // Load class options (fallback for when no event is selected)
+        function loadClassOptions() {
+            loadClassOptionsForEvent(selectedEventId);
+        }
+
+        // Filter drivers based on search
+        function filterDrivers() {
+            const searchTerm = document.getElementById('driverSearch').value.toLowerCase().trim();
+            const driverCards = document.querySelectorAll('.driver-card');
+            
+            driverCards.forEach(card => {
+                const driverName = card.querySelector('.driver-name').textContent.toLowerCase();
+                const driverDetails = card.querySelector('.driver-details').textContent.toLowerCase();
+                
+                if (driverName.includes(searchTerm) || driverDetails.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Clear driver search
+        function clearDriverSearch() {
+            document.getElementById('driverSearch').value = '';
+            filterDrivers();
+        }
+
+        // Select a driver
+        function selectDriver(driverId) {
+            // Remove previous selection
+            document.querySelectorAll('.driver-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selection to clicked card
+            const selectedCard = document.querySelector(`[data-driver-id="${driverId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            
+            // Get driver data
+            selectedDriver = dataManager.getParticipant(driverId);
+            if (!selectedDriver) {
+                showToast('Driver not found', 'error');
+                return;
+            }
+            
+            // Show driver summary
+            showDriverSummary(selectedDriver);
+            
+            // Enable edit button
+            document.getElementById('editDriverBtn').style.display = 'block';
+            
+            // Update complete button state
+            updateCompleteButtonState();
+        }
+
+        // Show driver summary
+        function showDriverSummary(driver) {
+            const summaryContainer = document.getElementById('selectedDriverSummary');
+            const contentContainer = document.getElementById('driverSummaryContent');
+            
+            if (!summaryContainer || !contentContainer) return;
+            
+            contentContainer.innerHTML = `
+                <div><span class="label">Name:</span> ${driver.name}</div>
+                <div><span class="label">Email:</span> ${driver.email || 'N/A'}</div>
+                <div><span class="label">Phone:</span> ${driver.phone || 'N/A'}</div>
+                <div><span class="label">Team:</span> ${driver.team || 'N/A'}</div>
+                <div><span class="label">Racing #:</span> ${driver.racingNumber || 'N/A'}</div>
+                ${driver.notes ? `<div><span class="label">Notes:</span> ${driver.notes}</div>` : ''}
+            `;
+            
+            summaryContainer.style.display = 'block';
+        }
+
+        // Toggle class selection
+        function toggleClass(className, price) {
+            const checkbox = document.getElementById(`class-${className}`);
+            const classOption = checkbox.closest('.class-option');
+            
+            if (checkbox.checked) {
+                // Uncheck and remove from selection
+                checkbox.checked = false;
+                classOption.classList.remove('selected');
+                selectedClasses = selectedClasses.filter(cls => cls.name !== className);
+            } else {
+                // Check and add to selection
+                checkbox.checked = true;
+                classOption.classList.add('selected');
+                selectedClasses.push({ name: className, price: price });
+            }
+            
+            // Update pricing summary
+            updatePricingSummary();
+            
+            // Update complete button state
+            updateCompleteButtonState();
+        }
+
+        // Update pricing summary
+        function updatePricingSummary() {
+            const pricingContainer = document.getElementById('pricingSummary');
+            const breakdownContainer = document.getElementById('pricingBreakdown');
+            
+            if (!pricingContainer || !breakdownContainer) return;
+            
+            if (selectedClasses.length === 0) {
+                pricingContainer.style.display = 'none';
+                return;
+            }
+            
+            let total = 0;
+            const breakdownHtml = selectedClasses.map(cls => {
+                total += cls.price;
+                return `<div class="pricing-item"><span>${cls.name}</span><span>$${cls.price}</span></div>`;
+            }).join('');
+            
+            breakdownContainer.innerHTML = `
+                ${breakdownHtml}
+                <div class="pricing-item pricing-total">
+                    <span>Total</span>
+                    <span>$${total}</span>
+                </div>
+            `;
+            
+            pricingContainer.style.display = 'block';
+        }
+
+        // Update complete button state
+        function updateCompleteButtonState() {
+            const completeBtn = document.getElementById('completeBtn');
+            if (!completeBtn) return;
+            
+            const canComplete = selectedDriver && selectedClasses.length > 0;
+            completeBtn.disabled = !canComplete;
+        }
+
+        // Edit driver info
+        function editDriverInfo() {
+            if (!selectedDriver) {
+                showToast('Please select a driver first', 'warning');
+                return;
+            }
+            
+            // Populate edit form
+            document.getElementById('editDriverName').value = selectedDriver.name || '';
+            document.getElementById('editDriverNickname').value = selectedDriver.nickname || '';
+            document.getElementById('editDriverNumber').value = selectedDriver.racingNumber || '';
+            document.getElementById('editDriverEmail').value = selectedDriver.email || '';
+            document.getElementById('editDriverPhone').value = selectedDriver.phone || '';
+            document.getElementById('editDriverTeam').value = selectedDriver.team || '';
+            document.getElementById('editDriverNotes').value = selectedDriver.notes || '';
+            
+            // Show modal
+            document.getElementById('driverEditModal').style.display = 'flex';
+        }
+
+        // Close driver edit modal
+        function closeDriverEditModal() {
+            document.getElementById('driverEditModal').style.display = 'none';
+        }
+
+        // Save driver edit
+        async function saveDriverEdit() {
+            if (!selectedDriver) {
+                showToast('No driver selected', 'error');
+                return;
+            }
+            
+            try {
+                // Update driver data
+                selectedDriver.name = document.getElementById('editDriverName').value;
+                selectedDriver.nickname = document.getElementById('editDriverNickname').value;
+                selectedDriver.racingNumber = parseInt(document.getElementById('editDriverNumber').value) || null;
+                selectedDriver.email = document.getElementById('editDriverEmail').value;
+                selectedDriver.phone = document.getElementById('editDriverPhone').value;
+                selectedDriver.team = document.getElementById('editDriverTeam').value;
+                selectedDriver.notes = document.getElementById('editDriverNotes').value;
+                
+                // Save to data manager
+                await dataManager.updateParticipant(selectedDriver.id, selectedDriver);
+                
+                // Update UI
+                showDriverSummary(selectedDriver);
+                loadDriversList();
+                
+                // Close modal
+                closeDriverEditModal();
+                
+                showToast('Driver information updated successfully', 'success');
+            } catch (error) {
+                console.error('Error updating driver:', error);
+                showToast('Error updating driver information', 'error');
+            }
+        }
+
+        // Complete add existing registration
+        async function completeAddExisting() {
+            if (!selectedDriver || selectedClasses.length === 0) {
+                showToast('Please select a driver and at least one class', 'warning');
+                return;
+            }
+            
+            if (!selectedEventId) {
+                showToast('Please select an event first', 'warning');
+                return;
+            }
+            
+            try {
+                // Update participant's selected classes for this event
+                const classNames = selectedClasses.map(cls => cls.name);
+                
+                // Maintain event-specific class mappings
+                const eventClasses = selectedDriver.eventClasses || {};
+                eventClasses[selectedEventId] = classNames;
+                
+                // Aggregate all unique classes across all events for the participant's profile
+                const allClassesSet = new Set(selectedDriver.selectedClasses || []);
+                classNames.forEach(className => allClassesSet.add(className));
+                const allClassesArray = Array.from(allClassesSet);
+                
+                const updatedParticipant = {
+                    ...selectedDriver,
+                    selectedClasses: allClassesArray, // All classes ever registered (aggregate)
+                    eventClasses: eventClasses, // Event-specific class mapping: { eventId: [classes] }
+                    eventId: selectedEventId, // Current/last event
+                    sledClasses: allClassesArray // Legacy compatibility
+                };
+                
+                console.log('Updating participant with event-specific classes:');
+                console.log('- Event:', selectedEventId);
+                console.log('- Classes for this event:', classNames);
+                console.log('- All classes ever registered:', allClassesArray);
+                console.log('- Event classes mapping:', eventClasses);
+                
+                // Update participant with new classes
+                await dataManager.updateParticipant(selectedDriver.id, updatedParticipant);
+                
+                // Register participant for the event
+                const success = await dataManager.registerParticipantForEvent(selectedEventId, selectedDriver.id);
+                if (success) {
+                    console.log('✅ Participant registered for event:', selectedEventId);
+                    console.log('✅ Classes registered for this event:', classNames);
+                    showToast(`Registration completed successfully! Registered for ${classNames.length} class(es).`, 'success');
+                    
+                    // Reset form but keep event selection
+                    resetFormKeepEvent();
+                } else {
+                    showToast('Error registering participant for event', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error completing registration:', error);
+                showToast('Error completing registration', 'error');
+            }
+        }
+
+        // Reset form but keep event selection
+        function resetFormKeepEvent() {
+            selectedDriver = null;
+            selectedClasses = [];
+            
+            // Clear selections
+            document.querySelectorAll('.driver-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.class-option').forEach(option => {
+                option.classList.remove('selected');
+                const checkbox = option.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = false;
+            });
+            
+            // Hide summary
+            document.getElementById('selectedDriverSummary').style.display = 'none';
+            document.getElementById('pricingSummary').style.display = 'none';
+            document.getElementById('editDriverBtn').style.display = 'none';
+            
+            // Disable complete button
+            document.getElementById('completeBtn').disabled = true;
+            
+            // Clear search
+            document.getElementById('driverSearch').value = '';
+        }
+
+        // Reset form completely (including event selection)
+        function resetForm() {
+            selectedDriver = null;
+            selectedClasses = [];
+            selectedEventId = null;
+            currentEvent = null;
+            
+            // Clear selections
+            document.querySelectorAll('.driver-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.class-option').forEach(option => {
+                option.classList.remove('selected');
+                const checkbox = option.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = false;
+            });
+            
+            // Hide summary
+            document.getElementById('selectedDriverSummary').style.display = 'none';
+            document.getElementById('pricingSummary').style.display = 'none';
+            document.getElementById('editDriverBtn').style.display = 'none';
+            
+            // Disable complete button
+            document.getElementById('completeBtn').disabled = true;
+            
+            // Clear search
+            document.getElementById('driverSearch').value = '';
+            
+            // Reset event selector
+            const eventInput = document.getElementById('eventSelect-input');
+            if (eventInput) {
+                eventInput.value = '';
+                eventInput.removeAttribute('data-selected-value');
+            }
+        }
+
+        // Refresh drivers
+        function refreshDrivers() {
+            showToast('Refreshing drivers...', 'info');
+            dataManager.loadFromStorage().then(() => {
+                loadDriversList();
+                showToast('Drivers refreshed successfully!', 'success');
+            }).catch(error => {
+                console.error('Error refreshing drivers:', error);
+                showToast('Error refreshing drivers', 'error');
+            });
+        }
+
+        // Go to registration page
+        function goToRegistration() {
+            window.location.href = 'registration.html';
+        }
+
+        // Make functions globally available
+        window.dataManager = null;
+        window.registrationManager = null;
+        window.showToast = showToast;
+        window.filterDrivers = filterDrivers;
+        window.clearDriverSearch = clearDriverSearch;
+        window.selectDriver = selectDriver;
+        window.toggleClass = toggleClass;
+        window.editDriverInfo = editDriverInfo;
+        window.closeDriverEditModal = closeDriverEditModal;
+        window.saveDriverEdit = saveDriverEdit;
+        window.completeAddExisting = completeAddExisting;
+        window.refreshDrivers = refreshDrivers;
+        window.goToRegistration = goToRegistration;
+        window.onEventSelect = onEventSelect;
+        window.loadEvents = loadEvents;
+
+        // Set global references after initialization
+        setTimeout(() => {
+            window.dataManager = dataManager;
+            window.registrationManager = registrationManager;
+        }, 100);
+    </script>
+</body>
+</html>
