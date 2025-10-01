@@ -1,17 +1,3 @@
-
-# EPC17 — Professional Racing Event Management System
-
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
-
-> EPC Technology — Project 17
-> Professional racing event management focused on reliable results, reproducible pairings, and real-time operations.
-
-## Overview
-
-EPC17 is a lightweight, network-accessible system for running professional drag-racing events. It prioritizes correctness, state persistence, deterministic pairing logic, and testability over visual flashiness. The repo includes a Flask backend, a modular JavaScript frontend, and a versioned prompt library for any LLM-driven features (race recaps, voice lines). See `/llm/prompts` for prompt specs.
-
 This README is concise and action-oriented. For development workflow and prompt specs consult `EPC17_WORKFLOW.md` and `EPC17_PROMPTS.md` in the repository root.
 
 ## Quick start
@@ -150,7 +136,3 @@ MIT. See `LICENSE.txt` for details.
 - Replace JSON storage with Postgres when moving to production
 - Add a lightweight monitoring dashboard that surfaces pairing health and queue lengths
 
----
-If you want, I will:
-- commit this README into the repo file `EPC17_README.md`, and
-- generate a starter `PromptExample` and `pairing_engine` test stub now.
