@@ -1,3 +1,33 @@
+# EPC17 Patch Notes
+
+## Version 0.9.5 (Unreleased)
+- Beta tag: TBD (will follow format `YYWwwrVV`, next after 25W40a09)
+
+### Added
+- TBA
+
+### Changed
+- TBA
+
+### Fixed
+- TBA
+
+### Performance
+- TBA
+
+### Testing
+- TBA
+
+### Documentation
+- TBA
+
+### Data & Migrations
+- TBA
+
+---
+
+## Version 0.9.4 - Beta 25W40a09 (Released 2025-10-01)
+
 2025-10-01 Compact Hero Section and Registration Form (Beta)
 - **Tighter Hero Section**: Reduced padding from 1.5rem to 0.75rem/1.25rem, margins from 2rem to 1rem
 - **Smaller Hero Typography**: Title reduced from 2rem to 1.5rem, subtitle from 1rem to 0.875rem
