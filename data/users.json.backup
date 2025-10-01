@@ -10,7 +10,8 @@
       "races",
       "drivers profile",
       "analytics",
-      "live display"
+      "live display",
+      "animator"
     ]
   },
   {
@@ -20,9 +21,26 @@
     "permissions": [
       "registration"
     ],
+    "allowedEvents": []
+  },
+  {
+    "id": "ffafa535-40cd-4010-a169-d0c3da8646e9",
+    "username": "View",
+    "password": "View123",
+    "permissions": [
+      "live display"
+    ],
+    "allowedEvents": []
+  },
+  {
+    "id": "32ea8425-7394-42a6-92b2-cb21164acf4a",
+    "username": "ani",
+    "password": "ani123",
+    "permissions": [
+      "animator"
+    ],
     "allowedEvents": [
-      "49ecbfa3-d4d3-4b35-b192-7f08dfe325b1",
-      "73db5b82-5b73-4d01-928f-434ee0d45844"
+      "8acfdea0-9fe2-479b-beb1-6f0022f5ab0f"
     ]
   }
 ]

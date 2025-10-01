@@ -1,0 +1,68 @@
+---
+description: "EPC17 Project - Cursor rules, naming, and long-term guidance"
+globs:
+  - src/**/*.js
+  - src/**/*.jsx
+  - src/**/*.ts
+  - src/**/*.tsx
+alwaysApply: true
+---
+# EPC17_RULES - Cursor-focused Project Rules (living)
+This file is the single source of truth for formatting, architecture, and constraints
+that Cursor / LLM agents should always use when generating or modifying code for this project.
+
+## Style & Naming
+- JavaScript / TypeScript: follow **ESLint recommended + Prettier** formatting. Use ESM (import/export).
+- React components: **PascalCase** for filenames and exports. Put components in `src/components/<Feature>/`.
+- Hooks: prefix with `use` and store in `src/hooks/` (e.g., `src/hooks/useTasks.js`).
+- Utility functions: `src/utils/`, use **camelCase** for functions, **snake_case** allowed for filenames only where required by older systems.
+- CSS classes: **kebab-case**. Prefer utility-first (Tailwind) where applicable.
+
+## Architecture & Patterns
+- Prefer **small components** (≤ 200 lines). Break large components into subcomponents and hooks.
+- All side-effects must be in hooks (useEffect / custom hooks). No direct DOM manipulation (`document.*`) except for very explicit exceptions listed below.
+- State: use React hooks and prop drilling or context. Prefer derived state over duplication.
+- Data fetching: centralize in `src/api/*` or `src/hooks/useFetch.js`. API layer returns normalized JSON.
+- Avoid global mutable state; prefer React Context or injected services for testability.
+
+## Safety & Hallucination Guardrails (for LLMs)
+- Never invent data. If required fields are missing from provided context, return `needs_data:true` and list `missing_fields`.
+- When generating user-facing text (recaps, voice lines), include exact fields from the `context` object only.
+- Always include a small `analysis` block (2-4 bullet points) when generating complex features, then the requested output.
+- For code generation, include unit tests alongside implementation. If external behavior is uncertain, create a failing test that documents the expected behavior.
+
+## Code Comments & Logging
+- New modules: include a JSDoc header describing purpose, exports, inputs, outputs, and error modes.
+- Add `console.debug` lines behind a `DEBUG` env toggle for complex flows.
+- All produced code must include basic error handling and clear failure messages.
+
+## Files / Folders Cursor Should Treat as Canonical
+- `docs/EPC17_PROMPTS.md` — prompt specs and examples (authoritative).
+- `docs/EPC17_WORKFLOW.md` — workflow map, release & CI rules.
+- `EPC17_RULES.mdc` — this file (enforced).
+- `PATCHNOTES.txt` — must be updated at every change.
+
+## Cursor / Session Behaviors
+- Use `Notepad` snippets for frequently used patterns: API template, fetch hook, prompt wrapper.
+- When asked to implement a feature: produce a plan (3-8 tasks), then implement the first task and run tests. Repeat.
+- When making UI changes, produce a short accessibility checklist for each new component (ARIA attributes, keyboard nav, labels).
+
+## Project-Specific Rules (Snowmobile Drag Racing App)
+- Prioritize code quality over speed.
+- Application must handle hundreds of drivers and races efficiently.
+- Maintain **simplicity** in design and implementation.
+- Provide clear, well-structured code with comments explaining complex sections.
+- Avoid unnecessary abstractions; keep the code straightforward.
+- All generated code must align with the architecture defined in this repo.
+
+## Patch Notes & Versioning Rules
+- **PATCHNOTES.txt must be updated for every change** (feature, fix, refactor, or rules update).
+- Each entry must include: version string, summary of changes, and impacted files.
+- When instructed to "change version to xx.xx", Cursor must:
+  1. Move all current patch notes under the new version number.
+  2. Clean up outdated/obsolete entries as specified.
+  3. Ensure `PATCHNOTES.txt` remains a clear history of project evolution.
+
+## Exceptions
+- Direct DOM access allowed only in `src/utils/dom-bridge.js` and must be explicitly reviewed.
+- If a model produces an output that would break tests, the change must be reverted or corrected before merging.

@@ -5,78 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Analytics (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="main-nav">
-        <div class="nav-brand">
-            <div class="brand-icon">
-                <i class="fas fa-chart-bar"></i>
-            </div>
-            <div class="brand-text">
-                <span class="brand-main">EPC TECHNOLOGY</span>
-                <span class="brand-sub">PROJECT 17</span>
-            </div>
-        </div>
-        
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registration</a></li>
-            <li><a href="series.html">Series</a></li>
-            <li><a href="events.html">Events</a></li>
-            <li><a href="races.html">Races</a></li>
-            <li><a href="driver-profile.html">Drivers</a></li>
-            <li class="active"><a href="analytics.html">Analytics</a></li>
-            <li><a href="live-display.html">Live Display</a></li>
-        </ul>
-        
-        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
-        
-        <div class="mobile-nav-menu">
-            <div class="mobile-nav-header">
-                <div class="mobile-nav-brand">
-                    <div class="brand-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="brand-text">
-                        <span class="brand-main">EPC TECHNOLOGY</span>
-                        <span class="brand-sub">PROJECT 17</span>
-                    </div>
-                </div>
-                <button class="mobile-nav-close" aria-label="Close navigation menu">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <ul class="mobile-nav-links">
-                <li><a href="index.html">🏠 Home</a></li>
-                <li><a href="registration.html">📝 Registration</a></li>
-                <li><a href="series.html">🏆 Series</a></li>
-                <li><a href="events.html">📅 Events</a></li>
-                <li><a href="races.html">🏁 Races</a></li>
-                <li><a href="driver-profile.html">👥 Drivers</a></li>
-                <li><a href="analytics.html" class="active">📊 Analytics</a></li>
-                <li><a href="live-display.html">🖥️ Live Display</a></li>
-            </ul>
-            <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">25W32a09</div>
-            </div>
-        </div>
-        
-        <div class="mobile-nav-overlay"></div>
-    </nav>
+    <!-- Navigation is now handled by sidebar-nav.js -->
 
     <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1>Analytics Dashboard</h1>
-                <p class="subtitle">Comprehensive racing statistics and insights</p>
-            </div>
-            <div class="header-actions">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">Analytics Dashboard</h1>
+                    <p class="hero-subtitle">Comprehensive racing statistics and insights with professional data visualization</p>
+                </div>
+                <div class="hero-actions">
                 <button id="analyticsExportPdf" class="btn btn-secondary btn-sm" onclick="exportAnalytics('pdf')" title="Export to PDF">
                     <i class="fas fa-file-pdf"></i> PDF
                 </button>
@@ -89,17 +32,7 @@
             </div>
         </div>
 
-        <!-- Analytics Navigation -->
-        <div class="analytics-nav">
-            <button class="analytics-nav-btn active" onclick="showSection('overall')" id="overallBtn">
-                <i class="fas fa-chart-line"></i>
-                <span>All-Time Stats</span>
-            </button>
-            <button class="analytics-nav-btn" onclick="showSection('events')" id="eventsBtn">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Event Analytics</span>
-            </button>
-        </div>
+        <!-- Analytics Navigation moved to top navigation -->
 
         <!-- All-Time Statistics -->
         <div id="overallSection" class="analytics-section">
@@ -134,109 +67,198 @@
             </div>
         </div>
 
-        <!-- Event Analytics -->
-        <div id="eventsSection" class="analytics-section" style="display: none;">
+        <!-- Time Analytics Section -->
+        <div id="timeAnalyticsSection" class="analytics-section">
             <div class="section-header">
-                <h2><i class="fas fa-calendar-alt"></i> Event Analytics</h2>
+                <h2><i class="fas fa-clock"></i> Time Analytics</h2>
             </div>
             
-            <!-- Event Selection -->
-            <div class="event-selector">
-                <label for="eventSelect">Select Event:</label>
-                <select id="eventSelect" onchange="loadEventAnalytics()">
-                    <option value="">Choose an event...</option>
-                </select>
+            <!-- Race Timing Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card timing-card">
+                    <div class="stat-icon"><i class="fas fa-stopwatch"></i></div>
+                    <div class="stat-value" id="avgRaceTime">0s</div>
+                    <div class="stat-label">Average Race Duration</div>
+                    <div class="stat-trend" id="raceTimeTrend">--</div>
+                </div>
+                
+                <div class="stat-card timing-card">
+                    <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
+                    <div class="stat-value" id="racesPerHour">0</div>
+                    <div class="stat-label">Races per Hour</div>
+                    <div class="stat-trend" id="racesPerHourTrend">--</div>
+                </div>
+                
+                <div class="stat-card timing-card">
+                    <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="stat-value" id="avgTimeBetweenRaces">0s</div>
+                    <div class="stat-label">Avg Time Between Races</div>
+                    <div class="stat-trend" id="timeBetweenRacesTrend">--</div>
+                </div>
+                
+                <div class="stat-card timing-card">
+                    <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                    <div class="stat-value" id="avgEventDuration">0h</div>
+                    <div class="stat-label">Average Event Duration</div>
+                    <div class="stat-trend" id="eventDurationTrend">--</div>
+                </div>
             </div>
-            
-            <!-- Event Statistics -->
-            <div id="eventStats" class="event-stats" style="display: none;">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                        <div class="stat-value" id="eventRevenue">$0</div>
-                        <div class="stat-label">Total Revenue</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-users"></i></div>
-                        <div class="stat-value" id="eventRegistrations">0</div>
-                        <div class="stat-label">Registrations</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-user"></i></div>
-                        <div class="stat-value" id="eventDrivers">0</div>
-                        <div class="stat-label">Drivers</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-flag-checkered"></i></div>
-                        <div class="stat-value" id="eventRaces">0</div>
-                        <div class="stat-label">Completed Races</div>
-                    </div>
 
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-circle-check"></i></div>
-                        <div class="stat-value" id="eventCompletionPercent">0%</div>
-                        <div class="stat-label">Event Completion</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-calculator"></i></div>
-                        <div class="stat-value" id="avgFeePerDriver">$0</div>
-                        <div class="stat-label">Avg Fee per Driver</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
-                        <div class="stat-value" id="eventClasses">0</div>
-                        <div class="stat-label">Racing Classes</div>
-                    </div>
+            <!-- Race Timing Chart -->
+            <div class="chart-container">
+                <h3><i class="fas fa-chart-area"></i> Race Timing Distribution</h3>
+                <div class="chart-wrapper">
+                    <canvas id="timingChart" width="800" height="400"></canvas>
                 </div>
-                
-                <!-- Class Breakdown -->
-                <div class="class-breakdown">
-                    <h3><i class="fas fa-layer-group"></i> Class Breakdown</h3>
-                    <div id="classBreakdown" class="class-grid">
-                        <!-- Class breakdown will be populated here -->
+            </div>
+
+            <!-- Performance Trends -->
+            <div class="trends-container">
+                <h3><i class="fas fa-chart-line"></i> Performance Trends</h3>
+                <div class="trends-grid">
+                    <div class="trend-card">
+                        <h4>Peak Racing Hours</h4>
+                        <div class="trend-chart" id="peakHoursChart"></div>
                     </div>
-                </div>
-                
-                <!-- Driver Statistics Table -->
-                <div class="driver-stats">
-                    <h3><i class="fas fa-user-friends"></i> Driver Statistics</h3>
-                    <div class="table-container">
-                        <table class="data-table" id="driverStatsTable">
-                            <thead>
-                                <tr>
-                                    <th onclick="sortTable('driverStatsTable', 0)" class="sortable">Driver <i class="fas fa-sort"></i></th>
-                                    <th onclick="sortTable('driverStatsTable', 1)" class="sortable">Classes <i class="fas fa-sort"></i></th>
-                                    <th onclick="sortTable('driverStatsTable', 2)" class="sortable">Races <i class="fas fa-sort"></i></th>
-                                    <th onclick="sortTable('driverStatsTable', 3)" class="sortable">Wins <i class="fas fa-sort"></i></th>
-                                    <th onclick="sortTable('driverStatsTable', 4)" class="sortable">Win % <i class="fas fa-sort"></i></th>
-                                    <th onclick="sortTable('driverStatsTable', 5)" class="sortable">Avg Position <i class="fas fa-sort"></i></th>
-                                    <th onclick="sortTable('driverStatsTable', 6)" class="sortable">Total Fee <i class="fas fa-sort"></i></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Driver stats will be populated here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <!-- Lane Win Percentage Section -->
-                <div class="lane-win-stats">
-                    <h3><i class="fas fa-percentage"></i> Lane Win Percentage</h3>
-                    <div class="lane-win-grid">
-                        <!-- Lane win stats will be populated here -->
+                    <div class="trend-card">
+                        <h4>Event Efficiency</h4>
+                        <div class="efficiency-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Race Completion Rate</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="completionRateBar"></div>
+                                </div>
+                                <span class="metric-value" id="completionRate">0%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Time Efficiency</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="timeEfficiencyBar"></div>
+                                </div>
+                                <span class="metric-value" id="timeEfficiency">0%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </main>
 
     <style>
+        /* Hero Section Styles - Consistent with Series Page */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         /* Analytics Styles */
         .analytics-nav {
             display: flex;
@@ -372,168 +394,47 @@
             font-weight: 500;
         }
 
-        /* Event Selector */
-        .event-selector {
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+
+        /* Time Analytics Styles */
+        .timing-card {
+            background: linear-gradient(135deg, rgba(255, 140, 66, 0.1) 0%, rgba(74, 144, 226, 0.05) 100%);
+            border-left: 4px solid var(--accent-orange-warm);
         }
 
-        .event-selector label {
-            color: var(--text-primary, #ffffff);
+        .timing-card .stat-icon {
+            color: var(--accent-orange-warm);
+        }
+
+        .stat-trend {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
             font-weight: 500;
-            font-size: 16px;
         }
 
-        .event-selector select {
-            background: var(--bg-primary, #1a1a1a);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            padding: 12px 16px;
-            color: var(--text-primary, #ffffff);
-            font-size: 16px;
-            min-width: 300px;
-            cursor: pointer;
+        .stat-trend.positive {
+            color: #4CAF50;
         }
 
-        .event-selector select:focus {
-            outline: none;
-            border-color: var(--accent-primary, #4a90e2);
-            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        .stat-trend.negative {
+            color: #f44336;
         }
 
-        /* Class Breakdown */
-        .class-breakdown {
-            margin-bottom: 30px;
+        .stat-trend.neutral {
+            color: var(--text-secondary);
         }
 
-        .class-breakdown h3 {
-            color: var(--text-primary, #ffffff);
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .class-breakdown h3 i {
-            color: var(--accent-primary, #4a90e2);
-        }
-
-        .class-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .class-card {
-            background: var(--bg-primary, #1a1a1a);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .class-card h4 {
-            color: var(--accent-primary, #4a90e2);
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .class-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .class-stat {
-            text-align: center;
-        }
-
-        .class-stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-primary, #ffffff);
-            margin-bottom: 4px;
-        }
-
-        .class-stat-label {
-            font-size: 12px;
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        /* Driver Statistics */
-        .driver-stats h3 {
-            color: var(--text-primary, #ffffff);
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .driver-stats h3 i {
-            color: var(--accent-primary, #4a90e2);
-        }
-
-        .table-container {
-            background: var(--bg-primary, #1a1a1a);
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .data-table th {
-            background: rgba(255,255,255,0.05);
-            padding: 15px 12px;
-            text-align: left;
-            color: var(--text-primary, #ffffff);
-            font-weight: 600;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .data-table th.sortable:hover {
-            background: rgba(74, 144, 226, 0.1);
-        }
-
-        .data-table th i {
-            margin-left: 5px;
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        .data-table td {
-            padding: 12px;
-            color: var(--text-secondary, #b3b3b3);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .data-table tr:hover {
-            background: rgba(255,255,255,0.02);
-        }
-
-        /* Lane Win Percentage Styles */
-        .lane-win-stats {
-            margin-top: 30px;
+        /* Chart Container Styles */
+        .chart-container {
             background: var(--bg-primary, #1a1a1a);
             border-radius: 12px;
             padding: 25px;
+            margin: 25px 0;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .lane-win-stats h3 {
+        .chart-container h3 {
             color: var(--text-primary, #ffffff);
             font-size: 20px;
             font-weight: 600;
@@ -543,62 +444,160 @@
             gap: 10px;
         }
 
-        .lane-win-stats h3 i {
+        .chart-container h3 i {
             color: var(--accent-primary, #4a90e2);
         }
 
-        .lane-win-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+        .chart-wrapper {
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
         }
 
-        .lane-win-card {
+        #timingChart {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Trends Container */
+        .trends-container {
+            background: var(--bg-primary, #1a1a1a);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .trends-container h3 {
+            color: var(--text-primary, #ffffff);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .trends-container h3 i {
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .trends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .trend-card {
             background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+            padding: 20px;
             transition: all 0.3s ease;
         }
 
-        .lane-win-card:hover {
-            transform: translateY(-5px);
+        .trend-card:hover {
+            transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-color: var(--accent-primary, #4a90e2);
         }
 
-        .lane-win-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--accent-primary, #4a90e2), var(--accent-secondary, #9b59b6));
-            border-radius: 12px 12px 0 0;
-        }
-
-        .lane-win-icon {
-            font-size: 32px;
-            color: var(--accent-primary, #4a90e2);
-            margin-bottom: 15px;
-        }
-
-        .lane-win-value {
-            font-size: 36px;
-            font-weight: 700;
+        .trend-card h4 {
             color: var(--text-primary, #ffffff);
-            margin-bottom: 8px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .lane-win-label {
+        .trend-chart {
+            height: 150px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Efficiency Metrics */
+        .efficiency-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metric-label {
             font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
+            color: var(--text-secondary);
             font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-orange-glow));
+            border-radius: 4px;
+            transition: width 0.8s ease;
+            width: 0%;
+        }
+
+        .metric-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        /* Enhanced Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .stat-card {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .stat-card:hover {
+            animation: pulse 0.6s ease;
         }
 
         /* Responsive Design */
@@ -611,25 +610,17 @@
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             }
             
-            .event-selector {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .event-selector select {
-                min-width: 100%;
-            }
-            
-            .class-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
-            
-            .table-container {
-                overflow-x: auto;
-            }
-
-            .lane-win-grid {
+            .trends-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .chart-wrapper {
+                padding: 10px;
+            }
+            
+            #timingChart {
+                width: 100%;
+                height: 250px;
             }
         }
     </style>
@@ -642,6 +633,8 @@
     <!-- Export libs -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script>
         // Simple inline export utility
         window.ExportUtils = {
@@ -695,17 +688,49 @@
         };
     </script>
     <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
 
     <script>
         let dataManager;
         let allEvents = [];
         let allParticipants = [];
-        let currentEvent = null;
-        let sortDirection = {};
+        let timingChart = null;
+
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🔐 Analytics page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🔐 Analytics page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🔐 Analytics page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🔐 Analytics page: Authentication complete, proceeding with data load');
+            return true;
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
             try {
+                // Wait for authentication before initializing
+                await waitForAuthentication();
+                
                 dataManager = new DataManager();
                 await dataManager.loadFromStorage(['events', 'participants']);
                 
@@ -713,7 +738,10 @@
                 await loadAllData();
                 
                 // Show initial view
-                showSection('overall');
+                loadOverallStats();
+                
+                // Load time analytics
+                loadTimeAnalytics();
                 
                 // Initialize mobile navigation
                 if (window.MobileNavigation) {
@@ -728,9 +756,10 @@
         // Load all data
         async function loadAllData() {
             try {
-                // Load ALL events and participants (not just paginated results)
+                // Load ALL events, participants, and race brackets
                 const eventsResult = await dataManager.getEvents({}, 1, 50000); // Get all events
                 const participantsResult = await dataManager.getParticipants({}, 1, 50000); // Get all participants
+                const raceBrackets = await dataManager.loadRaceBrackets(); // Get race brackets
                 
                 // Handle the data structure properly - API returns paginated results
                 if (eventsResult && eventsResult.events) {
@@ -748,6 +777,9 @@
                 } else {
                     allParticipants = [];
                 }
+                
+                // Store race brackets globally for race counting
+                window.raceBrackets = raceBrackets || {};
                 
             } catch (error) {
                 console.error('Error loading analytics data:', error);
@@ -788,26 +820,6 @@
             }
         }
 
-        // Show section
-        function showSection(section) {
-            // Update active button
-            document.querySelectorAll('.analytics-nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(section + 'Btn').classList.add('active');
-
-            // Hide all sections
-            document.getElementById('overallSection').style.display = 'none';
-            document.getElementById('eventsSection').style.display = 'none';
-
-            // Show selected section
-            document.getElementById(section + 'Section').style.display = 'block';
-
-            // Load appropriate data
-            if (section === 'overall') {
-                loadOverallStats();
-            } else if (section === 'events') {
-                loadEventSelector();
-            }
-        }
 
         // Load overall statistics
         function loadOverallStats() {
@@ -837,14 +849,31 @@
         function calculateTotalRaces() {
             let totalRaces = 0;
             
-            // Count races from participant statistics
-            allParticipants.forEach(participant => {
-                if (participant.statistics && participant.statistics.raceHistory) {
-                    totalRaces += participant.statistics.raceHistory.length;
-                }
-            });
+            // Count races from race brackets if available
+            if (window.raceBrackets) {
+                Object.values(window.raceBrackets).forEach(eventBrackets => {
+                    if (eventBrackets && eventBrackets.classes) {
+                        Object.values(eventBrackets.classes).forEach(classData => {
+                            if (classData.rounds && Array.isArray(classData.rounds)) {
+                                classData.rounds.forEach(round => {
+                                    if (round.heats && Array.isArray(round.heats)) {
+                                        round.heats.forEach(heat => {
+                                            // Count as completed race if it has a status of 'completed' or has results
+                                            if (heat.status === 'completed' || 
+                                                (heat.results && Object.keys(heat.results).length > 0) ||
+                                                (heat.finishOrder && Object.keys(heat.finishOrder).length > 0)) {
+                                                totalRaces++;
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
             
-            // If no race history, estimate from events and participants
+            // Fallback: If no race brackets, estimate from events and participants
             if (totalRaces === 0) {
                 allEvents.forEach(event => {
                     const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
@@ -858,393 +887,19 @@
                 });
             }
             
+            console.log(`🏁 Total races calculated: ${totalRaces} (from race brackets: ${window.raceBrackets ? 'yes' : 'no'})`);
             return totalRaces;
         }
 
-        // Load event selector
-        function loadEventSelector() {
-            const select = document.getElementById('eventSelect');
-            select.innerHTML = '<option value="">Choose an event...</option>';
-            
-            // Sort events by date (newest first)
-            const sortedEvents = allEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedEvents.forEach(event => {
-                const option = document.createElement('option');
-                option.value = event.id;
-                option.textContent = `${event.name} - ${event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}`;
-                select.appendChild(option);
-            });
-        }
 
-        // Load event analytics
-        function loadEventAnalytics() {
-            const eventId = document.getElementById('eventSelect').value;
-            const eventStats = document.getElementById('eventStats');
-            
-            if (!eventId) {
-                eventStats.style.display = 'none';
-                return;
-            }
-            
-            currentEvent = allEvents.find(e => e.id === eventId);
-            if (!currentEvent) return;
-            
-            // Get event participants
-            const eventParticipants = allParticipants.filter(p => p.eventId === eventId);
-            
-            // Calculate event statistics
-            const eventRevenue = eventParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
-            const uniqueDrivers = new Set(eventParticipants.map(p => p.id)).size;
-            const totalEntries = eventParticipants.reduce((sum, p) => {
-                const classCount = p.selectedClasses ? p.selectedClasses.length : 1;
-                return sum + classCount;
-            }, 0);
-            const avgFeePerDriver = uniqueDrivers > 0 ? Math.round(eventRevenue / uniqueDrivers) : 0;
-            
-            // Get unique classes
-            const eventClasses = new Set();
-            eventParticipants.forEach(p => {
-                if (p.selectedClasses) {
-                    p.selectedClasses.forEach(c => eventClasses.add(c));
-                }
-            });
-            
-            // Calculate completed races
-            const eventRaces = calculateEventRaces(eventParticipants);
-            const expectedTotalRaces = calculateExpectedTotalRacesForEvent(currentEvent, eventParticipants);
-            const completionPct = expectedTotalRaces > 0 ? Math.round((eventRaces / expectedTotalRaces) * 100) : 0;
-            
-            // Update statistics
-            document.getElementById('eventRevenue').textContent = `$${eventRevenue.toLocaleString()}`;
-            document.getElementById('eventRegistrations').textContent = totalEntries.toLocaleString();
-            document.getElementById('eventDrivers').textContent = uniqueDrivers.toLocaleString();
-            document.getElementById('eventRaces').textContent = eventRaces.toLocaleString();
-            document.getElementById('avgFeePerDriver').textContent = `$${avgFeePerDriver.toLocaleString()}`;
-            document.getElementById('eventClasses').textContent = eventClasses.size;
-            const completionEl = document.getElementById('eventCompletionPercent');
-            if (completionEl) completionEl.textContent = `${completionPct}%`;
-            
-            // Load class breakdown
-            loadClassBreakdown(eventParticipants);
-            
-            // Load driver statistics
-            loadDriverStatistics(eventParticipants);
-
-            // Load lane win percentage
-            loadLaneWinPercentage(eventParticipants);
-            
-            // Show event stats
-            eventStats.style.display = 'block';
-        }
-
-        // Calculate event races
-        function calculateEventRaces(eventParticipants) {
-            // Count completed races from stored histories; fallback to 0
-            let totalCompleted = 0;
-            eventParticipants.forEach(participant => {
-                if (participant.statistics && participant.statistics.raceHistory) {
-                    totalCompleted += participant.statistics.raceHistory.length;
-                }
-            });
-            return totalCompleted;
-        }
-
-        // Compute expected total races for the selected event based on class sizes and lanes per race
-        function calculateExpectedTotalRacesForEvent(event, eventParticipants) {
-            if (!event) return 0;
-            const m = parseInt(event.numberOfTracks || 4, 10);
-            const eliminationType = (event.eliminationType || 'double').toLowerCase();
-
-            const classToIds = new Map();
-            const addToClass = (cls, id) => {
-                if (!cls) return;
-                const key = String(cls).trim();
-                if (!key) return;
-                if (!classToIds.has(key)) classToIds.set(key, new Set());
-                classToIds.get(key).add(id);
-            };
-
-            (eventParticipants || []).forEach(p => {
-                if (Array.isArray(p.selectedClasses) && p.selectedClasses.length) {
-                    p.selectedClasses.forEach(c => addToClass(c, p.id));
-                } else if (Array.isArray(p.sledClasses) && p.sledClasses.length) {
-                    p.sledClasses.forEach(c => addToClass(c, p.id));
-                } else if (p.sledClass) {
-                    addToClass(p.sledClass, p.id);
-                }
-            });
-
-            if (classToIds.size === 0) {
-                const ids = new Set((eventParticipants || []).map(p => p.id));
-                classToIds.set('ALL', ids);
-            }
-
-            let total = 0;
-            for (const [, idSet] of classToIds.entries()) {
-                const n = idSet.size;
-                if (n <= 1) continue;
-                if (eliminationType === 'single') {
-                    total += expectedRacesSingleElimination(n, m);
-                } else if (eliminationType === 'double' || eliminationType === 'double_random') {
-                    total += expectedRacesDoubleElimination(n, m);
-                } else if (eliminationType === 'custom') {
-                    // Approximate: consider loss limit and outcomes
-                    const custom = Array.isArray(event.customOutcomes) ? event.customOutcomes : [];
-                    const hasLose = custom.some(x => String(x).toLowerCase() === 'lose');
-                    const lossLimit = Number.isFinite(event.customLossLimit) ? Number(event.customLossLimit) : 2;
-                    
-                    if (!hasLose || lossLimit === 1) {
-                        // No losses allowed or single loss = single elimination
-                        total += expectedRacesSingleElimination(n, m);
-                    } else if (lossLimit >= 2) {
-                        // Multiple losses allowed = similar to double elimination
-                        total += expectedRacesDoubleElimination(n, m);
-                    } else {
-                        total += expectedRacesSingleElimination(n, m);
-                    }
-                } else {
-                    total += expectedRacesDoubleElimination(n, m);
-                }
-            }
-            return total;
-        }
-
-        function expectedRacesSingleElimination(n, m) {
-            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
-            let U = n;
-            let total = 0;
-            while (U > 1) {
-                const Rw = Math.ceil(U / m);
-                total += Rw;
-                U = Rw;
-            }
-            return total;
-        }
-
-        function expectedRacesDoubleElimination(n, m) {
-            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
-            let U = n;
-            let L = 0;
-            let total = 0;
-            const Rw1 = Math.ceil(U / m);
-            total += Rw1;
-            U = Rw1;
-            L = n - Rw1;
-            while (!(U === 1 && L === 1)) {
-                const Rw = Math.ceil(U / m);
-                total += Rw;
-                const drop = U - Rw;
-                const Rl = Math.ceil((L + drop) / m);
-                total += Rl;
-                U = Rw;
-                L = Rl;
-                if (total > 100000) break;
-            }
-            total += 1; // final championship
-            return total;
-        }
-
-        // Load class breakdown
-        function loadClassBreakdown(eventParticipants) {
-            const container = document.getElementById('classBreakdown');
-            
-            // Group by class
-            const classData = {};
-            eventParticipants.forEach(p => {
-                if (p.selectedClasses) {
-                    p.selectedClasses.forEach(className => {
-                        if (!classData[className]) {
-                            classData[className] = { participants: [], revenue: 0 };
-                        }
-                        classData[className].participants.push(p);
-                        classData[className].revenue += p.totalFee || 0;
-                    });
-                }
-            });
-            
-            const classCards = Object.entries(classData).map(([className, data]) => `
-                <div class="class-card">
-                    <h4>${className}</h4>
-                    <div class="class-stats">
-                        <div class="class-stat">
-                            <div class="class-stat-value">${data.participants.length}</div>
-                            <div class="class-stat-label">Drivers</div>
-                        </div>
-                        <div class="class-stat">
-                            <div class="class-stat-value">$${data.revenue}</div>
-                            <div class="class-stat-label">Revenue</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            
-            container.innerHTML = classCards;
-        }
-
-        // Load driver statistics
-        function loadDriverStatistics(eventParticipants) {
-            const tbody = document.querySelector('#driverStatsTable tbody');
-            
-            const driverStats = eventParticipants.map(participant => {
-                const classes = participant.selectedClasses ? participant.selectedClasses.join(', ') : 'Unknown';
-                const races = participant.totalRaces || 0;
-                const wins = participant.totalWins || 0;
-                const winRate = races > 0 ? ((wins / races) * 100).toFixed(1) : '0.0';
-                const avgPosition = participant.avgPosition || 0;
-                const totalFee = participant.totalFee || 0;
-                
-                return {
-                    driver: participant.name,
-                    classes: classes,
-                    races: races,
-                    wins: wins,
-                    winRate: parseFloat(winRate),
-                    avgPosition: avgPosition,
-                    totalFee: totalFee
-                };
-            });
-            
-            // Sort by wins by default
-            driverStats.sort((a, b) => b.wins - a.wins);
-            
-            const driverRows = driverStats.map(stat => `
-                <tr>
-                    <td><strong>${stat.driver}</strong></td>
-                    <td>${stat.classes}</td>
-                    <td>${stat.races}</td>
-                    <td>${stat.wins}</td>
-                    <td>${stat.winRate}%</td>
-                    <td>${stat.avgPosition > 0 ? stat.avgPosition.toFixed(1) : 'N/A'}</td>
-                    <td>$${stat.totalFee.toLocaleString()}</td>
-                </tr>
-            `).join('');
-            
-            tbody.innerHTML = driverRows;
-        }
-
-        // Load lane win percentage
-        function loadLaneWinPercentage(eventParticipants) {
-            const container = document.querySelector('.lane-win-grid');
-            if (!container) return;
-            
-            container.innerHTML = ''; // Clear previous content
-
-            const laneStats = {};
-            eventParticipants.forEach(participant => {
-                if (participant.statistics && participant.statistics.lanePerformance) {
-                    for (const lane in participant.statistics.lanePerformance) {
-                        if (!laneStats[lane]) {
-                            laneStats[lane] = { races: 0, wins: 0 };
-                        }
-                        // Use 'total' from lanePerformance for number of races
-                        laneStats[lane].races += participant.statistics.lanePerformance[lane].total || 0;
-                        laneStats[lane].wins += participant.statistics.lanePerformance[lane].wins || 0;
-                    }
-                }
-            });
-
-            const laneWinCards = Object.entries(laneStats).map(([lane, data]) => {
-                const winRate = data.races > 0 ? ((data.wins / data.races) * 100).toFixed(1) : '0.0';
-                return `
-                    <div class="lane-win-card">
-                        <div class="lane-win-icon"><i class="fas fa-car"></i></div>
-                        <div class="lane-win-value">${winRate}%</div>
-                        <div class="lane-win-label">Lane ${lane} (${data.wins}/${data.races})</div>
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = laneWinCards;
-        }
-
-        // Sort table
-        function sortTable(tableId, columnIndex) {
-            console.log('🔄 Sorting table:', tableId, 'column:', columnIndex);
-            
-            const table = document.getElementById(tableId);
-            const tbody = table.querySelector('tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            
-            // Toggle sort direction
-            if (sortDirection[tableId] === columnIndex) {
-                sortDirection[tableId] = -columnIndex; // Reverse direction
-                console.log('🔄 Reversing sort direction to:', -columnIndex);
-            } else {
-                sortDirection[tableId] = columnIndex; // First click: ascending
-                console.log('🔄 Setting sort direction to:', columnIndex);
-            }
-            
-            const activeColumn = sortDirection[tableId];
-            
-            // Sort rows
-            rows.sort((a, b) => {
-                const aValue = getCellValue(a.cells[Math.abs(activeColumn)], activeColumn);
-                const bValue = getCellValue(b.cells[Math.abs(activeColumn)], activeColumn);
-                
-                if (activeColumn < 0) {
-                    // Descending: big to small
-                    return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-                } else {
-                    // Ascending: small to big
-                    return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-                }
-            });
-            
-            // Reorder rows
-            rows.forEach(row => tbody.appendChild(row));
-            
-            // Update sort indicators
-            updateSortIndicators(table, activeColumn);
-            
-            console.log('✅ Sorting completed');
-        }
-
-        // Get cell value for sorting
-        function getCellValue(cell, columnIndex) {
-            const text = cell.textContent.trim();
-            const idx = Math.abs(columnIndex);
-            
-            // Handle different data types based on absolute column index
-            if (idx === 0) return text.toLowerCase(); // Driver name
-            if (idx === 1) return text.toLowerCase(); // Classes
-            if (idx === 2) return parseInt(text) || 0; // Races
-            if (idx === 3) return parseInt(text) || 0; // Wins
-            if (idx === 4) return parseFloat(text) || 0; // Win %
-            if (idx === 5) return text === 'N/A' ? 0 : parseFloat(text) || 0; // Avg Position
-            if (idx === 6) return parseInt(text.replace(/[$,]/g, '')) || 0; // Total Fee
-            
-            return text;
-        }
-
-        // Update sort indicators
-        function updateSortIndicators(table, activeColumn) {
-            const headers = table.querySelectorAll('th');
-            headers.forEach((header, index) => {
-                const icon = header.querySelector('i');
-                if (icon) {
-                    if (Math.abs(activeColumn) === index) {
-                        icon.className = activeColumn < 0 ? 'fas fa-sort-up' : 'fas fa-sort-down';
-                    } else {
-                        icon.className = 'fas fa-sort';
-                    }
-                }
-            });
-        }
 
         // Refresh analytics
         async function refreshAnalytics() {
             try {
                 await dataManager.loadFromStorage(['events', 'participants']);
                 await loadAllData();
-                
-                // Refresh current view
-                const activeSection = document.querySelector('.analytics-nav-btn.active');
-                if (activeSection) {
-                    const section = activeSection.id.replace('Btn', '');
-                    showSection(section);
-                }
-                
+                loadOverallStats();
+                loadTimeAnalytics();
                 showToast('Analytics data refreshed successfully!', 'success');
             } catch (error) {
                 console.error('Error refreshing analytics data:', error);
@@ -1299,6 +954,446 @@
                 }, 300);
             }, 3000);
         }
+
+        // Time Analytics Functions
+        function loadTimeAnalytics() {
+            console.log('⏰ Loading time analytics...');
+            
+            try {
+                // Calculate time-based statistics
+                const timeStats = calculateTimeStatistics();
+                
+                // Update time analytics displays
+                updateTimeAnalyticsDisplay(timeStats);
+                
+                // Create timing chart
+                createTimingChart(timeStats);
+                
+                // Create peak hours visualization
+                createPeakHoursChart(timeStats);
+                
+                // Update efficiency metrics
+                updateEfficiencyMetrics(timeStats);
+                
+                console.log('✅ Time analytics loaded successfully');
+            } catch (error) {
+                console.error('❌ Error loading time analytics:', error);
+            }
+        }
+
+        function calculateTimeStatistics() {
+            const stats = {
+                raceTimes: [],
+                raceIntervals: [],
+                eventDurations: [],
+                racesPerHour: {},
+                completionRates: []
+            };
+
+            // Analyze race brackets for timing data
+            if (window.raceBrackets) {
+                Object.values(window.raceBrackets).forEach(eventBrackets => {
+                    if (eventBrackets && eventBrackets.classes) {
+                        Object.values(eventBrackets.classes).forEach(classData => {
+                            if (classData.rounds && Array.isArray(classData.rounds)) {
+                                let classStartTime = null;
+                                let classEndTime = null;
+                                
+                                classData.rounds.forEach(round => {
+                                    if (round.heats && Array.isArray(round.heats)) {
+                                        round.heats.forEach(heat => {
+                                            if (heat.startTime && heat.endTime) {
+                                                // Calculate race duration
+                                                const startTime = new Date(heat.startTime);
+                                                const endTime = new Date(heat.endTime);
+                                                const duration = endTime - startTime;
+                                                
+                                                if (duration > 0 && duration < 3600000) { // Less than 1 hour (reasonable race time)
+                                                    stats.raceTimes.push(duration);
+                                                }
+                                                
+                                                // Track class timing
+                                                if (!classStartTime || startTime < classStartTime) {
+                                                    classStartTime = startTime;
+                                                }
+                                                if (!classEndTime || endTime > classEndTime) {
+                                                    classEndTime = endTime;
+                                                }
+                                            }
+                                            
+                                            // Track race intervals
+                                            if (heat.startTime) {
+                                                const raceTime = new Date(heat.startTime);
+                                                const hour = raceTime.getHours();
+                                                stats.racesPerHour[hour] = (stats.racesPerHour[hour] || 0) + 1;
+                                            }
+                                        });
+                                    }
+                                });
+                                
+                                // Calculate class duration
+                                if (classStartTime && classEndTime) {
+                                    const classDuration = classEndTime - classStartTime;
+                                    if (classDuration > 0) {
+                                        stats.eventDurations.push(classDuration);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Calculate race intervals (time between consecutive races)
+            const allRaceTimes = [];
+            if (window.raceBrackets) {
+                Object.values(window.raceBrackets).forEach(eventBrackets => {
+                    if (eventBrackets && eventBrackets.classes) {
+                        Object.values(eventBrackets.classes).forEach(classData => {
+                            if (classData.rounds && Array.isArray(classData.rounds)) {
+                                classData.rounds.forEach(round => {
+                                    if (round.heats && Array.isArray(round.heats)) {
+                                        round.heats.forEach(heat => {
+                                            if (heat.startTime) {
+                                                allRaceTimes.push(new Date(heat.startTime));
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Sort race times and calculate intervals
+            allRaceTimes.sort((a, b) => a - b);
+            for (let i = 1; i < allRaceTimes.length; i++) {
+                const interval = allRaceTimes[i] - allRaceTimes[i - 1];
+                if (interval > 0 && interval < 1800000) { // Less than 30 minutes (reasonable interval)
+                    stats.raceIntervals.push(interval);
+                }
+            }
+
+            return stats;
+        }
+
+        function updateTimeAnalyticsDisplay(timeStats) {
+            // Average Race Duration
+            const avgRaceTime = timeStats.raceTimes.length > 0 
+                ? timeStats.raceTimes.reduce((sum, time) => sum + time, 0) / timeStats.raceTimes.length 
+                : 0;
+            const avgRaceTimeSeconds = Math.round(avgRaceTime / 1000);
+            document.getElementById('avgRaceTime').textContent = `${avgRaceTimeSeconds}s`;
+
+            // Races per Hour
+            const totalRaces = Object.values(timeStats.racesPerHour).reduce((sum, count) => sum + count, 0);
+            const totalHours = Object.keys(timeStats.racesPerHour).length || 1;
+            const avgRacesPerHour = Math.round(totalRaces / totalHours);
+            document.getElementById('racesPerHour').textContent = avgRacesPerHour.toString();
+
+            // Average Time Between Races
+            const avgTimeBetweenRaces = timeStats.raceIntervals.length > 0 
+                ? timeStats.raceIntervals.reduce((sum, time) => sum + time, 0) / timeStats.raceIntervals.length 
+                : 0;
+            const avgTimeBetweenSeconds = Math.round(avgTimeBetweenRaces / 1000);
+            document.getElementById('avgTimeBetweenRaces').textContent = `${avgTimeBetweenSeconds}s`;
+
+            // Average Event Duration
+            const avgEventDuration = timeStats.eventDurations.length > 0 
+                ? timeStats.eventDurations.reduce((sum, time) => sum + time, 0) / timeStats.eventDurations.length 
+                : 0;
+            const avgEventHours = Math.round(avgEventDuration / (1000 * 60 * 60));
+            document.getElementById('avgEventDuration').textContent = `${avgEventHours}h`;
+
+            // Add trend indicators (simplified - in real app, compare with historical data)
+            const trendElements = ['raceTimeTrend', 'racesPerHourTrend', 'timeBetweenRacesTrend', 'eventDurationTrend'];
+            trendElements.forEach(elementId => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = '📈 Stable';
+                    element.className = 'stat-trend neutral';
+                }
+            });
+        }
+
+        function createTimingChart(timeStats) {
+            const ctx = document.getElementById('timingChart');
+            if (!ctx || timeStats.raceTimes.length === 0) {
+                ctx.parentElement.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">No timing data available</p>';
+                return;
+            }
+
+            if (timingChart) {
+                timingChart.destroy();
+            }
+
+            // Create histogram data
+            const bins = 10;
+            const minTime = Math.min(...timeStats.raceTimes);
+            const maxTime = Math.max(...timeStats.raceTimes);
+            const binSize = (maxTime - minTime) / bins;
+            
+            const histogram = new Array(bins).fill(0);
+            timeStats.raceTimes.forEach(time => {
+                const binIndex = Math.min(Math.floor((time - minTime) / binSize), bins - 1);
+                histogram[binIndex]++;
+            });
+
+            const labels = Array.from({length: bins}, (_, i) => {
+                const startTime = Math.round((minTime + i * binSize) / 1000);
+                const endTime = Math.round((minTime + (i + 1) * binSize) / 1000);
+                return `${startTime}s-${endTime}s`;
+            });
+
+            timingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Races',
+                        data: histogram,
+                        backgroundColor: 'rgba(255, 140, 66, 0.6)',
+                        borderColor: 'rgba(255, 140, 66, 1)',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#b3b3b3'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#b3b3b3'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPeakHoursChart(timeStats) {
+            const container = document.getElementById('peakHoursChart');
+            if (!container) return;
+
+            const hours = Object.keys(timeStats.racesPerHour).sort((a, b) => a - b);
+            if (hours.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No peak hour data available</p>';
+                return;
+            }
+
+            const maxRaces = Math.max(...Object.values(timeStats.racesPerHour));
+            
+            let chartHTML = '<div class="peak-hours-bars">';
+            for (let hour = 0; hour < 24; hour++) {
+                const raceCount = timeStats.racesPerHour[hour] || 0;
+                const percentage = maxRaces > 0 ? (raceCount / maxRaces) * 100 : 0;
+                const hourLabel = hour.toString().padStart(2, '0') + ':00';
+                
+                chartHTML += `
+                    <div class="hour-bar">
+                        <div class="hour-label">${hourLabel}</div>
+                        <div class="bar-container">
+                            <div class="bar" style="height: ${percentage}%;" title="${raceCount} races"></div>
+                        </div>
+                        <div class="race-count">${raceCount}</div>
+                    </div>
+                `;
+            }
+            chartHTML += '</div>';
+
+            container.innerHTML = chartHTML;
+        }
+
+        function updateEfficiencyMetrics(timeStats) {
+            // Calculate completion rate (simplified)
+            const totalExpectedRaces = allEvents.reduce((sum, event) => {
+                const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
+                return sum + calculateExpectedTotalRacesForEvent(event, eventParticipants);
+            }, 0);
+            
+            const completedRaces = calculateTotalRaces();
+            const completionRate = totalExpectedRaces > 0 ? Math.round((completedRaces / totalExpectedRaces) * 100) : 0;
+            
+            // Update completion rate
+            document.getElementById('completionRate').textContent = `${completionRate}%`;
+            document.getElementById('completionRateBar').style.width = `${completionRate}%`;
+            
+            // Calculate time efficiency (simplified - based on race frequency)
+            const avgRacesPerHour = Object.values(timeStats.racesPerHour).length > 0 
+                ? Object.values(timeStats.racesPerHour).reduce((sum, count) => sum + count, 0) / Object.values(timeStats.racesPerHour).length
+                : 0;
+            const timeEfficiency = Math.min(Math.round(avgRacesPerHour * 10), 100); // Scale to 0-100
+            
+            document.getElementById('timeEfficiency').textContent = `${timeEfficiency}%`;
+            document.getElementById('timeEfficiencyBar').style.width = `${timeEfficiency}%`;
+        }
+
+        // Helper function to calculate expected races for an event (reused from existing code)
+        function calculateExpectedTotalRacesForEvent(event, eventParticipants) {
+            if (!event) return 0;
+            const m = parseInt(event.numberOfTracks || 4, 10);
+            const eliminationType = (event.eliminationType || 'double').toLowerCase();
+
+            const classToIds = new Map();
+            const addToClass = (cls, id) => {
+                if (!cls) return;
+                const key = String(cls).trim();
+                if (!key) return;
+                if (!classToIds.has(key)) classToIds.set(key, new Set());
+                classToIds.get(key).add(id);
+            };
+
+            (eventParticipants || []).forEach(p => {
+                if (Array.isArray(p.selectedClasses) && p.selectedClasses.length) {
+                    p.selectedClasses.forEach(c => addToClass(c, p.id));
+                } else if (Array.isArray(p.sledClasses) && p.sledClasses.length) {
+                    p.sledClasses.forEach(c => addToClass(c, p.id));
+                } else if (p.sledClass) {
+                    addToClass(p.sledClass, p.id);
+                }
+            });
+
+            if (classToIds.size === 0) {
+                const ids = new Set((eventParticipants || []).map(p => p.id));
+                classToIds.set('ALL', ids);
+            }
+
+            let total = 0;
+            for (const [, idSet] of classToIds.entries()) {
+                const n = idSet.size;
+                if (n <= 1) continue;
+                if (eliminationType === 'single') {
+                    total += expectedRacesSingleElimination(n, m);
+                } else {
+                    total += expectedRacesDoubleElimination(n, m);
+                }
+            }
+            return total;
+        }
+
+        function expectedRacesSingleElimination(n, m) {
+            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
+            let U = n;
+            let total = 0;
+            while (U > 1) {
+                const Rw = Math.ceil(U / m);
+                total += Rw;
+                U = Rw;
+            }
+            return total;
+        }
+
+        function expectedRacesDoubleElimination(n, m) {
+            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
+            let U = n;
+            let L = 0;
+            let total = 0;
+            const Rw1 = Math.ceil(U / m);
+            total += Rw1;
+            U = Rw1;
+            L = n - Rw1;
+            while (!(U === 1 && L === 1)) {
+                const Rw = Math.ceil(U / m);
+                total += Rw;
+                const drop = U - Rw;
+                const Rl = Math.ceil((L + drop) / m);
+                total += Rl;
+                U = Rw;
+                L = Rl;
+                if (total > 100000) break;
+            }
+            total += 1;
+            return total;
+        }
     </script>
+
+    <style>
+        /* Peak Hours Chart Styles */
+        .peak-hours-bars {
+            display: flex;
+            align-items: end;
+            height: 120px;
+            gap: 2px;
+            justify-content: space-between;
+        }
+
+        .hour-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .hour-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            transform: rotate(-45deg);
+            white-space: nowrap;
+        }
+
+        .bar-container {
+            height: 80px;
+            width: 100%;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+        }
+
+        .bar {
+            width: 100%;
+            background: linear-gradient(to top, var(--accent-orange-warm), var(--accent-orange-glow));
+            border-radius: 2px 2px 0 0;
+            transition: all 0.3s ease;
+            min-height: 2px;
+        }
+
+        .bar:hover {
+            background: linear-gradient(to top, var(--accent-orange-glow), var(--accent-orange-warm));
+        }
+
+        .race-count {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .peak-hours-bars {
+                gap: 1px;
+            }
+            
+            .hour-label {
+                font-size: 8px;
+            }
+            
+            .race-count {
+                font-size: 8px;
+            }
+        }
+    </style>
 </body>
 </html>

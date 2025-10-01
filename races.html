@@ -6,9 +6,122 @@
     <title>EPC TECHNOLOGY - Race Management (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="styles/race.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Hero Section Styles - Consistent with Series Page */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -23,41 +136,6 @@
             margin-top: 0.5rem;
         }
 
-        .tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .tab-btn {
-            padding: 0.75rem 1.5rem;
-            background: none;
-            border: none;
-            border-bottom: 2px solid transparent;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn:hover {
-            color: var(--text-primary);
-            background: var(--bg-secondary);
-        }
-
-        .tab-btn.active {
-            color: var(--accent-primary);
-            border-bottom-color: var(--accent-primary);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
 
         .race-card {
             background: var(--bg-secondary);
@@ -857,55 +935,100 @@
         
         .modal-wrapper {
             background: var(--bg-primary);
-            border-radius: 8px;
+            border-radius: 12px;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             margin: 2rem auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
             position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.5rem 2rem;
+            padding: 2rem 2rem 1.5rem 2rem;
             border-bottom: 1px solid var(--border-color);
-            background: var(--bg-secondary);
-            border-radius: 8px 8px 0 0;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px 12px 0 0;
+            position: relative;
+        }
+
+        .modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--accent-primary) 50%, transparent 100%);
         }
         
         .modal-header h2 {
             color: var(--text-primary);
             margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .modal-header h2::before {
+            content: '✏️';
             font-size: 1.5rem;
         }
         
         .modal-close {
             background: none;
             border: none;
-            font-size: 2rem;
+            font-size: 1.5rem;
             color: var(--text-secondary);
             cursor: pointer;
-            padding: 0;
-            width: 2rem;
-            height: 2rem;
+            padding: 0.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            transition: background-color 0.2s ease;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
         }
         
         .modal-close:hover {
             background: var(--bg-primary);
             color: var(--text-primary);
+            border-color: var(--border-color);
+            transform: scale(1.05);
         }
         
         .modal-body {
             padding: 2rem;
-            max-height: 70vh;
+            max-height: 75vh;
             overflow-y: auto;
+            background: var(--bg-primary);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 3px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 3px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-orange-warm);
         }
         
         @media (max-width: 768px) {
@@ -923,89 +1046,355 @@
                 padding: 1.5rem;
             }
         }
+
+        /* Event Form Styling */
+        .event-form {
+            max-width: 100%;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-section h4 {
+            color: var(--text-primary);
+            margin: 0 0 1.5rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-section h4::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow));
+            border-radius: 2px;
+        }
+
+        .form-section h5 {
+            color: var(--text-primary);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-group input:disabled,
+        .form-group select:disabled,
+        .form-group textarea:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-checkbox input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: var(--accent-primary);
+            cursor: pointer;
+        }
+
+        .form-checkbox label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .form-help {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .text-warning {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: #f59e0b;
+        }
+
+        .track-preview {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .track-preview h5 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        #track-visualization {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .track-lane {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .track-lane.winner {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .class-pricing-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+
+        .class-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+        }
+
+        .class-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .class-name {
+            flex: 1;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .class-price {
+            width: 120px;
+        }
+
+        .class-price input {
+            text-align: right;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            margin: 2rem -2rem -2rem -2rem;
+            padding: 1.5rem 2rem 2rem 2rem;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .form-actions .btn {
+            min-width: 140px;
+            padding: 0.875rem 1.5rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .form-actions .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-actions .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow));
+            border: none;
+        }
+
+        .form-actions .btn-primary:hover {
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm));
+        }
+
+        #event-form-errors {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 6px;
+            color: #ef4444;
+        }
+
+        /* Custom outcomes styling */
+        .custom-outcome-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .custom-outcome-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .position-label {
+            min-width: 80px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .outcome-select {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        /* Responsive adjustments for event form */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .form-section {
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .form-section h4 {
+                font-size: 1.1rem;
+                margin-bottom: 1rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .form-actions .btn {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .class-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+            .class-price {
+                width: 100%;
+            }
+
+            .custom-outcome-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+            .outcome-select {
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Main Navigation -->
-    <nav class="main-nav">
-        <div class="nav-brand">
-            <div class="brand-icon">
-                <i class="fas fa-cogs"></i>
-            </div>
-            <div class="brand-text">
-                <span class="brand-main">EPC TECHNOLOGY</span>
-                <span class="brand-sub">PROJECT 17</span>
-            </div>
-        </div>
-        
-                <!-- Desktop Navigation -->
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registration</a></li>
-            <li><a href="series.html">Series</a></li>
-            <li><a href="events.html">Events</a></li>
-            <li class="active"><a href="races.html">Races</a></li>
-            <li><a href="driver-profile.html">Drivers</a></li>
-            <li><a href="analytics.html">Analytics</a></li>
-            <li><a href="live-display.html">Live Display</a></li>
-        </ul>
-        
-        <!-- Mobile Hamburger Menu -->
-        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
-        
-        <!-- Mobile Navigation Menu -->
-        <div class="mobile-nav-menu">
-            <div class="mobile-nav-header">
-                <div class="mobile-nav-brand">
-                    <div class="brand-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <div class="brand-text">
-                        <span class="brand-main">EPC TECHNOLOGY</span>
-                        <span class="brand-sub">PROJECT 17</span>
-                    </div>
-                </div>
-                <button class="mobile-nav-close" aria-label="Close navigation menu">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <ul class="mobile-nav-links">
-                <li><a href="index.html">🏠 Home</a></li>
-                <li><a href="registration.html">📝 Registration</a></li>
-                <li><a href="series.html">🏆 Series</a></li>
-                <li><a href="events.html">📅 Events</a></li>
-                <li><a href="races.html" class="active">🏁 Races</a></li>
-                <li><a href="driver-profile.html">👥 Drivers</a></li>
-                <li><a href="analytics.html">📊 Analytics</a></li>
-                <li><a href="live-display.html">🖥️ Live Display</a></li>
-            </ul>
-            <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">25W32a09</div>
-            </div>
-        </div>
-        
-        <!-- Mobile Navigation Overlay -->
-        <div class="mobile-nav-overlay"></div>
-    </nav>
+    <!-- Navigation is now handled by sidebar-nav.js -->
 
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Header Section -->
-            <header class="page-header">
-                <div class="header-content">
-                    <h1 class="page-title">
-                        <i class="fas fa-flag-checkered"></i>
-                        Race Management
-                        <span class="project-badge">PROJECT 17</span>
-                    </h1>
-                    <p class="page-subtitle">EPC Technology - Tournament Management System</p>
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1 class="hero-title">
+                            <i class="fas fa-flag-checkered"></i>
+                            Race Management
+                        </h1>
+                        <p class="hero-subtitle">EPC Technology - Tournament Management System with professional organization and real-time tracking</p>
+                    </div>
                 </div>
-            </header>
+            </div>
 
             <!-- Event Selection Section -->
             <section class="event-selection" id="event-selection">
@@ -1100,24 +1489,10 @@
                     <!-- Stats will be populated here -->
                 </div>
 
-                <!-- Race Management Tabs -->
-                <div class="race-tabs">
-                    <button class="tab-btn active" data-tab="brackets">
-                        <i class="fas fa-sitemap"></i>
-                        Brackets
-                    </button>
-                    <button class="tab-btn" data-tab="results">
-                        <i class="fas fa-trophy"></i>
-                        Results
-                    </button>
-                    <button class="tab-btn" data-tab="final-results">
-                        <i class="fas fa-medal"></i>
-                        Final Results
-                    </button>
-                </div>
+                <!-- Race Management Tabs moved to top navigation -->
 
                 <!-- Tab Content -->
-                <div class="tab-content active" id="brackets-tab">
+                <div class="tab-content active" id="brackets-content">
                     <div class="brackets-header">
                         <h3>Tournament Brackets</h3>
                         <div class="bracket-actions">
@@ -1146,58 +1521,7 @@
 
 
 
-                <div class="tab-content" id="results-tab">
-                    <div class="results-header">
-                        <h3>Race Results & Tournament Progress</h3>
-                    </div>
-                    <div class="results-controls">
-                        <button class="btn btn-secondary" id="class-filter-toggle">
-                            <i class="fas fa-filter"></i> Filter Classes
-                        </button>
-                        <div class="class-filter-dropdown" id="class-filter-dropdown" style="display: none;">
-                            <label class="checkbox">
-                                <input type="checkbox" id="class-filter-select-all" checked>
-                                <span>Select All</span>
-                            </label>
-                            <div class="class-filter-options" id="class-filter-options"></div>
-                        </div>
-                    </div>
-                    <div class="results-container" id="results-container">
-                        <!-- Results will be rendered here -->
-                    </div>
-                    
-                    <!-- Skeleton loading for results -->
-                    <div id="resultsSkeleton" class="skeleton-loading" style="display: none;">
-                        <!-- Skeleton cards will be populated by JavaScript -->
-                    </div>
-                </div>
-
-                <div class="tab-content" id="final-results-tab">
-                    <div class="final-results-header">
-                        <h3>Final Tournament Results</h3>
-                        <p class="subtitle">Comprehensive standings with proper tie handling for eliminated drivers</p>
-                    </div>
-                    <div class="results-controls">
-                        <button class="btn btn-secondary" id="final-class-filter-toggle">
-                            <i class="fas fa-filter"></i> Filter Classes
-                        </button>
-                        <div class="class-filter-dropdown" id="final-class-filter-dropdown" style="display: none;">
-                            <label class="checkbox">
-                                <input type="checkbox" id="final-class-filter-select-all" checked>
-                                <span>Select All</span>
-                            </label>
-                            <div class="class-filter-options" id="final-class-filter-options"></div>
-                        </div>
-                    </div>
-                    <div class="final-results-container" id="final-results-container">
-                        <!-- Final results will be rendered here -->
-                    </div>
-                    
-                    <!-- Skeleton loading for final results -->
-                    <div id="finalResultsSkeleton" class="skeleton-loading" style="display: none;">
-                        <!-- Skeleton cards will be populated by JavaScript -->
-                    </div>
-                </div>
+                
             </section>
         </div>
     </main>
@@ -1250,14 +1574,48 @@
     <script src="js/race-ui.js?v=1.2"></script>
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
     <script>
         // Initialize the race management system
         let dataManager, pairingEngine, raceManager, raceUI, eventManager;
 
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🔐 Races page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🔐 Races page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🔐 Races page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🔐 Races page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('Initializing Race Management System...');
+            console.log('🏁 RACES PAGE: Initializing Race Management System...');
+            console.log('🏁 RACES PAGE: Current URL:', window.location.href);
             
             try {
+                // Wait for authentication before initializing
+                await waitForAuthentication();
+                
                 // Initialize core modules
                 dataManager = new DataManager();
                 eventManager = new EventManager();
@@ -1268,6 +1626,7 @@
                 pairingEngine = new PairingEngine();
                 raceManager = new RaceManager(dataManager, pairingEngine);
                 raceUI = new RaceUI(raceManager, dataManager);
+                window.raceUI = raceUI; // Make it globally available
                 
                 // Set up real-time event listeners
                 setupEventListeners();
@@ -1277,12 +1636,122 @@
                 window.allRacesEventsData = [...allEvents];
                 window.filteredRacesEventsData = [...allEvents];
                 
-                // Initial render of events
-                filterRacesEvents();
+                // Wait a bit for RaceUI to initialize, then render events
+                setTimeout(() => {
+                    // Initial render of events using modern interface
+                    if (typeof filterRacesEvents === 'function' && 
+                        typeof window.renderRacesEventsGrid === 'function') {
+                        console.log('Using modern event rendering interface');
+                        filterRacesEvents();
+                    } else {
+                        // Fallback: manually trigger event loading
+                        console.log('Using fallback event rendering interface');
+                        if (raceUI) {
+                            raceUI.loadEvents();
+                        }
+                    }
+                }, 100);
                 
-                console.log('Race Management System initialized successfully');
-                console.log('📊 Statistics Manager:', dataManager.statisticsManager ? 'Active' : 'Not Available');
-                console.log('📡 Event Bus:', dataManager.eventBus ? 'Active' : 'Not Available');
+                console.log('🏁 RACES PAGE: Race Management System initialized successfully');
+                console.log('🏁 RACES PAGE: Statistics Manager:', dataManager.statisticsManager ? 'Active' : 'Not Available');
+                console.log('🏁 RACES PAGE: Event Bus:', dataManager.eventBus ? 'Active' : 'Not Available');
+                console.log('🏁 RACES PAGE: RaceUI:', raceUI ? 'Initialized' : 'Not Available');
+                console.log('🏁 RACES PAGE: window.raceUI:', window.raceUI ? 'Available' : 'Not Available');
+                
+                // Set up global references
+                setupGlobalReferences();
+                
+                // Set up navigation listeners
+                setupNavigationListeners();
+                
+                // Ensure sidebar navigation is available
+                if (!window.sidebarNav) {
+                    window.sidebarNav = new SidebarNavigation();
+                }
+                
+                // Test if basic JavaScript is working
+                console.log('🏁 RACES PAGE: Testing basic JavaScript functionality...');
+                document.addEventListener('click', (e) => {
+                    console.log('🏁 RACES PAGE: Click detected on:', e.target.tagName, e.target.className, e.target.id);
+                    
+                    // Check if it's a button with onclick
+                    if (e.target.tagName === 'BUTTON' && e.target.onclick) {
+                        console.log('🏁 RACES PAGE: Button with onclick found:', e.target.onclick.toString());
+                    }
+                    
+                    // Check if it's a button with specific classes
+                    if (e.target.classList.contains('btn-primary')) {
+                        console.log('🏁 RACES PAGE: Primary button clicked, checking for eventId...');
+                        const onclickAttr = e.target.getAttribute('onclick');
+                        console.log('🏁 RACES PAGE: onclick attribute:', onclickAttr);
+                        
+                        // Try to extract eventId from onclick
+                        if (onclickAttr && onclickAttr.includes('selectEventForRaces')) {
+                            const match = onclickAttr.match(/selectEventForRaces\('([^']+)'\)/);
+                            if (match) {
+                                const eventId = match[1];
+                                console.log('🏁 RACES PAGE: Extracted eventId:', eventId);
+                                console.log('🏁 RACES PAGE: Manually calling selectEventForRaces...');
+                                selectEventForRaces(eventId);
+                            }
+                        }
+                    }
+                    
+                    // Handle back to events button
+                    if (e.target && e.target.id === 'back-to-events') {
+                        console.log('🏁 RACES PAGE: Back to events button clicked (direct handler)');
+                        if (window.raceUI) {
+                            window.raceUI.showEventSelection();
+                        } else {
+                            console.error('🏁 RACES PAGE: raceUI not available for back to events');
+                        }
+                    }
+                    
+                    
+                    // Handle complete event button
+                    if (e.target && e.target.id === 'complete-event') {
+                        console.log('🏁 RACES PAGE: Complete event button clicked (direct handler)');
+                        if (window.raceUI) {
+                            window.raceUI.manuallyCompleteEvent();
+                        } else {
+                            console.error('🏁 RACES PAGE: raceUI not available for complete event');
+                        }
+                    }
+                    
+                    // Handle participant clicks
+                    if (e.target.classList.contains('clickable-participant') || 
+                        e.target.closest('.clickable-participant')) {
+                        const participantElement = e.target.classList.contains('clickable-participant') ? 
+                            e.target : e.target.closest('.clickable-participant');
+                        
+                        console.log('🏁 RACES PAGE: Participant clicked (direct handler)');
+                        console.log('🏁 RACES PAGE: Participant element:', participantElement);
+                        
+                        // Try to find participant ID from data attributes
+                        const participantId = participantElement.dataset.participantId || 
+                                            participantElement.dataset.participant || 
+                                            participantElement.getAttribute('data-participant-id');
+                        
+                        console.log('🏁 RACES PAGE: Participant ID:', participantId);
+                        
+                        if (participantId && window.raceUI) {
+                            // Call the participant selection method if it exists
+                            if (typeof window.raceUI.handleParticipantClick === 'function') {
+                                console.log('🏁 RACES PAGE: Calling handleParticipantClick with element');
+                                window.raceUI.handleParticipantClick(participantElement);
+                            } else {
+                                console.log('🏁 RACES PAGE: handleParticipantClick method not found, trying alternative...');
+                                // Try to trigger the original click handler
+                                const originalClick = participantElement.onclick;
+                                if (originalClick) {
+                                    originalClick.call(participantElement, e);
+                                }
+                            }
+                        } else {
+                            console.error('🏁 RACES PAGE: No participant ID found or raceUI not available');
+                        }
+                    }
+                });
             } catch (error) {
                 console.error('Error initializing Race Management System:', error);
                 showToast('Error initializing race management system', 'error');
@@ -1387,7 +1856,7 @@
                     if (raceUI) {
                         raceUI.selectedEventId = null;
                         raceUI.showEventSelection();
-                        await raceUI.loadEvents();
+                        // showEventSelection now handles the modern rendering internally
                     }
                 } else {
                     showToast('Failed to reload data', 'error');
@@ -1488,8 +1957,24 @@
                         if (raceUI && raceUI.selectedEventId === eventId) {
                             raceUI.showEventSelection();
                         } else if (raceUI) {
-                            // Just refresh the events list
-                            await raceUI.loadEvents();
+                            // Just refresh the events list with modern interface
+                            if (typeof window.renderRacesEventsGrid === 'function' && 
+                                typeof window.allRacesEventsData !== 'undefined') {
+                                // Refresh data and re-render
+                                const freshEvents = dataManager.getEventsArray();
+                                window.allRacesEventsData = [...freshEvents];
+                                window.filteredRacesEventsData = [...freshEvents];
+                                window.currentRacesPage = 1;
+                                if (typeof window.sortRacesEventsData === 'function') {
+                                    window.sortRacesEventsData();
+                                }
+                                window.renderRacesEventsGrid(window.filteredRacesEventsData);
+                                if (typeof window.updateRacesResultsCount === 'function') {
+                                    window.updateRacesResultsCount();
+                                }
+                            } else {
+                                await raceUI.loadEvents();
+                            }
                         }
                         
                         showToast(`Event "${event.name}" has been deleted successfully`, 'success');
@@ -1515,7 +2000,7 @@
                     if (raceUI) {
                         raceUI.selectedEventId = null;
                         raceUI.showEventSelection();
-                        await raceUI.loadEvents();
+                        // showEventSelection now handles the modern rendering internally
                     }
                     
                     showToast('All data has been cleared successfully', 'success');
@@ -1534,8 +2019,8 @@
         window.showToast = showToast;
         window.closeRaceResultModal = closeRaceResultModal;
 
-        // Set global references after initialization
-        document.addEventListener('DOMContentLoaded', () => {
+        // Set global references after initialization (moved to main DOMContentLoaded)
+        function setupGlobalReferences() {
             setTimeout(() => {
                 window.raceManager = raceManager;
                 window.raceUI = raceUI;
@@ -1552,7 +2037,7 @@
                     console.log('Search and sort functionality initialized for races page');
                 }
             }, 100);
-        });
+        }
 
         // Skeleton loading functions for races page
         function showEventsSkeletonLoading() {
@@ -1597,57 +2082,12 @@
             if (bracketsContainer) bracketsContainer.style.display = 'block';
         }
 
-        function showResultsSkeletonLoading() {
-            console.log('🔄 Showing results skeleton loading...');
-            const resultsContainer = document.getElementById('results-container');
-            const skeleton = document.getElementById('resultsSkeleton');
-            
-            if (resultsContainer) resultsContainer.style.display = 'none';
-            if (skeleton) {
-                skeleton.innerHTML = UIComponents.createSkeletonCards(6, 'table');
-                skeleton.style.display = 'block';
-            }
-        }
-
-        function hideResultsSkeletonLoading() {
-            console.log('✅ Hiding results skeleton loading...');
-            const resultsContainer = document.getElementById('results-container');
-            const skeleton = document.getElementById('resultsSkeleton');
-            
-            if (skeleton) skeleton.style.display = 'none';
-            if (resultsContainer) resultsContainer.style.display = 'block';
-        }
-
-        function showFinalResultsSkeletonLoading() {
-            console.log('🔄 Showing final results skeleton loading...');
-            const finalResultsContainer = document.getElementById('final-results-container');
-            const skeleton = document.getElementById('finalResultsSkeleton');
-            
-            if (finalResultsContainer) finalResultsContainer.style.display = 'none';
-            if (skeleton) {
-                skeleton.innerHTML = UIComponents.createSkeletonCards(8, 'table');
-                skeleton.style.display = 'block';
-            }
-        }
-
-        function hideFinalResultsSkeletonLoading() {
-            console.log('✅ Hiding final results skeleton loading...');
-            const finalResultsContainer = document.getElementById('final-results-container');
-            const skeleton = document.getElementById('finalResultsSkeleton');
-            
-            if (skeleton) skeleton.style.display = 'none';
-            if (finalResultsContainer) finalResultsContainer.style.display = 'block';
-        }
 
         // Make skeleton functions globally available
         window.showEventsSkeletonLoading = showEventsSkeletonLoading;
         window.hideEventsSkeletonLoading = hideEventsSkeletonLoading;
         window.showBracketsSkeletonLoading = showBracketsSkeletonLoading;
         window.hideBracketsSkeletonLoading = hideBracketsSkeletonLoading;
-        window.showResultsSkeletonLoading = showResultsSkeletonLoading;
-        window.hideResultsSkeletonLoading = hideResultsSkeletonLoading;
-        window.showFinalResultsSkeletonLoading = showFinalResultsSkeletonLoading;
-        window.hideFinalResultsSkeletonLoading = hideFinalResultsSkeletonLoading;
 
         // Performance-optimized bracket rendering
         async function renderBrackets(eventId) {
@@ -1908,6 +2348,15 @@
 
         // Search and Sort Functions for Races Page
         function filterRacesEvents() {
+            // Safety check: ensure required functions and data are available
+            if (typeof window.allRacesEventsData === 'undefined' || 
+                typeof window.sortRacesEventsData !== 'function' ||
+                typeof window.renderRacesEventsGrid !== 'function' ||
+                typeof window.updateRacesResultsCount !== 'function') {
+                console.warn('Required functions not available, skipping filter operation');
+                return;
+            }
+            
             const searchTerm = document.getElementById('racesSearch').value.toLowerCase().trim();
             const statusFilter = document.getElementById('racesStatusFilter').value;
             const clearButton = document.getElementById('clearRacesSearch');
@@ -1983,9 +2432,9 @@
                     case 'location-desc':
                         return (b.location || '').localeCompare(a.location || '');
                     case 'participants-desc':
-                        return (b.participants?.length || 0) - (a.participants?.length || 0);
+                        return (dataManager.getEventParticipantStats(b.id)?.uniqueDrivers || 0) - (dataManager.getEventParticipantStats(a.id)?.uniqueDrivers || 0);
                     case 'participants-asc':
-                        return (a.participants?.length || 0) - (b.participants?.length || 0);
+                        return (dataManager.getEventParticipantStats(a.id)?.uniqueDrivers || 0) - (dataManager.getEventParticipantStats(b.id)?.uniqueDrivers || 0);
                     default:
                         return 0;
                 }
@@ -2047,7 +2496,12 @@
             
             const eventsHtml = pageEvents.map(event => {
                 const eventStatus = getEventStatus(event);
-                const participantCount = event.participants ? event.participants.length : 0;
+                
+                // Get participant statistics using the new data manager function
+                let participantStats = { uniqueDrivers: 0, totalRegistrations: 0 };
+                if (typeof dataManager !== 'undefined' && dataManager.getEventParticipantStats) {
+                    participantStats = dataManager.getEventParticipantStats(event.id);
+                }
                 
                 return `
                     <div class="event-card ${eventStatus.toLowerCase()}" data-event-id="${event.id}">
@@ -2064,9 +2518,13 @@
                                 <span class="detail-label">Location:</span>
                                 <span class="detail-value">${event.location}</span>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Participants:</span>
-                                <span class="detail-value">${participantCount}/${event.maxParticipants || 'Unlimited'}</span>
+                            <div class="detail-item drivers">
+                                <span class="detail-label">Drivers:</span>
+                                <span class="detail-value">${participantStats.uniqueDrivers} driver${participantStats.uniqueDrivers !== 1 ? 's' : ''}</span>
+                            </div>
+                            <div class="detail-item registrations">
+                                <span class="detail-label">Registrations:</span>
+                                <span class="detail-value">${participantStats.totalRegistrations} ${participantStats.totalRegistrations === 1 ? 'entry' : 'entries'}</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Tracks:</span>
@@ -2163,8 +2621,17 @@
         }
 
         function selectEventForRaces(eventId) {
+            console.log('🏁 RACES PAGE: selectEventForRaces called with eventId:', eventId);
+            console.log('🏁 RACES PAGE: window.raceUI available:', !!window.raceUI);
+            
             if (window.raceUI) {
-                window.raceUI.selectEvent(eventId);
+                console.log('🔍 Calling raceUI.selectEvent...');
+                window.raceUI.selectEvent(eventId).catch(error => {
+                    console.error('❌ Error in selectEvent:', error);
+                });
+            } else {
+                console.error('❌ raceUI not available');
+                alert('Race UI not available. Please refresh the page and try again.');
             }
         }
 
@@ -2199,8 +2666,8 @@
             }
         }
 
-        // Fix navigation click issues
-        document.addEventListener('DOMContentLoaded', function() {
+        // Fix navigation click issues (moved to main DOMContentLoaded)
+        function setupNavigationListeners() {
             const navLinks = document.querySelectorAll('.nav-links li');
             
             navLinks.forEach(li => {
@@ -2217,7 +2684,8 @@
                     }
                 });
             });
-        });
+        }
+        
     </script>
 </body>
 </html> 

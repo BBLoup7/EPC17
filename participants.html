@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Participants (Project 17)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Hero Section Styles - Consistent with other pages */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Participant Card Styles */
+        .participant-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .participant-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .participant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .participant-header h4 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-actions .btn {
+            padding: 0.25rem 0.5rem;
+            min-width: auto;
+        }
+        
+        .participant-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+        
+        .status-inactive {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+        
+        .participant-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .detail-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+        
+        .detail-row .label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .detail-row .value {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+
+        .participant-classes {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .participant-classes h5 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .class-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .class-tag {
+            background: var(--accent-primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* Search and Filter Controls */
+        .search-filter-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            color: var(--text-secondary);
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-search:hover {
+            color: var(--text-primary);
+            background: var(--bg-primary);
+        }
+
+        .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .filter-select option {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 2rem;
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .pagination-controls .btn {
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-controls .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-controls .btn:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .pagination-controls .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+        }
+
+        .pagination-controls .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .pagination-controls .btn-secondary:not(:disabled):hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-primary);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .search-filter-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .search-container {
+                min-width: auto;
+            }
+
+            .filter-container {
+                justify-content: space-between;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .participant-details {
+                grid-template-columns: 1fr;
+            }
+
+            .participant-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .pagination-container {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .pagination-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .pagination-controls .btn {
+                min-width: 35px;
+                height: 35px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation is handled by sidebar-nav.js -->
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1 class="hero-title">
+                            <i class="fas fa-users"></i>
+                            Participants
+                        </h1>
+                        <p class="hero-subtitle">EPC Technology - Manage and view all registered participants across events</p>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-hero" onclick="refreshParticipants()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                        <button class="btn btn-outline" onclick="exportParticipants()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="stats-grid" id="participants-stats">
+                <!-- Stats will be populated here -->
+            </div>
+
+            <!-- Search and Filter Controls -->
+            <div class="search-filter-controls">
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="participantsSearch" class="search-input" placeholder="Search participants by name, email, or phone..." oninput="filterParticipants()">
+                        <button class="clear-search" id="clearParticipantsSearch" onclick="clearParticipantsSearch()" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="filter-container">
+                    <label for="participantsEventFilter" class="filter-label">Event:</label>
+                    <select id="participantsEventFilter" class="filter-select" onchange="filterParticipants()">
+                        <option value="">All Events</option>
+                        <!-- Event options will be populated here -->
+                    </select>
+                </div>
+                <div class="filter-container">
+                    <label for="participantsClassFilter" class="filter-label">Class:</label>
+                    <select id="participantsClassFilter" class="filter-select" onchange="filterParticipants()">
+                        <option value="">All Classes</option>
+                        <!-- Class options will be populated here -->
+                    </select>
+                </div>
+                <div class="filter-container">
+                    <label for="pageSizeSelect" class="filter-label">Per Page:</label>
+                    <select id="pageSizeSelect" class="filter-select" onchange="changePageSize()">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Participants List -->
+            <div id="participants-list">
+                <!-- Participants will be loaded here -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="participants-pagination" class="pagination-container">
+                <!-- Pagination controls will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="utils/performance-monitor.js"></script>
+    <script src="utils/helpers.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
+    <script src="utils/validation.js"></script>
+    <script src="utils/event-bus.js"></script>
+    <script src="modules/statistics-manager.js"></script>
+    <script src="utils/data-manager.js?v=1.2"></script>
+    <script src="utils/migration-utils.js?v=1.2"></script>
+    <script src="modules/registration.js?v=1.2"></script>
+    <!-- Mobile Navigation -->
+    <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
+    <script>
+        // Initialize the participants system
+        let dataManager, registrationManager;
+
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('👥 Participants page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('👥 Participants page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('👥 Participants page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('👥 Participants page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('👥 PARTICIPANTS PAGE: Initializing Participants System...');
+            
+            try {
+                // Wait for authentication before initializing
+                await waitForAuthentication();
+                
+                // Initialize core modules
+                dataManager = new DataManager();
+                registrationManager = new RegistrationManager(dataManager);
+                
+                // Wait for data to load before initializing UI
+                await dataManager.loadFromStorage();
+                
+                // Initialize UI
+                loadParticipantsStats();
+                loadFilterOptions();
+                loadParticipantsList();
+                
+                console.log('👥 PARTICIPANTS PAGE: Participants System initialized successfully');
+                
+            } catch (error) {
+                console.error('Error initializing Participants System:', error);
+                showToast('Error initializing participants system', 'error');
+            }
+        });
+
+        // Global utility functions
+        function showToast(message, type = 'info') {
+            if (typeof Helpers !== 'undefined' && Helpers.showToast) {
+                Helpers.showToast(message, type);
+            } else {
+                // Fallback if Helpers is not available
+                console.log(`Toast (${type}): ${message}`);
+                alert(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+
+        // Load participants statistics
+        function loadParticipantsStats() {
+            const statsContainer = document.getElementById('participants-stats');
+            if (!statsContainer) return;
+
+            const participants = dataManager.getParticipantsArray();
+            const events = dataManager.getEventsArray();
+            
+            // Calculate statistics
+            const totalParticipants = participants.length;
+            const activeParticipants = participants.filter(p => p.status === 'active').length;
+            const totalEvents = events.length;
+            const totalRegistrations = participants.reduce((sum, p) => sum + (p.events ? p.events.length : 0), 0);
+
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalParticipants}</div>
+                    <div class="stat-label">Total Participants</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${activeParticipants}</div>
+                    <div class="stat-label">Active Participants</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${totalEvents}</div>
+                    <div class="stat-label">Total Events</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${totalRegistrations}</div>
+                    <div class="stat-label">Total Registrations</div>
+                </div>
+            `;
+        }
+
+        // Load filter options
+        function loadFilterOptions() {
+            const eventFilter = document.getElementById('participantsEventFilter');
+            const classFilter = document.getElementById('participantsClassFilter');
+            
+            if (eventFilter) {
+                const events = dataManager.getEventsArray();
+                eventFilter.innerHTML = '<option value="">All Events</option>' + 
+                    events.map(event => `<option value="${event.id}">${event.name}</option>`).join('');
+            }
+            
+            if (classFilter) {
+                // Get unique classes from all participants
+                const participants = dataManager.getParticipantsArray();
+                const allClasses = new Set();
+                
+                participants.forEach(participant => {
+                    if (participant.classes) {
+                        participant.classes.forEach(cls => allClasses.add(cls));
+                    }
+                });
+                
+                classFilter.innerHTML = '<option value="">All Classes</option>' + 
+                    Array.from(allClasses).sort().map(cls => `<option value="${cls}">${cls}</option>`).join('');
+            }
+        }
+
+        // Pagination state
+        let currentPage = 1;
+        let itemsPerPage = 25; // Variable page size for better user control
+        let totalParticipants = 0;
+        let totalPages = 0;
+
+        // Load participants list with pagination
+        function loadParticipantsList() {
+            const container = document.getElementById('participants-list');
+            const paginationContainer = document.getElementById('participants-pagination');
+            if (!container) return;
+
+            const allParticipants = getFilteredParticipants();
+            totalParticipants = allParticipants.length;
+            totalPages = Math.ceil(totalParticipants / itemsPerPage);
+            
+            // Ensure current page is valid
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
+            if (currentPage < 1) {
+                currentPage = 1;
+            }
+            
+            if (allParticipants.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <h3>No Participants Found</h3>
+                        <p>No participants match your current filters. Try adjusting your search criteria.</p>
+                        <button class="btn btn-secondary" onclick="clearAllFilters()">
+                            <i class="fas fa-times"></i>
+                            Clear Filters
+                        </button>
+                    </div>
+                `;
+                if (paginationContainer) paginationContainer.innerHTML = '';
+                return;
+            }
+
+            // Calculate pagination range
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, allParticipants.length);
+            const pageParticipants = allParticipants.slice(startIndex, endIndex);
+
+            const participantsHtml = pageParticipants.map(participant => {
+                const statusClass = participant.status === 'active' ? 'status-active' : 'status-inactive';
+                const statusText = participant.status === 'active' ? 'Active' : 'Inactive';
+                
+                // Get participant's events - check both eventIds and eventId arrays
+                let eventNames = [];
+                if (participant.eventIds && Array.isArray(participant.eventIds)) {
+                    eventNames = participant.eventIds.map(eventId => {
+                        const event = dataManager.getEvent(eventId);
+                        return event ? event.name : null;
+                    }).filter(name => name);
+                } else if (participant.eventId) {
+                    const event = dataManager.getEvent(participant.eventId);
+                    if (event) eventNames.push(event.name);
+                }
+                const participantEvents = eventNames.length > 0 ? eventNames.join(', ') : 'No events';
+                
+                // Get participant's classes - check multiple possible field names
+                const participantClasses = participant.selectedClasses || participant.sledClasses || [];
+                
+                // Get contact information from nested object
+                const email = participant.contact?.email || participant.contactEmail || 'N/A';
+                const phone = participant.contact?.phone || participant.contactPhone || 'N/A';
+                const emergencyContact = participant.contact?.emergency || participant.emergencyContact || 'N/A';
+                
+                // Get vehicle information if available
+                let vehicleInfo = 'N/A';
+                if (participant.sledConfigurations && Object.keys(participant.sledConfigurations).length > 0) {
+                    const configs = Object.values(participant.sledConfigurations);
+                    vehicleInfo = configs.map(config => {
+                        const parts = [];
+                        if (config.year) parts.push(config.year);
+                        if (config.make) parts.push(config.make);
+                        if (config.model) parts.push(config.model);
+                        return parts.join(' ');
+                    }).filter(v => v).join(', ') || 'N/A';
+                }
+                
+                // Get sponsors if available
+                const sponsors = participant.sponsors && participant.sponsors.length > 0 
+                    ? participant.sponsors.join(', ') 
+                    : null;
+                
+                // Format DOB if available
+                let formattedDob = 'N/A';
+                if (participant.dob) {
+                    try {
+                        formattedDob = new Date(participant.dob).toLocaleDateString();
+                    } catch (e) {
+                        formattedDob = participant.dob;
+                    }
+                }
+                
+                return `
+                    <div class="participant-card" data-participant-id="${participant.id}">
+                        <div class="participant-header">
+                            <h4>${participant.name}${participant.nickname ? ` "${participant.nickname}"` : ''}</h4>
+                            <div class="header-actions">
+                                <span class="participant-status ${statusClass}">${statusText}</span>
+                                <button class="btn btn-sm btn-secondary" onclick="editParticipant('${participant.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteParticipant('${participant.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="participant-details">
+                            <div class="detail-row">
+                                <span class="label">Racing #:</span>
+                                <span class="value">${participant.racingNumber || 'Not assigned'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Date of Birth:</span>
+                                <span class="value">${formattedDob}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Email:</span>
+                                <span class="value">${email}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Phone:</span>
+                                <span class="value">${phone}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Emergency Contact:</span>
+                                <span class="value">${emergencyContact}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Vehicle(s):</span>
+                                <span class="value">${vehicleInfo}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Events:</span>
+                                <span class="value">${participantEvents}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Total Fee:</span>
+                                <span class="value">$${participant.totalFee || 0}</span>
+                            </div>
+                        </div>
+                        ${participantClasses.length > 0 ? `
+                            <div class="participant-classes">
+                                <h5>All Classes Ever Registered:</h5>
+                                <div class="class-tags">
+                                    ${participantClasses.map(cls => `<span class="class-tag">${cls}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${participant.eventClasses && Object.keys(participant.eventClasses).length > 0 ? `
+                            <div class="participant-classes" style="margin-top: 1rem;">
+                                <h5>Classes by Event:</h5>
+                                ${Object.entries(participant.eventClasses).map(([eventId, classes]) => {
+                                    const event = dataManager.getEvent(eventId);
+                                    const eventName = event ? event.name : `Event ${eventId}`;
+                                    return `
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <strong style="font-size: 0.85rem; color: var(--text-secondary);">${eventName}:</strong>
+                                            <div class="class-tags" style="margin-top: 0.25rem;">
+                                                ${classes.map(cls => `<span class="class-tag" style="font-size: 0.8rem;">${cls}</span>`).join('')}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+                        ${sponsors ? `
+                            <div class="participant-classes">
+                                <h5>Sponsors:</h5>
+                                <div class="class-tags">
+                                    ${participant.sponsors.map(sponsor => `<span class="class-tag" style="background: var(--accent-secondary);">${sponsor}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = participantsHtml;
+            
+            // Render pagination
+            renderPagination(paginationContainer);
+        }
+
+        // Get filtered participants based on current filters
+        function getFilteredParticipants() {
+            const searchTerm = document.getElementById('participantsSearch').value.toLowerCase().trim();
+            const eventFilter = document.getElementById('participantsEventFilter').value;
+            const classFilter = document.getElementById('participantsClassFilter').value;
+            
+            let participants = dataManager.getParticipantsArray();
+            
+            // Apply search filter
+            if (searchTerm) {
+                participants = participants.filter(participant => {
+                    const nameMatch = participant.name && participant.name.toLowerCase().includes(searchTerm);
+                    const emailMatch = participant.email && participant.email.toLowerCase().includes(searchTerm);
+                    const phoneMatch = participant.phone && participant.phone.toLowerCase().includes(searchTerm);
+                    return nameMatch || emailMatch || phoneMatch;
+                });
+            }
+            
+            // Apply event filter
+            if (eventFilter) {
+                participants = participants.filter(participant => {
+                    return participant.events && participant.events.includes(eventFilter);
+                });
+            }
+            
+            // Apply class filter
+            if (classFilter) {
+                participants = participants.filter(participant => {
+                    return participant.classes && participant.classes.includes(classFilter);
+                });
+            }
+            
+            return participants;
+        }
+
+        // Filter participants
+        function filterParticipants() {
+            const clearButton = document.getElementById('clearParticipantsSearch');
+            const searchInput = document.getElementById('participantsSearch');
+            
+            // Update clear button visibility
+            if (clearButton && searchInput) {
+                clearButton.style.display = searchInput.value.trim() ? 'block' : 'none';
+            }
+            
+            // Reset to first page when filtering
+            currentPage = 1;
+            
+            // Reload participants list with filters
+            loadParticipantsList();
+        }
+
+        // Render pagination controls
+        function renderPagination(container) {
+            if (!container || totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            let paginationHtml = `
+                <div class="pagination-info">
+                    <span>Showing ${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalParticipants)} of ${totalParticipants} participants</span>
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn btn-sm btn-secondary" onclick="goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>
+                        <i class="fas fa-angle-double-left"></i> First
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                        <i class="fas fa-angle-left"></i> Previous
+                    </button>
+            `;
+
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === currentPage ? 'active' : '';
+                paginationHtml += `
+                    <button class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'}" onclick="goToPage(${i})" ${isActive ? 'disabled' : ''}>
+                        ${i}
+                    </button>
+                `;
+            }
+
+            paginationHtml += `
+                    <button class="btn btn-sm btn-secondary" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                        Next <i class="fas fa-angle-right"></i>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>
+                        Last <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = paginationHtml;
+        }
+
+        // Navigate to specific page
+        function goToPage(page) {
+            if (page < 1 || page > totalPages || page === currentPage) {
+                return;
+            }
+            
+            currentPage = page;
+            loadParticipantsList();
+            
+            // Scroll to top of participants list
+            const participantsList = document.getElementById('participants-list');
+            if (participantsList) {
+                participantsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Change page size
+        function changePageSize() {
+            const pageSizeSelect = document.getElementById('pageSizeSelect');
+            if (pageSizeSelect) {
+                itemsPerPage = parseInt(pageSizeSelect.value);
+                currentPage = 1; // Reset to first page when changing page size
+                loadParticipantsList();
+            }
+        }
+
+        // Clear search
+        function clearParticipantsSearch() {
+            document.getElementById('participantsSearch').value = '';
+            document.getElementById('clearParticipantsSearch').style.display = 'none';
+            filterParticipants();
+        }
+
+        // Clear all filters
+        function clearAllFilters() {
+            document.getElementById('participantsSearch').value = '';
+            document.getElementById('participantsEventFilter').value = '';
+            document.getElementById('participantsClassFilter').value = '';
+            document.getElementById('clearParticipantsSearch').style.display = 'none';
+            currentPage = 1; // Reset to first page
+            filterParticipants();
+        }
+
+        // Edit participant
+        function editParticipant(participantId) {
+            console.log('📝 Opening comprehensive edit form for participant:', participantId);
+            
+            try {
+                const participant = dataManager.getParticipant(participantId);
+                if (!participant) {
+                    alert('Participant not found');
+                    return;
+                }
+                
+                // Create comprehensive edit modal HTML
+                const editModalHtml = createEditParticipantModal(participant);
+                
+                // Show the modal
+                showEditModal('Edit Participant', editModalHtml);
+                
+                // Initialize form after modal is shown
+                setTimeout(() => {
+                    initializeEditForm(participant);
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error opening edit form:', error);
+                alert('Error opening edit form. Please try again.');
+            }
+        }
+
+        // Delete participant
+        async function deleteParticipant(participantId) {
+            try {
+                const participant = dataManager.getParticipant(participantId);
+                if (!participant) {
+                    showToast('Participant not found', 'error');
+                    return;
+                }
+
+                if (window.confirmDelete) {
+                    window.confirmDelete(participant.name, async () => {
+                        try {
+                            await dataManager.deleteParticipant(participantId);
+                            showToast(`Participant "${participant.name}" has been deleted successfully`, 'success');
+                            loadParticipantsList();
+                            loadParticipantsStats();
+                        } catch (error) {
+                            console.error('Error deleting participant:', error);
+                            showToast('Error deleting participant. Please try again.', 'error');
+                            throw error;
+                        }
+                    });
+                } else {
+                    // Fallback confirmation
+                    if (confirm(`Are you sure you want to delete participant "${participant.name}"?`)) {
+                        try {
+                            await dataManager.deleteParticipant(participantId);
+                            showToast(`Participant "${participant.name}" has been deleted successfully`, 'success');
+                            loadParticipantsList();
+                            loadParticipantsStats();
+                        } catch (error) {
+                            console.error('Error deleting participant:', error);
+                            showToast('Error deleting participant. Please try again.', 'error');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting participant:', error);
+                showToast('Error deleting participant. Please try again.', 'error');
+            }
+        }
+
+        // Refresh participants
+        function refreshParticipants() {
+            showToast('Refreshing participants...', 'info');
+            dataManager.loadFromStorage().then(() => {
+                loadParticipantsStats();
+                loadFilterOptions();
+                loadParticipantsList();
+                showToast('Participants refreshed successfully!', 'success');
+            }).catch(error => {
+                console.error('Error refreshing participants:', error);
+                showToast('Error refreshing participants', 'error');
+            });
+        }
+
+        // Export participants
+        function exportParticipants() {
+            showToast('Export functionality coming soon!', 'info');
+        }
+
+        // Create comprehensive edit participant modal HTML
+        function createEditParticipantModal(participant) {
+            return `
+                <div class="edit-participant-modal">
+                    <form id="editParticipantForm" class="edit-form">
+                        <input type="hidden" id="editParticipantId" value="${participant.id}">
+                        
+                        <!-- Driver Information -->
+                        <div class="form-section">
+                            <h3>Driver Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="editName" value="${participant.name || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Nickname</label>
+                                    <input type="text" class="form-control" id="editNickname" value="${participant.nickname || ''}" placeholder="Racing nickname">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Racing Number *</label>
+                                    <input type="text" class="form-control" id="editRacingNumber" value="${participant.racingNumber || ''}" required pattern="[A-Za-z0-9]+" placeholder="e.g., 1, 1A, 99B" title="Racing number can contain numbers and letters">
+                                    <small class="form-text">Required. Can contain numbers and letters. Must be unique per class in this event.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Date of Birth *</label>
+                                    <input type="date" class="form-control" id="editDob" value="${participant.dob || ''}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sponsors -->
+                        <div class="form-section">
+                            <h3>Sponsors (Optional)</h3>
+                            <div class="form-group">
+                                <label class="form-label">Add Sponsors</label>
+                                <div class="sponsor-input-container">
+                                    <input type="text" class="form-control sponsor-input" id="editSponsorInput" placeholder="Enter sponsor name and press Enter">
+                                    <button type="button" class="btn btn-secondary sponsor-add-btn" onclick="addEditSponsor()">Add</button>
+                                </div>
+                                <div class="sponsor-tags" id="editSponsorTags">
+                                    <!-- Sponsor tags will be added here -->
+                                </div>
+                                <p class="help-text">Add multiple sponsors by typing and pressing Enter or clicking Add. Click on a sponsor tag to remove it.</p>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="form-section">
+                            <h3>Contact Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="editEmail" value="${participant.contact?.email || participant.contactEmail || ''}" placeholder="your.email@example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" id="editPhone" value="${participant.contact?.phone || participant.contactPhone || ''}" placeholder="(555) 123-4567">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Emergency Contact</label>
+                                <input type="text" class="form-control" id="editEmergencyContact" value="${participant.contact?.emergency || participant.emergencyContact || ''}" placeholder="Emergency contact name and phone">
+                            </div>
+                        </div>
+
+                        <!-- Racing Classes -->
+                        <div class="form-section">
+                            <h3>Racing Classes</h3>
+                            <div id="editClassSelection" class="class-selection">
+                                <!-- Classes will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Configurations -->
+                        <div class="form-section">
+                            <h3>Vehicle Configurations</h3>
+                            <div id="editVehicleConfigurations" class="vehicle-configurations">
+                                <!-- Vehicle configurations will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Event Assignment -->
+                        <div class="form-section">
+                            <h3>Event Assignments</h3>
+                            <div class="form-group">
+                                <label class="form-label">Select Events (multiple selection supported)</label>
+                                <div id="editEventSelection" class="event-selection">
+                                    <!-- Events will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Participant Status -->
+                        <div class="form-section">
+                            <h3>Status</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-control" id="editStatus">
+                                        <option value="active" ${(participant.status || 'active') === 'active' ? 'selected' : ''}>Active</option>
+                                        <option value="inactive" ${participant.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Total Fee</label>
+                                    <input type="number" class="form-control" id="editTotalFee" value="${participant.totalFee || ''}" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <style>
+                    .edit-participant-modal {
+                        max-width: 800px;
+                        margin: 0 auto;
+                    }
+                    
+                    .edit-form {
+                        padding: 2rem;
+                        overflow-y: auto;
+                        flex: 1;
+                        min-height: 0;
+                    }
+                    
+                    .form-section {
+                        margin-bottom: 2rem;
+                        padding: 1.5rem;
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                        background: var(--bg-secondary);
+                    }
+                    
+                    .form-section h3 {
+                        margin: 0 0 1rem 0;
+                        color: var(--text-primary);
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                    }
+                    
+                    .form-row {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 1rem;
+                    }
+                    
+                    .form-group {
+                        margin-bottom: 1.5rem;
+                    }
+                    
+                    .form-label, label {
+                        display: block;
+                        margin-bottom: 0.5rem;
+                        font-weight: 500;
+                        color: var(--text-primary);
+                    }
+                    
+                    .form-control {
+                        width: 100%;
+                        padding: 0.75rem;
+                        border: 1px solid var(--text-secondary);
+                        border-radius: 4px;
+                        font-size: 1rem;
+                        background-color: var(--bg-primary);
+                        color: var(--text-primary);
+                        transition: border-color 0.2s;
+                    }
+                    
+                    .form-control:focus {
+                        outline: none;
+                        border-color: var(--accent-primary);
+                    }
+                    
+                    .class-selection {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 1rem;
+                    }
+                    
+                    .class-option {
+                        padding: 0.75rem;
+                        border: 2px solid var(--border-color);
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: center;
+                        background: var(--bg-primary);
+                    }
+                    
+                    .class-option:hover {
+                        border-color: var(--accent-primary);
+                    }
+                    
+                    .class-option.selected {
+                        border-color: var(--accent-primary);
+                        background: var(--bg-secondary);
+                    }
+                    
+                    .class-option h5 {
+                        margin: 0 0 0.5rem 0;
+                        color: var(--text-primary);
+                    }
+                    
+                    .class-fee {
+                        font-weight: 600;
+                        color: var(--success);
+                        margin-bottom: 0.25rem;
+                    }
+                    
+                    .class-description {
+                        font-size: 0.8rem;
+                        color: var(--text-secondary);
+                    }
+                    
+                    .event-selection {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                        gap: 1rem;
+                        max-height: 400px;
+                        overflow-y: auto;
+                        padding: 0.5rem;
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                        background: var(--bg-primary);
+                    }
+                    
+                    .event-option {
+                        padding: 1rem;
+                        border: 2px solid var(--border-color);
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        background: var(--bg-secondary);
+                        position: relative;
+                    }
+                    
+                    .event-option:hover {
+                        border-color: var(--accent-primary);
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    }
+                    
+                    .event-option.selected {
+                        border-color: var(--accent-primary);
+                        background: var(--bg-primary);
+                        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+                    }
+                    
+                    .event-option .event-checkbox {
+                        position: absolute;
+                        top: 0.75rem;
+                        right: 0.75rem;
+                        width: 1.2rem;
+                        height: 1.2rem;
+                        accent-color: var(--accent-primary);
+                    }
+                    
+                    .event-option .event-name {
+                        font-weight: 600;
+                        color: var(--text-primary);
+                        margin-bottom: 0.5rem;
+                        padding-right: 2rem;
+                    }
+                    
+                    .event-option .event-details {
+                        font-size: 0.85rem;
+                        color: var(--text-secondary);
+                        margin-bottom: 0.25rem;
+                    }
+                    
+                    .event-option .event-status {
+                        font-size: 0.75rem;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 4px;
+                        display: inline-block;
+                        margin-top: 0.5rem;
+                    }
+                    
+                    .event-option .event-status.active {
+                        background: var(--success);
+                        color: white;
+                    }
+                    
+                    .event-option .event-status.upcoming {
+                        background: var(--warning);
+                        color: white;
+                    }
+                    
+                    .event-option .event-status.completed {
+                        background: var(--text-secondary);
+                        color: white;
+                    }
+                    
+                    .form-actions {
+                        display: flex;
+                        justify-content: center;
+                        gap: 1rem;
+                        margin-top: 2rem;
+                        padding-top: 1rem;
+                        border-top: 1px solid var(--border-color);
+                    }
+                    
+                    .btn {
+                        padding: 0.75rem 1.5rem;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 500;
+                        transition: background-color 0.2s;
+                    }
+                    
+                    .btn-primary {
+                        background: var(--accent-primary);
+                        color: white;
+                    }
+                    
+                    .btn-primary:hover {
+                        background: var(--accent-secondary);
+                    }
+                    
+                    .btn-secondary {
+                        background: var(--text-secondary);
+                        color: var(--bg-primary);
+                    }
+                    
+                    .btn-secondary:hover {
+                        background: var(--text-primary);
+                    }
+                    
+                    /* Sponsor Section Styles */
+                    .sponsor-input-container {
+                        display: flex;
+                        gap: 0.5rem;
+                        margin-bottom: 1rem;
+                    }
+
+                    .sponsor-input {
+                        flex: 1;
+                    }
+
+                    .sponsor-add-btn {
+                        white-space: nowrap;
+                        min-width: 80px;
+                    }
+
+                    .sponsor-tags {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                        margin-top: 0.5rem;
+                    }
+
+                    .sponsor-tag {
+                        background: var(--accent-primary);
+                        color: white;
+                        padding: 0.5rem 0.75rem;
+                        border-radius: 20px;
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        border: none;
+                        user-select: none;
+                    }
+
+                    .sponsor-tag:hover {
+                        background: var(--accent-secondary);
+                        transform: translateY(-1px);
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                    }
+
+                    .sponsor-tag .remove-icon {
+                        font-size: 1.1rem;
+                        font-weight: bold;
+                        line-height: 1;
+                        opacity: 0.8;
+                    }
+
+                    .sponsor-tag:hover .remove-icon {
+                        opacity: 1;
+                    }
+
+                    .help-text {
+                        color: var(--text-secondary);
+                        font-size: 0.9rem;
+                        margin-top: 0.5rem;
+                        font-style: italic;
+                    }
+                    
+                    @media (max-width: 768px) {
+                        .edit-form {
+                            padding: 1rem;
+                        }
+                        
+                        .form-row {
+                            grid-template-columns: 1fr;
+                        }
+                        
+                        .class-selection {
+                            grid-template-columns: 1fr;
+                        }
+                        
+                        .event-selection {
+                            grid-template-columns: 1fr;
+                        }
+                        
+                        .sponsor-input-container {
+                            flex-direction: column;
+                        }
+
+                        .sponsor-add-btn {
+                            width: 100%;
+                        }
+                        
+                        .form-actions {
+                            flex-direction: column;
+                        }
+                    }
+                </style>
+            `;
+        }
+
+        // Show edit modal
+        function showEditModal(title, content) {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'editModalBackdrop';
+            overlay.className = 'modal-overlay active';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                z-index: 1000;
+                overflow-y: auto;
+                padding: 1rem;
+            `;
+            
+            // Create modal content
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
+            modalContent.style.cssText = `
+                background: var(--bg-primary);
+                border-radius: 8px;
+                width: 100%;
+                max-width: 1000px;
+                margin: 2rem auto;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                position: relative;
+                max-height: calc(100vh - 4rem);
+                display: flex;
+                flex-direction: column;
+            `;
+            
+            modalContent.innerHTML = `
+                <div class="modal-header" style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 1.5rem 2rem;
+                    border-bottom: 1px solid var(--border-color);
+                    background: var(--bg-secondary);
+                    border-radius: 8px 8px 0 0;
+                    flex-shrink: 0;
+                ">
+                    <h2 style="color: var(--text-primary); margin: 0; font-size: 1.5rem;">${title}</h2>
+                    <button class="modal-close" onclick="closeEditModal()" style="
+                        background: none;
+                        border: none;
+                        font-size: 2rem;
+                        color: var(--text-secondary);
+                        cursor: pointer;
+                        padding: 0;
+                        width: 2rem;
+                        height: 2rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 4px;
+                        transition: background-color 0.2s ease;
+                    ">&times;</button>
+                </div>
+                <div class="modal-body" style="
+                    padding: 0;
+                    overflow-y: auto;
+                    flex: 1;
+                    min-height: 0;
+                ">
+                    ${content}
+                </div>
+            `;
+            
+            overlay.appendChild(modalContent);
+            document.body.appendChild(overlay);
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+            
+            // Add hover effect for close button
+            const closeBtn = modalContent.querySelector('.modal-close');
+            closeBtn.addEventListener('mouseenter', () => {
+                closeBtn.style.background = 'var(--bg-primary)';
+                closeBtn.style.color = 'var(--text-primary)';
+            });
+            closeBtn.addEventListener('mouseleave', () => {
+                closeBtn.style.background = 'none';
+                closeBtn.style.color = 'var(--text-secondary)';
+            });
+            
+            // Add responsive styles
+            if (window.innerWidth <= 768) {
+                modalContent.style.margin = '1rem';
+                modalContent.style.width = 'calc(100% - 2rem)';
+                modalContent.querySelector('.modal-header').style.padding = '1rem';
+            }
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            const backdrop = document.getElementById('editModalBackdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.style.overflow = '';
+        }
+
+        // Initialize edit form
+        function initializeEditForm(participant) {
+            // Load available classes
+            loadEditClassOptions(participant);
+            
+            // Load vehicle configurations
+            loadEditVehicleConfigurations(participant);
+            
+            // Load available events
+            loadEditEventOptions(participant);
+            loadEditSponsors(participant);
+            
+            // Setup form submission
+            const form = document.getElementById('editParticipantForm');
+            if (form) {
+                form.addEventListener('submit', handleEditFormSubmit);
+            }
+            
+            // Add sponsor input event listener
+            const sponsorInput = document.getElementById('editSponsorInput');
+            if (sponsorInput) {
+                sponsorInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addEditSponsor();
+                    }
+                });
+            }
+        }
+
+        // Load class options for editing
+        function loadEditClassOptions(participant) {
+            const container = document.getElementById('editClassSelection');
+            if (!container) return;
+            
+            // Get unique classes from all events and participants
+            const allClasses = new Set();
+            
+            // Add classes from events
+            const events = dataManager.getEventsArray();
+            events.forEach(event => {
+                if (event.classSettings) {
+                    event.classSettings.forEach(cls => {
+                        allClasses.add(cls.className || cls.name);
+                    });
+                }
+            });
+            
+            // Add classes from all participants
+            const participants = dataManager.getParticipantsArray();
+            participants.forEach(p => {
+                if (p.selectedClasses) {
+                    p.selectedClasses.forEach(cls => allClasses.add(cls));
+                }
+            });
+            
+            const classOptionsHtml = Array.from(allClasses).sort().map(className => {
+                const isSelected = participant.selectedClasses && participant.selectedClasses.includes(className);
+                return `
+                    <div class="class-option ${isSelected ? 'selected' : ''}" data-class="${className}">
+                        <h5>${className}</h5>
+                        <div class="class-fee">$50.00</div>
+                        <div class="class-description">Racing class</div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = classOptionsHtml;
+            
+            // Add event listeners for class selection changes
+            const classOptionElements = container.querySelectorAll('.class-option');
+            classOptionElements.forEach(option => {
+                option.addEventListener('click', () => {
+                    const className = option.dataset.class;
+                    toggleEditClass(className);
+                });
+            });
+        }
+
+        // Load event options for editing
+        function loadEditEventOptions(participant) {
+            const container = document.getElementById('editEventSelection');
+            if (!container) return;
+            
+            // Get participant's current events
+            const participantEvents = [];
+            if (participant.eventId) {
+                participantEvents.push(participant.eventId);
+            }
+            
+            // Check if participant is in multiple events based on event participant lists
+            const events = dataManager.getEventsArray();
+            events.forEach(event => {
+                if (event.participants && event.participants.includes(participant.id)) {
+                    if (!participantEvents.includes(event.id)) {
+                        participantEvents.push(event.id);
+                    }
+                }
+            });
+            
+            if (events.length === 0) {
+                container.innerHTML = '<div class="no-events">No events available for assignment.</div>';
+                return;
+            }
+            
+            const eventOptions = events.map(event => {
+                const isSelected = participantEvents.includes(event.id);
+                const eventDate = event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD';
+                const eventStatus = event.status || 'active';
+                const eventLocation = event.location || 'Location TBD';
+                
+                return `
+                    <div class="event-option ${isSelected ? 'selected' : ''}" data-event-id="${event.id}" onclick="toggleEditEvent('${event.id}')">
+                        <input type="checkbox" class="event-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleEditEvent('${event.id}')">
+                        <div class="event-name">${event.name}</div>
+                        <div class="event-details">📅 ${eventDate}</div>
+                        <div class="event-details">📍 ${eventLocation}</div>
+                        <div class="event-status ${eventStatus}">${eventStatus.charAt(0).toUpperCase() + eventStatus.slice(1)}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = eventOptions;
+        }
+
+        // Load vehicle configurations for editing
+        function loadEditVehicleConfigurations(participant) {
+            const container = document.getElementById('editVehicleConfigurations');
+            if (!container) return;
+            
+            // Clear existing configurations
+            container.innerHTML = '';
+            
+            // Load configurations for each selected class
+            if (participant.selectedClasses) {
+                participant.selectedClasses.forEach(className => {
+                    addEditVehicleConfig(className, participant);
+                });
+            }
+        }
+
+        // Add vehicle configuration for a class
+        function addEditVehicleConfig(className, participant) {
+            const container = document.getElementById('editVehicleConfigurations');
+            if (!container) return;
+            
+            // Check if configuration already exists
+            if (document.getElementById(`edit-vehicle-config-${className.replace(/\s+/g, '-')}`)) {
+                return;
+            }
+            
+            // Get existing configuration or create default
+            const existingConfig = participant.sledConfigurations?.[className] || {};
+            
+            const configDiv = document.createElement('div');
+            configDiv.className = 'vehicle-config';
+            configDiv.id = `edit-vehicle-config-${className.replace(/\s+/g, '-')}`;
+            
+            configDiv.innerHTML = `
+                <h4>🏁 Vehicle Configuration for ${className}</h4>
+                <div class="vehicle-config-grid">
+                    <div class="form-group">
+                        <label class="form-label">Vehicle Make</label>
+                        <input type="text" class="form-control" id="edit_vehicle_${className.replace(/\s+/g, '_')}_make" 
+                               value="${existingConfig.make || ''}" placeholder="e.g., Brand A, Brand B, Brand C">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vehicle Model</label>
+                        <input type="text" class="form-control" id="edit_vehicle_${className.replace(/\s+/g, '_')}_model" 
+                               value="${existingConfig.model || ''}" placeholder="e.g., Model X, Model Y, Model Z">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vehicle Year</label>
+                        <input type="number" class="form-control" id="edit_vehicle_${className.replace(/\s+/g, '_')}_year" 
+                               value="${existingConfig.year || ''}" min="1990" max="2025" placeholder="e.g., 2023">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Engine</label>
+                        <input type="text" class="form-control" id="edit_vehicle_${className.replace(/\s+/g, '_')}_engine" 
+                               value="${existingConfig.engine || ''}" placeholder="e.g., V8, 4-cylinder, Electric">
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(configDiv);
+        }
+
+        // Load sponsors for editing
+        function loadEditSponsors(participant) {
+            const container = document.getElementById('editSponsorTags');
+            if (!container) return;
+            
+            // Clear existing sponsors
+            container.innerHTML = '';
+            
+            // Load existing sponsors from participant data
+            const existingSponsors = participant.sponsors || [];
+            existingSponsors.forEach(sponsor => {
+                addEditSponsorTag(sponsor);
+            });
+        }
+
+        // Add sponsor in edit form
+        function addEditSponsor() {
+            const input = document.getElementById('editSponsorInput');
+            const sponsorName = input.value.trim();
+            
+            if (sponsorName) {
+                addEditSponsorTag(sponsorName);
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        // Add sponsor tag to edit form
+        function addEditSponsorTag(sponsorName) {
+            const container = document.getElementById('editSponsorTags');
+            if (!container) return;
+            
+            // Check if sponsor already exists
+            const existingTags = container.querySelectorAll('.sponsor-tag span:first-child');
+            const sponsorExists = Array.from(existingTags).some(tag => tag.textContent === sponsorName);
+            
+            if (!sponsorExists) {
+                const tag = document.createElement('div');
+                tag.className = 'sponsor-tag';
+                tag.innerHTML = `
+                    <span>${sponsorName}</span>
+                    <span class="remove-icon" onclick="removeEditSponsor('${sponsorName}')">&times;</span>
+                `;
+                container.appendChild(tag);
+            }
+        }
+
+        // Remove sponsor from edit form
+        function removeEditSponsor(sponsorName) {
+            const container = document.getElementById('editSponsorTags');
+            if (!container) return;
+            
+            const tags = container.querySelectorAll('.sponsor-tag');
+            tags.forEach(tag => {
+                const sponsorSpan = tag.querySelector('span:first-child');
+                if (sponsorSpan && sponsorSpan.textContent === sponsorName) {
+                    tag.remove();
+                }
+            });
+        }
+
+        // Toggle class selection and handle vehicle configuration
+        function toggleEditClass(className) {
+            const option = document.querySelector(`#editClassSelection .class-option[data-class="${className}"]`);
+            if (!option) return;
+            
+            const isSelected = option.classList.contains('selected');
+            
+            if (isSelected) {
+                option.classList.remove('selected');
+                removeEditVehicleConfig(className);
+            } else {
+                option.classList.add('selected');
+                // Get participant data from the hidden input
+                const participantId = document.getElementById('editParticipantId').value;
+                const participant = dataManager.getParticipant(participantId);
+                addEditVehicleConfig(className, participant);
+            }
+        }
+
+        // Remove vehicle configuration for a class
+        function removeEditVehicleConfig(className) {
+            const configDiv = document.getElementById(`edit-vehicle-config-${className.replace(/\s+/g, '-')}`);
+            if (configDiv) {
+                configDiv.remove();
+            }
+        }
+
+        // Toggle event selection in edit form
+        function toggleEditEvent(eventId) {
+            const eventOption = document.querySelector(`[data-event-id="${eventId}"]`);
+            const checkbox = eventOption.querySelector('.event-checkbox');
+            if (!eventOption || !checkbox) return;
+            
+            eventOption.classList.toggle('selected');
+            checkbox.checked = eventOption.classList.contains('selected');
+        }
+
+        // Handle edit form submission
+        async function handleEditFormSubmit(event) {
+            event.preventDefault();
+            
+            try {
+                const participantId = document.getElementById('editParticipantId').value;
+                
+                // Gather form data
+                const selectedClassElements = document.querySelectorAll('.class-option.selected');
+                const selectedClasses = Array.from(selectedClassElements).map(el => el.dataset.class);
+                
+                // Collect vehicle configurations
+                const vehicleConfigurations = {};
+                selectedClasses.forEach(className => {
+                    const classId = className.replace(/\s+/g, '_');
+                    vehicleConfigurations[className] = {
+                        make: document.getElementById(`edit_vehicle_${classId}_make`)?.value || '',
+                        model: document.getElementById(`edit_vehicle_${classId}_model`)?.value || '',
+                        year: document.getElementById(`edit_vehicle_${classId}_year`)?.value || '',
+                        engine: document.getElementById(`edit_vehicle_${classId}_engine`)?.value || ''
+                    };
+                });
+                
+                const selectedEventElements = document.querySelectorAll('.event-option.selected');
+                const selectedEvents = Array.from(selectedEventElements).map(el => el.dataset.eventId);
+                
+                // Gather sponsors from tags
+                const sponsorTags = document.querySelectorAll('#editSponsorTags .sponsor-tag span:first-child');
+                const sponsors = Array.from(sponsorTags).map(tag => tag.textContent);
+                
+                // Validate racing number
+                const racingNumber = document.getElementById('editRacingNumber').value;
+                if (!racingNumber || racingNumber.trim() === '') {
+                    alert('Racing number is required');
+                    return;
+                }
+                
+                // Validate racing number format
+                const racingNumberRegex = /^[A-Za-z0-9]+$/;
+                if (!racingNumberRegex.test(racingNumber.trim())) {
+                    alert('Racing number can only contain letters and numbers');
+                    return;
+                }
+                
+                const updatedData = {
+                    name: document.getElementById('editName').value.trim(),
+                    nickname: document.getElementById('editNickname').value.trim(),
+                    racingNumber: racingNumber.trim(),
+                    dob: document.getElementById('editDob').value,
+                    contact: {
+                        email: document.getElementById('editEmail').value.trim(),
+                        phone: document.getElementById('editPhone').value.trim(),
+                        emergency: document.getElementById('editEmergencyContact').value.trim()
+                    },
+                    sponsors: sponsors,
+                    selectedClasses: selectedClasses,
+                    eventClasses: participant.eventClasses || {}, // Preserve event-specific class mappings
+                    sledConfigurations: vehicleConfigurations,
+                    selectedEvents: selectedEvents,
+                    eventId: selectedEvents.length > 0 ? selectedEvents[0] : null,
+                    status: document.getElementById('editStatus').value,
+                    totalFee: parseFloat(document.getElementById('editTotalFee').value) || 0
+                };
+                
+                // Validate required fields
+                if (!updatedData.name || !updatedData.dob) {
+                    alert('Please fill in all required fields (Name and Date of Birth).');
+                    return;
+                }
+                
+                if (selectedClasses.length === 0) {
+                    alert('Please select at least one racing class.');
+                    return;
+                }
+                
+                if (selectedEvents.length === 0) {
+                    alert('Please select at least one event.');
+                    return;
+                }
+                
+                console.log('💾 Updating participant:', participantId, updatedData);
+                
+                // Update participant using DataManager
+                const success = await dataManager.updateParticipant(participantId, updatedData);
+                
+                if (success) {
+                    // Register participant for all selected events
+                    for (const eventId of selectedEvents) {
+                        try {
+                            await dataManager.registerParticipantForEvent(eventId, participantId);
+                        } catch (error) {
+                            console.warn(`Failed to register participant for event ${eventId}:`, error);
+                        }
+                    }
+                    
+                    const eventCount = selectedEvents.length;
+                    const eventText = eventCount === 1 ? 'event' : 'events';
+                    showToast(`Participant updated successfully! Registered for ${eventCount} ${eventText}.`, 'success');
+                    closeEditModal();
+                    
+                    // Refresh participant list
+                    loadParticipantsList();
+                    loadParticipantsStats();
+                } else {
+                    showToast('Failed to update participant. Please try again.', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error updating participant:', error);
+                showToast('Error updating participant: ' + error.message, 'error');
+            }
+        }
+
+        // Make functions globally available
+        window.dataManager = null;
+        window.registrationManager = null;
+        window.showToast = showToast;
+        window.filterParticipants = filterParticipants;
+        window.clearParticipantsSearch = clearParticipantsSearch;
+        window.clearAllFilters = clearAllFilters;
+        window.editParticipant = editParticipant;
+        window.deleteParticipant = deleteParticipant;
+        window.refreshParticipants = refreshParticipants;
+        window.exportParticipants = exportParticipants;
+        window.goToPage = goToPage;
+        window.renderPagination = renderPagination;
+        window.changePageSize = changePageSize;
+        window.createEditParticipantModal = createEditParticipantModal;
+        window.showEditModal = showEditModal;
+        window.closeEditModal = closeEditModal;
+        window.initializeEditForm = initializeEditForm;
+        window.loadEditClassOptions = loadEditClassOptions;
+        window.loadEditEventOptions = loadEditEventOptions;
+        window.loadEditVehicleConfigurations = loadEditVehicleConfigurations;
+        window.loadEditSponsors = loadEditSponsors;
+        window.addEditSponsor = addEditSponsor;
+        window.addEditSponsorTag = addEditSponsorTag;
+        window.removeEditSponsor = removeEditSponsor;
+        window.toggleEditClass = toggleEditClass;
+        window.toggleEditEvent = toggleEditEvent;
+        window.addEditVehicleConfig = addEditVehicleConfig;
+        window.removeEditVehicleConfig = removeEditVehicleConfig;
+        window.handleEditFormSubmit = handleEditFormSubmit;
+
+        // Set global references after initialization
+        setTimeout(() => {
+            window.dataManager = dataManager;
+            window.registrationManager = registrationManager;
+        }, 100);
+    </script>
+</body>
+</html>

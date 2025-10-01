@@ -67,6 +67,12 @@ class DataManager {
      * Perform a fetch using Auth wrapper if available (adds Authorization token)
      */
     request(url, options = {}) {
+        // Check if we have authentication before making requests
+        if (!window.Auth || !window.currentUser) {
+            console.warn('🚫 No authentication available, skipping request to:', url);
+            return Promise.reject(new Error('Authentication required'));
+        }
+        
         if (window.Auth && typeof window.Auth.fetch === 'function') {
             return window.Auth.fetch(url, options);
         }
@@ -186,7 +192,16 @@ class DataManager {
             }
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // Provide more specific error messages for common HTTP status codes
+                if (response.status === 403) {
+                    throw new Error(`Access denied (403): You do not have permission to access ${type} data`);
+                } else if (response.status === 401) {
+                    throw new Error(`Authentication required (401): Please log in to access ${type} data`);
+                } else if (response.status === 404) {
+                    throw new Error(`Not found (404): ${type} data not available on server`);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
             }
             
             // Check if data was modified (304 Not Modified)
@@ -510,6 +525,10 @@ class DataManager {
             if (response.status === 404) {
                 console.log(`📭 ${endpoint} not found on server (404) - this is normal for new items`);
                 return [];
+            } else if (response.status === 403) {
+                throw new Error(`Access denied (403): You do not have permission to access ${endpoint}`);
+            } else if (response.status === 401) {
+                throw new Error(`Authentication required (401): Please log in to access ${endpoint}`);
             }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
@@ -959,6 +978,30 @@ class DataManager {
         console.log('🔍 this.data.participants:', this.data.participants);
         console.log('🔍 this.data.participants length:', this.data.participants?.length || 0);
         return this.data.participants || [];
+    }
+
+    /**
+     * Calculate participant statistics for an event
+     * Returns an object with uniqueDrivers and totalRegistrations
+     */
+    getEventParticipantStats(eventId) {
+        const allParticipants = this.getParticipantsArray();
+        const eventParticipants = allParticipants.filter(p => p.eventId === eventId);
+        
+        // Calculate unique drivers (by participant ID)
+        const uniqueDrivers = new Set(eventParticipants.map(p => p.id)).size;
+        
+        // Calculate total registrations (sum of all class registrations per participant)
+        const totalRegistrations = eventParticipants.reduce((sum, p) => {
+            const classCount = p.selectedClasses ? p.selectedClasses.length : 1;
+            return sum + classCount;
+        }, 0);
+        
+        return {
+            uniqueDrivers,
+            totalRegistrations,
+            eventParticipants
+        };
     }
 
     /**
@@ -1925,6 +1968,36 @@ class DataManager {
         } catch (error) {
             console.error('❌ Failed to update race bracket:', bracketId, error.message);
             throw error;
+        }
+    }
+
+    /**
+     * Delete race bracket for an event
+     */
+    deleteRaceBracket(eventId) {
+        try {
+            console.log(`🗑️ Deleting race bracket for event: ${eventId}`);
+            
+            // Remove from local cache
+            if (this.data.raceBrackets && this.data.raceBrackets[eventId]) {
+                delete this.data.raceBrackets[eventId];
+                console.log(`✅ Race bracket removed from local cache for event: ${eventId}`);
+            }
+            
+            // Remove from server
+            this.deleteFromServer('race-brackets', eventId).catch(error => {
+                console.warn('⚠️ Failed to delete race bracket from server:', error);
+            });
+            
+            // Emit event for UI updates
+            if (this.eventBus) {
+                this.eventBus.emit('raceBracketDeleted', { eventId });
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting race bracket:', error);
+            return false;
         }
     }
 

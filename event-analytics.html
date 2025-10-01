@@ -1,0 +1,3340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Event Analytics Dashboard (Project 17)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="analytics-dashboard">
+    <!-- Navigation is now handled by sidebar-nav.js -->
+
+    <main class="main-content analytics-main">
+        <!-- Modern Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-chart-line"></i>
+                        Event Analytics Dashboard
+                    </h1>
+                    <p class="dashboard-subtitle">Comprehensive insights and performance metrics for racing events</p>
+                </div>
+                <div class="header-actions">
+                    <div class="filter-controls">
+                        <select id="eventSeriesFilter" class="modern-select">
+                            <option value="">All Series</option>
+                        </select>
+                        <select id="classFilter" class="modern-select">
+                            <option value="">All Classes</option>
+                        </select>
+                        <select id="timeRangeFilter" class="modern-select">
+                            <option value="all">All Time</option>
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                            <option value="90d">Last 90 Days</option>
+                        </select>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="analyticsExportPdf" class="btn-modern btn-outline" onclick="exportAnalytics('pdf')" title="Export to PDF">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>PDF</span>
+                        </button>
+                        <button id="analyticsExportPng" class="btn-modern btn-outline" onclick="exportAnalytics('png')" title="Export to PNG">
+                            <i class="fas fa-image"></i>
+                            <span>PNG</span>
+                        </button>
+                        <button class="btn-modern btn-primary" onclick="refreshAnalytics()" title="Refresh Data">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics Overview -->
+        <div class="metrics-overview">
+            <div class="overview-card primary">
+                <div class="metric-content">
+                    <div class="metric-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="metric-data">
+                        <div class="metric-value" id="totalRevenue">$0</div>
+                        <div class="metric-label">Total Revenue</div>
+                        <div class="metric-change positive" id="revenueChange">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+12.5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overview-card success">
+                <div class="metric-content">
+                    <div class="metric-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-data">
+                        <div class="metric-value" id="totalParticipants">0</div>
+                        <div class="metric-label">Total Participants</div>
+                        <div class="metric-change positive" id="participantsChange">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+8.2%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overview-card warning">
+                <div class="metric-content">
+                    <div class="metric-icon">
+                        <i class="fas fa-flag-checkered"></i>
+                    </div>
+                    <div class="metric-data">
+                        <div class="metric-value" id="totalRaces">0</div>
+                        <div class="metric-label">Completed Races</div>
+                        <div class="metric-change neutral" id="racesChange">
+                            <i class="fas fa-minus"></i>
+                            <span>0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overview-card info">
+                <div class="metric-content">
+                    <div class="metric-icon">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="metric-data">
+                        <div class="metric-value" id="totalClasses">0</div>
+                        <div class="metric-label">Active Classes</div>
+                        <div class="metric-change positive" id="classesChange">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+3.1%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Selection Panel -->
+        <div class="event-selection-panel">
+            <div class="panel-header">
+                <h3><i class="fas fa-search"></i> Event Selection</h3>
+                <p>Choose a specific event to analyze detailed metrics and performance data</p>
+            </div>
+            <div class="event-selector-modern">
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="eventSearch" placeholder="Search events by name or date..." autocomplete="off" class="modern-search">
+                        <button type="button" class="search-clear" id="clearSearch" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="search-dropdown" id="eventDropdown" style="display: none;">
+                        <div class="search-results" id="eventOptions">
+                            <!-- Options will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            
+        <!-- Detailed Analytics Section -->
+        <div id="eventStats" class="detailed-analytics" style="display: none;">
+            <!-- Performance Charts Row -->
+            <div class="analytics-row">
+                <div class="chart-card large">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-area"></i> Revenue Trends</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon" title="Fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <button class="btn-icon" title="Download">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-summary">
+                        <div class="summary-item">
+                            <span class="label">This Month:</span>
+                            <span class="value" id="monthlyRevenue">$0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Growth:</span>
+                            <span class="value positive" id="revenueGrowth">+0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-users"></i> Participation</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="participationChart" width="200" height="200"></canvas>
+                    </div>
+                    <div class="chart-insights">
+                        <div class="insight-item">
+                            <i class="fas fa-arrow-up text-success"></i>
+                            <span>Active drivers increased</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Statistics Grid -->
+            <div class="stats-grid-modern">
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon revenue">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+5.2%</span>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="eventRevenue">$0</div>
+                        <div class="stat-label">Event Revenue</div>
+                        <div class="stat-description">Total registration fees collected</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon participants">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+12.1%</span>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="eventRegistrations">0</div>
+                        <div class="stat-label">Total Registrations</div>
+                        <div class="stat-description">All class entries combined</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon drivers">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="stat-trend neutral">
+                            <i class="fas fa-minus"></i>
+                            <span>0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="eventDrivers">0</div>
+                        <div class="stat-label">Unique Drivers</div>
+                        <div class="stat-description">Individual participants</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon races">
+                            <i class="fas fa-flag-checkered"></i>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+8.7%</span>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="eventRaces">0</div>
+                        <div class="stat-label">Completed Races</div>
+                        <div class="stat-description">Finished competitions</div>
+                    </div>
+                </div>
+
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon completion">
+                            <i class="fas fa-circle-check"></i>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+2.3%</span>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="eventCompletionPercent">0%</div>
+                        <div class="stat-label">Event Completion</div>
+                        <div class="stat-description">Percentage of races finished</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon average">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="stat-trend negative">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-1.2%</span>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="avgFeePerDriver">$0</div>
+                        <div class="stat-label">Avg Fee per Driver</div>
+                        <div class="stat-description">Average registration cost</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon classes">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div class="stat-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+1.0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="eventClasses">0</div>
+                        <div class="stat-label">Racing Classes</div>
+                        <div class="stat-description">Active competition categories</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Class Breakdown Section -->
+            <div class="analytics-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-layer-group"></i> Class Performance Breakdown</h3>
+                    <p>Detailed analysis of each racing class performance and participation</p>
+                </div>
+                <div id="classBreakdown" class="class-breakdown-modern">
+                    <!-- Class breakdown will be populated here -->
+                </div>
+            </div>
+            <!-- Driver Performance Table -->
+            <div class="analytics-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-user-friends"></i> Driver Performance Analysis</h3>
+                    <p>Comprehensive statistics and performance metrics for all participants</p>
+                </div>
+                <div class="table-card">
+                    <div class="table-header">
+                        <div class="table-title">
+                            <i class="fas fa-trophy"></i>
+                            <span>Driver Rankings & Statistics</span>
+                        </div>
+                        <div class="table-actions">
+                            <button class="btn-icon" title="Export Data">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn-icon" title="Filter">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container-modern">
+                        <table class="modern-table" id="driverStatsTable">
+                            <thead id="driverStatsHeader">
+                                <tr>
+                                    <th onclick="sortTable('driverStatsTable', 0)" class="sortable">
+                                        <span>Driver</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </th>
+                                    <th onclick="sortTable('driverStatsTable', 1)" class="sortable">
+                                        <span>Classes</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </th>
+                                    <th onclick="sortTable('driverStatsTable', 2)" class="sortable">
+                                        <span>Races</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </th>
+                                    <th onclick="sortTable('driverStatsTable', 3)" class="sortable">
+                                        <span>Wins</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </th>
+                                    <th onclick="sortTable('driverStatsTable', 4)" class="sortable">
+                                        <span>Win %</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </th>
+                                    <th onclick="sortTable('driverStatsTable', 5)" class="sortable">
+                                        <span>AVG POS</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </th>
+                                    <!-- Lane columns will be dynamically added here -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Driver stats will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+                
+                <!-- Lane Win Percentage Section -->
+                <div class="lane-win-stats">
+                    <h3><i class="fas fa-percentage"></i> Lane Win Percentage</h3>
+                    <div class="lane-win-grid">
+                        <!-- Lane win stats will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Event Time Analytics Section -->
+                <div class="event-time-analytics">
+                    <h3><i class="fas fa-clock"></i> Event Time Analytics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card timing-card">
+                            <div class="stat-icon"><i class="fas fa-stopwatch"></i></div>
+                            <div class="stat-value" id="eventAvgRaceTime">0s</div>
+                            <div class="stat-label">Avg Race Duration</div>
+                            <div class="stat-trend" id="eventRaceTimeTrend">--</div>
+                        </div>
+                        
+                        <div class="stat-card timing-card">
+                            <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
+                            <div class="stat-value" id="eventRacesPerHour">0</div>
+                            <div class="stat-label">Races per Hour</div>
+                            <div class="stat-trend" id="eventRacesPerHourTrend">--</div>
+                        </div>
+                        
+                        <div class="stat-card timing-card">
+                            <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                            <div class="stat-value" id="eventAvgTimeBetweenRaces">0s</div>
+                            <div class="stat-label">Avg Time Between Races</div>
+                            <div class="stat-trend" id="eventTimeBetweenRacesTrend">--</div>
+                        </div>
+                        
+                        <div class="stat-card timing-card">
+                            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                            <div class="stat-value" id="eventDuration">0h</div>
+                            <div class="stat-label">Event Duration</div>
+                            <div class="stat-trend" id="eventDurationTrend">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Event Timing Chart -->
+                    <div class="chart-container">
+                        <h4><i class="fas fa-chart-area"></i> Race Timing Distribution</h4>
+                        <div class="chart-wrapper">
+                            <canvas id="eventTimingChart" width="600" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Event Efficiency Metrics -->
+                    <div class="efficiency-container">
+                        <h4><i class="fas fa-chart-line"></i> Event Efficiency</h4>
+                        <div class="efficiency-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Race Completion Rate</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="eventCompletionRateBar"></div>
+                                </div>
+                                <span class="metric-value" id="eventCompletionRate">0%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Time Efficiency</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="eventTimeEfficiencyBar"></div>
+                                </div>
+                                <span class="metric-value" id="eventTimeEfficiency">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+           <style>
+               /* Modern Analytics Dashboard Styles */
+               .analytics-dashboard {
+                   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+                   min-height: 100vh;
+               }
+
+        .analytics-main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+               /* Dashboard Header */
+               .dashboard-header {
+                   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+                   border-radius: 20px;
+                   padding: 2rem;
+                   margin-bottom: 2rem;
+                   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                   border: 1px solid var(--accent-primary);
+                   backdrop-filter: blur(10px);
+               }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 2rem;
+        }
+
+        .header-text {
+            flex: 1;
+        }
+
+               .dashboard-title {
+                   font-size: 2.5rem;
+                   font-weight: 800;
+                   background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-primary) 100%);
+                   -webkit-background-clip: text;
+                   -webkit-text-fill-color: transparent;
+                   background-clip: text;
+                   margin-bottom: 0.5rem;
+                   display: flex;
+                   align-items: center;
+                   gap: 1rem;
+               }
+
+               .dashboard-title i {
+                   color: var(--accent-orange-warm);
+                   font-size: 2rem;
+               }
+
+               .dashboard-subtitle {
+                   font-size: 1.1rem;
+                   color: var(--text-secondary);
+                   font-weight: 500;
+                   line-height: 1.6;
+               }
+
+        .header-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: flex-end;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+               .modern-select {
+                   padding: 0.75rem 1rem;
+                   border: 2px solid var(--accent-primary);
+                   border-radius: 12px;
+                   background: var(--bg-secondary);
+                   color: var(--text-primary);
+                   font-weight: 500;
+                   font-size: 0.9rem;
+                   cursor: pointer;
+                   transition: all 0.3s ease;
+                   min-width: 140px;
+               }
+
+               .modern-select:focus {
+                   outline: none;
+                   border-color: var(--accent-orange-warm);
+                   box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.2);
+               }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+               .btn-modern.btn-primary {
+                   background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-primary) 100%);
+                   color: var(--bg-primary);
+                   box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
+               }
+
+               .btn-modern.btn-primary:hover {
+                   transform: translateY(-2px);
+                   box-shadow: 0 8px 25px rgba(255, 140, 66, 0.4);
+               }
+
+               .btn-modern.btn-outline {
+                   background: var(--bg-secondary);
+                   color: var(--text-primary);
+                   border: 2px solid var(--accent-primary);
+               }
+
+               .btn-modern.btn-outline:hover {
+                   border-color: var(--accent-orange-warm);
+                   color: var(--accent-orange-warm);
+                   transform: translateY(-1px);
+               }
+
+        /* Metrics Overview */
+        .metrics-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+               .overview-card {
+                   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+                   border-radius: 16px;
+                   padding: 1.5rem;
+                   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                   border: 1px solid var(--accent-primary);
+                   transition: all 0.3s ease;
+                   position: relative;
+                   overflow: hidden;
+               }
+
+               .overview-card::before {
+                   content: '';
+                   position: absolute;
+                   top: 0;
+                   left: 0;
+                   right: 0;
+                   height: 4px;
+                   background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-primary));
+               }
+
+               .overview-card.primary::before {
+                   background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-primary));
+               }
+
+               .overview-card.success::before {
+                   background: linear-gradient(90deg, var(--success), #059669);
+               }
+
+               .overview-card.warning::before {
+                   background: linear-gradient(90deg, var(--warning), #d97706);
+               }
+
+               .overview-card.info::before {
+                   background: linear-gradient(90deg, var(--info), #1d4ed8);
+               }
+
+        .overview-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .metric-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .overview-card.primary .metric-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .overview-card.success .metric-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .overview-card.warning .metric-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .overview-card.info .metric-icon {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .metric-data {
+            flex: 1;
+        }
+
+               .metric-value {
+                   font-size: 2rem;
+                   font-weight: 800;
+                   color: var(--text-primary);
+                   margin-bottom: 0.25rem;
+               }
+
+               .metric-label {
+                   font-size: 0.9rem;
+                   color: var(--text-secondary);
+                   font-weight: 600;
+                   margin-bottom: 0.5rem;
+               }
+
+        .metric-change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            width: fit-content;
+        }
+
+        .metric-change.positive {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+        }
+
+        .metric-change.negative {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .metric-change.neutral {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+               /* Event Selection Panel */
+               .event-selection-panel {
+                   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+                   border-radius: 16px;
+                   padding: 2rem;
+                   margin-bottom: 2rem;
+                   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                   border: 1px solid var(--accent-primary);
+               }
+
+        .panel-header {
+            margin-bottom: 1.5rem;
+        }
+
+               .panel-header h3 {
+                   font-size: 1.5rem;
+                   font-weight: 700;
+                   color: var(--text-primary);
+                   margin-bottom: 0.5rem;
+                   display: flex;
+                   align-items: center;
+                   gap: 0.75rem;
+               }
+
+               .panel-header h3 i {
+                   color: var(--accent-orange-warm);
+               }
+
+               .panel-header p {
+                   color: var(--text-secondary);
+                   font-size: 1rem;
+                   line-height: 1.6;
+               }
+
+        .search-container {
+            position: relative;
+            max-width: 600px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+               .search-icon {
+                   position: absolute;
+                   left: 1rem;
+                   color: var(--text-muted);
+                   font-size: 1rem;
+                   z-index: 2;
+               }
+
+               .modern-search {
+                   width: 100%;
+                   padding: 1rem 1rem 1rem 3rem;
+                   border: 2px solid var(--accent-primary);
+                   border-radius: 12px;
+                   background: var(--bg-secondary);
+                   color: var(--text-primary);
+                   font-size: 1rem;
+                   font-weight: 500;
+                   transition: all 0.3s ease;
+               }
+
+               .modern-search:focus {
+                   outline: none;
+                   border-color: var(--accent-orange-warm);
+                   box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.2);
+               }
+
+        .search-clear {
+            position: absolute;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .search-clear:hover {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-results {
+            padding: 0.5rem 0;
+        }
+
+        /* Analytics Sections */
+        .analytics-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-header h3 i {
+            color: #667eea;
+        }
+
+        .section-header p {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Detailed Analytics */
+        .detailed-analytics {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Analytics Row */
+        .analytics-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+               .chart-card {
+                   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+                   border-radius: 16px;
+                   padding: 1.5rem;
+                   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                   border: 1px solid var(--accent-primary);
+                   transition: all 0.3s ease;
+               }
+
+               .chart-card:hover {
+                   transform: translateY(-2px);
+                   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+               }
+
+        .chart-card.large {
+            grid-column: span 2;
+        }
+
+               .card-header {
+                   display: flex;
+                   justify-content: space-between;
+                   align-items: center;
+                   margin-bottom: 1.5rem;
+                   padding-bottom: 1rem;
+                   border-bottom: 1px solid var(--accent-primary);
+               }
+
+               .card-header h3 {
+                   font-size: 1.25rem;
+                   font-weight: 700;
+                   color: var(--text-primary);
+                   display: flex;
+                   align-items: center;
+                   gap: 0.5rem;
+               }
+
+               .card-header h3 i {
+                   color: var(--accent-orange-warm);
+               }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+               .btn-icon {
+                   width: 36px;
+                   height: 36px;
+                   border-radius: 8px;
+                   border: 1px solid var(--accent-primary);
+                   background: var(--bg-secondary);
+                   color: var(--text-primary);
+                   cursor: pointer;
+                   display: flex;
+                   align-items: center;
+                   justify-content: center;
+                   transition: all 0.2s ease;
+               }
+
+               .btn-icon:hover {
+                   background: var(--bg-tertiary);
+                   border-color: var(--accent-orange-warm);
+                   color: var(--accent-orange-warm);
+               }
+
+               .chart-container {
+                   height: 300px;
+                   display: flex;
+                   align-items: center;
+                   justify-content: center;
+                   background: var(--bg-secondary);
+                   border-radius: 12px;
+                   margin-bottom: 1rem;
+                   border: 1px solid var(--accent-primary);
+               }
+
+        .chart-summary {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+               .summary-item .label {
+                   font-size: 0.8rem;
+                   color: var(--text-secondary);
+                   font-weight: 500;
+               }
+
+               .summary-item .value {
+                   font-size: 1.1rem;
+                   font-weight: 700;
+                   color: var(--text-primary);
+               }
+
+               .summary-item .value.positive {
+                   color: var(--success);
+               }
+
+        .chart-insights {
+            margin-top: 1rem;
+        }
+
+               .insight-item {
+                   display: flex;
+                   align-items: center;
+                   gap: 0.5rem;
+                   font-size: 0.9rem;
+                   color: var(--success);
+                   font-weight: 500;
+               }
+
+               .text-success {
+                   color: var(--success);
+               }
+
+        /* Modern Stats Grid */
+        .stats-grid-modern {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+               .stat-card-modern {
+                   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+                   border-radius: 16px;
+                   padding: 1.5rem;
+                   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                   border: 1px solid var(--accent-primary);
+                   transition: all 0.3s ease;
+                   position: relative;
+                   overflow: hidden;
+               }
+
+        .stat-card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .stat-icon.revenue {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .stat-icon.participants {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .stat-icon.drivers {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .stat-icon.races {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .stat-icon.completion {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .stat-icon.average {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .stat-icon.classes {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .stat-trend.positive {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+        }
+
+        .stat-trend.negative {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .stat-trend.neutral {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .stat-content {
+            text-align: left;
+        }
+
+               .stat-card-modern .stat-value {
+                   font-size: 2rem;
+                   font-weight: 800;
+                   color: var(--text-primary);
+                   margin-bottom: 0.25rem;
+               }
+
+               .stat-card-modern .stat-label {
+                   font-size: 1rem;
+                   color: var(--text-primary);
+                   font-weight: 600;
+                   margin-bottom: 0.5rem;
+               }
+
+               .stat-description {
+                   font-size: 0.85rem;
+                   color: var(--text-secondary);
+                   line-height: 1.4;
+               }
+
+        /* Modern Table Styles */
+        .table-card {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--accent-primary);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .table-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .table-title i {
+            color: var(--accent-orange-warm);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .table-container-modern {
+            overflow-x: auto;
+            background: var(--bg-primary);
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .modern-table th {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--accent-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modern-table th:hover {
+            background: var(--bg-tertiary);
+            color: var(--accent-orange-warm);
+        }
+
+        .modern-table th.sortable {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: space-between;
+        }
+
+        .sort-icon {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+        }
+
+        .modern-table th.sortable:hover .sort-icon {
+            opacity: 1;
+            color: var(--accent-orange-warm);
+        }
+
+        .modern-table td {
+            padding: 1rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--bg-secondary);
+            font-weight: 500;
+        }
+
+        .modern-table tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .modern-table tbody tr:hover td {
+            color: var(--text-primary);
+        }
+
+        /* Class Breakdown Modern */
+        .class-breakdown-modern {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .class-card-modern {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--accent-primary);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .class-card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .class-card-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .class-card-modern h4 {
+            color: var(--text-primary);
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .class-stats-modern {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .class-stat-modern {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .class-stat-value-modern {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .class-stat-label-modern {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .analytics-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-card.large {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .analytics-main {
+                padding: 1rem;
+            }
+
+            .dashboard-header {
+                padding: 1.5rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                align-items: stretch;
+            }
+
+            .header-actions {
+                align-items: stretch;
+            }
+
+            .filter-controls {
+                justify-content: stretch;
+            }
+
+            .modern-select {
+                flex: 1;
+                min-width: auto;
+            }
+
+            .action-buttons {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .metrics-overview {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+            }
+
+            .overview-card {
+                padding: 1rem;
+            }
+
+            .metric-content {
+                gap: 0.75rem;
+            }
+
+            .metric-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+            }
+
+            .event-selection-panel {
+                padding: 1.5rem;
+            }
+
+            .analytics-section {
+                padding: 1.5rem;
+            }
+
+            .stats-grid-modern {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-card-modern {
+                padding: 1rem;
+            }
+
+            .class-breakdown-modern {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+
+            .table-header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .table-actions {
+                justify-content: center;
+            }
+
+            .modern-table th,
+            .modern-table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .dashboard-title {
+                font-size: 2rem;
+            }
+
+            .dashboard-title i {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .analytics-main {
+                padding: 0.75rem;
+            }
+
+            .dashboard-header,
+            .event-selection-panel,
+            .analytics-section {
+                padding: 1rem;
+            }
+
+            .overview-card,
+            .stat-card-modern,
+            .class-card-modern {
+                padding: 0.75rem;
+            }
+
+            .metric-value {
+                font-size: 1.25rem;
+            }
+
+            .stat-card-modern .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .chart-container {
+                height: 200px;
+            }
+
+            .btn-modern {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .modern-select {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Combo Box Styles */
+        .combo-box-container {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .combo-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--bg-primary, #1a1a1a);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .combo-box:focus-within {
+            border-color: var(--accent-primary, #4a90e2);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .combo-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px 16px;
+            color: var(--text-primary, #ffffff);
+            font-size: 16px;
+            outline: none;
+        }
+
+        .combo-box input::placeholder {
+            color: var(--text-secondary, #b3b3b3);
+        }
+
+        .combo-box-toggle {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary, #b3b3b3);
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .combo-box-toggle:hover {
+            color: var(--text-primary, #ffffff);
+        }
+
+        .combo-box-toggle i {
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .combo-box-toggle.open i {
+            transform: rotate(180deg);
+        }
+
+        .combo-box-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary, #1a1a1a);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .combo-box-options {
+            padding: 8px 0;
+        }
+
+        .combo-box-option {
+            padding: 12px 16px;
+            color: var(--text-primary, #ffffff);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .combo-box-option:last-child {
+            border-bottom: none;
+        }
+
+        .combo-box-option:hover {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .combo-box-option.selected {
+            background: rgba(74, 144, 226, 0.2);
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .combo-box-option.highlighted {
+            background: rgba(74, 144, 226, 0.15);
+        }
+
+        .combo-box-option.empty {
+            color: var(--text-secondary, #b3b3b3);
+            font-style: italic;
+            cursor: default;
+        }
+
+        .combo-box-option.empty:hover {
+            background: transparent;
+        }
+
+        /* Class Breakdown */
+        .class-breakdown {
+            margin-bottom: 30px;
+        }
+
+        .class-breakdown h3 {
+            color: var(--text-primary, #ffffff);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .class-breakdown h3 i {
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .class-card {
+            background: var(--bg-primary, #1a1a1a);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .class-card h4 {
+            color: var(--accent-primary, #4a90e2);
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .class-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .class-stat {
+            text-align: center;
+        }
+
+        .class-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary, #ffffff);
+            margin-bottom: 4px;
+        }
+
+        .class-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary, #b3b3b3);
+        }
+
+        /* Driver Statistics */
+        .driver-stats h3 {
+            color: var(--text-primary, #ffffff);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .driver-stats h3 i {
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .table-container {
+            background: var(--bg-primary, #1a1a1a);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: rgba(255,255,255,0.05);
+            padding: 15px 12px;
+            text-align: left;
+            color: var(--text-primary, #ffffff);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .data-table th.sortable:hover {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .data-table th i {
+            margin-left: 5px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .data-table td {
+            padding: 12px;
+            color: var(--text-secondary, #b3b3b3);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* Lane Win Percentage Styles */
+        .lane-win-stats {
+            margin-top: 30px;
+            background: var(--bg-primary, #1a1a1a);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .lane-win-stats h3 {
+            color: var(--text-primary, #ffffff);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lane-win-stats h3 i {
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .lane-win-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .lane-win-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .lane-win-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-color: var(--accent-primary, #4a90e2);
+        }
+
+        .lane-win-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary, #4a90e2), var(--accent-secondary, #9b59b6));
+            border-radius: 12px 12px 0 0;
+        }
+
+        .lane-win-icon {
+            font-size: 32px;
+            color: var(--accent-primary, #4a90e2);
+            margin-bottom: 15px;
+        }
+
+        .lane-win-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary, #ffffff);
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .lane-win-label {
+            font-size: 14px;
+            color: var(--text-secondary, #b3b3b3);
+            font-weight: 500;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            
+            .event-selector {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .combo-box-container {
+                min-width: 100%;
+            }
+            
+            .class-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .lane-win-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Event Time Analytics Styles */
+        .event-time-analytics {
+            margin-top: 30px;
+            background: var(--bg-primary, #1a1a1a);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .event-time-analytics h3 {
+            color: var(--text-primary, #ffffff);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .event-time-analytics h3 i {
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .timing-card {
+            background: linear-gradient(135deg, rgba(255, 140, 66, 0.1) 0%, rgba(74, 144, 226, 0.05) 100%);
+            border-left: 4px solid var(--accent-orange-warm);
+        }
+
+        .timing-card .stat-icon {
+            color: var(--accent-orange-warm);
+        }
+
+        .stat-trend {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .stat-trend.positive {
+            color: #4CAF50;
+        }
+
+        .stat-trend.negative {
+            color: #f44336;
+        }
+
+        .stat-trend.neutral {
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .chart-container h4 {
+            color: var(--text-primary, #ffffff);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container h4 i {
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .chart-wrapper {
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        #eventTimingChart {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .efficiency-container {
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .efficiency-container h4 {
+            color: var(--text-primary, #ffffff);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .efficiency-container h4 i {
+            color: var(--accent-primary, #4a90e2);
+        }
+
+        .efficiency-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-orange-glow));
+            border-radius: 4px;
+            transition: width 0.8s ease;
+            width: 0%;
+        }
+
+        .metric-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        @media (max-width: 768px) {
+            .chart-wrapper {
+                padding: 10px;
+            }
+            
+            #eventTimingChart {
+                width: 100%;
+                height: 200px;
+            }
+        }
+    </style>
+
+    <!-- Scripts -->
+    <script src="utils/event-bus.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
+    <script src="utils/data-manager.js"></script>
+    <!-- Export libs -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script>
+        // Simple inline export utility
+        window.ExportUtils = {
+            defaultFileName(prefix = 'export') {
+                const ts = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
+                return `${prefix}-${ts}`;
+            },
+            async ensureDependencies() {
+                if (!window.html2canvas) throw new Error('html2canvas not loaded');
+                if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF not loaded');
+            },
+            async exportElementAsPNG(element, fileName = 'export.png', scale = 2) {
+                await this.ensureDependencies();
+                const el = typeof element === 'string' ? document.querySelector(element) : element;
+                if (!el) throw new Error('Element not found');
+                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            },
+            async exportElementAsPDF(element, fileName = 'export.pdf', options = {}) {
+                await this.ensureDependencies();
+                const el = typeof element === 'string' ? document.querySelector(element) : element;
+                if (!el) throw new Error('Element not found');
+                const { orientation = 'p', unit = 'mm', format = 'a4', scale = 2, marginMm = 5 } = options;
+                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new window.jspdf.jsPDF({ orientation, unit, format });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imageProps = pdf.getImageProperties(imgData);
+                const printableWidth = pageWidth - marginMm * 2;
+                const imgWidth = printableWidth;
+                const imgHeight = (imageProps.height * imgWidth) / imageProps.width;
+                let position = marginMm;
+                let heightLeft = imgHeight;
+                pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - marginMm * 2);
+                while (heightLeft > 0) {
+                    pdf.addPage();
+                    position = marginMm - (imgHeight - heightLeft);
+                    pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - marginMm * 2);
+                }
+                pdf.save(fileName);
+            }
+        };
+    </script>
+    <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
+
+    <script>
+        let dataManager;
+        let allEvents = [];
+        let allParticipants = [];
+        let currentEvent = null;
+        let sortDirection = {};
+        let eventTimingChart = null;
+
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🔐 Event Analytics page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🔐 Event Analytics page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🔐 Event Analytics page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🔐 Event Analytics page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Wait for authentication before initializing
+                await waitForAuthentication();
+                
+                dataManager = new DataManager();
+                await dataManager.loadFromStorage(['events', 'participants']);
+                
+                // Load data
+                await loadAllData();
+                
+                // Load event selector
+                loadEventSelector();
+                
+                // Initialize mobile navigation
+                if (window.MobileNavigation) {
+                    new window.MobileNavigation();
+                }
+            } catch (error) {
+                console.error('Error initializing event analytics:', error);
+                showError('Failed to load event analytics data. Please refresh the page.');
+            }
+        });
+
+        // Load all data
+        async function loadAllData() {
+            try {
+                // Load ALL events, participants, and race brackets
+                const eventsResult = await dataManager.getEvents({}, 1, 50000); // Get all events
+                const participantsResult = await dataManager.getParticipants({}, 1, 50000); // Get all participants
+                const raceBrackets = await dataManager.loadRaceBrackets(); // Get race brackets
+                
+                // Handle the data structure properly - API returns paginated results
+                if (eventsResult && eventsResult.events) {
+                    allEvents = eventsResult.events;
+                } else if (Array.isArray(eventsResult)) {
+                    allEvents = eventsResult;
+                } else {
+                    allEvents = [];
+                }
+                
+                if (participantsResult && participantsResult.participants) {
+                    allParticipants = participantsResult.participants;
+                } else if (Array.isArray(participantsResult)) {
+                    allParticipants = participantsResult;
+                } else {
+                    allParticipants = [];
+                }
+                
+                // Store race brackets globally for race counting
+                window.raceBrackets = raceBrackets || {};
+                
+            } catch (error) {
+                console.error('Error loading event analytics data:', error);
+                throw error;
+            }
+        }
+
+        // Export function for analytics
+        async function exportAnalytics(format) {
+            try {
+                console.log('ExportUtils available:', typeof window.ExportUtils);
+                
+                if (!window.ExportUtils) {
+                    console.warn('ExportUtils not loaded, falling back to print');
+                    window.print();
+                    return;
+                }
+                
+                const main = document.querySelector('main');
+                const name = (window.ExportUtils && ExportUtils.defaultFileName('event-analytics')) || 'event-analytics';
+                if (!main) return;
+                if (window.ExportUtils && typeof ExportUtils.ensureDependencies === 'function') {
+                    await ExportUtils.ensureDependencies();
+                }
+                UIComponents && UIComponents.showLoadingOverlay && UIComponents.showLoadingOverlay('Rendering export...');
+                await new Promise(r => setTimeout(r, 50));
+                if (format === 'pdf') {
+                    await ExportUtils.exportElementAsPDF(main, `${name}.pdf`, { orientation: 'p', format: 'a4', marginMm: 5, scale: 2 });
+                } else if (format === 'png') {
+                    await ExportUtils.exportElementAsPNG(main, `${name}.png`, 2);
+                }
+                showToast('Export completed successfully!', 'success');
+            } catch (e) {
+                console.error('Export failed', e);
+                showToast('Export failed. See console for details.', 'error');
+            } finally {
+                UIComponents && UIComponents.hideLoadingOverlay && UIComponents.hideLoadingOverlay();
+            }
+        }
+
+        // Load event selector with modern UI
+        function loadEventSelector() {
+            const searchInput = document.getElementById('eventSearch');
+            const dropdown = document.getElementById('eventDropdown');
+            const options = document.getElementById('eventOptions');
+            const clearButton = document.getElementById('clearSearch');
+            
+            // Sort events by date (newest first)
+            const sortedEvents = allEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Store events for filtering
+            window.eventComboData = sortedEvents;
+            
+            // Populate options
+            populateEventOptions(sortedEvents);
+            
+            // Add event listeners
+            searchInput.addEventListener('input', handleEventSearch);
+            searchInput.addEventListener('focus', showEventDropdown);
+            searchInput.addEventListener('keydown', handleEventKeydown);
+            searchInput.addEventListener('input', toggleClearButton);
+            
+            if (clearButton) {
+                clearButton.addEventListener('click', clearSearch);
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-container')) {
+                    hideEventDropdown();
+                }
+            });
+            
+            // Load filter options
+            loadFilterOptions();
+        }
+
+        // Load filter options for modern filters
+        function loadFilterOptions() {
+            const seriesFilter = document.getElementById('eventSeriesFilter');
+            const classFilter = document.getElementById('classFilter');
+            
+            // Populate series filter
+            const uniqueSeries = [...new Set(allEvents.map(event => event.series || 'Default Series'))];
+            uniqueSeries.forEach(series => {
+                const option = document.createElement('option');
+                option.value = series;
+                option.textContent = series;
+                seriesFilter.appendChild(option);
+            });
+            
+            // Populate class filter
+            const uniqueClasses = new Set();
+            allEvents.forEach(event => {
+                if (event.classes) {
+                    event.classes.forEach(cls => uniqueClasses.add(cls));
+                }
+            });
+            [...uniqueClasses].sort().forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                classFilter.appendChild(option);
+            });
+        }
+
+        // Toggle clear button visibility
+        function toggleClearButton() {
+            const searchInput = document.getElementById('eventSearch');
+            const clearButton = document.getElementById('clearSearch');
+            if (clearButton) {
+                clearButton.style.display = searchInput.value ? 'block' : 'none';
+            }
+        }
+
+        // Clear search
+        function clearSearch() {
+            const searchInput = document.getElementById('eventSearch');
+            searchInput.value = '';
+            searchInput.focus();
+            toggleClearButton();
+            populateEventOptions(window.eventComboData);
+            showEventDropdown();
+        }
+
+        // Populate event options with modern styling
+        function populateEventOptions(events) {
+            const options = document.getElementById('eventOptions');
+            options.innerHTML = '';
+            
+            if (events.length === 0) {
+                options.innerHTML = '<div class="search-result-item empty">No events found</div>';
+                return;
+            }
+            
+            events.forEach(event => {
+                const option = document.createElement('div');
+                option.className = 'search-result-item';
+                option.dataset.value = event.id;
+                
+                const eventDate = event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD';
+                const eventSeries = event.series || 'Default Series';
+                
+                option.innerHTML = `
+                    <div class="event-option-content">
+                        <div class="event-name">${event.name}</div>
+                        <div class="event-details">
+                            <span class="event-date"><i class="fas fa-calendar"></i> ${eventDate}</span>
+                            <span class="event-series"><i class="fas fa-tag"></i> ${eventSeries}</span>
+                        </div>
+                    </div>
+                `;
+                
+                option.addEventListener('click', () => selectEvent(event));
+                options.appendChild(option);
+            });
+        }
+
+        // Create modern charts
+        function createModernCharts(eventData) {
+            createRevenueChart(eventData);
+            createParticipationChart(eventData);
+        }
+
+        // Revenue trend chart
+        function createRevenueChart(eventData) {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            // Mock data for demonstration - replace with actual data
+            const revenueData = {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: [12000, 19000, 15000, 25000, 22000, 30000],
+                    borderColor: 'rgb(255, 140, 66)', // Orange accent
+                    backgroundColor: 'rgba(255, 140, 66, 0.2)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgb(255, 140, 66)',
+                    pointBorderColor: '#030217', // Dark background
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            };
+
+            new Chart(ctx, {
+                type: 'line',
+                data: revenueData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#a0a0a0', // Light gray for dark theme
+                                font: {
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(160, 160, 160, 0.2)' // Light gray grid
+                            },
+                            ticks: {
+                                color: '#a0a0a0', // Light gray for dark theme
+                                font: {
+                                    weight: '500'
+                                },
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            hoverRadius: 8
+                        }
+                    }
+                }
+            });
+        }
+
+        // Participation chart
+        function createParticipationChart(eventData) {
+            const ctx = document.getElementById('participationChart');
+            if (!ctx) return;
+
+            const participationData = {
+                labels: ['Drivers', 'Spectators', 'Staff'],
+                datasets: [{
+                    data: [65, 25, 10],
+                    backgroundColor: [
+                        'rgba(255, 140, 66, 0.8)', // Orange
+                        'rgba(74, 144, 226, 0.8)', // Blue
+                        'rgba(76, 175, 80, 0.8)'  // Green
+                    ],
+                    borderColor: [
+                        'rgb(255, 140, 66)', // Orange
+                        'rgb(74, 144, 226)', // Blue
+                        'rgb(76, 175, 80)'   // Green
+                    ],
+                    borderWidth: 2
+                }]
+            };
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: participationData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#a0a0a0', // Light gray for dark theme
+                                font: {
+                                    weight: '500'
+                                },
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        // Handle event search
+        function handleEventSearch(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredEvents = window.eventComboData.filter(event => 
+                event.name.toLowerCase().includes(searchTerm) ||
+                (event.date && new Date(event.date).toLocaleDateString().toLowerCase().includes(searchTerm))
+            );
+            
+            populateEventOptions(filteredEvents);
+            showEventDropdown();
+        }
+
+        // Handle keyboard navigation
+        function handleEventKeydown(e) {
+            const options = document.querySelectorAll('.combo-box-option:not(.empty)');
+            const highlighted = document.querySelector('.combo-box-option.highlighted');
+            let currentIndex = -1;
+            
+            if (highlighted) {
+                currentIndex = Array.from(options).indexOf(highlighted);
+            }
+            
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    currentIndex = Math.min(currentIndex + 1, options.length - 1);
+                    highlightOption(options[currentIndex]);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    currentIndex = Math.max(currentIndex - 1, 0);
+                    highlightOption(options[currentIndex]);
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (highlighted) {
+                        highlighted.click();
+                    }
+                    break;
+                case 'Escape':
+                    hideEventDropdown();
+                    break;
+            }
+        }
+
+        // Highlight option
+        function highlightOption(option) {
+            document.querySelectorAll('.combo-box-option').forEach(opt => opt.classList.remove('highlighted'));
+            if (option) {
+                option.classList.add('highlighted');
+                option.scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        // Show dropdown
+        function showEventDropdown() {
+            const dropdown = document.getElementById('eventDropdown');
+            const toggle = document.getElementById('eventToggle');
+            if (dropdown) {
+                dropdown.style.display = 'block';
+            }
+            if (toggle) {
+                toggle.classList.add('open');
+            }
+        }
+
+        // Hide dropdown
+        function hideEventDropdown() {
+            const dropdown = document.getElementById('eventDropdown');
+            const toggle = document.getElementById('eventToggle');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+            if (toggle) {
+                toggle.classList.remove('open');
+            }
+        }
+
+        // Toggle dropdown
+        function toggleEventDropdown() {
+            const dropdown = document.getElementById('eventDropdown');
+            if (dropdown.style.display === 'none') {
+                showEventDropdown();
+            } else {
+                hideEventDropdown();
+            }
+        }
+
+        // Select event
+        function selectEvent(event) {
+            const searchInput = document.getElementById('eventSearch');
+            searchInput.value = `${event.name} - ${event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}`;
+            
+            // Mark the selected option
+            document.querySelectorAll('.combo-box-option').forEach(opt => opt.classList.remove('selected'));
+            const selectedOption = document.querySelector(`[data-value="${event.id}"]`);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+            }
+            
+            hideEventDropdown();
+            loadEventAnalytics(event.id);
+        }
+
+        // Load event analytics with modern UI integration
+        function loadEventAnalytics(eventId = null) {
+            // If no eventId provided, try to get it from the search input
+            if (!eventId) {
+                const searchInput = document.getElementById('eventSearch');
+                const selectedOption = document.querySelector('.search-result-item.selected');
+                if (selectedOption) {
+                    eventId = selectedOption.dataset.value;
+                } else {
+                    // Try to find event by matching the search input text
+                    const searchText = searchInput.value;
+                    const matchingEvent = window.eventComboData?.find(event => 
+                        event.name === searchText || searchText.includes(event.name)
+                    );
+                    if (matchingEvent) {
+                        eventId = matchingEvent.id;
+                    }
+                }
+            }
+            
+            const eventStats = document.getElementById('eventStats');
+            
+            if (!eventId) {
+                eventStats.style.display = 'none';
+                return;
+            }
+            
+            currentEvent = allEvents.find(e => e.id === eventId);
+            if (!currentEvent) return;
+            
+            // Get event participants
+            const eventParticipants = allParticipants.filter(p => p.eventId === eventId);
+            
+            // Calculate event statistics
+            const eventRevenue = eventParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
+            const uniqueDrivers = new Set(eventParticipants.map(p => p.id)).size;
+            const totalEntries = eventParticipants.reduce((sum, p) => {
+                const classCount = p.selectedClasses ? p.selectedClasses.length : 1;
+                return sum + classCount;
+            }, 0);
+            const avgFeePerDriver = uniqueDrivers > 0 ? Math.round(eventRevenue / uniqueDrivers) : 0;
+            
+            // Get unique classes
+            const eventClasses = new Set();
+            eventParticipants.forEach(p => {
+                if (p.selectedClasses) {
+                    p.selectedClasses.forEach(c => eventClasses.add(c));
+                }
+            });
+            
+            // Calculate completed races
+            const eventRaces = calculateEventRaces(eventParticipants);
+            const expectedTotalRaces = calculateExpectedTotalRacesForEvent(currentEvent, eventParticipants);
+            const completionPct = expectedTotalRaces > 0 ? Math.round((eventRaces / expectedTotalRaces) * 100) : 0;
+            
+            // Update modern statistics cards
+            document.getElementById('eventRevenue').textContent = `$${eventRevenue.toLocaleString()}`;
+            document.getElementById('eventRegistrations').textContent = totalEntries.toLocaleString();
+            document.getElementById('eventDrivers').textContent = uniqueDrivers.toLocaleString();
+            document.getElementById('eventRaces').textContent = eventRaces.toLocaleString();
+            document.getElementById('avgFeePerDriver').textContent = `$${avgFeePerDriver.toLocaleString()}`;
+            document.getElementById('eventClasses').textContent = eventClasses.size;
+            const completionEl = document.getElementById('eventCompletionPercent');
+            if (completionEl) completionEl.textContent = `${completionPct}%`;
+            
+            // Update overview metrics with animation
+            updateOverviewMetrics(eventRevenue, uniqueDrivers, eventRaces, eventClasses.size);
+            
+            // Load class breakdown
+            loadClassBreakdown(eventParticipants);
+            
+            // Load driver statistics
+            loadDriverStatistics(eventParticipants);
+
+            // Load lane win percentage
+            loadLaneWinPercentage(eventParticipants);
+
+            // Load event time analytics
+            loadEventTimeAnalytics(eventId);
+            
+            // Create modern charts
+            createModernCharts({ eventParticipants, eventRevenue, uniqueDrivers });
+            
+            // Show event stats with smooth animation
+            eventStats.style.display = 'flex';
+            eventStats.style.opacity = '0';
+            setTimeout(() => {
+                eventStats.style.transition = 'opacity 0.3s ease';
+                eventStats.style.opacity = '1';
+            }, 50);
+        }
+
+        // Update overview metrics with smooth animations
+        function updateOverviewMetrics(revenue, drivers, races, classes) {
+            // Animate metric values
+            animateValue('totalRevenue', 0, revenue, 1000, '$');
+            animateValue('totalParticipants', 0, drivers, 1000);
+            animateValue('totalRaces', 0, races, 1000);
+            animateValue('totalClasses', 0, classes, 1000);
+        }
+
+        // Animate numeric values
+        function animateValue(elementId, start, end, duration, prefix = '') {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            const startTime = performance.now();
+            const isCurrency = prefix === '$';
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function for smooth animation
+                const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+                const current = Math.round(start + (end - start) * easeOutQuart);
+                
+                if (isCurrency) {
+                    element.textContent = prefix + current.toLocaleString();
+                } else {
+                    element.textContent = current.toLocaleString();
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        // Calculate event races
+        function calculateEventRaces(eventParticipants) {
+            if (!currentEvent || !window.raceBrackets) {
+                console.log('⚠️ No current event or race brackets available for race counting');
+                return 0;
+            }
+            
+            const eventId = currentEvent.id;
+            const eventBrackets = window.raceBrackets[eventId];
+            
+            if (!eventBrackets || !eventBrackets.classes) {
+                console.log('⚠️ No race brackets found for event:', eventId);
+                return 0;
+            }
+            
+            let completedRaces = 0;
+            
+            // Count completed races from race brackets
+            Object.values(eventBrackets.classes).forEach(classData => {
+                if (classData.rounds && Array.isArray(classData.rounds)) {
+                    classData.rounds.forEach(round => {
+                        if (round.heats && Array.isArray(round.heats)) {
+                            round.heats.forEach(heat => {
+                                // Count as completed race if it has a status of 'completed' or has results
+                                if (heat.status === 'completed' || 
+                                    (heat.results && Object.keys(heat.results).length > 0) ||
+                                    (heat.finishOrder && Object.keys(heat.finishOrder).length > 0)) {
+                                    completedRaces++;
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+            
+            console.log(`🏁 Event ${eventId}: Found ${completedRaces} completed races from race brackets`);
+            return completedRaces;
+        }
+
+        // Compute expected total races for the selected event based on class sizes and lanes per race
+        function calculateExpectedTotalRacesForEvent(event, eventParticipants) {
+            if (!event) return 0;
+            const m = parseInt(event.numberOfTracks || 4, 10);
+            const eliminationType = (event.eliminationType || 'double').toLowerCase();
+
+            const classToIds = new Map();
+            const addToClass = (cls, id) => {
+                if (!cls) return;
+                const key = String(cls).trim();
+                if (!key) return;
+                if (!classToIds.has(key)) classToIds.set(key, new Set());
+                classToIds.get(key).add(id);
+            };
+
+            (eventParticipants || []).forEach(p => {
+                if (Array.isArray(p.selectedClasses) && p.selectedClasses.length) {
+                    p.selectedClasses.forEach(c => addToClass(c, p.id));
+                } else if (Array.isArray(p.sledClasses) && p.sledClasses.length) {
+                    p.sledClasses.forEach(c => addToClass(c, p.id));
+                } else if (p.sledClass) {
+                    addToClass(p.sledClass, p.id);
+                }
+            });
+
+            if (classToIds.size === 0) {
+                const ids = new Set((eventParticipants || []).map(p => p.id));
+                classToIds.set('ALL', ids);
+            }
+
+            let total = 0;
+            for (const [, idSet] of classToIds.entries()) {
+                const n = idSet.size;
+                if (n <= 1) continue;
+                if (eliminationType === 'single') {
+                    total += expectedRacesSingleElimination(n, m);
+                } else if (eliminationType === 'double' || eliminationType === 'double_random') {
+                    total += expectedRacesDoubleElimination(n, m);
+                } else if (eliminationType === 'custom') {
+                    // Approximate: consider loss limit and outcomes
+                    const custom = Array.isArray(event.customOutcomes) ? event.customOutcomes : [];
+                    const hasLose = custom.some(x => String(x).toLowerCase() === 'lose');
+                    const lossLimit = Number.isFinite(event.customLossLimit) ? Number(event.customLossLimit) : 2;
+                    
+                    if (!hasLose || lossLimit === 1) {
+                        // No losses allowed or single loss = single elimination
+                        total += expectedRacesSingleElimination(n, m);
+                    } else if (lossLimit >= 2) {
+                        // Multiple losses allowed = similar to double elimination
+                        total += expectedRacesDoubleElimination(n, m);
+                    } else {
+                        total += expectedRacesSingleElimination(n, m);
+                    }
+                } else {
+                    total += expectedRacesDoubleElimination(n, m);
+                }
+            }
+            return total;
+        }
+
+        function expectedRacesSingleElimination(n, m) {
+            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
+            let U = n;
+            let total = 0;
+            while (U > 1) {
+                const Rw = Math.ceil(U / m);
+                total += Rw;
+                U = Rw;
+            }
+            return total;
+        }
+
+        function expectedRacesDoubleElimination(n, m) {
+            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
+            let U = n;
+            let L = 0;
+            let total = 0;
+            const Rw1 = Math.ceil(U / m);
+            total += Rw1;
+            U = Rw1;
+            L = n - Rw1;
+            while (!(U === 1 && L === 1)) {
+                const Rw = Math.ceil(U / m);
+                total += Rw;
+                const drop = U - Rw;
+                const Rl = Math.ceil((L + drop) / m);
+                total += Rl;
+                U = Rw;
+                L = Rl;
+                if (total > 100000) break;
+            }
+            total += 1; // final championship
+            return total;
+        }
+
+        // Load class breakdown
+        function loadClassBreakdown(eventParticipants) {
+            const container = document.getElementById('classBreakdown');
+            
+            // Group by class
+            const classData = {};
+            eventParticipants.forEach(p => {
+                if (p.selectedClasses) {
+                    p.selectedClasses.forEach(className => {
+                        if (!classData[className]) {
+                            classData[className] = { participants: [], revenue: 0 };
+                        }
+                        classData[className].participants.push(p);
+                        classData[className].revenue += p.totalFee || 0;
+                    });
+                }
+            });
+            
+            const classCards = Object.entries(classData).map(([className, data]) => `
+                <div class="class-card">
+                    <h4>${className}</h4>
+                    <div class="class-stats">
+                        <div class="class-stat">
+                            <div class="class-stat-value">${data.participants.length}</div>
+                            <div class="class-stat-label">Drivers</div>
+                        </div>
+                        <div class="class-stat">
+                            <div class="class-stat-value">$${data.revenue}</div>
+                            <div class="class-stat-label">Revenue</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = classCards;
+        }
+
+        // Load driver statistics
+        function loadDriverStatistics(eventParticipants) {
+            const tbody = document.querySelector('#driverStatsTable tbody');
+            const header = document.querySelector('#driverStatsHeader tr');
+            
+            // Get number of tracks from current event
+            const numberOfTracks = currentEvent ? parseInt(currentEvent.numberOfTracks || 4, 10) : 4;
+            
+            // Clear existing lane columns (keep first 6 columns: Driver, Classes, Races, Wins, Win %, AVG POS)
+            const existingHeaders = header.querySelectorAll('th');
+            for (let i = 6; i < existingHeaders.length; i++) {
+                existingHeaders[i].remove();
+            }
+            
+            // Add lane columns to header
+            for (let lane = 1; lane <= numberOfTracks; lane++) {
+                const columnIndex = 5 + lane; // Start after AVG POS column (index 5)
+                const laneHeader = document.createElement('th');
+                laneHeader.className = 'sortable';
+                laneHeader.onclick = (function(index) {
+                    return function() {
+                        console.log('🖱️ Lane column clicked:', lane, 'Column index:', index);
+                        sortTable('driverStatsTable', index);
+                    };
+                })(columnIndex);
+                laneHeader.innerHTML = `L${lane}% <i class="fas fa-sort"></i>`;
+                header.appendChild(laneHeader);
+            }
+            
+            const driverStats = eventParticipants.map(participant => {
+                const classes = participant.selectedClasses ? participant.selectedClasses.join(', ') : 'Unknown';
+                const races = participant.totalRaces || 0;
+                const wins = participant.totalWins || 0;
+                const winRate = races > 0 ? ((wins / races) * 100).toFixed(1) : '0.0';
+                const avgPosition = participant.avgPosition || 0;
+                
+                // Calculate lane win percentages
+                const laneWinRates = {};
+                for (let lane = 1; lane <= numberOfTracks; lane++) {
+                    const laneKey = lane.toString();
+                    if (participant.statistics && participant.statistics.lanePerformance && participant.statistics.lanePerformance[laneKey]) {
+                        const laneStats = participant.statistics.lanePerformance[laneKey];
+                        const laneRaces = laneStats.total || 0;
+                        const laneWins = laneStats.wins || 0;
+                        laneWinRates[laneKey] = laneRaces > 0 ? ((laneWins / laneRaces) * 100).toFixed(1) : '0.0';
+                    } else {
+                        laneWinRates[laneKey] = '0.0';
+                    }
+                }
+                
+                return {
+                    driver: participant.name,
+                    classes: classes,
+                    races: races,
+                    wins: wins,
+                    winRate: parseFloat(winRate),
+                    avgPosition: avgPosition,
+                    laneWinRates: laneWinRates
+                };
+            });
+            
+            // Sort by wins by default
+            driverStats.sort((a, b) => b.wins - a.wins);
+            
+            const driverRows = driverStats.map(stat => {
+                // Build lane percentage cells
+                const laneCells = Object.keys(stat.laneWinRates)
+                    .sort((a, b) => parseInt(a) - parseInt(b))
+                    .map(lane => `<td>${stat.laneWinRates[lane]}%</td>`)
+                    .join('');
+                
+                return `
+                    <tr>
+                        <td><strong>${stat.driver}</strong></td>
+                        <td>${stat.classes}</td>
+                        <td>${stat.races}</td>
+                        <td>${stat.wins}</td>
+                        <td>${stat.winRate}%</td>
+                        <td>${stat.avgPosition > 0 ? stat.avgPosition.toFixed(1) : 'N/A'}</td>
+                        ${laneCells}
+                    </tr>
+                `;
+            }).join('');
+            
+            tbody.innerHTML = driverRows;
+        }
+
+        // Load lane win percentage
+        function loadLaneWinPercentage(eventParticipants) {
+            const container = document.querySelector('.lane-win-grid');
+            if (!container) return;
+            
+            container.innerHTML = ''; // Clear previous content
+
+            const laneStats = {};
+            eventParticipants.forEach(participant => {
+                if (participant.statistics && participant.statistics.lanePerformance) {
+                    for (const lane in participant.statistics.lanePerformance) {
+                        if (!laneStats[lane]) {
+                            laneStats[lane] = { races: 0, wins: 0 };
+                        }
+                        // Use 'total' from lanePerformance for number of races
+                        laneStats[lane].races += participant.statistics.lanePerformance[lane].total || 0;
+                        laneStats[lane].wins += participant.statistics.lanePerformance[lane].wins || 0;
+                    }
+                }
+            });
+
+            const laneWinCards = Object.entries(laneStats).map(([lane, data]) => {
+                const winRate = data.races > 0 ? ((data.wins / data.races) * 100).toFixed(1) : '0.0';
+                return `
+                    <div class="lane-win-card">
+                        <div class="lane-win-icon"><i class="fas fa-car"></i></div>
+                        <div class="lane-win-value">${winRate}%</div>
+                        <div class="lane-win-label">Lane ${lane} (${data.wins}/${data.races})</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = laneWinCards;
+        }
+
+        // Sort table
+        function sortTable(tableId, columnIndex) {
+            console.log('🔄 Sorting table:', tableId, 'column:', columnIndex);
+            
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Check if this is a lane percentage column (index >= 6)
+            const isLaneColumn = Math.abs(columnIndex) >= 6;
+            
+            // Toggle sort direction
+            if (sortDirection[tableId] === columnIndex || sortDirection[tableId] === -columnIndex) {
+                // Reverse direction
+                sortDirection[tableId] = sortDirection[tableId] === columnIndex ? -columnIndex : columnIndex;
+                console.log('🔄 Reversing sort direction to:', sortDirection[tableId]);
+            } else {
+                // For lane columns, start with descending (high to low)
+                // For other columns, start with ascending (low to high)
+                sortDirection[tableId] = isLaneColumn ? -columnIndex : columnIndex;
+                console.log('🔄 Setting sort direction to:', sortDirection[tableId], isLaneColumn ? '(lane column - high to low first)' : '(regular column - low to high first)');
+            }
+            
+            const activeColumn = sortDirection[tableId];
+            
+            // Sort rows
+            rows.sort((a, b) => {
+                const aValue = getCellValue(a.cells[Math.abs(activeColumn)], activeColumn);
+                const bValue = getCellValue(b.cells[Math.abs(activeColumn)], activeColumn);
+                
+                if (activeColumn < 0) {
+                    // Descending: big to small
+                    return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+                } else {
+                    // Ascending: small to big
+                    return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+                }
+            });
+            
+            // Reorder rows
+            rows.forEach(row => tbody.appendChild(row));
+            
+            // Update sort indicators
+            updateSortIndicators(table, activeColumn);
+            
+            console.log('✅ Sorting completed');
+        }
+
+        // Get cell value for sorting
+        function getCellValue(cell, columnIndex) {
+            const text = cell.textContent.trim();
+            const idx = Math.abs(columnIndex);
+            
+            // Handle different data types based on absolute column index
+            if (idx === 0) return text.toLowerCase(); // Driver name
+            if (idx === 1) return text.toLowerCase(); // Classes
+            if (idx === 2) return parseInt(text) || 0; // Races
+            if (idx === 3) return parseInt(text) || 0; // Wins
+            if (idx === 4) return parseFloat(text) || 0; // Win %
+            if (idx === 5) return text === 'N/A' ? 0 : parseFloat(text) || 0; // AVG POS
+            if (idx >= 6) {
+                const value = parseFloat(text.replace('%', '')) || 0;
+                console.log('🔢 Lane column value:', text, '-> parsed:', value, 'for column index:', idx);
+                return value; // Lane percentages (L1%, L2%, etc.)
+            }
+            
+            return text;
+        }
+
+        // Update sort indicators
+        function updateSortIndicators(table, activeColumn) {
+            const headers = table.querySelectorAll('th');
+            headers.forEach((header, index) => {
+                const icon = header.querySelector('i');
+                if (icon) {
+                    if (Math.abs(activeColumn) === index) {
+                        icon.className = activeColumn < 0 ? 'fas fa-sort-up' : 'fas fa-sort-down';
+                    } else {
+                        icon.className = 'fas fa-sort';
+                    }
+                }
+            });
+        }
+
+        // Refresh analytics
+        async function refreshAnalytics() {
+            try {
+                await dataManager.loadFromStorage(['events', 'participants']);
+                await loadAllData();
+                loadEventSelector();
+                showToast('Event analytics data refreshed successfully!', 'success');
+            } catch (error) {
+                console.error('Error refreshing event analytics data:', error);
+                showToast('Error refreshing data. Please try again.', 'error');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('eventsSection').innerHTML = `
+                <div class="section-header">
+                    <h2><i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> Error</h2>
+                </div>
+                <p style="color: var(--text-secondary);">${message}</p>
+                <button class="btn btn-primary" onclick="refreshAnalytics()">Try Again</button>
+            `;
+        }
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+                color: white;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Event Time Analytics Functions
+        function loadEventTimeAnalytics(eventId) {
+            console.log('⏰ Loading event time analytics for event:', eventId);
+            
+            try {
+                // Calculate event-specific time statistics
+                const eventTimeStats = calculateEventTimeStatistics(eventId);
+                
+                // Update event time analytics displays
+                updateEventTimeAnalyticsDisplay(eventTimeStats);
+                
+                // Create event timing chart
+                createEventTimingChart(eventTimeStats);
+                
+                // Update event efficiency metrics
+                updateEventEfficiencyMetrics(eventTimeStats, eventId);
+                
+                console.log('✅ Event time analytics loaded successfully');
+            } catch (error) {
+                console.error('❌ Error loading event time analytics:', error);
+            }
+        }
+
+        function calculateEventTimeStatistics(eventId) {
+            const stats = {
+                raceTimes: [],
+                raceIntervals: [],
+                eventDuration: 0,
+                racesPerHour: {},
+                startTime: null,
+                endTime: null
+            };
+
+            // Analyze race brackets for this specific event
+            if (window.raceBrackets && window.raceBrackets[eventId]) {
+                const eventBrackets = window.raceBrackets[eventId];
+                
+                if (eventBrackets && eventBrackets.classes) {
+                    Object.values(eventBrackets.classes).forEach(classData => {
+                        if (classData.rounds && Array.isArray(classData.rounds)) {
+                            let classStartTime = null;
+                            let classEndTime = null;
+                            
+                            classData.rounds.forEach(round => {
+                                if (round.heats && Array.isArray(round.heats)) {
+                                    round.heats.forEach(heat => {
+                                        if (heat.startTime && heat.endTime) {
+                                            // Calculate race duration
+                                            const startTime = new Date(heat.startTime);
+                                            const endTime = new Date(heat.endTime);
+                                            const duration = endTime - startTime;
+                                            
+                                            if (duration > 0 && duration < 3600000) { // Less than 1 hour (reasonable race time)
+                                                stats.raceTimes.push(duration);
+                                            }
+                                            
+                                            // Track class timing
+                                            if (!classStartTime || startTime < classStartTime) {
+                                                classStartTime = startTime;
+                                            }
+                                            if (!classEndTime || endTime > classEndTime) {
+                                                classEndTime = endTime;
+                                            }
+                                        }
+                                        
+                                        // Track race intervals
+                                        if (heat.startTime) {
+                                            const raceTime = new Date(heat.startTime);
+                                            const hour = raceTime.getHours();
+                                            stats.racesPerHour[hour] = (stats.racesPerHour[hour] || 0) + 1;
+                                        }
+                                    });
+                                }
+                            });
+                            
+                            // Calculate class duration
+                            if (classStartTime && classEndTime) {
+                                const classDuration = classEndTime - classStartTime;
+                                if (classDuration > 0) {
+                                    stats.eventDuration = Math.max(stats.eventDuration, classDuration);
+                                    if (!stats.startTime || classStartTime < stats.startTime) {
+                                        stats.startTime = classStartTime;
+                                    }
+                                    if (!stats.endTime || classEndTime > stats.endTime) {
+                                        stats.endTime = classEndTime;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Calculate race intervals (time between consecutive races for this event)
+            const allRaceTimes = [];
+            if (window.raceBrackets && window.raceBrackets[eventId]) {
+                const eventBrackets = window.raceBrackets[eventId];
+                
+                if (eventBrackets && eventBrackets.classes) {
+                    Object.values(eventBrackets.classes).forEach(classData => {
+                        if (classData.rounds && Array.isArray(classData.rounds)) {
+                            classData.rounds.forEach(round => {
+                                if (round.heats && Array.isArray(round.heats)) {
+                                    round.heats.forEach(heat => {
+                                        if (heat.startTime) {
+                                            allRaceTimes.push(new Date(heat.startTime));
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+
+            // Sort race times and calculate intervals
+            allRaceTimes.sort((a, b) => a - b);
+            for (let i = 1; i < allRaceTimes.length; i++) {
+                const interval = allRaceTimes[i] - allRaceTimes[i - 1];
+                if (interval > 0 && interval < 1800000) { // Less than 30 minutes (reasonable interval)
+                    stats.raceIntervals.push(interval);
+                }
+            }
+
+            return stats;
+        }
+
+        function updateEventTimeAnalyticsDisplay(timeStats) {
+            // Average Race Duration
+            const avgRaceTime = timeStats.raceTimes.length > 0 
+                ? timeStats.raceTimes.reduce((sum, time) => sum + time, 0) / timeStats.raceTimes.length 
+                : 0;
+            const avgRaceTimeSeconds = Math.round(avgRaceTime / 1000);
+            document.getElementById('eventAvgRaceTime').textContent = `${avgRaceTimeSeconds}s`;
+
+            // Races per Hour
+            const totalRaces = Object.values(timeStats.racesPerHour).reduce((sum, count) => sum + count, 0);
+            const totalHours = Object.keys(timeStats.racesPerHour).length || 1;
+            const avgRacesPerHour = Math.round(totalRaces / totalHours);
+            document.getElementById('eventRacesPerHour').textContent = avgRacesPerHour.toString();
+
+            // Average Time Between Races
+            const avgTimeBetweenRaces = timeStats.raceIntervals.length > 0 
+                ? timeStats.raceIntervals.reduce((sum, time) => sum + time, 0) / timeStats.raceIntervals.length 
+                : 0;
+            const avgTimeBetweenSeconds = Math.round(avgTimeBetweenRaces / 1000);
+            document.getElementById('eventAvgTimeBetweenRaces').textContent = `${avgTimeBetweenSeconds}s`;
+
+            // Event Duration
+            const eventHours = Math.round(timeStats.eventDuration / (1000 * 60 * 60));
+            document.getElementById('eventDuration').textContent = `${eventHours}h`;
+
+            // Add trend indicators (simplified)
+            const trendElements = ['eventRaceTimeTrend', 'eventRacesPerHourTrend', 'eventTimeBetweenRacesTrend', 'eventDurationTrend'];
+            trendElements.forEach(elementId => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = '📈 Event Data';
+                    element.className = 'stat-trend neutral';
+                }
+            });
+        }
+
+        function createEventTimingChart(timeStats) {
+            const ctx = document.getElementById('eventTimingChart');
+            if (!ctx || timeStats.raceTimes.length === 0) {
+                ctx.parentElement.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No timing data available for this event</p>';
+                return;
+            }
+
+            if (eventTimingChart) {
+                eventTimingChart.destroy();
+            }
+
+            // Create histogram data
+            const bins = 8; // Fewer bins for smaller dataset
+            const minTime = Math.min(...timeStats.raceTimes);
+            const maxTime = Math.max(...timeStats.raceTimes);
+            const binSize = (maxTime - minTime) / bins;
+            
+            const histogram = new Array(bins).fill(0);
+            timeStats.raceTimes.forEach(time => {
+                const binIndex = Math.min(Math.floor((time - minTime) / binSize), bins - 1);
+                histogram[binIndex]++;
+            });
+
+            const labels = Array.from({length: bins}, (_, i) => {
+                const startTime = Math.round((minTime + i * binSize) / 1000);
+                const endTime = Math.round((minTime + (i + 1) * binSize) / 1000);
+                return `${startTime}s-${endTime}s`;
+            });
+
+            eventTimingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Races',
+                        data: histogram,
+                        backgroundColor: 'rgba(255, 140, 66, 0.6)',
+                        borderColor: 'rgba(255, 140, 66, 1)',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#b3b3b3'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#b3b3b3'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateEventEfficiencyMetrics(timeStats, eventId) {
+            // Calculate event completion rate
+            const eventParticipants = allParticipants.filter(p => p.eventId === eventId);
+            const expectedRaces = calculateExpectedTotalRacesForEvent(currentEvent, eventParticipants);
+            const completedRaces = calculateEventRaces(eventParticipants);
+            const completionRate = expectedRaces > 0 ? Math.round((completedRaces / expectedRaces) * 100) : 0;
+            
+            // Update completion rate
+            document.getElementById('eventCompletionRate').textContent = `${completionRate}%`;
+            document.getElementById('eventCompletionRateBar').style.width = `${completionRate}%`;
+            
+            // Calculate time efficiency (based on race frequency for this event)
+            const avgRacesPerHour = Object.values(timeStats.racesPerHour).length > 0 
+                ? Object.values(timeStats.racesPerHour).reduce((sum, count) => sum + count, 0) / Object.values(timeStats.racesPerHour).length
+                : 0;
+            const timeEfficiency = Math.min(Math.round(avgRacesPerHour * 10), 100); // Scale to 0-100
+            
+            document.getElementById('eventTimeEfficiency').textContent = `${timeEfficiency}%`;
+            document.getElementById('eventTimeEfficiencyBar').style.width = `${timeEfficiency}%`;
+        }
+    </script>
+</body>
+</html>
+

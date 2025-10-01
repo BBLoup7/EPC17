@@ -46,6 +46,7 @@ ALL_CATEGORIES = [
     'drivers profile',
     'analytics',
     'live display',
+    'animator',
 ]
 
 def is_admin_session(session):

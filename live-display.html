@@ -8,6 +8,119 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Hero Section Styles - Consistent with Series Page */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         /* Live Display Specific Styles */
         body {
             margin: 0;
@@ -950,20 +1063,25 @@
 
 
     <div class="live-display-container">
-        <!-- Compact Header -->
-        <div class="header-section">
-            <!-- Sneaky Back Button -->
-            <button class="back-button" onclick="window.history.back()" title="Go Back">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-            
-            <div class="header-left">
-                <div class="event-info">
-                    <h1 class="event-title" id="event-title">Loading Event...</h1>
-                    <p class="event-subtitle" id="event-subtitle">Live Display</p>
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title" id="event-title">Loading Event...</h1>
+                    <p class="hero-subtitle" id="event-subtitle">Live Display - Real-time race tracking and results</p>
+                </div>
+                <div class="hero-actions">
+                    <button class="back-button" onclick="window.history.back()" title="Go Back">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button class="btn btn-primary btn-hero" onclick="refreshDisplay()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline" onclick="toggleFullscreen()">
+                        <i class="fas fa-expand"></i> Fullscreen
+                    </button>
                 </div>
             </div>
-            <div class="header-right"></div>
         </div>
 
         <!-- Main Content - 3 Column Layout (FULL WIDTH) -->
@@ -2175,8 +2293,12 @@
             }
         }
 
-        // Wait for app initialization to complete
-        function waitForAppInitialization() {
+        // Wait for app initialization and authentication to complete
+        async function waitForAppInitialization() {
+            // First wait for authentication
+            await waitForAuthentication();
+            
+            // Then wait for app components
             if (window.dataManager && window.eventBus) {
                 console.log('✅ App initialization complete, starting Live Display');
                 initializeLiveDisplay();
@@ -2184,6 +2306,35 @@
                 console.log('⏳ Waiting for app initialization...');
                 setTimeout(waitForAppInitialization, 100);
             }
+        }
+
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🔐 Live Display: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🔐 Live Display: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🔐 Live Display: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🔐 Live Display: Authentication complete, proceeding with data load');
+            return true;
         }
 
         // Start waiting for app initialization

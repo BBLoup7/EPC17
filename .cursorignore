@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+*.log
+.vscode/
+.env.local
+.cache/
+debug_snapshots/

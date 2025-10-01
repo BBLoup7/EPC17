@@ -250,7 +250,7 @@ let allParticipants = [];
 let allEvents = [];
 let filteredParticipants = [];
 let currentPage = 1;
-const itemsPerPage = 50; // Increased for better performance
+const itemsPerPage = 25; // Reduced for better performance and user experience
 
 // Performance optimization: Cache frequently accessed data
 const performanceCache = {
@@ -1846,26 +1846,29 @@ async function handleEditFormSubmit(event) {
             
             const eventCount = selectedEvents.length;
             const eventText = eventCount === 1 ? 'event' : 'events';
-            alert(`Participant updated successfully! Registered for ${eventCount} ${eventText}.`);
+            Helpers.showToast(`Participant updated successfully! Registered for ${eventCount} ${eventText}.`, 'success');
             closeEditModal();
             
             // Refresh participant list
             loadParticipantData();
         } else {
-            alert('Failed to update participant. Please try again.');
+            Helpers.showToast('Failed to update participant. Please try again.', 'error');
         }
         
     } catch (error) {
         console.error('Error updating participant:', error);
-        alert('Error updating participant: ' + error.message);
+        Helpers.showToast('Error updating participant: ' + error.message, 'error');
     }
 }
 
 // Delete participant function
 function deleteParticipant(participantId) {
-    if (!confirm('Are you sure you want to delete this participant? This action cannot be undone.')) {
-        return;
-    }
+    window.confirmDelete('this participant', () => {
+        performParticipantDeletion(participantId);
+    });
+}
+
+function performParticipantDeletion(participantId) {
     
     try {
         // Remove from data manager
@@ -1877,10 +1880,10 @@ function deleteParticipant(participantId) {
         loadParticipantData();
         
         // Show success message
-        alert('Participant deleted successfully!');
+        Helpers.showToast('Participant deleted successfully!', 'success');
     } catch (error) {
         console.error('Error deleting participant:', error);
-        alert('Error deleting participant. Please try again.');
+        Helpers.showToast('Error deleting participant. Please try again.', 'error');
     }
 }
 

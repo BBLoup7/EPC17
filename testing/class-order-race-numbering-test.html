@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Order Race Numbering Test - EPC17</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { padding: 10px 15px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .log { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin: 10px 0; border-radius: 3px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>Class Order Race Numbering Test</h1>
+    <p>This test verifies that race numbering follows the defined class order when generating subsequent rounds.</p>
+
+    <div class="test-section">
+        <h3>Test Configuration</h3>
+        <p><strong>Event:</strong> Stress Event 2-7</p>
+        <p><strong>Class Order:</strong> 600 Stock → 600 Improve → 800 Stock → 800 Improve → 1000 Stock → 1000 Improve</p>
+        <p><strong>Scenario:</strong> Round 1 ended at Race #158, Round 2 should start at Race #159 with 600 Stock</p>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Actions</h3>
+        <button onclick="runClassOrderTest()">Run Class Order Test</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Results</h3>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Console Log</h3>
+        <div id="consoleLog" class="log"></div>
+    </div>
+
+    <script>
+        // Mock data for testing
+        const mockEvent = {
+            id: "test-event-123",
+            name: "Stress Event 2-7",
+            classOrder: [
+                "4c2eff79-47df-408f-9f25-c79d7981c2c7", // 600 Stock
+                "755e5f75-d873-4c25-92ab-6818ca84f361", // 600 Improve
+                "b9c43e5d-ec10-4111-bbb1-1dfdee76e184", // 800 Stock
+                "eb92c78e-6dc6-4ac4-a30a-d36330fdbe36", // 800 Improve
+                "c17afe86-d7f4-4631-890d-608df1bec743", // 1000 Stock
+                "5206b94f-9d58-46d6-bcce-4522440b534f"  // 1000 Improve
+            ],
+            classSettings: [
+                { classId: "4c2eff79-47df-408f-9f25-c79d7981c2c7", className: "600 Stock" },
+                { classId: "755e5f75-d873-4c25-92ab-6818ca84f361", className: "600 Improve" },
+                { classId: "b9c43e5d-ec10-4111-bbb1-1dfdee76e184", className: "800 Stock" },
+                { classId: "eb92c78e-6dc6-4ac4-a30a-d36330fdbe36", className: "800 Improve" },
+                { classId: "c17afe86-d7f4-4631-890d-608df1bec743", className: "1000 Stock" },
+                { classId: "5206b94f-9d58-46d6-bcce-4522440b534f", className: "1000 Improve" }
+            ]
+        };
+
+        const mockBracket = {
+            classes: {
+                "600 Stock": {
+                    currentRound: 2,
+                    rounds: [
+                        {
+                            roundNumber: 1,
+                            heats: [
+                                { raceNumber: 1, className: "600 Stock" },
+                                { raceNumber: 2, className: "600 Stock" },
+                                { raceNumber: 3, className: "600 Stock" }
+                            ]
+                        }
+                    ]
+                },
+                "600 Improve": {
+                    currentRound: 2,
+                    rounds: [
+                        {
+                            roundNumber: 1,
+                            heats: [
+                                { raceNumber: 4, className: "600 Improve" },
+                                { raceNumber: 5, className: "600 Improve" }
+                            ]
+                        }
+                    ]
+                },
+                "800 Stock": {
+                    currentRound: 1,
+                    rounds: [
+                        {
+                            roundNumber: 1,
+                            heats: [
+                                { raceNumber: 6, className: "800 Stock" },
+                                { raceNumber: 7, className: "800 Stock" }
+                            ]
+                        }
+                    ]
+                }
+            }
+        };
+
+        // Mock race manager methods
+        const mockRaceManager = {
+            enforceClassOrderRaceNumbering: function(eventId, className) {
+                log(`🔧 Enforcing class order race numbering for class: ${className}`);
+                
+                try {
+                    if (!mockEvent.classOrder || !Array.isArray(mockEvent.classOrder)) {
+                        log('⚠️ No class order defined, cannot enforce class order race numbering', 'warning');
+                        return;
+                    }
+
+                    // Find the class ID for the given class name
+                    const classSetting = mockEvent.classSettings.find(c => c.className === className);
+                    if (!classSetting) {
+                        log(`⚠️ Class "${className}" not found in event settings`, 'warning');
+                        return;
+                    }
+
+                    const classId = classSetting.classId;
+                    const classOrderIndex = mockEvent.classOrder.indexOf(classId);
+                    
+                    if (classOrderIndex === -1) {
+                        log(`⚠️ Class "${className}" not found in event class order`, 'warning');
+                        return;
+                    }
+
+                    // Find the last race number assigned
+                    let lastRaceNumber = 0;
+                    let lastRaceClass = null;
+                    for (const classKey of Object.keys(mockBracket.classes)) {
+                        const classData = mockBracket.classes[classKey];
+                        if (!classData || !Array.isArray(classData.rounds)) continue;
+                        for (const round of classData.rounds) {
+                            if (!round || !Array.isArray(round.heats)) continue;
+                            for (const heat of round.heats) {
+                                if (heat && Number.isFinite(heat.raceNumber)) {
+                                    if (heat.raceNumber > lastRaceNumber) {
+                                        lastRaceNumber = heat.raceNumber;
+                                        lastRaceClass = classKey;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (lastRaceNumber === 0) {
+                        log(`🔧 First race for event, "${className}" can proceed`, 'info');
+                        return;
+                    }
+
+                    // Find which class should get the next race number based on class order
+                    const lastRaceClassSetting = mockEvent.classSettings.find(c => c.className === lastRaceClass);
+                    if (!lastRaceClassSetting) {
+                        log(`⚠️ Last race class "${lastRaceClass}" not found in event settings`, 'warning');
+                        return;
+                    }
+
+                    const lastRaceClassOrderIndex = mockEvent.classOrder.indexOf(lastRaceClassSetting.classId);
+                    if (lastRaceClassOrderIndex === -1) {
+                        log(`⚠️ Last race class "${lastRaceClass}" not found in event class order`, 'warning');
+                        return;
+                    }
+
+                    // Calculate which class should be next
+                    const expectedNextIndex = (lastRaceClassOrderIndex + 1) % mockEvent.classOrder.length;
+                    const expectedNextClassId = mockEvent.classOrder[expectedNextIndex];
+                    const expectedNextClassSetting = mockEvent.classSettings.find(c => c.classId === expectedNextClassId);
+                    const expectedNextClassName = expectedNextClassSetting?.className || expectedNextClassId;
+
+                    if (expectedNextIndex === classOrderIndex) {
+                        log(`✅ Class "${className}" is next in sequence for race numbering (after "${expectedNextClassName}")`, 'success');
+                        return true;
+                    } else {
+                        log(`⚠️ Class "${className}" is not next in sequence. Expected: "${expectedNextClassName}" (order ${expectedNextIndex + 1}), got: "${className}" (order ${classOrderIndex + 1})`, 'warning');
+                        log(`🔧 This may cause race numbers to be out of sequence with class order`, 'warning');
+                        return false;
+                    }
+                } catch (error) {
+                    log(`Error enforcing class order race numbering: ${error}`, 'error');
+                    return false;
+                }
+            }
+        };
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            
+            // Add to console log
+            const consoleLog = document.getElementById('consoleLog');
+            const logDiv = document.createElement('div');
+            logDiv.className = `test-result ${type}`;
+            logDiv.textContent = logEntry;
+            consoleLog.appendChild(logDiv);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+            
+            // Also log to browser console
+            console.log(logEntry);
+        }
+
+        function runClassOrderTest() {
+            log('🚀 Starting Class Order Race Numbering Test', 'info');
+            log('', 'info');
+            
+            // Test 1: 600 Stock should be next after 800 Stock (last race #7)
+            log('📋 Test 1: Checking if 600 Stock is next in sequence after 800 Stock', 'info');
+            const test1Result = mockRaceManager.enforceClassOrderRaceNumbering('test-event-123', '600 Stock');
+            log(`Test 1 Result: ${test1Result ? 'PASS' : 'FAIL'}`, test1Result ? 'success' : 'error');
+            log('', 'info');
+            
+            // Test 2: 600 Improve should NOT be next (should be 800 Improve)
+            log('📋 Test 2: Checking if 600 Improve is next in sequence (should fail)', 'info');
+            const test2Result = mockRaceManager.enforceClassOrderRaceNumbering('test-event-123', '600 Improve');
+            log(`Test 2 Result: ${test2Result ? 'FAIL (unexpected pass)' : 'PASS (expected fail)'}`, test2Result ? 'error' : 'success');
+            log('', 'info');
+            
+            // Test 3: 800 Improve should be next after 800 Stock
+            log('📋 Test 3: Checking if 800 Improve is next in sequence after 800 Stock', 'info');
+            const test3Result = mockRaceManager.enforceClassOrderRaceNumbering('test-event-123', '800 Improve');
+            log(`Test 3 Result: ${test3Result ? 'PASS' : 'FAIL'}`, test3Result ? 'success' : 'error');
+            log('', 'info');
+            
+            // Test 4: 1000 Stock should NOT be next (should be 800 Improve)
+            log('📋 Test 4: Checking if 1000 Stock is next in sequence (should fail)', 'info');
+            const test4Result = mockRaceManager.enforceClassOrderRaceNumbering('test-event-123', '1000 Stock');
+            log(`Test 4 Result: ${test4Result ? 'FAIL (unexpected pass)' : 'PASS (expected fail)'}`, test4Result ? 'error' : 'success');
+            log('', 'info');
+            
+            // Summary
+            log('', 'info');
+            log('📊 Test Summary:', 'info');
+            log(`✅ Tests Passed: ${[test1Result, !test2Result, test3Result, !test4Result].filter(Boolean).length}/4`, 'info');
+            log(`❌ Tests Failed: ${[test1Result, !test2Result, test3Result, !test4Result].filter(Boolean).length === 4 ? 0 : 4 - [test1Result, !test2Result, test3Result, !test4Result].filter(Boolean).length}`, 'info');
+            
+            // Update test results
+            const testResults = document.getElementById('testResults');
+            testResults.innerHTML = `
+                <div class="test-result ${test1Result ? 'success' : 'error'}">
+                    <strong>Test 1:</strong> 600 Stock sequence check - ${test1Result ? 'PASS' : 'FAIL'}
+                </div>
+                <div class="test-result ${!test2Result ? 'success' : 'error'}">
+                    <strong>Test 2:</strong> 600 Improve sequence check - ${!test2Result ? 'PASS' : 'FAIL'}
+                </div>
+                <div class="test-result ${test3Result ? 'success' : 'error'}">
+                    <strong>Test 3:</strong> 800 Improve sequence check - ${test3Result ? 'PASS' : 'FAIL'}
+                </div>
+                <div class="test-result ${!test4Result ? 'success' : 'error'}">
+                    <strong>Test 4:</strong> 1000 Stock sequence check - ${!test4Result ? 'PASS' : 'FAIL'}
+                </div>
+            `;
+        }
+
+        function clearLog() {
+            document.getElementById('consoleLog').innerHTML = '';
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        // Initialize test
+        log('🔧 Class Order Race Numbering Test initialized', 'info');
+        log('📋 Mock event and bracket data loaded', 'info');
+        log('🎯 Ready to run tests', 'info');
+    </script>
+</body>
+</html>

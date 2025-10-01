@@ -53,6 +53,19 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* Event card status-based styling */
+.event-card.upcoming {
+    border-left: 4px solid #3b82f6;
+}
+
+.event-card.active {
+    border-left: 4px solid #10b981;
+}
+
+.event-card.completed {
+    border-left: 4px solid #6b7280;
+}
+
 .event-header {
     display: flex;
     justify-content: space-between;
@@ -75,17 +88,36 @@
     text-transform: uppercase;
 }
 
-.event-status.active {
+.event-status.active,
+.status-active {
     background: #10b981;
     color: white;
 }
 
-.event-status.upcoming {
+.event-status.upcoming,
+.status-upcoming {
     background: #3b82f6;
     color: white;
 }
 
-.event-status.completed {
+.event-status.completed,
+.status-completed {
+    background: #6b7280;
+    color: white;
+}
+
+/* Additional status classes for consistency */
+.status-upcoming {
+    background: #3b82f6;
+    color: white;
+}
+
+.status-active {
+    background: #10b981;
+    color: white;
+}
+
+.status-completed {
     background: #6b7280;
     color: white;
 }
@@ -106,6 +138,40 @@
 .detail-row i {
     width: 16px;
     color: var(--accent-primary);
+}
+
+/* Modern event card detail styles */
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.detail-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Participant statistics styling */
+.detail-item .detail-value {
+    font-weight: 600;
+}
+
+/* Highlight drivers and registrations */
+.detail-item.drivers .detail-value {
+    color: var(--accent-primary);
+}
+
+.detail-item.registrations .detail-value {
+    color: #10b981;
 }
 
 .event-actions {

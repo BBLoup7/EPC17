@@ -5,135 +5,780 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Registration (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .participant-card {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            padding: 1.5rem;
+        /* Modern Hero Section Styles */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 10px;
+            padding: 0.75rem 1.25rem;
+            margin-top: 0.25rem;
             margin-bottom: 1rem;
-            border: 1px solid var(--border-color);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: visible;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 140, 66, 0.05) 0%, rgba(74, 144, 226, 0.05) 100%);
+            z-index: 0;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.35rem;
+            line-height: 1.2;
+            text-shadow: 0 4px 20px rgba(255, 140, 66, 0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 600px;
+            line-height: 1.4;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        /* Modern Event Selector */
+        .event-selector {
+            margin-top: 0.35rem;
+            position: relative;
+            z-index: 10002;
+        }
+
+        .event-selector .combo-box-container {
+            max-width: 400px;
+            position: relative;
+            z-index: 10002;
+        }
+
+        .event-selector .combo-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .event-selector .combo-box:focus-within {
+            border-color: var(--accent-orange-warm);
+            box-shadow: 0 0 0 4px rgba(255, 140, 66, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-hero {
+            padding: 0.75rem 1.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 8px 25px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            color: white;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 140, 66, 0.6) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: 0.75rem 1.75rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 140, 66, 0.2);
+        }
+
+        /* Modern Utility Button */
+        .btn-utility {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-secondary);
+            padding: 0.6rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .btn-utility:hover {
+            background: rgba(220, 53, 69, 0.2);
+            border-color: #dc3545;
+            color: #dc3545;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+        }
+
+        /* Modern Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1rem 1.25rem;
+                margin-bottom: 1.25rem;
+                border-radius: 10px;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.75rem;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .participant-details {
+                grid-template-columns: 1fr;
+            }
+
+            .participant-card {
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+
+            .form-section {
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+
+            .empty-state {
+                padding: 3rem 2rem;
+                border-radius: 16px;
+            }
+
+            .error-message {
+                padding: 3rem 2rem;
+                border-radius: 12px;
+            }
+
+            .warning-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.75rem;
+            }
+
+            .performance-warning {
+                border-radius: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-section {
+                padding: 0.875rem 1rem;
+            }
+
+            .hero-title {
+                font-size: 1.4rem;
+            }
+
+            .hero-subtitle {
+                font-size: 0.875rem;
+            }
+
+            .participant-card {
+                padding: 1rem;
+            }
+
+            .form-section {
+                padding: 1rem;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .detail-row .value {
+                text-align: left;
+            }
+        }
+
+        /* Loading States */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--accent-orange-warm);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Enhanced Focus States */
+        *:focus-visible {
+            outline: 2px solid var(--accent-orange-warm);
+            outline-offset: 2px;
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-orange-warm);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-orange-glow);
+        }
+
+        /* Modern Participant Cards */
+        .participant-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .participant-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-primary));
+            border-radius: 16px 16px 0 0;
         }
         
         .participant-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 140, 66, 0.3);
         }
         
         .participant-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .participant-header h4 {
             color: var(--text-primary);
             margin: 0;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .participant-header h4::before {
+            content: '👤';
+            font-size: 1.2rem;
         }
 
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
         .header-actions .btn {
-            padding: 0.25rem 0.5rem;
+            padding: 0.5rem 1rem;
             min-width: auto;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .header-actions .btn:hover {
+            transform: translateY(-2px);
         }
         
+        /* Modern Status Badges */
         .participant-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
         }
         
         .status-active {
-            background: var(--success);
-            color: var(--bg-primary);
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
         }
-        
 
+        .status-active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
         
         .status-inactive {
-            background: var(--text-secondary);
-            color: var(--bg-primary);
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .status-inactive:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
         }
         
+        /* Modern Detail Grid */
         .participant-details {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
         }
         
         .detail-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.25rem 0;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .detail-row:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 140, 66, 0.2);
+            transform: translateY(-1px);
         }
         
         .detail-row .label {
             color: var(--text-secondary);
             font-weight: 500;
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-row .label::before {
+            content: '•';
+            color: var(--accent-orange-warm);
+            font-weight: bold;
         }
         
         .detail-row .value {
             color: var(--text-primary);
-            font-weight: 400;
-            font-size: 0.9rem;
+            font-weight: 600;
+            font-size: 0.95rem;
             text-align: right;
         }
         
+        /* Modern Empty State */
         .empty-state {
             text-align: center;
-            padding: 4rem 2rem;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            border: 2px dashed var(--border-color);
-            margin: 2rem 0;
+            padding: 5rem 3rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-radius: 20px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            margin: 3rem 0;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .empty-state::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 140, 66, 0.03) 0%, rgba(74, 144, 226, 0.03) 100%);
+            z-index: 0;
+        }
+
+        .empty-state > * {
+            position: relative;
+            z-index: 1;
         }
         
         .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
         
         .empty-state h3 {
             color: var(--text-primary);
             margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         
         .empty-state p {
             color: var(--text-secondary);
             margin-bottom: 2rem;
-            max-width: 500px;
+            max-width: 600px;
             margin-left: auto;
             margin-right: auto;
+            font-size: 1.1rem;
+            line-height: 1.6;
         }
         
+        /* Modern Error Message */
         .error-message {
             text-align: center;
-            padding: 4rem 2rem;
-            background: var(--danger);
-            color: white;
-            border-radius: 8px;
-            margin: 2rem 0;
+            padding: 4rem 3rem;
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+            border: 2px solid rgba(220, 53, 69, 0.3);
+            border-radius: 16px;
+            margin: 3rem 0;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        .error-message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.05) 0%, rgba(220, 53, 69, 0.02) 100%);
+            z-index: 0;
+        }
+
+        .error-message > * {
+            position: relative;
+            z-index: 1;
+        }
+
         .error-message h3 {
             margin-bottom: 1rem;
+            color: #dc3545;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
-        
+
+        .error-message p {
+            color: #dc3545;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Modern Performance Warning Banner */
+        .performance-warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+            border: 2px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            animation: slideInFromTop 0.5s ease-out;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .warning-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            position: relative;
+        }
+
+        .warning-icon {
+            font-size: 1.5rem;
+            color: #ffc107;
+        }
+
+        .warning-text {
+            flex: 1;
+            color: #ffc107;
+            font-weight: 500;
+        }
+
+        .warning-close {
+            background: none;
+            border: none;
+            color: #ffc107;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .warning-close:hover {
+            background: rgba(255, 193, 7, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Modern Form Styling */
+        .form-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-primary));
+            border-radius: 16px 16px 0 0;
+        }
+
+        .form-section h3 {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .form-section h3::before {
+            content: '📝';
+            font-size: 1.3rem;
+        }
+
+        /* Modern Input Styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-orange-warm);
+            box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        /* Modern Button Styling */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow));
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 140, 66, 0.4);
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm));
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in-left {
+            animation: slideInLeft 0.6s ease-out forwards;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         .header-actions {
             display: flex;
             gap: 1rem;
@@ -255,42 +900,6 @@
             gap: 0.2rem;
         }
 
-        .tab-btn-modern {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            padding: 0.6rem 0.8rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            min-height: 36px;
-        }
-
-        .tab-btn-modern:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .tab-btn-modern.active {
-            background: var(--accent-primary);
-            color: white;
-            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
-        }
-
-        .tab-btn-modern i {
-            font-size: 0.9rem;
-        }
-
-        .tab-btn-modern span {
-            font-weight: 500;
-        }
 
         /* Performance Warning Styles */
         .performance-warning {
@@ -353,88 +962,259 @@
         
         /* Add Existing Driver Styles */
         .add-existing-container {
-            max-width: 1200px;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 0.5rem;
         }
 
-        .section-header {
-            text-align: center;
-            margin-bottom: 2rem;
+        /* Duplicate Warning Styles */
+        .duplicate-warning {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .section-header h2 {
-            color: var(--text-primary);
+        .duplicate-warning-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 0.5rem;
         }
 
-        .section-header p {
-            color: var(--text-secondary);
-        }
-
-        .add-existing-step {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            padding: 2rem;
-            border: 1px solid var(--border-color);
-            margin-bottom: 2rem;
-        }
-
-        .step-header {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--primary);
-        }
-
-        .step-header h3 {
-            color: var(--primary);
+        .duplicate-warning-header h4 {
             margin: 0;
+            color: #155724;
+            font-size: 1.1rem;
+        }
+
+        .duplicate-warning-close {
+            background: none;
+            border: none;
+            color: #155724;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .duplicate-warning-close:hover {
+            background: rgba(21, 87, 36, 0.1);
+        }
+
+        .duplicate-warning-subtitle {
+            margin: 0 0 1rem 0;
+            color: #155724;
+            font-size: 0.9rem;
+        }
+
+        .potential-duplicates {
+            margin-bottom: 1rem;
+        }
+
+        .potential-duplicate-item {
+            background: #ffffff;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .potential-duplicate-item:hover {
+            border-color: #a8d5ae;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .duplicate-match-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .duplicate-driver-details {
+            flex: 1;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .duplicate-driver-details:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .duplicate-driver-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .duplicate-match-reasons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .match-confidence {
+            background: #ff9800;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .match-reason {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .duplicate-contact-info {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .use-existing-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .use-existing-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .use-existing-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .duplicate-warning-actions {
+            text-align: center;
+            padding-top: 0.5rem;
+            border-top: 1px solid #ffeaa7;
+        }
+
+        .btn-continue-new {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-continue-new:hover {
+            background: #f57c00;
+        }
+
+
+
+        /* Event Selection Notice */
+        .event-selection-notice {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .notice-content {
             display: flex;
             align-items: center;
-        }
-
-        .step-header h3:before {
-            content: "✓";
-            background: var(--primary);
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
             justify-content: center;
-            margin-right: 0.5rem;
-            font-size: 0.8rem;
+            gap: 0.5rem;
+            color: #1976d2;
+            font-weight: 500;
         }
 
-        .existing-drivers-section {
-            margin-top: 2rem;
+        .notice-content i {
+            font-size: 1.2rem;
         }
 
-        .existing-drivers-section h3 {
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-
-        .driver-search {
-            margin-bottom: 1rem;
-        }
-
-        .existing-drivers-list {
+        /* Driver Selection Interface */
+        .driver-selection-interface {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: 650px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        /* Driver Search Section */
+        .driver-search-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            height: fit-content;
+        }
+
+        .search-header {
+            margin-bottom: 0.75rem;
+        }
+
+        .search-header h3 {
+            color: var(--text-primary);
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .search-controls .form-control {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-controls .btn {
+            padding: 0.5rem;
+            min-width: 40px;
+            height: 40px;
+        }
+
+        /* Drivers Grid */
+        .drivers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
+            padding: 0.5rem 0;
         }
 
         .driver-card {
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             padding: 1rem;
             cursor: pointer;
             transition: all 0.2s ease;
+            position: relative;
         }
 
         .driver-card:hover {
@@ -446,312 +1226,426 @@
         .driver-card.selected {
             border-color: var(--primary);
             background: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+
+        .driver-card.selected::before {
+            content: "✓";
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
         }
 
         .driver-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .driver-name {
             font-weight: 600;
             color: var(--text-primary);
+            font-size: 1.1rem;
         }
 
         .driver-status {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             padding: 0.2rem 0.5rem;
             border-radius: 12px;
             background: var(--success);
             color: white;
+            font-weight: 500;
         }
 
         .driver-details {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
             line-height: 1.4;
+            margin-bottom: 0.5rem;
+        }
+
+        .driver-details div {
+            margin-bottom: 0.2rem;
         }
 
         .driver-classes {
-            margin-top: 0.5rem;
-        }
-
-        .class-tag {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 12px;
             font-size: 0.8rem;
-            margin-right: 0.5rem;
-            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+            font-weight: 500;
         }
 
-        .event-registration-form {
+        .driver-classes strong {
+            color: var(--text-secondary);
+        }
+
+        /* Registration Summary Sidebar */
+        .registration-summary-sidebar {
+            position: sticky;
+            top: 1rem;
+            display: grid;
+            grid-template-columns: 350px 300px;
+            gap: 1.5rem;
+        }
+
+        .summary-card {
             background: var(--bg-secondary);
             border-radius: 8px;
-            padding: 2rem;
-            margin-top: 2rem;
+            padding: 1rem;
             border: 1px solid var(--border-color);
-            display: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .selected-driver-info {
-            background: var(--primary-light);
+        /* Right Column for Classes, Pricing, Actions */
+        .summary-right-column {
+            background: var(--bg-secondary);
             border-radius: 8px;
             padding: 1rem;
-            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-card h3 {
+            color: var(--text-primary);
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+            text-align: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        /* Selected Driver Summary */
+        .selected-driver-summary {
+            background: var(--primary-light);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
             border-left: 4px solid var(--primary);
         }
 
-        .class-selection {
-            margin-bottom: 1.5rem;
-        }
-
-        .class-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .class-option {
-            background: var(--bg-primary);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .class-option:hover {
-            border-color: var(--primary);
-        }
-
-        .class-option.selected {
-            border-color: var(--primary);
-            background: var(--primary-light);
-        }
-
-        /* Duplicate Detection Styles */
-        .duplicate-warning {
-            background: linear-gradient(135deg, #fff8e1, #ffecb3);
-            border: 2px solid #ff9800;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            animation: slideInDown 0.3s ease-out;
-            box-shadow: 0 4px 20px rgba(255, 152, 0, 0.2);
-            position: relative;
-            z-index: 10;
-            color: #333; /* Dark text for better contrast */
-        }
-
-        .duplicate-warning h4 {
-            color: #d84315; /* Dark orange for better readability */
-            margin: 0 0 0.5rem 0;
-            display: flex;
-            align-items: center;
-            font-weight: 600;
-        }
-
-        .duplicate-warning p {
-            color: #424242; /* Dark gray for better contrast */
-            margin: 0.5rem 0;
-        }
-
-        .duplicate-warning::before {
-            content: "🚨";
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: #ff9800;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 1.2rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .duplicate-warning h4 {
-            color: #e65100;
-            margin: 0 0 0.5rem 0;
-            display: flex;
-            align-items: center;
-        }
-
-        .duplicate-warning h4:before {
-            content: "⚠️";
-            margin-right: 0.5rem;
-        }
-
-        .potential-duplicates {
-            margin-top: 1rem;
-        }
-
-        .potential-duplicate-item {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .potential-duplicate-item:hover {
-            border-color: var(--primary);
-            background: var(--primary-light);
-        }
-
-        .potential-duplicate-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .duplicate-match-info {
+        .driver-info-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 0.5rem;
         }
 
-        .duplicate-driver-name {
-            font-weight: 600;
-            color: var(--text-primary);
+        .driver-info-header h4 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 1rem;
         }
 
-        .duplicate-match-reasons {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-top: 0.25rem;
-        }
-
-        .match-reason {
-            display: inline-block;
-            background: var(--warning);
-            color: white;
-            padding: 0.1rem 0.4rem;
-            border-radius: 10px;
-            margin-right: 0.25rem;
-            font-size: 0.7rem;
-        }
-
-        .match-confidence {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            padding: 0.1rem 0.4rem;
-            border-radius: 10px;
-            margin-right: 0.5rem;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .use-existing-btn {
+        .btn-edit-driver {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 0.3rem 0.6rem;
+            padding: 0.25rem 0.5rem;
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.8rem;
+            transition: background-color 0.2s;
         }
 
-        .use-existing-btn:hover {
+        .btn-edit-driver:hover {
             background: var(--primary-dark);
         }
 
-        /* Additional class option selected state */
-        .class-option.selected {
-            border-color: var(--primary) !important;
-            background: var(--primary-light) !important;
+        /* Class Selection */
+        .class-selection-section {
+            margin-bottom: 0.75rem;
         }
 
-        .class-option.selected h5 {
-            color: var(--primary);
+        .class-selection-section h4 {
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
         }
 
-        .class-option input[type="checkbox"] {
-            margin-right: 0.5rem;
+        .class-options-compact {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
         }
 
-        .class-name {
+        .class-option-compact {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: block;
+        }
+
+        .class-option-compact:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .class-option-compact.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+
+
+        .class-option-content {
+            text-align: center;
+        }
+
+        .class-name-compact {
             font-weight: 600;
             color: var(--text-primary);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
         }
 
-        .class-price {
+        .class-price-compact {
             color: var(--success);
             font-weight: 500;
-            margin-top: 0.25rem;
+            font-size: 0.85rem;
         }
 
-        .pricing-summary {
+        /* Pricing Summary */
+        .pricing-summary-compact {
             background: var(--bg-primary);
-            border-radius: 8px;
-            padding: 1rem;
+            border-radius: 6px;
+            padding: 0.5rem;
             border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
         }
 
-        .pricing-row {
+        .pricing-header h4 {
+            color: var(--text-primary);
+            margin: 0 0 0.4rem 0;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .pricing-breakdown-compact {
+            text-align: center;
+        }
+
+        .pricing-line-compact {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
+            font-size: 0.9rem;
         }
 
-        .pricing-total {
+        .pricing-total-compact {
             font-weight: 600;
             font-size: 1.1rem;
             border-top: 1px solid var(--border-color);
-            padding-top: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .driver-event-summary {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .summary-section {
-            background: var(--bg-primary);
-            padding: 1rem;
-            border-radius: 6px;
-            border-left: 4px solid var(--primary);
-        }
-
-        .summary-section h4 {
+            padding-top: 0.4rem;
+            margin-top: 0.4rem;
             color: var(--primary);
-            margin-bottom: 0.5rem;
         }
 
-        .summary-section p {
-            margin: 0.25rem 0;
-            color: var(--text-secondary);
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
         }
 
-        /* Driver Edit Section Styles */
-        .driver-edit-section {
-            background: var(--bg-primary);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border: 2px solid var(--primary);
+        .action-buttons .btn {
+            width: 100%;
+            padding: 0.6rem;
+            font-weight: 500;
         }
 
-        .driver-edit-section h4 {
-            color: var(--primary);
-            margin-bottom: 1rem;
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
         }
 
-        .driver-edit-section h4:before {
-            content: "✏️";
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .driver-selection-interface {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .registration-summary-sidebar {
+                position: static;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .summary-card,
+            .summary-right-column {
+                margin-top: 1rem;
+            }
+        }
+
+        @media (max-width: 1400px) {
+            .driver-selection-interface {
+                grid-template-columns: 650px 1fr;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .add-existing-container {
+                padding: 0.5rem;
+            }
+
+            .drivers-grid {
+                grid-template-columns: 1fr;
+                max-height: 400px;
+            }
+
+            .search-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-controls .btn {
+                align-self: flex-end;
+                width: fit-content;
+            }
+
+            .registration-summary-sidebar {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .modal-content {
+                margin: 0.5rem;
+                max-height: calc(100vh - 1rem);
+            }
+
+            .modal-header,
+            .modal-body,
+            .modal-footer {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .section-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .driver-card {
+                padding: 0.75rem;
+            }
+
+            .driver-name {
+                font-size: 1rem;
+            }
+
+            .summary-card {
+                padding: 1rem;
+            }
+        }
+
+        /* Driver Summary Styles */
+        .driver-summary div {
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+            line-height: 1.3;
+        }
+
+        .driver-summary strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .driver-info-row {
+            display: block;
+            margin-bottom: 0.4rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .driver-info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .driver-info-row > div {
+            margin-bottom: 0;
+        }
+
+        /* Edit Form Grid */
         .edit-form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -759,120 +1653,83 @@
             margin-bottom: 1rem;
         }
 
-        .edit-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            min-height: 44px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
         }
 
         .btn-outline {
             background: transparent;
             border: 2px solid var(--primary);
             color: var(--primary);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s ease;
         }
 
         .btn-outline:hover {
             background: var(--primary);
             color: white;
-        }
-
-        @media (max-width: 768px) {
-            .participant-details {
-                grid-template-columns: 1fr;
-            }
-            
-            .detail-row {
-                justify-content: space-between;
-            }
-            
-            .detail-row .value {
-                text-align: left;
-            }
-            
-            .header-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .header-actions select {
-                min-width: auto;
-            }
-
-            .existing-drivers-list {
-                grid-template-columns: 1fr;
-            }
-
-            .class-options {
-                grid-template-columns: 1fr;
-            }
-
-            .add-existing-container {
-                padding: 1rem;
-            }
-
-            .driver-event-summary {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            /* Modern Header Mobile Styles */
-            .page-header-modern {
-                padding: 1rem;
-            }
-
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .header-main h1 {
-                font-size: 1.5rem;
-            }
-
-            .event-selector {
-                max-width: 100%;
-            }
-
-            /* Modern Tabs Mobile Styles */
-            .tabs-modern {
-                flex-direction: column;
-                gap: 0.25rem;
-            }
-
-            .tab-btn-modern {
-                justify-content: flex-start;
-                padding: 0.75rem 1rem;
-            }
-
-            .tab-btn-modern span {
-                display: block;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .page-header-modern {
-                padding: 0.75rem;
-            }
-
-            .header-main h1 {
-                font-size: 1.3rem;
-            }
-
-            .subtitle-text {
-                font-size: 0.9rem;
-            }
-
-            .tab-btn-modern {
-                font-size: 0.85rem;
-                padding: 0.6rem 0.8rem;
-            }
         }
 
         /* Registration Status Styles */
@@ -1025,13 +1882,6 @@
             width: 100%;
         }
 
-        .tab-content {
-            margin-top: 0;
-        }
-
-        .tab-content.active {
-            animation: fadeIn 0.3s ease-out;
-        }
 
         @keyframes fadeIn {
             from {
@@ -1061,70 +1911,7 @@
     </style>
 </head>
 <body>
-    <nav class="main-nav">
-        <div class="nav-brand">
-            <div class="brand-icon">
-                <i class="fas fa-cogs"></i>
-            </div>
-            <div class="brand-text">
-                <span class="brand-main">EPC TECHNOLOGY</span>
-                <span class="brand-sub">PROJECT 17</span>
-            </div>
-        </div>
-        
-                <!-- Desktop Navigation -->
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li class="active"><a href="registration.html">Registration</a></li>
-            <li><a href="series.html">Series</a></li>
-            <li><a href="events.html">Events</a></li>
-            <li><a href="races.html">Races</a></li>
-            <li><a href="driver-profile.html">Drivers</a></li>
-            <li><a href="analytics.html">Analytics</a></li>
-            <li><a href="live-display.html">Live Display</a></li>
-        </ul>
-        
-        <!-- Mobile Hamburger Menu -->
-        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
-        
-        <!-- Mobile Navigation Menu -->
-        <div class="mobile-nav-menu">
-            <div class="mobile-nav-header">
-                <div class="mobile-nav-brand">
-                    <div class="brand-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <div class="brand-text">
-                        <span class="brand-main">EPC TECHNOLOGY</span>
-                        <span class="brand-sub">PROJECT 17</span>
-                    </div>
-                </div>
-                <button class="mobile-nav-close" aria-label="Close navigation menu">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <ul class="mobile-nav-links">
-                <li><a href="index.html">🏠 Home</a></li>
-                <li><a href="registration.html" class="active">📝 Registration</a></li>
-                <li><a href="series.html">🏆 Series</a></li>
-                <li><a href="events.html">📅 Events</a></li>
-                <li><a href="races.html">🏁 Races</a></li>
-                <li><a href="driver-profile.html">👥 Drivers</a></li>
-                <li><a href="analytics.html">📊 Analytics</a></li>
-                <li><a href="live-display.html">🖥️ Live Display</a></li>
-            </ul>
-            <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">25W32a09</div>
-            </div>
-        </div>
-        
-        <!-- Mobile Navigation Overlay -->
-        <div class="mobile-nav-overlay"></div>
-    </nav>
+    <!-- Navigation is now handled by sidebar-nav.js -->
 
     <main class="main-content">
         <!-- Performance Warning Banner -->
@@ -1139,21 +1926,19 @@
             </div>
         </div>
         
-        <!-- Modern Compact Header -->
-        <div class="page-header-modern">
-            <div class="header-content">
-                <div class="header-main">
-                    <h1>Event Registration</h1>
-                    <div class="header-subtitle">
-                        <span class="subtitle-text">Register drivers for racing events</span>
-                        <div class="event-selector">
-                            <div id="eventSelectContainer">
-                                <!-- Event combo box will be created here -->
-                            </div>
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">Event Registration</h1>
+                    <p class="hero-subtitle">Register drivers for racing events with professional organization and real-time management</p>
+                    <div class="event-selector">
+                        <div id="eventSelectContainer">
+                            <!-- Event combo box will be created here -->
                         </div>
                     </div>
                 </div>
-                <div class="header-actions">
+                <div class="hero-actions">
                     <button class="btn-utility" onclick="clearAllData()" title="Clear All Test Data">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -1161,142 +1946,10 @@
             </div>
         </div>
 
-        <!-- Modern Thin Tabs -->
-        <div class="tabs-modern">
-            <button class="tab-btn-modern active" onclick="switchTab('form')">
-                <i class="fas fa-edit"></i>
-                <span>Registration</span>
-            </button>
-            <button class="tab-btn-modern" onclick="switchTab('list')">
-                <i class="fas fa-users"></i>
-                <span>Participants</span>
-            </button>
-            <button class="tab-btn-modern" onclick="switchTab('addExisting')">
-                <i class="fas fa-user-plus"></i>
-                <span>Add Driver</span>
-            </button>
-        </div>
 
-        <div id="formView" class="tab-content active">
-            <!-- Skeleton loading for registration form -->
-            <div id="formSkeleton" class="skeleton-loading" style="display: none;">
-                <!-- Skeleton cards will be populated by JavaScript -->
-            </div>
+        <!-- Registration form will be loaded here -->
+        <div id="formView">
             <!-- Registration form will be loaded here -->
-        </div>
-
-        <div id="listView" class="tab-content">
-            <!-- Skeleton loading for participant list -->
-            <div id="participantsSkeleton" class="skeleton-loading" style="display: none;">
-                <!-- Skeleton cards will be populated by JavaScript -->
-            </div>
-            <!-- Participant list will be loaded here -->
-        </div>
-
-        <div id="addExistingView" class="tab-content">
-            <!-- Add existing driver interface -->
-            <div class="add-existing-container">
-                <div class="section-header">
-                    <h2>Add Existing Driver to Event</h2>
-                    <p>Select a driver who is already registered and add them to a new event</p>
-                </div>
-
-                <!-- Step 1: Event Selection -->
-                <div class="add-existing-step" id="eventSelectionStep">
-                    <div class="step-header">
-                        <h3>Step 1: Select Event</h3>
-                    </div>
-                    <div class="form-group">
-                        <label for="targetEvent">Choose the event to add driver to:</label>
-                        <div id="targetEventContainer">
-                            <!-- Combo box will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 2: Driver Selection -->
-                <div class="add-existing-step" id="driverSelectionStep" style="display: none;">
-                    <div class="step-header">
-                        <h3>Step 2: Select Driver</h3>
-                        <div class="driver-search">
-                            <input type="text" class="form-control" id="driverSearch" placeholder="Search drivers by name...">
-                        </div>
-                    </div>
-                    <div id="existingDriversList" class="existing-drivers-list">
-                        <!-- Drivers will be loaded here -->
-                    </div>
-                </div>
-
-                <!-- Step 3: Driver Information & Class Selection -->
-                <div class="add-existing-step" id="registrationStep" style="display: none;">
-                    <div class="step-header">
-                        <h3>Step 3: Review & Edit Driver Information</h3>
-                    </div>
-                    
-                    <div class="selected-driver-info" id="selectedDriverInfo">
-                        <!-- Selected driver info will appear here -->
-                    </div>
-                    
-                    <!-- Driver Edit Section -->
-                    <div class="driver-edit-section" id="driverEditSection" style="display: none;">
-                        <h4>Edit Driver Information</h4>
-                        <div class="edit-form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Full Name</label>
-                                <input type="text" class="form-control" id="editDriverName" name="editDriverName">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Nickname</label>
-                                <input type="text" class="form-control" id="editDriverNickname" name="editDriverNickname">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Racing Number</label>
-                                <input type="number" class="form-control" id="editDriverNumber" name="editDriverNumber" min="1" max="999">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" id="editDriverEmail" name="editDriverEmail">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="editDriverPhone" name="editDriverPhone">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Emergency Contact</label>
-                                <input type="text" class="form-control" id="editDriverEmergency" name="editDriverEmergency">
-                            </div>
-                        </div>
-                        <div class="edit-actions">
-                            <button type="button" class="btn btn-secondary" onclick="cancelEditDriver()">Cancel Edit</button>
-                            <button type="button" class="btn btn-primary" onclick="saveDriverEdits()">Save Changes</button>
-                        </div>
-                    </div>
-                    
-                    <div class="class-selection">
-                        <h4>Select Racing Classes</h4>
-                        <div id="classOptions" class="class-options">
-                            <!-- Class options will appear here -->
-                        </div>
-                    </div>
-                    
-                    <div class="pricing-summary" id="pricingSummary">
-                        <h4>Registration Summary</h4>
-                        <div id="pricingBreakdown">
-                            <!-- Pricing breakdown will appear here -->
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="resetAddExisting()">Start Over</button>
-                        <button type="button" class="btn btn-outline" onclick="editDriverInfo()" id="editDriverBtn">
-                            <i class="fas fa-edit"></i> Edit Driver Info
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="completeAddExisting()" id="completeBtn" disabled>
-                            Complete Registration
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
@@ -1313,15 +1966,47 @@
     <script src="modules/registration.js"></script>
     <script src="modules/series.js"></script>
     <!-- Mobile Navigation -->
-    <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
 
     <script>
         let registrationManager;
         let seriesManager;
         let dataManager;
 
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🔐 Registration page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🔐 Registration page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🔐 Registration page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🔐 Registration page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
         // Initialize managers
         document.addEventListener('DOMContentLoaded', async () => {
+            // Wait for authentication before initializing
+            await waitForAuthentication();
+            
             // Initialize data manager and load data
             dataManager = new DataManager();
             await dataManager.loadFromStorage();
@@ -1338,61 +2023,53 @@
             await loadEvents();
             
             await loadComponents();
+            
+            // Check for edit mode from URL parameters
+            await handleEditMode();
+            
+            // Create top tabs for registration page
+            // Ensure sidebar navigation is available
+            if (!window.sidebarNav) {
+                window.sidebarNav = new SidebarNavigation();
+            }
+            
         });
 
         // Load all components
         async function loadComponents() {
             await loadRegistrationForm();
-            await loadParticipantList();
         }
 
-        // Tab switching
-        window.switchTab = async function(tab) {
-            // Clean up previous tab state
-            if (typeof window.cleanupParticipantList === 'function') {
-                window.cleanupParticipantList();
-            }
-            window.participantListLoading = false;
-            
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn-modern').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(tab + 'View').classList.add('active');
-            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
-            
-            if (tab === 'list') {
-                // Prevent multiple rapid tab switches
-                if (window.participantListLoading) {
-                    console.log('🚫 Participant list already loading, skipping');
-                    return;
-                }
+        // Handle edit mode from URL parameters
+        async function handleEditMode() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const editParticipantId = urlParams.get('edit');
                 
-                window.participantListLoading = true;
-                
-                // Ensure DataManager has latest data before loading component
-                if (window.dataManager && typeof window.dataManager.loadFromStorage === 'function') {
-                    console.log('🔄 Refreshing DataManager before loading participant list...');
-                    await window.dataManager.loadFromStorage(['participants', 'events'], true); // Force refresh
-                }
-                
-                loadParticipantList().then(async () => {
-                    // After component is loaded, refresh the data if refresh function is available
-                    if (typeof window.refreshParticipantList === 'function') {
-                        console.log('🔄 Refreshing participant list data after tab switch...');
-                        await window.refreshParticipantList();
+                if (editParticipantId) {
+                    console.log('📝 Edit mode detected for participant:', editParticipantId);
+                    
+                    // Get the participant data
+                    const participant = dataManager.getParticipant(editParticipantId);
+                    if (!participant) {
+                        console.error('❌ Participant not found for edit:', editParticipantId);
+                        showToast('Participant not found for editing', 'error');
+                        return;
                     }
-                    window.participantListLoading = false;
-                }).catch(error => {
-                    console.error('Error loading participant list:', error);
-                    window.participantListLoading = false;
-                });
-            } else if (tab === 'addExisting') {
-                await loadAddExistingView();
+                    
+                    console.log('✅ Found participant for editing:', participant.name);
+                    
+                    // Navigate to the existing drivers page with edit parameter
+                    console.log('🔄 Redirecting to existing drivers page for editing...');
+                    window.location.href = `existing-drivers.html?edit=${editParticipantId}`;
+                }
+            } catch (error) {
+                console.error('❌ Error handling edit mode:', error);
+                showToast('Error loading edit mode', 'error');
             }
-        };
+        }
+
+
 
         // Load events for event registration
         async function loadEvents() {
@@ -1447,6 +2124,38 @@
                 registrationManager.currentEventId = eventId;
                 // Update the form with classes from the selected event's series
                 updateFormWithEventClasses(eventId);
+                
+                // If we're on the add existing driver tab, refresh the classes
+                const addExistingView = document.getElementById('addExistingView');
+                if (addExistingView && addExistingView.classList.contains('active')) {
+                    loadClassOptionsForEvent(eventId, document.getElementById('classOptions'));
+                    // Clear any previous driver selection since event changed
+                    if (window.selectedDriverId) {
+                        document.querySelectorAll('.driver-card').forEach(card => {
+                            card.classList.remove('selected');
+                        });
+                        const selectedDriverSummary = document.getElementById('selectedDriverSummary');
+                        const editDriverBtn = document.getElementById('editDriverBtn');
+                        if (selectedDriverSummary) selectedDriverSummary.style.display = 'none';
+                        if (editDriverBtn) editDriverBtn.style.display = 'none';
+                        window.selectedDriverId = null;
+                        window.selectedEventId = null;
+                        window.selectedClasses = [];
+                        updatePricingSummary();
+                    }
+                }
+            }
+        }
+
+        // Handle event selector change for add existing driver tab
+        function handleEventSelectorChange() {
+            const eventInput = document.getElementById('eventSelect-input');
+            if (eventInput && eventInput.getAttribute('data-selected-value')) {
+                const selectedEventId = eventInput.getAttribute('data-selected-value');
+                const addExistingView = document.getElementById('addExistingView');
+                if (addExistingView && addExistingView.classList.contains('active')) {
+                    loadClassOptionsForEvent(selectedEventId, document.getElementById('classOptions'));
+                }
             }
         }
 
@@ -1481,27 +2190,10 @@
             if (skeleton) skeleton.style.display = 'none';
         }
 
-        function showParticipantsSkeleton() {
-            console.log('🔄 Showing participants skeleton loading...');
-            const skeleton = document.getElementById('participantsSkeleton');
-            
-            if (skeleton) {
-                skeleton.innerHTML = UIComponents.createSkeletonCards(8, 'table');
-                skeleton.style.display = 'block';
-            }
-        }
-
-        function hideParticipantsSkeleton() {
-            console.log('✅ Hiding participants skeleton loading...');
-            const skeleton = document.getElementById('participantsSkeleton');
-            
-            if (skeleton) skeleton.style.display = 'none';
-        }
 
         // Load registration form component
         async function loadRegistrationForm() {
             try {
-                showFormSkeleton();
                 const formView = document.getElementById('formView');
                 const response = await fetch('components/registration-form.html');
                 const html = await response.text();
@@ -1544,10 +2236,8 @@
                 }
                 
                 console.log('Registration form loaded successfully');
-                hideFormSkeleton();
             } catch (error) {
                 console.error('Error loading registration form:', error);
-                hideFormSkeleton();
                 document.getElementById('formView').innerHTML = `
                     <div class="error-message">
                         <h3>Error Loading Registration Form</h3>
@@ -1657,24 +2347,31 @@
                 let seriesName = 'Event';
 
                 // First check if event has specific class settings configured
-                if (event.classSettings && event.classSettings.length > 0) {
-                    console.log('Using event-specific class settings for form:', event.classSettings);
-                    classes = event.classSettings.map(cls => ({
-                        name: cls.className || cls.name,
-                        fee: cls.fee
-                    }));
+                const enabledClasses = event.classSettings?.filter(cs => cs.enabled) || [];
+                
+                if (enabledClasses.length > 0) {
+                    console.log(`📋 Using ${enabledClasses.length} activated class settings for event ${event.name}`);
                     
-                    // Get series name for display
-                    if (event.seriesId) {
-                        const series = dataManager.getSeries(event.seriesId);
-                        if (series) {
-                            seriesName = series.name;
-                        }
+                    // Get series for class details
+                    const series = event.seriesId ? dataManager.getSeries(event.seriesId) : null;
+                    if (series) {
+                        seriesName = series.name;
+                        
+                        // Map enabled classes to their full details from series
+                        classes = enabledClasses.map(classSetting => {
+                            const seriesClass = series.sledClasses?.find(sc => sc.id === classSetting.classId);
+                            if (!seriesClass) return null;
+                            
+                            return {
+                                name: seriesClass.name,
+                                fee: classSetting.price || seriesClass.defaultFee
+                            };
+                        }).filter(Boolean);
                     }
                 }
-                // Fallback to series classes if no event-specific settings
+                // Fallback to series classes if no activated class settings
                 else if (event.seriesId) {
-                    console.log('No event-specific classes, using series classes for form');
+                    console.warn(`⚠️ Event ${event.name} has no activated class settings, using all series classes`);
                     const series = dataManager.getSeries(event.seriesId);
                     if (series && series.sledClasses) {
                         seriesName = series.name;
@@ -1832,7 +2529,8 @@
                 }
                 
                 // Refresh participant list if it's visible
-                if (document.getElementById('listView').classList.contains('active')) {
+                const listView = document.getElementById('listView');
+                if (listView && listView.classList.contains('active')) {
                     console.log('🔄 Refreshing participant list after registration...');
                     if (typeof window.refreshParticipantList === 'function') {
                         await window.refreshParticipantList();
@@ -1971,101 +2669,6 @@
         }
 
         // Load participant list component
-        async function loadParticipantList() {
-            try {
-                showParticipantsSkeleton();
-                const listView = document.getElementById('listView');
-                const response = await fetch('components/participant-list.html');
-                const html = await response.text();
-                
-                console.log('🔄 Loading participant list component...');
-                
-                // Create a temporary container to parse the HTML
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html;
-                
-                // Extract and load the HTML content (without scripts)
-                const htmlContent = tempDiv.querySelector('div') || tempDiv;
-                if (htmlContent) {
-                    listView.innerHTML = htmlContent.outerHTML;
-                } else {
-                    // Fallback: load all HTML but filter out script tags
-                    const htmlWithoutScript = html.replace(/<script[\s\S]*?<\/script>/gi, '');
-                    listView.innerHTML = htmlWithoutScript;
-                }
-                
-                console.log('✅ HTML content loaded');
-                
-                // Add any styles from the component
-                const styles = tempDiv.querySelectorAll('style');
-                styles.forEach(style => {
-                    if (!document.querySelector(`style[data-component="participant-list"]`)) {
-                        const newStyle = style.cloneNode(true);
-                        newStyle.setAttribute('data-component', 'participant-list');
-                        document.head.appendChild(newStyle);
-                    }
-                });
-                
-                console.log('✅ Styles added');
-                
-                // Extract and execute scripts
-                const scripts = tempDiv.querySelectorAll('script');
-                console.log(`🔧 Found ${scripts.length} script(s) to execute`);
-                
-                scripts.forEach((script, index) => {
-                    const newScript = document.createElement('script');
-                    newScript.textContent = script.textContent;
-                    newScript.setAttribute('data-component', 'participant-list');
-                    document.head.appendChild(newScript);
-                    console.log(`✅ Script ${index + 1} executed`);
-                });
-                
-                // Wait a moment for scripts to initialize, then check for functions
-                setTimeout(async () => {
-                    console.log('🔍 Checking for participant list functions...');
-                    console.log('   - window.initializeParticipantList:', typeof window.initializeParticipantList);
-                    console.log('   - initializeParticipantList:', typeof initializeParticipantList);
-                    
-                    // Check if component is already initialized
-                    if (window.participantListInitialized) {
-                        console.log('✅ Component already initialized, skipping manual initialization');
-                        return;
-                    }
-                    
-                    if (typeof window.initializeParticipantList === 'function') {
-                        console.log('✅ Calling window.initializeParticipantList()');
-                        await window.initializeParticipantList();
-                    } else if (typeof initializeParticipantList === 'function') {
-                        console.log('✅ Calling initializeParticipantList()');
-                        await initializeParticipantList();
-                    } else {
-                        console.log('⏳ Initialization function not found yet, component may be auto-initializing');
-                        // Don't show error, just wait a bit longer
-                        setTimeout(async () => {
-                            if (typeof window.initializeParticipantList === 'function') {
-                                console.log('✅ Found initialization function on retry');
-                                await window.initializeParticipantList();
-                            } else {
-                                console.error('❌ No initialization function found after retry!');
-                            }
-                        }, 1000);
-                    }
-                }, 500);
-                
-                console.log('✅ Participant list component loaded successfully');
-                hideParticipantsSkeleton();
-            } catch (error) {
-                console.error('❌ Error loading participant list:', error);
-                hideParticipantsSkeleton();
-                document.getElementById('listView').innerHTML = `
-                    <div class="error-message">
-                        <h3>Error Loading Participant List</h3>
-                        <p>There was an error loading the participant list. Please refresh the page.</p>
-                        <p>Error: ${error.message}</p>
-                    </div>
-                `;
-            }
-        }
 
         // OLD Load participant data into the list - DISABLED to prevent conflicts with new component
         async function loadParticipantData() {
@@ -2186,9 +2789,31 @@
 
         // Load add existing driver view
         async function loadAddExistingView() {
-            await loadAvailableEvents();
+            console.log('🔄 loadAddExistingView called');
+            
+            // No need to load events separately - uses header event selector
+            console.log('🔄 Loading existing drivers...');
             await loadExistingDrivers();
+            console.log('✅ Existing drivers loaded');
+            
+            console.log('🔄 Setting up add existing events...');
             setupAddExistingEvents();
+            console.log('✅ Add existing events setup complete');
+            
+            // Check if an event is selected in the header
+            const eventInput = document.getElementById('eventSelect-input');
+            if (eventInput && eventInput.getAttribute('data-selected-value')) {
+                const selectedEventId = eventInput.getAttribute('data-selected-value');
+                loadClassOptionsForEvent(selectedEventId, document.getElementById('classOptions'));
+            }
+            
+            // Set up event listener for event selector changes
+            setTimeout(() => {
+                const eventInput = document.getElementById('eventSelect-input');
+                if (eventInput) {
+                    eventInput.addEventListener('change', handleEventSelectorChange);
+                }
+            }, 500);
         }
 
         // Setup event handlers for add existing functionality
@@ -2219,13 +2844,37 @@
             });
         }
 
+        // Clear driver search and show all drivers
+        function clearDriverSearch() {
+            const searchInput = document.getElementById('driverSearch');
+            if (searchInput) {
+                searchInput.value = '';
+                filterDriversList('');
+            }
+        }
+
         // Select a driver for registration
         window.selectDriver = function(driverId) {
+            console.log('🔍 selectDriver called with driverId:', driverId);
+            
             try {
-                const targetEventInput = document.getElementById('targetEvent-input');
-                const targetEventId = targetEventInput ? targetEventInput.getAttribute('data-selected-value') : '';
-                if (!targetEventId) {
-                    alert('Please select an event first');
+                // Get event from header event selector or from stored selection (for duplicate resolution)
+                let eventId = '';
+                const eventInput = document.getElementById('eventSelect-input');
+                
+                if (window.selectedEventForExistingDriver && window.selectedEventForExistingDriver.id) {
+                    // Use stored event selection from duplicate warning
+                    eventId = window.selectedEventForExistingDriver.id;
+                    console.log('✅ Using stored event selection for duplicate resolution:', eventId);
+                } else if (eventInput && eventInput.getAttribute('data-selected-value')) {
+                    // Use header event selector
+                    eventId = eventInput.getAttribute('data-selected-value');
+                    console.log('✅ Using header event selector:', eventId);
+                }
+                
+                if (!eventId) {
+                    console.error('❌ No event selected');
+                    alert('Please select an event in the page header first');
                     return;
                 }
 
@@ -2236,20 +2885,41 @@
                 }
 
                 // Check if driver is already registered for this event
-                const event = dataManager.getEvent(targetEventId);
+                const event = dataManager.getEvent(eventId);
                 if (event && event.participants && event.participants.includes(driverId)) {
                     alert(`${driver.name} is already registered for this event.`);
                     return;
                 }
 
                 // Update UI
+                console.log('🔄 Updating UI for driver selection...');
                 document.querySelectorAll('.driver-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-                document.querySelector(`[onclick="selectDriver('${driverId}')"]`).classList.add('selected');
+                    card.classList.remove('selected');
+                });
+                
+                const targetCard = document.querySelector(`[onclick="selectDriver('${driverId}')"]`);
+                if (targetCard) {
+                    targetCard.classList.add('selected');
+                    console.log('✅ Driver card selected in UI');
+                } else {
+                    console.warn('⚠️ Could not find driver card to select');
+                }
 
-                // Show registration step
-                showRegistrationStep(driver, targetEventId);
+                // Show driver summary and load classes
+                console.log('🔄 Showing driver summary and loading classes...');
+                showDriverSummary(driver, eventId);
+                loadClassOptionsForEvent(eventId, document.getElementById('classOptions'));
+                
+                // Store selected driver and event
+                window.selectedDriverId = driverId;
+                window.selectedEventId = eventId;
+                console.log('✅ Driver and event stored:', { driverId, eventId });
+                
+                // Clear stored event selection after use (for duplicate resolution)
+                if (window.selectedEventForExistingDriver) {
+                    delete window.selectedEventForExistingDriver;
+                    console.log('🧹 Cleared stored event selection');
+                }
                 
             } catch (error) {
                 console.error('Error selecting driver:', error);
@@ -2257,28 +2927,56 @@
             }
         };
 
-        // Show registration step with driver and event info
-        function showRegistrationStep(driver, eventId) {
-            const registrationStep = document.getElementById('registrationStep');
-            const selectedDriverInfo = document.getElementById('selectedDriverInfo');
-            const classOptions = document.getElementById('classOptions');
+        // Show driver summary in the sidebar
+        function showDriverSummary(driver, eventId) {
+            const selectedDriverSummary = document.getElementById('selectedDriverSummary');
+            const driverSummaryContent = document.getElementById('driverSummaryContent');
+            const editDriverBtn = document.getElementById('editDriverBtn');
             
-            // Show selected driver info
-            selectedDriverInfo.innerHTML = `
-                <h4>Selected Driver: ${driver.name}${driver.nickname ? ` (${driver.nickname})` : ''}</h4>
+            // Show selected driver info with more details
+            driverSummaryContent.innerHTML = `
                 <div class="driver-summary">
-                    <div><strong>Email:</strong> ${driver.contact?.email || driver.contactEmail || 'N/A'}</div>
-                    <div><strong>Phone:</strong> ${driver.contact?.phone || driver.contactPhone || 'N/A'}</div>
-                    ${driver.racingNumber ? `<div><strong>Racing Number:</strong> #${driver.racingNumber}</div>` : ''}
+                    <div class="driver-info-row">
+                        <div><strong>Full Name:</strong> ${driver.name}</div>
+                    </div>
+                    <div class="driver-info-row">
+                        <div><strong>Nickname:</strong> ${driver.nickname || 'None'}</div>
+                    </div>
+                    <div class="driver-info-row">
+                        <div><strong>Racing Number:</strong> ${driver.racingNumber ? `#${driver.racingNumber}` : 'None'}</div>
+                    </div>
+                    <div class="driver-info-row">
+                        <div><strong>Date of Birth:</strong> ${driver.dateOfBirth ? new Date(driver.dateOfBirth).toLocaleDateString() : 'Not specified'}</div>
+                    </div>
+                    <div class="driver-info-row">
+                        <div><strong>Email:</strong> ${driver.contact?.email || driver.contactEmail || 'Not specified'}</div>
+                    </div>
+                    <div class="driver-info-row">
+                        <div><strong>Phone:</strong> ${driver.contact?.phone || driver.contactPhone || 'Not specified'}</div>
+                    </div>
+                    <div class="driver-info-row">
+                        <div><strong>Emergency Contact:</strong> ${driver.contact?.emergency || 'Not specified'}</div>
+                    </div>
+                    ${driver.sponsors && driver.sponsors.length > 0 ? `
+                        <div class="driver-info-row">
+                            <div><strong>Sponsors:</strong> ${driver.sponsors.join(', ')}</div>
+                        </div>
+                    ` : ''}
+                    ${driver.selectedClasses && driver.selectedClasses.length > 0 ? `
+                        <div class="driver-info-row">
+                            <div><strong>Current Classes:</strong> ${driver.selectedClasses.join(', ')}</div>
+                        </div>
+                    ` : ''}
                 </div>
             `;
             
-            // Load available classes for the event
-            loadClassOptionsForEvent(eventId, classOptions);
+            // Show the summary and edit button
+            selectedDriverSummary.style.display = 'block';
+            editDriverBtn.style.display = 'inline-block';
             
-            registrationStep.style.display = 'block';
-            window.selectedDriverId = driver.id;
-            window.selectedEventId = eventId;
+            // Reset class selections
+            window.selectedClasses = [];
+            updatePricingSummary();
         }
 
         // Load class options for the selected event
@@ -2290,7 +2988,7 @@
                         <div class="no-event-selected">
                             <div class="instruction-icon">📅</div>
                             <h4>Select an Event First</h4>
-                            <p>Please select an event above to see available racing classes.</p>
+                            <p>Please select an event in the page header to see available racing classes.</p>
                         </div>
                     `;
                     window.selectedClasses = [];
@@ -2312,18 +3010,30 @@
 
                 let classes = [];
 
-                // First check if event has specific class settings configured
-                if (event.classSettings && event.classSettings.length > 0) {
-                    console.log('Using event-specific class settings:', event.classSettings);
-                    classes = event.classSettings.map(cls => ({
-                        name: cls.className || cls.name,
-                        fee: cls.fee || 50,
-                        description: cls.description || 'Racing class'
-                    }));
+                // First check if event has specific class settings configured - only show enabled classes
+                const enabledClasses = event.classSettings?.filter(cs => cs.enabled) || [];
+                
+                if (enabledClasses.length > 0) {
+                    console.log(`📋 Using ${enabledClasses.length} activated class settings for event ${event.name}`);
+                    
+                    // Get series for class details
+                    const series = event.seriesId ? dataManager.getSeries(event.seriesId) : null;
+                    if (series && series.sledClasses) {
+                        classes = enabledClasses.map(classSetting => {
+                            const seriesClass = series.sledClasses.find(sc => sc.id === classSetting.classId);
+                            if (!seriesClass) return null;
+                            
+                            return {
+                                name: seriesClass.name,
+                                fee: classSetting.price || seriesClass.defaultFee,
+                                description: seriesClass.description || 'Racing class'
+                            };
+                        }).filter(Boolean);
+                    }
                 }
-                // Fallback to series classes if no event-specific settings
+                // Fallback to series classes if no activated class settings
                 else if (event.seriesId) {
-                    console.log('No event-specific classes, falling back to series classes');
+                    console.warn(`⚠️ Event ${event.name} has no activated class settings, falling back to all series classes`);
                     const series = dataManager.getSeries(event.seriesId);
                     if (series && series.sledClasses) {
                         classes = series.sledClasses.map(cls => ({
@@ -2350,43 +3060,53 @@
                 }
 
                 const classOptionsHtml = classes.map(cls => `
-                    <div class="class-option" onclick="toggleClassSelection('${cls.name}', ${cls.fee})">
-                        <h5>${cls.name}</h5>
-                        <div class="class-fee">$${cls.fee.toFixed(2)}</div>
-                        <div class="class-description">${cls.description || ''}</div>
+                    <div class="class-option-compact" onclick="toggleClassSelectionCompact('${cls.name}', ${cls.fee})">
+                        <div class="class-option-content">
+                            <div class="class-name-compact">${cls.name}</div>
+                            <div class="class-price-compact">$${cls.fee.toFixed(2)}</div>
+                        </div>
                     </div>
                 `).join('');
 
                 container.innerHTML = classOptionsHtml;
-                window.selectedClasses = [];
-                updatePricingSummary();
+                
+                // Initialize checkboxes with current selections
+                if (window.selectedClasses) {
+                    window.selectedClasses.forEach(cls => {
+                        const checkbox = document.getElementById(`class_${cls.name.replace(/\s+/g, '_')}`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
                 
             } catch (error) {
                 console.error('Error loading class options:', error);
-                container.innerHTML = '<p>Error loading classes. Using default options.</p>';
+                container.innerHTML = '<p>Error loading classes. Please try again.</p>';
             }
         }
 
-        // Toggle class selection
-        window.toggleClassSelection = function(className, fee) {
-            const classOption = event.target.closest('.class-option');
-            if (!classOption) return;
-
+        // Toggle class selection (compact version)
+        window.toggleClassSelectionCompact = function(className, fee) {
             if (!window.selectedClasses) window.selectedClasses = [];
 
             const existingIndex = window.selectedClasses.findIndex(c => c.name === className);
+            const classOption = event.target.closest('.class-option-compact');
             
             if (existingIndex >= 0) {
                 // Remove class
                 window.selectedClasses.splice(existingIndex, 1);
-                classOption.classList.remove('selected');
+                if (classOption) classOption.classList.remove('selected');
             } else {
                 // Add class
                 window.selectedClasses.push({ name: className, fee: fee });
-                classOption.classList.add('selected');
+                if (classOption) classOption.classList.add('selected');
             }
             
             updatePricingSummary();
+        };
+
+        // Legacy function for backward compatibility
+        window.toggleClassSelection = function(className, fee) {
+            window.toggleClassSelectionCompact(className, fee);
         };
 
         // Update pricing summary
@@ -2396,8 +3116,12 @@
             
             if (!window.selectedClasses || window.selectedClasses.length === 0) {
                 pricingSummary.innerHTML = `
-                    <h4>Registration Summary</h4>
-                    <p>Select at least one racing class to continue.</p>
+                    <div class="pricing-header">
+                        <h4>Total Cost</h4>
+                    </div>
+                    <div class="pricing-breakdown-compact">
+                        <p style="text-align: center; color: var(--text-secondary); margin: 0;">Select at least one racing class to continue.</p>
+                    </div>
                 `;
                 completeBtn.disabled = true;
                 return;
@@ -2405,16 +3129,24 @@
             
             const total = window.selectedClasses.reduce((sum, cls) => sum + cls.fee, 0);
             const breakdown = window.selectedClasses.map(cls => 
-                `<div class="pricing-line">${cls.name}: $${cls.fee.toFixed(2)}</div>`
+                `<div class="pricing-line-compact">
+                    <span>${cls.name}</span>
+                    <span>$${cls.fee.toFixed(2)}</span>
+                </div>`
             ).join('');
 
             pricingSummary.innerHTML = `
-                <h4>Registration Summary</h4>
-                <div class="pricing-breakdown">
+                <div class="pricing-header">
+                    <h4>Total Cost</h4>
+                </div>
+                <div class="pricing-breakdown-compact">
                     ${breakdown}
-                    <div class="pricing-total"><strong>Total: $${total.toFixed(2)}</strong></div>
+                    <div class="pricing-total-compact">
+                        <span>Total</span>
+                        <span>$${total.toFixed(2)}</span>
                     </div>
-                `;
+                </div>
+            `;
             
             completeBtn.disabled = false;
         }
@@ -2435,21 +3167,34 @@
                     return;
                 }
                 
-                // 🔧 FIXED: Update the participant's class information AND register for event with classes
+                // 🔧 FIXED: Update the participant's class information with event-specific tracking
                 const selectedClassNames = window.selectedClasses.map(c => c.name);
                 const totalNewFee = window.selectedClasses.reduce((sum, cls) => sum + cls.fee, 0);
                 
+                // Maintain event-specific class mappings
+                const eventClasses = driver.eventClasses || {};
+                eventClasses[window.selectedEventId] = selectedClassNames;
+                
+                // Aggregate all unique classes across all events for the participant's profile
+                const allClassesSet = new Set(driver.selectedClasses || []);
+                selectedClassNames.forEach(className => allClassesSet.add(className));
+                const allClassesArray = Array.from(allClassesSet);
+                
                 const updatedDriver = {
                     ...driver,
-                    selectedClasses: selectedClassNames,
+                    selectedClasses: allClassesArray, // All classes ever registered (aggregate)
+                    eventClasses: eventClasses, // Event-specific class mapping: { eventId: [classes] }
                     totalFee: (driver.totalFee || 0) + totalNewFee,
                     // Make sure to update both old and new class field names for compatibility
-                    sledClasses: selectedClassNames,
-                    sledClass: selectedClassNames.length > 0 ? selectedClassNames[0] : null
+                    sledClasses: allClassesArray,
+                    sledClass: allClassesArray.length > 0 ? allClassesArray[0] : null
                 };
                 
-                console.log(`🔧 Updating driver ${driver.name} classes from [${(driver.selectedClasses || driver.sledClasses || []).join(', ')}] to [${selectedClassNames.join(', ')}] for event ${event.name}`);
-                console.log('🔧 Updated driver data:', updatedDriver);
+                console.log(`🔧 Updating driver ${driver.name} for event ${event.name}`);
+                console.log('- Previous all classes:', driver.selectedClasses || []);
+                console.log('- Classes for this event:', selectedClassNames);
+                console.log('- Updated all classes:', allClassesArray);
+                console.log('- Event classes mapping:', eventClasses);
                 
                 // Update participant in data manager FIRST
                 const updateSuccess = await dataManager.updateParticipant(window.selectedDriverId, updatedDriver);
@@ -2466,12 +3211,10 @@
                 if (success) {
                     alert(`Successfully registered ${driver.name} for ${event.name}!\nClasses: ${updatedDriver.selectedClasses.join(', ')}`);
                     await resetAddExisting();
-                    // Refresh data
-                    await loadAvailableEvents();
-                    await loadExistingDrivers();
                     
                     // Refresh participant list if it's visible
-                    if (document.getElementById('listView').classList.contains('active')) {
+                    const listView = document.getElementById('listView');
+                    if (listView && listView.classList.contains('active')) {
                         if (typeof window.loadParticipantData === 'function') {
                             window.loadParticipantData();
                         }
@@ -2486,31 +3229,38 @@
             }
         };
 
-        // Reset the add existing form
-        window.resetAddExisting = async function() {
-            const targetEventInput = document.getElementById('targetEvent-input');
-            if (targetEventInput) {
-                targetEventInput.value = '';
-                targetEventInput.setAttribute('data-selected-value', '');
-            }
+        // Clear driver search
+        window.clearDriverSearch = function() {
             document.getElementById('driverSearch').value = '';
-            document.getElementById('driverSelectionStep').style.display = 'none';
-            resetRegistrationStep();
-            await loadExistingDrivers();
+            filterDriversList('');
         };
 
-        // Reset registration step
-        function resetRegistrationStep() {
-            document.getElementById('registrationStep').style.display = 'none';
-            document.getElementById('driverEditSection').style.display = 'none';
-            window.selectedDriverId = null;
-            window.selectedEventId = null;
-            window.selectedClasses = [];
+        // Reset the add existing form
+        window.resetAddExisting = async function() {
+            // Clear driver search
+            document.getElementById('driverSearch').value = '';
             
-            // Clear selections
+            // Clear driver selection
             document.querySelectorAll('.driver-card').forEach(card => {
                 card.classList.remove('selected');
             });
+            
+            // Hide driver summary
+            document.getElementById('selectedDriverSummary').style.display = 'none';
+            document.getElementById('editDriverBtn').style.display = 'none';
+            
+            // Reset class selections
+            window.selectedClasses = [];
+            updatePricingSummary();
+            
+            // Reload drivers
+            await loadExistingDrivers();
+        };
+
+        // Reset registration step (legacy - no longer used)
+        function resetRegistrationStep() {
+            // This function is no longer used in the new interface
+            console.log('resetRegistrationStep called - no longer needed');
         }
 
         // Edit driver information
@@ -2526,18 +3276,27 @@
             document.getElementById('editDriverNickname').value = driver.nickname || '';
             document.getElementById('editDriverNumber').value = driver.racingNumber || '';
             document.getElementById('editDriverEmail').value = driver.contact?.email || driver.contactEmail || '';
-            document.getElementById('editDriverPhone').value = driver.contact?.phone || driver.contactPhone || '';
+            const phoneField = document.getElementById('editDriverPhone');
+            phoneField.value = driver.contact?.phone || driver.contactPhone || '';
+            
+            // Format the phone number if it's just digits
+            if (phoneField.value && window.formatExistingPhoneNumber) {
+                window.formatExistingPhoneNumber(phoneField);
+            }
             document.getElementById('editDriverEmergency').value = driver.contact?.emergency || '';
 
-            // Show edit section
-            document.getElementById('driverEditSection').style.display = 'block';
-            document.getElementById('editDriverBtn').style.display = 'none';
+            // Show modal
+            document.getElementById('driverEditModal').style.display = 'flex';
         };
 
-        // Cancel editing driver information
+        // Close driver edit modal
+        window.closeDriverEditModal = function() {
+            document.getElementById('driverEditModal').style.display = 'none';
+        };
+
+        // Cancel editing driver information (legacy)
         window.cancelEditDriver = function() {
-            document.getElementById('driverEditSection').style.display = 'none';
-            document.getElementById('editDriverBtn').style.display = 'inline-block';
+            window.closeDriverEditModal();
         };
 
         // Save driver edits
@@ -2623,9 +3382,13 @@
 
         // Load existing drivers
         async function loadExistingDrivers() {
+            console.log('🔄 loadExistingDrivers called');
+            
             try {
                 const participantsResult = dataManager ? await dataManager.getParticipants({}, 1, 1000) : { participants: [] };
                 const participants = participantsResult.participants || participantsResult; // Handle both paginated and direct array responses
+                
+                console.log('📊 Found participants:', participants.length);
                 
                 // Sort participants alphabetically by name
                 const sortedParticipants = participants.sort((a, b) => 
@@ -2633,6 +3396,7 @@
                 );
                 
                 const driversList = document.getElementById('existingDriversList');
+                console.log('🔍 Drivers list element:', driversList);
                 
                 if (participants.length === 0) {
                     driversList.innerHTML = `
@@ -2650,7 +3414,7 @@
                     const classesText = Array.isArray(classes) ? classes.join(', ') : (classes || 'N/A');
                     
                     return `
-                        <div class="driver-card" onclick="selectDriver('${driver.id}')">
+                        <div class="driver-card" onclick="console.log('Driver card clicked for ${driver.name}'); selectDriver('${driver.id}')">
                             <div class="driver-card-header">
                                 <div class="driver-name">${driver.name}${driver.nickname ? ` (${driver.nickname})` : ''}</div>
                                 <div class="driver-status">${driver.status || 'Active'}</div>
@@ -2668,6 +3432,8 @@
                 }).join('');
                 
                 driversList.innerHTML = driversHtml;
+                console.log('✅ Drivers HTML populated, length:', driversHtml.length);
+                console.log('🔍 First few characters:', driversHtml.substring(0, 200));
                 
             } catch (error) {
                 console.error('Error loading existing drivers:', error);
@@ -2683,7 +3449,7 @@
                     return;
                 }
 
-                if (confirm(`Are you sure you want to delete ${participant.name}? This action cannot be undone.`)) {
+                window.confirmDelete(participant.name, async () => {
                         await dataManager.deleteParticipant(participantId);
                         
                         // Refresh the participant list
@@ -2696,11 +3462,11 @@
                         await initializeParticipantList();
                     }
                     
-                    alert(`${participant.name} has been deleted successfully`);
-                }
+                    Helpers.showToast(`${participant.name} has been deleted successfully`, 'success');
+                });
             } catch (error) {
                 console.error('Error deleting participant:', error);
-                alert('Error deleting participant. Please try again.');
+                Helpers.showToast('Error deleting participant. Please try again.', 'error');
             }
         };
 
@@ -2750,6 +3516,7 @@
         };
 
         // Duplicate Detection Functions
+        // Rule: EPC17_PROMPTS.md v1 - improved duplicate detection sensitivity and performance
         async function checkForDuplicateDrivers(formData) {
             if (!dataManager) return [];
             
@@ -2762,7 +3529,7 @@
                 let totalScore = 0;
                 let maxScore = 0;
                 
-                // Check name similarity (exact match or very similar)
+                // Check name similarity (exact match or very similar) - more sensitive
                 if (formData.name && participant.name) {
                     maxScore += 1;
                     const nameSimilarity = calculateStringSimilarity(
@@ -2772,33 +3539,76 @@
                     if (nameSimilarity > 0.95) {
                         matchReasons.push('Exact Name');
                         totalScore += 1;
-                    } else if (nameSimilarity > 0.85) {
+                    } else if (nameSimilarity > 0.75) { // Lowered from 0.85 to be more sensitive
                         matchReasons.push('Very Similar Name');
                         totalScore += 0.9;
+                    } else if (nameSimilarity > 0.65) { // Added medium similarity detection
+                        matchReasons.push('Similar Name');
+                        totalScore += 0.7;
                     }
                 }
                 
-                // Check email match (exact match only)
+                // Check email match (exact match and similar patterns)
                 const formEmail = formData.email || formData.contactEmail;
                 const participantEmail = participant.contact?.email || participant.contactEmail;
                 if (formEmail && participantEmail) {
                     maxScore += 1;
-                    if (formEmail.toLowerCase().trim() === participantEmail.toLowerCase().trim()) {
-                        matchReasons.push('Email');
+                    const cleanFormEmail = formEmail.toLowerCase().trim();
+                    const cleanParticipantEmail = participantEmail.toLowerCase().trim();
+                    
+                    if (cleanFormEmail === cleanParticipantEmail) {
+                        matchReasons.push('Exact Email');
                         totalScore += 1;
+                    } else {
+                        // Check for similar email patterns (same domain, similar username)
+                        const formEmailParts = cleanFormEmail.split('@');
+                        const participantEmailParts = cleanParticipantEmail.split('@');
+                        
+                        if (formEmailParts.length === 2 && participantEmailParts.length === 2) {
+                            // Same domain with similar username
+                            if (formEmailParts[1] === participantEmailParts[1]) {
+                                const usernameSimilarity = calculateStringSimilarity(formEmailParts[0], participantEmailParts[0]);
+                                if (usernameSimilarity > 0.7) {
+                                    matchReasons.push('Similar Email');
+                                    totalScore += 0.8;
+                                }
+                            }
+                        }
                     }
                 }
                 
-                // Check phone match (exact match only)
+                // Check phone match (exact match and similar patterns)
                 const formPhone = formData.phone || formData.contactPhone;
                 const participantPhone = participant.contact?.phone || participant.contactPhone;
                 if (formPhone && participantPhone) {
                     maxScore += 1;
                     const cleanFormPhone = cleanPhoneNumber(formPhone);
                     const cleanParticipantPhone = cleanPhoneNumber(participantPhone);
-                    if (cleanFormPhone && cleanParticipantPhone && cleanFormPhone === cleanParticipantPhone) {
-                        matchReasons.push('Phone');
-                        totalScore += 1;
+                    
+                    if (cleanFormPhone && cleanParticipantPhone) {
+                        if (cleanFormPhone === cleanParticipantPhone) {
+                            matchReasons.push('Exact Phone');
+                            totalScore += 1;
+                        } else {
+                            // Check for similar phone patterns (same area code, similar numbers)
+                            if (cleanFormPhone.length >= 10 && cleanParticipantPhone.length >= 10) {
+                                // Check if area code and first few digits match
+                                const formAreaCode = cleanFormPhone.substring(0, 3);
+                                const participantAreaCode = cleanParticipantPhone.substring(0, 3);
+                                
+                                if (formAreaCode === participantAreaCode) {
+                                    // Check similarity of remaining digits
+                                    const formRemaining = cleanFormPhone.substring(3);
+                                    const participantRemaining = cleanParticipantPhone.substring(3);
+                                    const remainingSimilarity = calculateStringSimilarity(formRemaining, participantRemaining);
+                                    
+                                    if (remainingSimilarity > 0.7) {
+                                        matchReasons.push('Similar Phone');
+                                        totalScore += 0.8;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -2814,8 +3624,8 @@
                 // If any matches found and confidence is high enough, add to potential duplicates
                 if (matchReasons.length > 0 && totalScore > 0) {
                     const confidence = maxScore > 0 ? totalScore / maxScore : 0;
-                    // Show if confidence is at least 50% or we have multiple exact matches
-                    if (confidence >= 0.5 || (matchReasons.includes('Exact Name') && matchReasons.length >= 2)) {
+                    // Show if confidence is at least 40% (lowered from 50%) or we have exact matches
+                    if (confidence >= 0.4 || matchReasons.some(reason => reason.includes('Exact'))) {
                         potentialDuplicates.push({
                             participant: participant,
                             matchReasons: matchReasons,
@@ -2843,16 +3653,16 @@
             const maxLen = Math.max(len1, len2);
             const minLen = Math.min(len1, len2);
             
-            // For longer names, allow more character differences
+            // For longer names, allow more character differences - more sensitive
             let maxAllowedDistance;
             if (maxLen <= 5) {
-                maxAllowedDistance = 1; // Very short names: only 1 character difference
+                maxAllowedDistance = 2; // Very short names: allow 2 character differences
             } else if (maxLen <= 10) {
-                maxAllowedDistance = 2; // Short names: 2 character differences
+                maxAllowedDistance = 3; // Short names: 3 character differences
             } else if (maxLen <= 15) {
-                maxAllowedDistance = 3; // Medium names: 3 character differences
+                maxAllowedDistance = 4; // Medium names: 4 character differences
             } else {
-                maxAllowedDistance = Math.floor(maxLen * 0.2); // Long names: 20% of length
+                maxAllowedDistance = Math.floor(maxLen * 0.25); // Long names: 25% of length
             }
             
             // If length difference is more than allowed, it's not similar enough
@@ -2887,6 +3697,52 @@
             return phone.replace(/\D/g, ''); // Remove all non-digits
         }
         
+        // Phone number formatting function - automatically formats as user types
+        function formatPhoneNumber(input) {
+            // Remove all non-digit characters
+            let value = input.value.replace(/\D/g, '');
+            
+            // Limit to 10 digits
+            if (value.length > 10) {
+                value = value.substring(0, 10);
+            }
+            
+            // Format the phone number automatically
+            let formattedValue = '';
+            if (value.length > 0) {
+                formattedValue = '(' + value.substring(0, 3);
+                if (value.length > 3) {
+                    formattedValue += ') ' + value.substring(3, 6);
+                    if (value.length > 6) {
+                        formattedValue += '-' + value.substring(6, 10);
+                    }
+                }
+            }
+            
+            // Update the input value
+            input.value = formattedValue;
+        }
+        
+        // Function to format phone number when loading existing data
+        function formatExistingPhoneNumber(phoneInput) {
+            if (phoneInput && phoneInput.value) {
+                // If the value is already formatted, don't reformat
+                if (phoneInput.value.includes('(') || phoneInput.value.includes('-')) {
+                    return;
+                }
+                // If it's just digits, format it
+                if (/^\d+$/.test(phoneInput.value)) {
+                    formatPhoneNumber(phoneInput);
+                }
+            }
+        }
+        
+        // Function to get clean phone number for form submission
+        function getCleanPhoneNumber(phoneInput) {
+            if (!phoneInput || !phoneInput.value) return '';
+            return phoneInput.value.replace(/\D/g, '');
+        }
+        
         // Display duplicate warning
         function showDuplicateWarning(potentialDuplicates, targetContainerId = 'formView') {
             // Remove existing warnings first
@@ -2900,28 +3756,33 @@
             
             const warningHtml = `
                 <div class="duplicate-warning" id="duplicateWarning">
-                    <h4>⚠️ Potential Duplicate Drivers Found</h4>
-                    <p><strong>Warning:</strong> The information you entered matches existing drivers in our database. Please review the matches below:</p>
+                    <div class="duplicate-warning-header">
+                        <h4>⚠️ Potential Duplicate Drivers Found</h4>
+                        <button class="duplicate-warning-close" onclick="removeDuplicateWarnings()" title="Dismiss">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <p class="duplicate-warning-subtitle">The information you entered matches existing drivers. Review the matches below:</p>
                     <div class="potential-duplicates">
                         ${potentialDuplicates.map(duplicate => {
                             const participant = duplicate.participant;
                             const reasons = duplicate.matchReasons;
                             const confidence = Math.round(duplicate.confidence * 100);
                             return `
-                                <div class="potential-duplicate-item" onclick="selectExistingDriver('${participant.id}')">
+                                <div class="potential-duplicate-item">
                                     <div class="duplicate-match-info">
-                                        <div>
+                                        <div class="duplicate-driver-details" onclick="console.log('Driver details clicked for ${participant.name}'); selectExistingDriver('${participant.id}')">
                                             <div class="duplicate-driver-name">${participant.name}${participant.nickname ? ` (${participant.nickname})` : ''}</div>
                                             <div class="duplicate-match-reasons">
                                                 <span class="match-confidence">${confidence}% match</span>
                                                 ${reasons.map(reason => `<span class="match-reason">${reason}</span>`).join('')}
                                             </div>
-                                            <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
+                                            <div class="duplicate-contact-info">
                                                 📧 ${participant.contact?.email || participant.contactEmail || 'N/A'} | 
                                                 📞 ${participant.contact?.phone || participant.contactPhone || 'N/A'}
                                             </div>
                                         </div>
-                                        <button class="use-existing-btn" onclick="event.stopPropagation(); selectExistingDriver('${participant.id}')">
+                                        <button class="use-existing-btn" onclick="console.log('Use This Driver button clicked for ${participant.name}'); console.log('About to call selectExistingDriver with ID: ${participant.id}'); selectExistingDriver('${participant.id}'); console.log('selectExistingDriver call completed');">
                                             <i class="fas fa-user-plus"></i> Use This Driver
                                         </button>
                                     </div>
@@ -2929,14 +3790,8 @@
                             `;
                         }).join('')}
                     </div>
-                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 193, 7, 0.15); border-radius: 6px; border-left: 4px solid #ff9800; color: #333;">
-                        <strong style="color: #d84315;">💡 What should you do?</strong>
-                        <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0; color: #424242;">
-                            <li>If this is the same driver, click "Use This Driver" to add them to the current event</li>
-                            <li>If this is a different driver with similar information, you can continue with registration</li>
-                            <li>You can edit the existing driver's information after selecting them</li>
-                        </ul>
-                        <button onclick="removeDuplicateWarnings()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                    <div class="duplicate-warning-actions">
+                        <button class="btn-continue-new" onclick="removeDuplicateWarnings()">
                             <i class="fas fa-plus"></i> Continue as New Driver
                         </button>
                     </div>
@@ -2944,7 +3799,7 @@
             `;
             
             // Insert warning between tabs and form content
-            const tabs = document.querySelector('.tabs');
+            const tabs = document.querySelector('.tabs-modern');
             if (tabs && tabs.nextSibling) {
                 // Insert after tabs
                 tabs.parentNode.insertBefore(document.createRange().createContextualFragment(warningHtml), tabs.nextSibling);
@@ -2972,53 +3827,57 @@
         
         // Select existing driver (for duplicate resolution)
         window.selectExistingDriver = function(driverId) {
+            console.log('🚨🚨🚨 selectExistingDriver FUNCTION CALLED! 🚨🚨🚨');
+            console.log('🔍 selectExistingDriver called with driverId:', driverId);
+            
             const participant = dataManager.getParticipant(driverId);
             if (!participant) {
+                console.error('Driver not found for ID:', driverId);
                 alert('Driver not found.');
                 return;
             }
             
-            // Switch to "Add Existing Driver" tab
-            switchTab('addExisting');
+            console.log('✅ Found participant:', participant.name);
             
-            // Set up the form with this driver
-            setTimeout(() => {
-                // Pre-select the current event if one is selected
-                const eventInput = document.getElementById('eventSelect-input');
-                const targetEventInput = document.getElementById('targetEvent-input');
-                
-                if (eventInput && eventInput.getAttribute('data-selected-value') && targetEventInput) {
-                    const selectedEventId = eventInput.getAttribute('data-selected-value');
-                    const selectedEventLabel = eventInput.value;
-                    
-                    // Set the combo box value
-                    targetEventInput.value = selectedEventLabel;
-                    targetEventInput.setAttribute('data-selected-value', selectedEventId);
-                    
-                    // Trigger the selection callback
-                    onTargetEventSelect(selectedEventId, selectedEventLabel);
-                    
-                    // Wait for drivers to load, then select this driver
-                    setTimeout(() => {
-                        selectDriver(driverId);
-                    }, 500);
-                }
-                
-                showToast(`Switched to existing driver: ${participant.name}`, 'info');
-            }, 200);
+            // Get the selected event from the form
+            const eventInput = document.getElementById('eventSelect-input');
+            let eventParam = '';
+            
+            if (eventInput && eventInput.getAttribute('data-selected-value')) {
+                const selectedEventId = eventInput.getAttribute('data-selected-value');
+                eventParam = `&event=${encodeURIComponent(selectedEventId)}`;
+                console.log('✅ Event selected:', selectedEventId);
+            } else {
+                console.warn('⚠️ No event selected, will need to select event on existing-drivers page');
+            }
+            
+            // Navigate to existing-drivers.html with driver and event parameters
+            const url = `existing-drivers.html?driver=${encodeURIComponent(driverId)}${eventParam}`;
+            console.log('🔄 Navigating to:', url);
+            
+            showToast(`Redirecting to existing driver: ${participant.name}`, 'info');
+            window.location.href = url;
             
             removeDuplicateWarnings();
         };
+        
+        // Test function to verify it's accessible
+        console.log('🔍 Testing selectExistingDriver function availability...');
+        console.log('🔍 window.selectExistingDriver:', typeof window.selectExistingDriver);
+        console.log('🔍 selectExistingDriver:', typeof selectExistingDriver);
         
         // Set up form monitoring for duplicate detection
         function setupDuplicateDetection() {
             console.log('🔍 Setting up duplicate detection...');
             
-            // Debounced version for input events - 1.5 second delay to reduce spam
-            const debouncedCheckFormForDuplicates = Helpers.debounce(checkFormForDuplicates, 1500);
+            // Debounced version for input events - 3 second delay to reduce spam and flashing
+            const debouncedCheckFormForDuplicates = Helpers.debounce(checkFormForDuplicates, 3000);
             
-            // Only monitor the name field - that's the most important one
+            // Monitor name, email, and phone fields for duplicates
             const nameField = document.querySelector('input[name="name"]');
+            const emailField = document.querySelector('input[name="contact.email"]');
+            const phoneField = document.querySelector('input[name="contact.phone"]');
+            
             if (nameField) {
                 // Remove any existing listeners to prevent duplicates
                 nameField.removeEventListener('blur', checkFormForDuplicates);
@@ -3028,13 +3887,45 @@
                 nameField.addEventListener('blur', checkFormForDuplicates);
                 nameField.addEventListener('input', debouncedCheckFormForDuplicates);
                 
-                console.log('✅ Set up duplicate detection for name field only');
-            } else {
-                console.log('⚠️ Name field not found for duplicate detection');
+                console.log('✅ Set up duplicate detection for name field');
             }
             
-            console.log('🔍 Duplicate detection setup complete (name field only)');
+            if (emailField) {
+                emailField.removeEventListener('blur', checkFormForDuplicates);
+                emailField.addEventListener('blur', checkFormForDuplicates);
+                console.log('✅ Set up duplicate detection for email field');
+            }
+            
+            if (phoneField) {
+                phoneField.removeEventListener('blur', checkFormForDuplicates);
+                phoneField.addEventListener('blur', checkFormForDuplicates);
+                
+                // Also set up phone formatting
+                phoneField.addEventListener('input', function() {
+                    if (window.formatPhoneNumber) {
+                        window.formatPhoneNumber(this);
+                    }
+                });
+                
+                // Format existing phone number if present
+                if (phoneField.value && window.formatExistingPhoneNumber) {
+                    window.formatExistingPhoneNumber(phoneField);
+                }
+                
+                console.log('✅ Set up duplicate detection and formatting for phone field');
+            }
+            
+            console.log('🔍 Duplicate detection setup complete (name, email, phone fields)');
         }
+        
+        // State management for duplicate detection to prevent unnecessary re-renders
+        let lastDuplicateCheck = {
+            name: '',
+            email: '',
+            phone: '',
+            result: null,
+            timestamp: 0
+        };
         
         // Check current form data for duplicates
         function checkFormForDuplicates() {
@@ -3042,15 +3933,47 @@
                 const formData = gatherCurrentFormData();
                 console.log('🔍 Checking for duplicates with form data:', formData);
                 
-                // Check if we have at least a name (most important field) - require more characters
-                if (!formData.name || formData.name.length < 3) {
-                    console.log('🔍 Not enough data for duplicate check (need at least 3 characters in name)');
+                // Check if we have enough data for duplicate detection
+                const hasName = formData.name && formData.name.length >= 2;
+                const hasEmail = formData.email && formData.email.length >= 5;
+                const hasPhone = formData.phone && formData.phone.length >= 7;
+                
+                if (!hasName && !hasEmail && !hasPhone) {
+                    console.log('🔍 Not enough data for duplicate check (need at least 2 chars in name, 5 in email, or 7 in phone)');
                     removeDuplicateWarnings();
+                    return;
+                }
+                
+                // Check if we've already done this exact check recently (within 5 seconds)
+                const now = Date.now();
+                const isSameCheck = (
+                    lastDuplicateCheck.name === formData.name &&
+                    lastDuplicateCheck.email === (formData.email || '') &&
+                    lastDuplicateCheck.phone === (formData.phone || '') &&
+                    (now - lastDuplicateCheck.timestamp) < 5000
+                );
+                
+                if (isSameCheck && lastDuplicateCheck.result !== null) {
+                    console.log('🔍 Using cached duplicate check result');
+                    if (lastDuplicateCheck.result.length > 0) {
+                        showDuplicateWarning(lastDuplicateCheck.result);
+                    } else {
+                        removeDuplicateWarnings();
+                    }
                     return;
                 }
                 
                 checkForDuplicateDrivers(formData).then(potentialDuplicates => {
                     console.log('🔍 Found potential duplicates:', potentialDuplicates);
+                    
+                    // Cache the result
+                    lastDuplicateCheck = {
+                        name: formData.name,
+                        email: formData.email || '',
+                        phone: formData.phone || '',
+                        result: potentialDuplicates,
+                        timestamp: now
+                    };
                     
                     if (potentialDuplicates.length > 0) {
                         showDuplicateWarning(potentialDuplicates);
@@ -3066,10 +3989,28 @@
             }
         }
 
+        // Clear duplicate detection cache
+        function clearDuplicateCache() {
+            lastDuplicateCheck = {
+                name: '',
+                email: '',
+                phone: '',
+                result: null,
+                timestamp: 0
+            };
+            console.log('🔍 Cleared duplicate detection cache');
+        }
+        
         // Make duplicate detection functions globally available
         window.checkFormForDuplicates = checkFormForDuplicates;
         window.removeDuplicateWarnings = removeDuplicateWarnings;
         window.showDuplicateWarning = showDuplicateWarning;
+        window.clearDuplicateCache = clearDuplicateCache;
+        
+        // Make phone formatting functions globally available
+        window.formatPhoneNumber = formatPhoneNumber;
+        window.formatExistingPhoneNumber = formatExistingPhoneNumber;
+        window.getCleanPhoneNumber = getCleanPhoneNumber;
 
         // Manual trigger for duplicate detection (can be called from registration form)
         window.triggerDuplicateCheck = function() {
@@ -3110,7 +4051,7 @@
                 await originalDeleteParticipant(participantId);
             } else {
                 // Fallback implementation
-                if (confirm('Are you sure you want to delete this participant? This action cannot be undone.')) {
+                window.confirmDelete('this participant', async () => {
                     try {
                         if (window.dataManager) {
                             await window.dataManager.deleteParticipant(participantId);
@@ -3122,13 +4063,13 @@
                                 await loadParticipantData();
                             }
                             
-                            alert('Participant deleted successfully!');
+                            Helpers.showToast('Participant deleted successfully!', 'success');
                         }
                     } catch (error) {
                         console.error('Error deleting participant:', error);
-                        alert('Error deleting participant. Please try again.');
+                        Helpers.showToast('Error deleting participant. Please try again.', 'error');
                     }
-                }
+                });
             }
         };
 
@@ -3195,6 +4136,21 @@
             // Wait a bit for data to load, then check
             setTimeout(checkPerformanceWarning, 2000);
         }
+        
+        // Test function availability after page loads
+        setTimeout(() => {
+            console.log('🔍 Testing function availability after page load...');
+            console.log('🔍 window.selectExistingDriver:', typeof window.selectExistingDriver);
+            console.log('🔍 window.switchTab:', typeof window.switchTab);
+            console.log('🔍 window.selectDriver:', typeof window.selectDriver);
+            
+            // Test if we can call the function
+            if (typeof window.selectExistingDriver === 'function') {
+                console.log('✅ selectExistingDriver function is available');
+            } else {
+                console.error('❌ selectExistingDriver function is NOT available');
+            }
+        }, 3000);
 
     </script>
     

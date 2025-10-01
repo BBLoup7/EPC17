@@ -1,147 +1,96 @@
-
-# EPC17 - Prompting Playbook (PromptSpec.md)
+# EPC17 - Prompting Playbook (PromptSpec.md) - ENHANCED for Cursor
 
 ## Purpose
-This document defines how to design, version, test, and store prompts for EPC17 features that use LLMs (race recaps, voice lines, summaries). Prompts are treated as code assets: versioned, tested, and auditable.
+Define how to design, version, test, and store prompts for EPC17 features that use LLMs (race recaps, voice lines, summaries, code generation). Treat prompts as code assets: versioned, tested, auditable, and stored in-repo so Cursor can reference them directly.
 
 ## Prompt Versioning & Storage
-- Store prompts in `/llm/prompts/<feature>/<version>/PromptSpec.md`
+- Store prompts in `/llm/prompts/<feature>/v<major>/PromptSpec.md`
 - Each PromptSpec includes:
   - Goal
   - Return format (strict schema)
   - Context definition (what inputs to supply)
   - Warnings & guardrails
   - Example input(s) and gold output(s)
-  - Evaluation rubric
-  - Engine settings (temperature, max_tokens, etc.)
-  - Changelog
+  - Evaluation rubric & tests
+  - Engine settings (temperature, max_tokens, model hints)
+  - Changelog (commit hash + notes)
 
-## PromptSpec Template
-```
-# PromptSpec: <feature>-v<major>
-
-Goal:
-  One-sentence description of objective.
-
-ReturnFormat:
-  JSON schema or explicit Markdown layout.
-
-Context:
-  List all fields required in the context object. Example:
-    { eventMeta, classResults[], laneUsageStats, incidents[] }
-
-Warnings:
-  - Do not invent driver names or positions.
-  - If required data missing, return needs_data: true.
-
-ExampleInput:
-  { ... }  // real small sample
-
-GoldOutput:
-  { ... }  // desired output for the example input
-
-EngineSettings:
-  temperature: 0.2
-  top_p: 0.95
-  max_tokens: 400
-
-Evaluation:
-  - Exactness: 0-10
-  - Grounding: 0-10
-  - Format adherence: 0-5
-  - Tone/style: 0-5
-  - Safety: 0-5
-
-ScoreThreshold: 25
-```
-
-## Recommended Prompting Patterns
-1. **System+Role**: Use a clear system prompt to lock the role and output behavior.
-   - Example: "You are EPC17's race editor. Output must match the ReturnFormat exactly."
-2. **Strict Return Format**: Prefer JSON objects for machine consumption.
-3. **Few-shot**: Include 1 or 2 gold examples to enforce style/format.
-4. **Step-back / Decompose**:
-   - Ask LLM to produce a short ‘‘analysis’’ block (e.g., top 3 stats) and then produce the final prose/JSON.
-   - Use analysis only for internal validation; do not expose to end users unless flagged for debugging.
-5. **Low Temperature for Facts**: ≤ 0.3 for recap/record tasks.
-
-## Race Recap - PromptSpec (example)
-```
-# PromptSpec: race-recap-v1
+## PromptSpec Template (cursor-friendly)
+PromptSpec: <feature>-v<major>
 
 Goal:
-  Produce a concise race recap for a class with highlights and stats.
+One-sentence description of objective.
 
 ReturnFormat:
-  JSON:
-  {
-    "class": string,
-    "headline": string,
-    "highlights": [string],
-    "topTimes": [{"driverId": uuid, "driverName": string, "time": number}],
-    "laneBias": {"laneId": string, "bias": number},
-    "anomalies": [string],
-    "needs_data": boolean
-  }
+JSON schema or explicit Markdown layout.
 
 Context:
-  {
-    "eventMeta": { "eventId": uuid, "trackId": uuid, "date": ISOString },
-    "classResults": [{ "position": int, "driverId": uuid, "driverName": string, "time": number, "laneId": string }],
-    "laneUsage": [{ "laneId": string, "usageCount": int }],
-    "incidents": [{ "type": string, "desc": string, "drivers": [uuid] }]
-  }
+List all fields required in the context object. Example:
+{ eventMeta, classResults[], laneUsageStats, incidents[] }
 
 Warnings:
-  - Do not invent missing times or drivers.
-  - If driver name not present, return needs_data: true and list missing fields.
-  - Return valid JSON only.
+
+Do not invent driver names or positions.
+
+If required data missing, return needs_data: true.
 
 ExampleInput:
-  (attach small concrete JSON here in the repo)
+{ ... } // small real sample
 
 GoldOutput:
-  (attach gold JSON output for the example input)
+{ ... } // desired output for the example input
 
 EngineSettings:
-  temperature: 0.2
-  max_tokens: 300
+temperature: 0.15
+top_p: 0.9
+max_tokens: 400
+model_hint: "Auto; prefer deterministic models (low-temp) for facts, GPT-5 when complexity > X"
 
 Evaluation:
-  - Grounding: must reference only fields from Context
-  - Format compliance: strict JSON validator
-```
+
+Exactness: 0-10
+
+Grounding: 0-10
+
+Format adherence: 0-5
+
+Tone/style: 0-5
+
+Safety: 0-5
+
+ScoreThreshold: 27
+
+### Recommended Prompting Patterns (for Cursor)
+1. **System+Role**: Use a strict system prompt to lock role and behavior.
+2. **Strict Return Format**: Prefer JSON for machine consumption; include a short `analysis` object for debugging.
+3. **Few-shot**: Include 1–2 gold examples in PromptSpec to enforce style/format.
+4. **Step-back / Decompose**: Ask LLM to produce a short analysis block (2-4 bullets) and then the final output.
+5. **Low Temperature for Facts**: ≤ 0.25 for recap/record tasks. Higher temp ok for creative tasks.
+6. **Model Hints**: Use Auto mode; override with GPT-5 for complex frontend logic or Claude for critical deterministic fixes.
 
 ## Hallucination Guardrails
-- If any required contextual field is missing, the model must set `needs_data: true` and include `missing_fields: [...]`.
-- Do not allow free-form speculation on driver motivations, sponsorships, or legal matters.
-- Strip Personally Identifiable Information before sending to third-party APIs.
+- If any required field is missing, `needs_data: true` and `missing_fields: [...]` MUST be returned.
+- No invention of driver names, times, or identifiers.
+- Strip or flag PII and sensitive info before sending outside repo.
+- For creative outputs, enforce explicit safe boundaries.
 
-## Prompt Testing
-- Unit-test prompts by executing them against stored examples and verifying:
-  - exact JSON schema match
-  - critical fields match expected values
-- Run 3 runs with the same prompt at target temperature to verify consistency
-- Attach the best-run output as the canonical example in `examples/`
+## Prompt Testing & Validation (in-Cursor)
+- Keep `/testing/prompts/<feature>/` with example input JSONs and `validate_prompt.sh`.
+- For code-generation prompts, require generated unit tests and run them automatically.
+- Use low-variance settings (temp 0.0–0.2) for validation runs.
 
-## Logging & Traceability
-- For every LLM call, log:
-  - prompt version (path and commit hash)
-  - input context (redact PII)
-  - response
-  - engine settings
-  - timestamp
-- Keep logs searchable for audits and debugging
-
-## Operational Notes
-- Use local mock LLM or small deterministic model for dev tests
-- Gate access to production LLM keys; store in secrets manager
-- For voice generation (if used later), maintain separate PromptSpec tied to voice persona and audio safety checks
-
-## Example Minimal Prompt (system + user)
+## Example Minimal Prompt
 System:
-"You are EPC17's race editor. Only return JSON matching the requested schema. If required data is missing, set needs_data: true."
+"You are EPC17's race editor. Only return JSON matching the schema. If required data missing, set needs_data: true."
 
 User:
 "Generate a race recap using the following context: <JSON>"
 
+## Prompt Recipes – Frontend JS Example
+Goal: Create a `TaskBoard` React component with drag-and-drop.
+
+System:
+"You are a senior React dev. Follow EPC17_RULES.mdc. Return patch + tests."
+
+User:
+"Build a Kanban TaskBoard with 3 columns (Todo, Doing, Done). Data shape: [{id,title,status}]. Include keyboard-accessible drag-and-drop and Jest tests verifying movement + ARIA attributes."

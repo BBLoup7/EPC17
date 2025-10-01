@@ -1,72 +1,208 @@
 <template id="series-form">
     <div class="series-form">
         <div class="form-header">
-            <h2 id="formTitle">Create New Series</h2>
+            <div class="header-content">
+                <h2 id="formTitle">Create New Series</h2>
+                <p class="form-subtitle">Set up a new racing series with custom classes and seasons</p>
+            </div>
             <button class="btn btn-close" id="closeForm">
                 <i class="fas fa-times"></i>
             </button>
         </div>
 
-        <form id="seriesForm">
-            <div class="form-group">
-                <label for="seriesName">Series Name *</label>
-                <input type="text" id="seriesName" name="name" required 
-                       placeholder="e.g., Winter Championship 2024"
-                       autocomplete="off">
+        <form id="seriesForm" class="modern-form">
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Basic Information
+                </h3>
+                
+                <div class="form-group">
+                    <label for="seriesName">Series Name *</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-trophy input-icon"></i>
+                        <input type="text" id="seriesName" name="name" required 
+                               placeholder="e.g., Winter Championship 2024"
+                               autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="seriesDescription">Description</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-align-left input-icon"></i>
+                        <textarea id="seriesDescription" name="description" rows="3" 
+                                  placeholder="Brief description of the series, goals, and format..."></textarea>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="seriesDescription">Description (Optional)</label>
-                <textarea id="seriesDescription" name="description" rows="3" 
-                          placeholder="Brief description of the series..."></textarea>
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Season Management
+                </h3>
+                <p class="section-description">Create seasons to organize events and track performance over time periods.</p>
+                
+                <div id="seasonsContainer">
+                    <div class="seasons-empty">
+                        <p>No seasons created yet. Add your first season to get started.</p>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-secondary btn-add" onclick="addSeasonRow()">
+                    <i class="fas fa-plus"></i> Add Season
+                </button>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-flag-checkered"></i>
+                    Racing Classes
+                </h3>
+                <p class="section-description">Configure racing classes for this series. Default fees can be customized for each event.</p>
+                
+                <div id="classesContainer">
+                    <div class="classes-empty">
+                        <p>No racing classes defined yet. Add classes to organize participants.</p>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-secondary btn-add" onclick="addClassRow()">
+                    <i class="fas fa-plus"></i> Add Class
+                </button>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-book"></i>
+                    Rules & Regulations
+                </h3>
+                <p class="section-description">Define the rules and regulations that govern this series.</p>
+                
+                <div class="form-group">
+                    <label for="rules">Series Rules</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-gavel input-icon"></i>
+                        <textarea id="rules" name="rules" rows="4" 
+                                  placeholder="Enter series rules and regulations..."></textarea>
+                    </div>
+                </div>
             </div>
 
             <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="saveBtn">Create Series</button>
+                <button type="button" class="btn btn-secondary" id="cancelBtn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" id="saveBtn">
+                    <i class="fas fa-save"></i> Create Series
+                </button>
             </div>
         </form>
 
         <div class="form-note">
-            <p><strong>Note:</strong> After creating the series, you can add classes, set rules, and configure other settings.</p>
+            <div class="note-icon">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <div class="note-content">
+                <h4>Pro Tip</h4>
+                <p>After creating the series, you can add classes, set rules, and configure other settings. You can also edit these details later.</p>
+            </div>
         </div>
     </div>
 
     <style>
         .series-form {
             background: var(--bg-secondary);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
             padding: 2rem;
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
+            border: 1px solid var(--border-color);
         }
 
         .form-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .header-content {
+            flex: 1;
         }
 
         .form-header h2 {
-            margin: 0;
+            margin: 0 0 0.5rem 0;
             color: var(--accent-primary);
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .form-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.4;
         }
 
         .btn-close {
-            background: none;
-            border: none;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
             color: var(--text-secondary);
             cursor: pointer;
-            font-size: 1.5rem;
-            padding: 0.5rem;
-            border-radius: 4px;
-            transition: color 0.2s;
+            font-size: 1.25rem;
+            padding: 0.75rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-close:hover {
             color: var(--text-primary);
+            border-color: var(--accent-primary);
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .modern-form {
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 0 0.75rem 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section-title i {
+            color: var(--accent-primary);
+            font-size: 1rem;
+        }
+
+        .section-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0 0 1rem 0;
+            line-height: 1.4;
         }
 
         .form-group {
@@ -75,95 +211,177 @@
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             color: var(--text-primary);
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            z-index: 1;
         }
 
         input[type="text"],
         textarea {
             width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--text-secondary);
-            border-radius: 4px;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             font-size: 1rem;
-            background-color: var(--bg-primary);
+            background-color: var(--bg-secondary);
             color: var(--text-primary);
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        textarea {
+            padding-left: 1rem;
+            resize: vertical;
+            min-height: 100px;
         }
 
         input[type="text"]:focus,
         textarea:focus {
             outline: none;
             border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            background-color: var(--bg-primary);
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 80px;
+        .btn-add {
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            color: var(--text-secondary);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-add:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(74, 144, 226, 0.1);
         }
 
         .form-actions {
             display: flex;
-            justify-content: flex-end;
             gap: 1rem;
+            justify-content: flex-end;
             margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
         }
 
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .form-actions .btn {
+            padding: 1rem 2rem;
             font-size: 1rem;
-            font-weight: 500;
-            transition: background-color 0.2s;
+            font-weight: 600;
+            border-radius: 12px;
+            min-width: 140px;
+            transition: all 0.3s ease;
         }
 
-        .btn-secondary {
-            background: var(--text-secondary);
-            color: var(--bg-primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--text-primary);
-        }
-
-        .btn-primary {
-            background: var(--accent-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-secondary);
+        .form-actions .btn:hover {
+            transform: translateY(-2px);
         }
 
         .form-note {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            background: var(--bg-primary);
-            border-left: 4px solid var(--accent-primary);
-            border-radius: 4px;
+            display: flex;
+            gap: 1rem;
+            background: linear-gradient(135deg, rgba(74, 144, 226, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid var(--accent-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
         }
 
-        .form-note p {
+        .note-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .note-content h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .note-content p {
             margin: 0;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
 
+        /* Responsive Design */
         @media (max-width: 768px) {
             .series-form {
-                padding: 1rem;
+                padding: 1.5rem;
                 margin: 1rem;
             }
-            
+
+            .form-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .btn-close {
+                align-self: flex-end;
+            }
+
+            .form-section {
+                padding: 1.5rem;
+            }
+
             .form-actions {
                 flex-direction: column;
             }
-            
-            .btn {
+
+            .form-actions .btn {
                 width: 100%;
+                min-width: auto;
+            }
+
+            .form-note {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .series-form {
+                padding: 1rem;
+                margin: 0.5rem;
+            }
+
+            .form-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .form-section {
+                padding: 1rem;
             }
         }
     </style>

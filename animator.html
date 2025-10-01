@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPC TECHNOLOGY - Animator / Commentator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(ellipse at center, rgba(255, 140, 66, 0.1) 0%, transparent 50%),
+                        radial-gradient(ellipse at 20% 80%, rgba(74, 144, 226, 0.1) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                        var(--bg-primary);
+        }
+
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--accent-orange-warm);
+            border-radius: 50%;
+            animation: float 25s infinite linear;
+            opacity: 0.4;
+        }
+
+        .particle:nth-child(2n) {
+            background: var(--accent-primary);
+            animation-duration: 30s;
+        }
+
+        .particle:nth-child(3n) {
+            background: var(--accent-purple);
+            animation-duration: 35s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.4;
+            }
+            90% {
+                opacity: 0.4;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Sports Broadcast Header */
+        .broadcast-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(135deg, rgba(26, 26, 58, 0.95), rgba(10, 10, 46, 0.95));
+            border-bottom: 2px solid var(--accent-orange-warm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .home-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
+        }
+        
+        .home-button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 140, 66, 0.5);
+        }
+        
+        .event-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% {
+                filter: drop-shadow(0 0 10px rgba(255, 140, 66, 0.3));
+            }
+            100% {
+                filter: drop-shadow(0 0 15px rgba(74, 144, 226, 0.4));
+            }
+        }
+        
+        .race-timer {
+            font-variant-numeric: tabular-nums;
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-primary));
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(255, 140, 66, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .race-timer .t {
+            animation: timerTick 1s ease-in-out infinite;
+            font-size: 1.1rem;
+        }
+        
+        @keyframes timerTick {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+        }
+        
+        .race-timer .label { 
+            font-weight: 500; 
+            color: rgba(255, 255, 255, 0.9); 
+            margin-right: 0.5rem; 
+            font-size: 0.9rem;
+        }
+
+        /* Main Layout */
+        .animator-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            grid-template-rows: 1fr;
+            gap: 1rem;
+            padding: 1rem;
+            margin-top: 60px;
+            height: calc(100vh - 60px);
+            box-sizing: border-box;
+        }
+
+        /* Enhanced Panels */
+        .panel {
+            background: linear-gradient(135deg, rgba(26, 26, 58, 0.9), rgba(10, 10, 46, 0.9));
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-primary), var(--accent-purple));
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border-color: var(--accent-orange-warm);
+        }
+        
+        .panel h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Left: Next 3 Races */
+        .next-races-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .mini-race { 
+            background: rgba(255,255,255,0.06); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 0.75rem; 
+            transition: all 0.3s ease;
+        }
+        .mini-race:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--accent-orange-warm);
+            transform: translateY(-1px);
+        }
+        .mini-race .top { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 0.5rem; 
+        }
+        .mini-race .title { 
+            font-weight: 600; 
+            color: var(--text-primary); 
+            font-size: 0.9rem; 
+        }
+        .mini-race .meta { 
+            color: var(--text-secondary); 
+            font-size: 0.75rem; 
+            background: rgba(255, 140, 66, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+        .mini-race .lanes { 
+            display: flex; 
+            gap: 0.3rem; 
+            flex-wrap: wrap; 
+        }
+        .mini-race .lanes.horizontal {
+            flex-direction: row;
+            justify-content: space-between;
+        }
+        .mini-race .lanes.vertical {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .lane-horizontal, .lane-vertical { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.4rem; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 6px; 
+            padding: 0.4rem 0.6rem; 
+            flex: 1;
+            min-width: 0;
+        }
+        .lane-vertical {
+            flex-direction: row;
+            justify-content: space-between;
+        }
+        .lane-number { 
+            background: var(--accent-primary); 
+            color: white; 
+            padding: 0.2rem 0.5rem; 
+            border-radius: 4px; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            min-width: 24px;
+            text-align: center;
+        }
+        .driver-name { 
+            font-size: 0.8rem; 
+            color: var(--text-primary); 
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Right: Previous 2 Races */
+        .prev-races { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.75rem; 
+        }
+        .prev-card { 
+            background: rgba(255,255,255,0.06); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 0.75rem; 
+            opacity: 0; 
+            transform: translateY(8px); 
+            transition: all 320ms ease;
+        }
+        .prev-card.show { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+        .prev-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--accent-orange-warm);
+            transform: translateY(-1px);
+        }
+        .prev-card .head { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 0.5rem; 
+        }
+        .prev-card .head .title { 
+            font-weight: 600; 
+            color: var(--text-primary); 
+            font-size: 0.95rem; 
+        }
+        .prev-card .head .time { 
+            color: var(--text-secondary); 
+            font-size: 0.75rem; 
+            background: rgba(255, 140, 66, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+        .prev-card .lanes { 
+            display: flex; 
+            flex-direction: column;
+            gap: 0.3rem; 
+        }
+        .prev-card .p { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 6px; 
+            padding: 0.4rem 0.6rem; 
+            transition: all 0.3s ease;
+        }
+        .prev-card .p:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        .prev-card .p.winner {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 66, 0.2));
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .prev-card .p.second {
+            background: linear-gradient(135deg, rgba(192, 192, 192, 0.2), rgba(255, 140, 66, 0.1));
+            border: 1px solid rgba(192, 192, 192, 0.3);
+        }
+        .prev-card .p.third {
+            background: linear-gradient(135deg, rgba(205, 127, 50, 0.2), rgba(255, 140, 66, 0.1));
+            border: 1px solid rgba(205, 127, 50, 0.3);
+        }
+        .prev-card .position { 
+            color: var(--accent-orange-warm); 
+            font-weight: 700; 
+            font-size: 0.9rem;
+            min-width: 30px;
+            text-align: center;
+        }
+        .prev-card .driver-info {
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            flex: 1;
+            margin-left: 0.5rem;
+        }
+        .prev-card .trophy {
+            font-size: 1rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Center: Next Race Highlight - Sports Broadcast Style */
+        .center-highlight { 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(26, 26, 58, 0.8), rgba(10, 10, 46, 0.8));
+            border-radius: 20px;
+            border: 2px solid var(--accent-orange-warm);
+            box-shadow: 0 0 40px rgba(255, 140, 66, 0.3);
+        }
+        
+        .cards-row { 
+            display: flex; 
+            align-items: stretch; 
+            justify-content: center; 
+            gap: 1rem; 
+            padding: 1rem; 
+            width: 100%;
+        }
+        
+        .driver-card { 
+            position: relative; 
+            width: clamp(250px, 25vw, 400px); 
+            background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); 
+            border: 2px solid rgba(255,255,255,0.2); 
+            border-radius: 20px; 
+            padding: 1.5rem; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.1); 
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .driver-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.2);
+        }
+        
+        .driver-header { 
+            display: flex; 
+            align-items: baseline; 
+            justify-content: space-between; 
+            margin-bottom: 0.5rem;
+        }
+        
+        .driver-name { 
+            font-family: 'Outfit', system-ui, sans-serif; 
+            color: #ffffff; 
+            font-size: clamp(1.4rem, 2.5vw, 2.5rem); 
+            font-weight: 800; 
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .driver-sub { 
+            color: var(--text-secondary); 
+            font-size: 1rem; 
+            margin-bottom: 0.5rem;
+        }
+        
+        .driver-stats { 
+            display: grid; 
+            grid-template-columns: repeat(3, minmax(0,1fr)); 
+            gap: 0.5rem; 
+            margin-top: 1rem; 
+        }
+        
+        .stat { 
+            background: linear-gradient(135deg, rgba(255, 140, 66, 0.2), rgba(74, 144, 226, 0.2)); 
+            border: 1px solid rgba(255, 140, 66, 0.3); 
+            color: #ffffff; 
+            padding: 0.75rem; 
+            border-radius: 12px; 
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat:hover {
+            background: linear-gradient(135deg, rgba(255, 140, 66, 0.3), rgba(74, 144, 226, 0.3));
+            transform: translateY(-2px);
+        }
+        
+        .stat .v { 
+            font-weight: 800; 
+            font-size: 1.2rem; 
+            color: var(--accent-orange-warm);
+        }
+        
+        .stat .k { 
+            font-size: 0.8rem; 
+            color: rgba(255, 255, 255, 0.8); 
+            margin-top: 0.25rem;
+        }
+        
+        /* Enhanced Lane Accents */
+        .lane-accent { 
+            position: absolute; 
+            inset: 0; 
+            border-radius: 20px; 
+            pointer-events: none; 
+            mix-blend-mode: screen; 
+            opacity: 0.7;
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+        
+        .lane-1 .lane-accent { 
+            box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.6), 0 0 30px rgba(74, 144, 226, 0.5) inset; 
+        }
+        .lane-2 .lane-accent { 
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.6), 0 0 30px rgba(239, 68, 68, 0.5) inset; 
+        }
+        .lane-3 .lane-accent { 
+            box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.6), 0 0 30px rgba(234, 179, 8, 0.5) inset; 
+        }
+        .lane-4 .lane-accent { 
+            box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.6), 0 0 30px rgba(147, 51, 234, 0.5) inset; 
+        }
+        .lane-5 .lane-accent { 
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.5) inset; 
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 0.9; }
+        }
+
+        /* Card animations - Sports broadcast style */
+        .cards-enter { 
+            opacity: 0; 
+            transform: translateY(40px) scale(0.95); 
+            filter: blur(2px);
+        }
+        .cards-enter-active { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+            filter: blur(0px);
+            transition: transform 600ms cubic-bezier(.25,.46,.45,.94), 
+                       opacity 600ms ease, 
+                       filter 600ms ease;
+        }
+        .cards-exit { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+            filter: blur(0px);
+        }
+        .cards-exit-active { 
+            opacity: 0; 
+            transform: translateY(-40px) scale(0.95); 
+            filter: blur(2px);
+            transition: transform 500ms cubic-bezier(.25,.46,.45,.94), 
+                       opacity 500ms ease, 
+                       filter 500ms ease;
+        }
+        
+        /* Enhanced driver card animations */
+        .driver-card {
+            transition: all 0.3s cubic-bezier(.25,.46,.45,.94);
+        }
+        .driver-card:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.1);
+        }
+        
+        /* Lane accent pulse animation */
+        .lane-accent {
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .animator-layout { grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr; height: auto; }
+            .side-left, .side-right { order: 2; }
+            .center-highlight { order: 3; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+    <div class="floating-particles" id="particles"></div>
+
+    <!-- Sports Broadcast Header -->
+    <div class="broadcast-header">
+        <div class="header-left">
+            <a href="index.html" class="home-button" title="Go to Home">
+                <i class="fas fa-home"></i>
+            </a>
+            <h1 class="event-title" id="event-name">Event</h1>
+        </div>
+        <div class="race-timer" id="race-timer">
+            <span class="label">Since last race:</span> 
+            <span class="t">00:00:00</span>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="animator-layout">
+        <!-- Left Panel: Next 3 Races -->
+        <aside class="panel side-left">
+            <h3><i class="fas fa-clock"></i> Next 3 Races</h3>
+            <div id="next-races" class="next-races-list"></div>
+        </aside>
+
+        <!-- Center Panel: Current Race Highlight -->
+        <section class="panel center-highlight">
+            <div id="cardsHost" class="cards-row"></div>
+        </section>
+
+        <!-- Right Panel: Previous 2 Races -->
+        <aside class="panel side-right">
+            <h3><i class="fas fa-flag-checkered"></i> Previous 2 Races</h3>
+            <div id="prev-races" class="prev-races"></div>
+        </aside>
+    </div>
+
+    <script src="utils/performance-monitor.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
+    <script src="utils/data-manager.js"></script>
+    <script src="utils/event-bus.js"></script>
+    <script src="modules/event.js"></script>
+    <script src="modules/pairing-engine.js"></script>
+    <script src="modules/race.js"></script>
+    <script src="js/race-ui.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Rule: EPC17_WORKFLOW.md - JS kept self-contained to avoid global pollution
+        (function() {
+            const classColors = { '1': '#4a90e2', '2': '#e74c3c', '3': '#f39c12', '4': '#9b59b6', '5': '#2ecc71', 'Unknown': '#95a5a6' };
+            let currentEvent = null;
+            let races = [];
+            let participants = [];
+            let raceBrackets = {};
+            let lastRaceTime = null;
+            let timerInterval = null;
+            let currentCardsKey = '';
+
+            document.addEventListener('DOMContentLoaded', init);
+
+            // Create floating particles for background
+            function createParticles() {
+                const particlesContainer = document.getElementById('particles');
+                const particleCount = 30;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 25 + 's';
+                    particle.style.animationDuration = (Math.random() * 10 + 25) + 's';
+                    particlesContainer.appendChild(particle);
+                }
+            }
+
+            async function init() {
+                // Create animated background particles
+                createParticles();
+                
+                // Wait for authentication to complete
+                const authSuccess = await waitForAuth();
+                if (!authSuccess) {
+                    // Authentication failed or permission denied - don't proceed
+                    return;
+                }
+                
+                await loadData();
+                setupEventListeners();
+                renderAll();
+                startTimer();
+            }
+
+            async function waitForAuth() {
+                // Wait for Auth to be available and initialized
+                let attempts = 0;
+                while (!window.Auth && attempts < 50) { // Max 2.5 seconds
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    attempts++;
+                }
+                
+                if (!window.Auth) {
+                    console.error('🔐 Auth system not available after waiting');
+                    showAccessDeniedMessage('Authentication system not available');
+                    return false;
+                }
+                
+                // Wait a bit more for session restoration to complete
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Check if we have a valid session
+                if (!window.currentUser) {
+                    console.log('🔐 No current user, authentication failed');
+                    showAccessDeniedMessage('Please log in to access the animator');
+                    return false;
+                }
+                
+                if (!window.Auth.hasPermission || !window.Auth.hasPermission('animator')) {
+                    console.log('🔐 No animator permission, access denied');
+                    showAccessDeniedMessage('You do not have permission to access the animator. Please contact an administrator.');
+                    return false;
+                }
+                
+                console.log('🔐 Authentication successful, proceeding with data load');
+                return true;
+            }
+
+            function setupEventListeners() {
+                // Manual refresh button
+                const refreshBtn = document.getElementById('refresh-btn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', () => {
+                        console.log('🔄 Animator: Manual refresh triggered');
+                        refreshDataAndRender();
+                    });
+                }
+                
+                if (!window.eventBus) return;
+                
+                // Listen for race completion - this is the key event for live updates
+                window.eventBus.on('race-result-recorded', (data) => {
+                    console.log('🏁 Animator: Race result recorded, updating display');
+                    // Update last race time from the actual race completion time
+                    if (data.race && data.race.endTime) {
+                        lastRaceTime = new Date(data.race.endTime).getTime();
+                    } else {
+                        lastRaceTime = Date.now();
+                    }
+                    // Only reset timer when a race is actually completed
+                    resetTimer();
+                    refreshDataAndRender();
+                });
+                
+                // Listen for race status changes
+                window.eventBus.on('race-status-changed', (data) => {
+                    console.log('🏁 Animator: Race status changed, updating display');
+                    if (data.status === 'completed' && data.race && data.race.endTime) {
+                        lastRaceTime = new Date(data.race.endTime).getTime();
+                        // Only reset timer when a race is actually completed
+                        resetTimer();
+                    }
+                    refreshDataAndRender();
+                });
+                
+                // Listen for bracket updates (when races are created/modified)
+                window.eventBus.on('race-bracket-saved', (data) => {
+                    console.log('🏁 Animator: Race bracket saved, updating display');
+                    refreshDataAndRender();
+                });
+                
+                // Listen for event updates
+                window.eventBus.on('event-updated', (data) => {
+                    console.log('🏁 Animator: Event updated, updating display');
+                    refreshDataAndRender();
+                });
+                
+                // Listen for event status changes
+                window.eventBus.on('eventStatusUpdated', (data) => {
+                    console.log('🏁 Animator: Event status updated, updating display');
+                    refreshDataAndRender();
+                });
+                
+                // Only refresh data every 30 seconds to catch any missed events (much less aggressive)
+                setInterval(() => {
+                    console.log('🔄 Animator: Background data refresh (30s)');
+                    refreshDataAndRender();
+                }, 30000);
+            }
+
+            async function refreshDataAndRender() {
+                const previousRace = getCurrentCenterRace();
+                await loadData(true);
+                const { nextRace, prevList } = computeQueues();
+                
+                // Check if we just completed a race (race moved from center to previous)
+                if (previousRace && previousRace.id !== nextRace?.id) {
+                    console.log('🏁 Animator: Race completed, showing completion animation');
+                    await showRaceCompletionAnimation(previousRace);
+                    // Only reset timer when a race is actually completed
+                    resetTimer();
+                }
+                
+                // Check if we have a newly completed race that should show results
+                const newlyCompletedRace = findNewlyCompletedRace();
+                if (newlyCompletedRace) {
+                    console.log('🏁 Animator: Showing results for newly completed race:', newlyCompletedRace.raceNumber);
+                    await showRaceResultsAnimation(newlyCompletedRace);
+                }
+                
+                renderAll(true);
+                // Don't reset timer on every refresh - only when race completes
+            }
+            
+            function getCurrentCenterRace() {
+                // Get the current race being displayed in center
+                const { nextRace } = computeQueues();
+                return nextRace;
+            }
+            
+            let lastCompletedRaceId = null;
+            
+            function findNewlyCompletedRace() {
+                const { prevList } = computeQueues();
+                if (prevList.length > 0) {
+                    const mostRecentCompleted = prevList[0];
+                    // Check if this is a newly completed race
+                    if (mostRecentCompleted.id !== lastCompletedRaceId) {
+                        lastCompletedRaceId = mostRecentCompleted.id;
+                        return mostRecentCompleted;
+                    }
+                }
+                return null;
+            }
+            
+            async function showRaceCompletionAnimation(completedRace) {
+                // Show a brief "RACE COMPLETE" overlay with results
+                const centerHost = document.getElementById('cardsHost');
+                const originalContent = centerHost.innerHTML;
+                
+                // Create completion overlay
+                const completionOverlay = document.createElement('div');
+                completionOverlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(135deg, rgba(16,185,129,0.95), rgba(59,130,246,0.95));
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                    border-radius: 14px;
+                    color: white;
+                    font-family: 'Outfit', system-ui, sans-serif;
+                `;
+                
+                const results = extractResults(completedRace);
+                const participants = getRaceParticipants(completedRace);
+                const winner = participants.find(p => results[p.id] === 1 || results[p.name] === 1);
+                
+                completionOverlay.innerHTML = `
+                    <div style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                        RACE COMPLETE!
+                    </div>
+                    <div style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem;">
+                        Race #${completedRace.raceNumber || 'TBD'} • ${completedRace.className || completedRace.class || 'Unknown'}
+                    </div>
+                    ${winner ? `<div style="font-size: 1.2rem; font-weight: 500;">Winner: ${winner.name}</div>` : ''}
+                `;
+                
+                centerHost.style.position = 'relative';
+                centerHost.appendChild(completionOverlay);
+                
+                // Animate in
+                completionOverlay.style.opacity = '0';
+                completionOverlay.style.transform = 'scale(0.8)';
+                requestAnimationFrame(() => {
+                    completionOverlay.style.transition = 'all 0.5s cubic-bezier(.25,.46,.45,.94)';
+                    completionOverlay.style.opacity = '1';
+                    completionOverlay.style.transform = 'scale(1)';
+                });
+                
+                // Show for 3 seconds then animate out
+                setTimeout(() => {
+                    completionOverlay.style.opacity = '0';
+                    completionOverlay.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        if (centerHost.contains(completionOverlay)) {
+                            centerHost.removeChild(completionOverlay);
+                        }
+                    }, 500);
+                }, 3000);
+            }
+            
+            async function showRaceResultsAnimation(completedRace) {
+                // Show the race results in the center panel, then slide to previous races
+                const centerHost = document.getElementById('cardsHost');
+                const originalContent = centerHost.innerHTML;
+                
+                // Create results display
+                const resultsDisplay = document.createElement('div');
+                resultsDisplay.className = 'race-results-display';
+                resultsDisplay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(135deg, rgba(26, 26, 58, 0.95), rgba(10, 10, 46, 0.95));
+                    border: 2px solid var(--accent-orange-warm);
+                    border-radius: 20px;
+                    padding: 1.5rem;
+                    z-index: 1000;
+                    color: white;
+                    font-family: 'Outfit', system-ui, sans-serif;
+                    backdrop-filter: blur(8px);
+                `;
+                
+                const results = extractResults(completedRace);
+                const participants = getRaceParticipants(completedRace);
+                
+                // Sort participants by position
+                const sortedParticipants = participants.sort((a, b) => {
+                    const posA = results[a.id] || results[a.name] || a.position || 999;
+                    const posB = results[b.id] || results[b.name] || b.position || 999;
+                    return posA - posB;
+                });
+                
+                const resultsHtml = sortedParticipants.map(p => {
+                    const pos = results[p.id] || results[p.name] || p.position || null;
+                    const posTxt = pos ? ordinal(pos) : '';
+                    const isWinner = pos === 1;
+                    const positionClass = isWinner ? 'winner' : pos === 2 ? 'second' : pos === 3 ? 'third' : '';
+                    
+                    return `
+                        <div class="result-row ${positionClass}" style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            background: ${isWinner ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 66, 0.2))' : 'rgba(255,255,255,0.05)'};
+                            border: 1px solid ${isWinner ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255,255,255,0.1)'};
+                            border-radius: 8px;
+                            padding: 0.75rem 1rem;
+                            margin-bottom: 0.5rem;
+                            transition: all 0.3s ease;
+                        ">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="
+                                    background: var(--accent-orange-warm);
+                                    color: white;
+                                    padding: 0.3rem 0.6rem;
+                                    border-radius: 6px;
+                                    font-weight: 700;
+                                    font-size: 1rem;
+                                    min-width: 40px;
+                                    text-align: center;
+                                ">${posTxt || '—'}</span>
+                                <span style="font-size: 1.1rem; font-weight: 600;">L${p.lane} • ${p.name}</span>
+                            </div>
+                            ${isWinner ? '<span style="font-size: 1.2rem;">🏆</span>' : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                resultsDisplay.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <div style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-orange-warm);">
+                            RACE RESULTS
+                        </div>
+                        <div style="font-size: 1.2rem; font-weight: 600; color: var(--text-secondary);">
+                            Race #${completedRace.raceNumber || 'TBD'} • ${completedRace.className || completedRace.class || 'Unknown'}
+                        </div>
+                    </div>
+                    <div class="results-list">
+                        ${resultsHtml}
+                    </div>
+                `;
+                
+                centerHost.style.position = 'relative';
+                centerHost.appendChild(resultsDisplay);
+                
+                // Animate in
+                resultsDisplay.style.opacity = '0';
+                resultsDisplay.style.transform = 'translateY(20px) scale(0.95)';
+                requestAnimationFrame(() => {
+                    resultsDisplay.style.transition = 'all 0.6s cubic-bezier(.25,.46,.45,.94)';
+                    resultsDisplay.style.opacity = '1';
+                    resultsDisplay.style.transform = 'translateY(0) scale(1)';
+                });
+                
+                // Show for 4 seconds then slide to previous races
+                setTimeout(() => {
+                    resultsDisplay.style.transition = 'all 0.8s cubic-bezier(.25,.46,.45,.94)';
+                    resultsDisplay.style.opacity = '0';
+                    resultsDisplay.style.transform = 'translateX(-100%) scale(0.9)';
+                    
+                    setTimeout(() => {
+                        if (centerHost.contains(resultsDisplay)) {
+                            centerHost.removeChild(resultsDisplay);
+                        }
+                        // The race will now appear in the previous races panel
+                    }, 800);
+                }, 4000);
+            }
+
+            async function loadData(isRefresh = false) {
+                try {
+                    // Check if we have authentication
+                    if (!window.Auth || !window.Auth.hasPermission('animator')) {
+                        throw new Error('Authentication required - please log in');
+                    }
+
+                    const [eventsData, racesData, participantsData, bracketsData] = await Promise.all([
+                        window.dataManager.getEvents({}, 1, 1000),
+                        window.dataManager.getRaces(),
+                        window.dataManager.getParticipants({}, 1, 2000),
+                        window.dataManager.getRaceBrackets()
+                    ]);
+                    const events = Array.isArray(eventsData?.events) ? eventsData.events : (Array.isArray(eventsData) ? eventsData : []);
+                    races = Array.isArray(racesData?.races) ? racesData.races : (Array.isArray(racesData) ? racesData : []);
+                    participants = Array.isArray(participantsData?.participants) ? participantsData.participants : (Array.isArray(participantsData) ? participantsData : []);
+                    raceBrackets = bracketsData || {};
+                    
+                    // Always extract races from brackets since races.json is often empty
+                    if (raceBrackets && Object.keys(raceBrackets).length > 0) {
+                        const extracted = [];
+                        Object.entries(raceBrackets).forEach(([eventId, bracket]) => {
+                            const r = extractRacesFromBrackets(bracket, eventId);
+                            extracted.push(...r);
+                        });
+                        races = extracted;
+                        console.log('🏁 Animator: Extracted races from brackets:', races?.length || 0, 'races');
+                    }
+                    
+                    // Pick event with most recent activity, or most recent event if no races
+                    currentEvent = findEventFromRaceActivity(events, races) || (events.length ? [...events].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0] : null);
+                    
+                    // If still no current event, try to find one from race brackets
+                    if (!currentEvent && raceBrackets && Object.keys(raceBrackets).length > 0) {
+                        const eventIds = Object.keys(raceBrackets);
+                        const mostRecentEventId = eventIds[0]; // Take first available
+                        currentEvent = events.find(e => e.id === mostRecentEventId);
+                        console.log('🏁 Animator: Selected event from brackets:', currentEvent?.name || 'Unknown');
+                    }
+                    // Infer last race time
+                    lastRaceTime = inferLastRaceTime(races) || lastRaceTime || Date.now();
+                    
+                    if (!isRefresh) console.log('✅ Animator data loaded successfully');
+                } catch (e) {
+                    console.error('Animator load error', e);
+                    if (!isRefresh) {
+                        // Show user-friendly error message
+                        showAccessDeniedMessage('Unable to load animator data. Please check your permissions.');
+                        
+                        // If it's a 403 error, show specific message
+                        if (e.message.includes('403') || e.message.includes('FORBIDDEN')) {
+                            showAccessDeniedMessage('Access denied. You do not have permission to view animator data.');
+                        }
+                    }
+                }
+            }
+
+            function findEventFromRaceActivity(events, allRaces) {
+                if (!events || events.length === 0) return null;
+                const byEvent = new Map();
+                (allRaces || []).forEach(r => {
+                    const id = r.eventId || r.event || (r.metadata && r.metadata.eventId);
+                    if (!id) return;
+                    const t = new Date(r.completedAt || r.updatedAt || r.createdAt || 0).getTime();
+                    const prev = byEvent.get(id) || 0;
+                    if (t > prev) byEvent.set(id, t);
+                });
+                let chosen = null, best = -1;
+                events.forEach(ev => {
+                    const score = byEvent.get(ev.id) || new Date(ev.updatedAt || ev.createdAt || 0).getTime();
+                    if (score > best) { best = score; chosen = ev; }
+                });
+                return chosen;
+            }
+
+            function inferLastRaceTime(allRaces) {
+                const t = (allRaces||[])
+                    .filter(r => r.status === 'completed' || r.results || r.endTime || r.completedAt)
+                    .map(r => new Date(r.endTime || r.completedAt || r.updatedAt || r.createdAt || 0).getTime())
+                    .sort((a,b)=>b-a)[0];
+                return t || null;
+            }
+
+            function startTimer() {
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(updateTimer, 1000);
+                updateTimer();
+            }
+            function resetTimer() { 
+                // Only reset timer if we don't have a valid last race time
+                if (!lastRaceTime) {
+                    lastRaceTime = Date.now(); 
+                }
+                updateTimer(); 
+            }
+            function updateTimer() {
+                const host = document.getElementById('race-timer').querySelector('.t');
+                const diff = Math.max(0, Date.now() - (lastRaceTime || Date.now()));
+                const s = Math.floor(diff/1000);
+                const h = String(Math.floor(s/3600)).padStart(2,'0');
+                const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+                const sec = String(s%60).padStart(2,'0');
+                host.textContent = `${h}:${m}:${sec}`;
+            }
+
+            function renderAll(fromRefresh = false) {
+                renderHeader();
+                const { nextRace, nextList, prevList } = computeQueues();
+                renderCenterCards(nextRace, fromRefresh);
+                renderNextList(nextList);
+                renderPrevList(prevList);
+            }
+
+            function renderHeader() {
+                const el = document.getElementById('event-name');
+                el.textContent = currentEvent ? currentEvent.name : 'No Active Event';
+            }
+
+            function computeQueues() {
+                // Filter races for current event only
+                const eventRaces = (races || []).filter(race => {
+                    const eventMatch = !race.eventId || race.eventId === currentEvent?.id;
+                    return eventMatch;
+                });
+                
+                console.log('🔍 Animator computeQueues:', {
+                    totalRaces: races?.length || 0,
+                    currentEventId: currentEvent?.id,
+                    currentEventName: currentEvent?.name,
+                    eventRaces: eventRaces.length,
+                    eventRacesDetails: eventRaces.slice(0, 5).map(r => ({ id: r.id, eventId: r.eventId, status: r.status, raceNumber: r.raceNumber, className: r.className }))
+                });
+                
+                // Debug status distribution
+                const statusCounts = eventRaces.reduce((acc, r) => {
+                    acc[r.status] = (acc[r.status] || 0) + 1;
+                    return acc;
+                }, {});
+                console.log('🔍 Race status distribution:', statusCounts);
+                
+                // Normalize races with participants - sort by race number if available, otherwise by creation time
+                const byTime = [...eventRaces].sort((a,b) => {
+                    // Try to sort by race number first
+                    if (a.raceNumber && b.raceNumber) {
+                        return a.raceNumber - b.raceNumber;
+                    }
+                    // Fall back to creation time
+                    return new Date(a.createdAt||0) - new Date(b.createdAt||0);
+                });
+                
+                const upcoming = byTime.filter(r => 
+                    r.status === 'scheduled' || 
+                    r.status === 'in_progress' || 
+                    r.status === 'pending' || 
+                    r.status === 'upcoming' ||
+                    (!r.status && !r.results) // Include races with no status as upcoming
+                );
+                
+                const completed = [...byTime].filter(r => 
+                    r.status === 'completed' || 
+                    r.results || 
+                    r.completedAt
+                ).sort((a,b) => {
+                    // Sort by race number first (most recent completed races first)
+                    if (a.raceNumber && b.raceNumber) {
+                        return b.raceNumber - a.raceNumber;
+                    }
+                    // Fall back to completion time
+                    return new Date(b.completedAt||b.updatedAt||b.createdAt||0) - 
+                           new Date(a.completedAt||a.updatedAt||a.createdAt||0);
+                });
+                
+                console.log('🔍 Filtered races:', {
+                    upcoming: upcoming.length,
+                    completed: completed.length,
+                    upcomingDetails: upcoming.slice(0, 3).map(r => ({ id: r.id, status: r.status, raceNumber: r.raceNumber, className: r.className })),
+                    completedDetails: completed.slice(0, 3).map(r => ({ id: r.id, status: r.status, raceNumber: r.raceNumber, className: r.className }))
+                });
+                
+                const nextRace = upcoming[0] || null;
+                const nextList = upcoming.slice(1, 4);
+                const prevList = completed.slice(0, 2);
+                return { nextRace, nextList, prevList };
+            }
+
+            function renderNextList(list) {
+                const host = document.getElementById('next-races');
+                if (list.length === 0) {
+                    host.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem; font-size: 0.9rem;">No upcoming races</div>';
+                } else {
+                    host.innerHTML = list.map(r => miniRaceHtml(r)).join('');
+                }
+            }
+
+            function miniRaceHtml(r) {
+                const cls = r.className || r.class || 'Unknown';
+                const color = classColors[cls] || classColors['Unknown'];
+                const participants = getRaceParticipants(r);
+                
+                // Create a more consistent display for different lane configurations
+                let lanesHtml = '';
+                if (participants.length === 0) {
+                    lanesHtml = '<span class="meta">No participants</span>';
+                } else if (participants.length <= 2) {
+                    // Side by side for 2 or fewer participants
+                    lanesHtml = participants.map(p => 
+                        `<div class="lane-horizontal">
+                            <span class="lane-number">L${p.lane}</span>
+                            <span class="driver-name">${p.name}</span>
+                        </div>`
+                    ).join('');
+                } else {
+                    // Stacked for 3+ participants
+                    lanesHtml = participants.map(p => 
+                        `<div class="lane-vertical">
+                            <span class="lane-number">L${p.lane}</span>
+                            <span class="driver-name">${p.name}</span>
+                        </div>`
+                    ).join('');
+                }
+                
+                return `<div class="mini-race" style="border-left:3px solid ${color}">
+                    <div class="top">
+                        <div class="title">Race #${r.raceNumber || 'TBD'} • ${cls}</div>
+                        <div class="meta">${(r.bracketType||'upper').toUpperCase()}</div>
+                    </div>
+                    <div class="lanes ${participants.length <= 2 ? 'horizontal' : 'vertical'}">${lanesHtml}</div>
+                </div>`;
+            }
+
+            function renderPrevList(list) {
+                const host = document.getElementById('prev-races');
+                host.innerHTML = '';
+                if (list.length === 0) {
+                    host.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem; font-size: 0.9rem;">No completed races</div>';
+                } else {
+                    list.forEach((r, i) => {
+                        const card = document.createElement('div');
+                        card.className = 'prev-card';
+                        card.innerHTML = prevCardHtml(r);
+                        host.appendChild(card);
+                        
+                        // Stagger the animation for a more dynamic effect
+                        setTimeout(() => {
+                            requestAnimationFrame(() => card.classList.add('show'));
+                        }, i * 100);
+                    });
+                }
+            }
+
+            function prevCardHtml(r) {
+                const cls = r.className || r.class || 'Unknown';
+                const lanes = getRaceParticipants(r);
+                const results = extractResults(r);
+                const time = formatTime(r.completedAt || r.updatedAt || r.createdAt);
+                
+                // Sort participants by position for better display
+                const sortedLanes = lanes.sort((a, b) => {
+                    const posA = results[a.id] || results[a.name] || a.position || 999;
+                    const posB = results[b.id] || results[b.name] || b.position || 999;
+                    return posA - posB;
+                });
+                
+                const lanesHtml = sortedLanes.map(p => {
+                    const pos = results[p.id] || results[p.name] || p.position || null;
+                    const posTxt = pos ? ordinal(pos) : '';
+                    const isWinner = pos === 1;
+                    const positionClass = isWinner ? 'winner' : pos === 2 ? 'second' : pos === 3 ? 'third' : '';
+                    
+                    return `<div class="p ${positionClass}">
+                        <span class="position">${posTxt || '—'}</span>
+                        <span class="driver-info">L${p.lane} • ${p.name}</span>
+                        ${isWinner ? '<span class="trophy">🏆</span>' : ''}
+                    </div>`;
+                }).join('');
+                
+                return `<div class="head">
+                    <div class="title">Race #${r.raceNumber || 'TBD'} • ${cls}</div>
+                    <div class="time">${time}</div>
+                </div>
+                <div class="lanes">${lanesHtml || '<span class="meta">No participants</span>'}</div>`;
+            }
+
+            function renderCenterCards(race, fromRefresh) {
+                const host = document.getElementById('cardsHost');
+                const key = race ? (race.id || `${race.className||race.class}-${race.raceNumber}`) : 'none';
+                
+                let html;
+                if (race) {
+                    html = driverCardsHtml(race);
+                } else {
+                    // Show more helpful message when no race data
+                    const hasRaces = races && races.length > 0;
+                    const hasEvent = currentEvent !== null;
+                    if (!hasEvent) {
+                        html = '<div class="driver-card"><div class="driver-name">No Active Event</div><div class="driver-sub">Please select an event to view races</div></div>';
+                    } else if (!hasRaces) {
+                        html = '<div class="driver-card"><div class="driver-name">No Race Data</div><div class="driver-sub">No races found for this event</div></div>';
+                    } else {
+                        html = '<div class="driver-card"><div class="driver-name">No Upcoming Race</div><div class="driver-sub">All races may be completed</div></div>';
+                    }
+                }
+                
+                if (currentCardsKey !== key) {
+                    // animate out then in
+                    animateSwap(host, html);
+                    currentCardsKey = key;
+                } else if (fromRefresh) {
+                    host.innerHTML = html;
+                }
+            }
+
+            function driverCardsHtml(race) {
+                const drivers = getRaceParticipants(race);
+                return drivers.map(d => `
+                    <div class="driver-card lane-${d.lane}">
+                        <div class="lane-accent"></div>
+                        <div class="driver-header">
+                            <div class="driver-name">${d.name} <span style="opacity:.6;font-weight:600">#${d.number||'—'}</span></div>
+                            <div class="driver-sub">Lane ${d.lane}</div>
+                        </div>
+                        <div class="driver-sub">${d.sponsor||'—'} • ${d.age? d.age + ' yrs' : 'Age —'}</div>
+                        <div class="driver-stats">
+                            <div class="stat"><div class="v">${d.dayWins||0}</div><div class="k">Wins</div></div>
+                            <div class="stat"><div class="v">${d.dayRaces||0}</div><div class="k">Races</div></div>
+                            <div class="stat"><div class="v">${d.classWins||0}/${d.classRaces||0}</div><div class="k">Class</div></div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function getRaceParticipants(race) {
+                let list = [];
+                if (Array.isArray(race.lanes)) {
+                    list = race.lanes.filter(l=>l&&l.participant).map((l,idx)=> ({ id: l.participant.id, lane: l.lane || (idx+1), name: l.participant.name, number: l.participant.number, sponsor: l.participant.sponsor, age: l.participant.age }));
+                } else if (Array.isArray(race.participants)) {
+                    list = race.participants.map((pid, idx) => {
+                        const p = participants.find(pp => pp.id === pid) || {};
+                        return { id: pid, lane: idx+1, name: p.name || `Driver ${String(pid).slice(-4)}`, number: p.number, sponsor: p.sponsor, age: p.age };
+                    });
+                }
+                // Enrich stats (simple cached day/class counts) - only for current event races
+                const byId = list.reduce((m,p)=> (m[p.id]=p, m), {});
+                const eventRaces = (races||[]).filter(r => !r.eventId || r.eventId === currentEvent?.id);
+                eventRaces.forEach(r => {
+                    const res = extractResults(r);
+                    const isToday = true; // simplified day scope
+                    // Use getRaceParticipantsBasic to avoid recursion
+                    getRaceParticipantsBasic(r).forEach(pr => {
+                        const t = byId[pr.id];
+                        if (!t) return;
+                        t.dayRaces = (t.dayRaces||0) + (isToday ? 1 : 0);
+                        const pos = res[pr.id] || res[pr.name] || pr.position;
+                        if (pos === 1) t.dayWins = (t.dayWins||0) + 1;
+                        if ((r.className||r.class) === (race.className||race.class)) {
+                            t.classRaces = (t.classRaces||0) + 1;
+                            if (pos === 1) t.classWins = (t.classWins||0) + 1;
+                        }
+                    });
+                });
+                return list;
+            }
+
+            // Basic function to get race participants without stats enrichment (avoids recursion)
+            function getRaceParticipantsBasic(race) {
+                let list = [];
+                if (Array.isArray(race.lanes)) {
+                    list = race.lanes.filter(l=>l&&l.participant).map((l,idx)=> ({ id: l.participant.id, lane: l.lane || (idx+1), name: l.participant.name, number: l.participant.number, sponsor: l.participant.sponsor, age: l.participant.age }));
+                } else if (Array.isArray(race.participants)) {
+                    list = race.participants.map((pid, idx) => {
+                        const p = participants.find(pp => pp.id === pid) || {};
+                        return { id: pid, lane: idx+1, name: p.name || `Driver ${String(pid).slice(-4)}`, number: p.number, sponsor: p.sponsor, age: p.age };
+                    });
+                }
+                return list;
+            }
+
+            function extractResults(r) {
+                const results = r.results || r.raceResults || r.finishOrder || {};
+                if (Array.isArray(results)) {
+                    const map = {};
+                    results.forEach((rr, i) => { const id = rr.participantId || rr.participant; if (id) map[id] = rr.position || (i+1); });
+                    return map;
+                }
+                if (Array.isArray(results.finishOrder)) {
+                    const map = {}; results.finishOrder.forEach((id, i) => map[id] = i+1); return map;
+                }
+                return results || {};
+            }
+
+            // Extract races from race brackets (copied from live-display.html)
+            function extractRacesFromBrackets(brackets, eventIdOverride = null) {
+                const races = [];
+                
+                if (!brackets || typeof brackets !== 'object') {
+                    return races;
+                }
+                
+                if (brackets.classes) {
+                    Object.entries(brackets.classes).forEach(([className, classData]) => {
+                        if (classData.rounds && Array.isArray(classData.rounds)) {
+                            classData.rounds.forEach((round, roundIndex) => {
+                                let bracketType = round.bracketType;
+                                // Try to infer bracketType if missing
+                                if (!bracketType) {
+                                    if (round.name && typeof round.name === 'string') {
+                                        if (round.name.toLowerCase().includes('lower')) bracketType = 'lower';
+                                        else if (round.name.toLowerCase().includes('final')) bracketType = 'final';
+                                        else if (round.name.toLowerCase().includes('upper')) bracketType = 'upper';
+                                    }
+                                    if (!bracketType && round.type && typeof round.type === 'string') {
+                                        bracketType = round.type.toLowerCase();
+                                    }
+                                }
+                                if (!bracketType && round.heats && round.heats.length > 0) {
+                                    // Try to infer from heat data
+                                    const heatBracket = round.heats[0].bracketType || round.heats[0].bracket;
+                                    if (heatBracket) bracketType = heatBracket;
+                                }
+                                if (!bracketType) bracketType = 'unknown';
+                                
+                                if (round.heats && Array.isArray(round.heats)) {
+                                    round.heats.forEach((heat, heatIndex) => {
+                                        const finalBracketType = heat.bracketType || heat.bracket || bracketType;
+                                        
+                                        const race = {
+                                            id: heat.id || `heat_${className}_${roundIndex}_${heatIndex}`,
+                                            className: className,
+                                            round: roundIndex + 1,
+                                            heatNumber: heat.heatNumber || (heatIndex + 1),
+                                            raceNumber: heat.raceNumber || null,
+                                            numberOfLanes: heat.numberOfLanes || classData.numberOfLanes || 4,
+                                            status: heat.status === 'completed' ? 'completed' : 
+                                                   heat.status === 'in_progress' ? 'in_progress' : 'scheduled',
+                                            participants: heat.participants || [],
+                                            lanes: heat.lanes || [],
+                                            results: heat.results || heat.finishOrder || {},
+                                            scheduledTime: heat.scheduledTime || heat.startTime,
+                                            completedAt: heat.completedAt || heat.endTime,
+                                            createdAt: heat.createdAt || new Date().toISOString(),
+                                            eliminationType: classData.eliminationType || 'single',
+                                            bracketType: finalBracketType,
+                                            isComplete: heat.status === 'completed' || false,
+                                            eventId: eventIdOverride || brackets.eventId || null
+                                        };
+                                        races.push(race);
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                return races;
+            }
+
+            function animateSwap(host, nextHtml) {
+                // Exit animation - slide out and fade
+                const exiting = document.createElement('div');
+                exiting.className = 'cards-row cards-exit';
+                exiting.innerHTML = host.innerHTML;
+                host.innerHTML = '';
+                
+                if (exiting.innerHTML.trim()) {
+                    host.appendChild(exiting);
+                    requestAnimationFrame(() => {
+                        exiting.classList.add('cards-exit-active');
+                        setTimeout(() => {
+                            host.removeChild(exiting);
+                            // Enter animation - slide in from top with fade
+                            const entering = document.createElement('div');
+                            entering.className = 'cards-row cards-enter';
+                            entering.innerHTML = nextHtml;
+                            host.appendChild(entering);
+                            requestAnimationFrame(() => entering.classList.add('cards-enter-active'));
+                        }, 450);
+                    });
+                } else {
+                    // No existing content, just enter
+                    const entering = document.createElement('div');
+                    entering.className = 'cards-row cards-enter';
+                    entering.innerHTML = nextHtml;
+                    host.appendChild(entering);
+                    requestAnimationFrame(() => entering.classList.add('cards-enter-active'));
+                }
+            }
+
+            function ordinal(n) { if (!n) return ''; const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+            function formatTime(ts) { if (!ts) return ''; const d=new Date(ts); const h=String(d.getHours()).padStart(2,'0'); const m=String(d.getMinutes()).padStart(2,'0'); return `${h}:${m}`; }
+            
+            function showAccessDeniedMessage(message) {
+                // Update the UI to show access denied message
+                document.getElementById('event-name').textContent = 'Access Denied';
+                document.querySelector('.race-timer .t').textContent = 'Permission Required';
+                
+                // Clear the content areas
+                document.getElementById('next-races').innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem;">Access Denied</div>';
+                document.getElementById('cardsHost').innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 2rem;">' + message + '</div>';
+                document.getElementById('prev-races').innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem;">Access Denied</div>';
+                
+                // Show a toast notification if available
+                if (window.showToast) {
+                    window.showToast(message, 'error');
+                } else {
+                    // Fallback to alert if toast is not available
+                    alert(message);
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
+
+

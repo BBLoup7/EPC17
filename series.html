@@ -5,9 +5,365 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Series Management (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
+        /* CSS Variables */
+        :root {
+            --accent-blue: #3b82f6;
+        }
+        
+        /* Modern Series Page Styles */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-hero {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
+            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-orange-warm);
+            color: var(--accent-orange-warm);
+            background: rgba(255, 140, 66, 0.1);
+        }
+
+        /* Enhanced Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-primary)) !important;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3) !important;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            border-color: var(--accent-orange-warm) !important;
+            color: var(--accent-orange-warm) !important;
+            background: rgba(255, 140, 66, 0.1) !important;
+        }
+
+        .btn-danger {
+            background: var(--accent-red-strong);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        /* Stats Overview */
+        .stats-overview {
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-primary), var(--accent-purple));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(255, 140, 66, 0.2);
+            border-color: var(--accent-orange-warm);
+        }
+
+        .stat-card.stat-primary::before {
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-primary));
+        }
+
+        .stat-card.stat-success::before {
+            background: linear-gradient(90deg, var(--accent-green-strong), var(--accent-success));
+        }
+
+        .stat-card.stat-info::before {
+            background: linear-gradient(90deg, var(--accent-info), var(--accent-purple));
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .stat-card.stat-primary .stat-icon {
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-primary));
+        }
+
+        .stat-card.stat-success .stat-icon {
+            background: linear-gradient(135deg, var(--accent-green-strong), var(--accent-success));
+        }
+
+        .stat-card.stat-info .stat-icon {
+            background: linear-gradient(135deg, var(--accent-info), var(--accent-purple));
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Content Area */
+        .content-area {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .content-area.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .series-container {
+            margin-top: 2rem;
+        }
+
+        /* Enhanced Skeleton Loading */
+        .skeleton-loading {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .skeleton-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-primary), var(--accent-purple));
+        }
+
+        .skeleton-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .skeleton-title {
+            height: 1.5rem;
+            background: linear-gradient(90deg, var(--bg-primary) 25%, var(--border-color) 50%, var(--bg-primary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+            width: 60%;
+        }
+
+        .skeleton-status {
+            height: 1rem;
+            background: linear-gradient(90deg, var(--bg-primary) 25%, var(--border-color) 50%, var(--bg-primary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 20px;
+            width: 80px;
+        }
+
+        .skeleton-description {
+            height: 1rem;
+            background: linear-gradient(90deg, var(--bg-primary) 25%, var(--border-color) 50%, var(--bg-primary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-description:nth-child(2) {
+            width: 80%;
+        }
+
+        .skeleton-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .skeleton-meta-item {
+            height: 2.5rem;
+            background: linear-gradient(90deg, var(--bg-primary) 25%, var(--border-color) 50%, var(--bg-primary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 12px;
+        }
+
+        .skeleton-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .skeleton-button {
+            height: 2.5rem;
+            background: linear-gradient(90deg, var(--bg-primary) 25%, var(--border-color) 50%, var(--bg-primary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 12px;
+            flex: 1;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -315,8 +671,61 @@
             border: 1px dashed var(--border-color, rgba(255,255,255,0.1));
         }
         
-        /* Responsive adjustments */
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-hero,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .stat-card {
+                padding: 1.25rem;
+            }
+            
+            .stat-value {
+                font-size: 1.75rem;
+            }
+            
             .season-inputs,
             .class-inputs {
                 grid-template-columns: 1fr;
@@ -332,6 +741,29 @@
             .btn-remove-season,
             .btn-remove-class {
                 align-self: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-section {
+                padding: 1.5rem 1rem;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
             }
         }
         
@@ -494,111 +926,71 @@
     </style>
 </head>
 <body>
-    <nav class="main-nav">
-        <div class="nav-brand">
-            <div class="brand-icon">
-                <i class="fas fa-cogs"></i>
-            </div>
-            <div class="brand-text">
-                <span class="brand-main">EPC TECHNOLOGY</span>
-                <span class="brand-sub">PROJECT 17</span>
-            </div>
-        </div>
-        
-        <!-- Desktop Navigation -->
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registration</a></li>
-            <li class="active"><a href="series.html">Series</a></li>
-            <li><a href="events.html">Events</a></li>
-            <li><a href="races.html">Races</a></li>
-            <li><a href="driver-profile.html">Drivers</a></li>
-            <li><a href="analytics.html">Analytics</a></li>
-            <li><a href="live-display.html">Live Display</a></li>
-        </ul>
-        
-        <!-- Mobile Hamburger Menu -->
-        <button class="mobile-nav-toggle" aria-label="Toggle navigation menu">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
-        
-        <!-- Mobile Navigation Menu -->
-        <div class="mobile-nav-menu">
-            <div class="mobile-nav-header">
-                <div class="mobile-nav-brand">
-                    <div class="brand-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <div class="brand-text">
-                        <span class="brand-main">EPC TECHNOLOGY</span>
-                        <span class="brand-sub">PROJECT 17</span>
-                    </div>
-                </div>
-                <button class="mobile-nav-close" aria-label="Close navigation menu">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <ul class="mobile-nav-links">
-                <li><a href="index.html">🏠 Home</a></li>
-                <li><a href="registration.html">📝 Registration</a></li>
-                <li><a href="series.html" class="active">🏆 Series</a></li>
-                <li><a href="events.html">📅 Events</a></li>
-                <li><a href="races.html">🏁 Races</a></li>
-                <li><a href="driver-profile.html">👥 Drivers</a></li>
-                <li><a href="analytics.html">📊 Analytics</a></li>
-                <li><a href="live-display.html">🖥️ Live Display</a></li>
-            </ul>
-            <div class="mobile-nav-footer">
-                <div class="mobile-nav-version">25W32a09</div>
-            </div>
-        </div>
-        
-        <!-- Mobile Navigation Overlay -->
-        <div class="mobile-nav-overlay"></div>
-    </nav>
+    <!-- Navigation is now handled by sidebar-nav.js -->
 
     <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1>Series Management</h1>
-                <p class="subtitle">Create and manage racing series and championships</p>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-primary" id="createSeriesBtn">
-                    <i class="fas fa-plus"></i> Create Series
-                </button>
-                <div class="utility-actions">
-                    <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
-                        <i class="fas fa-trash-alt"></i> Clear All Data
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">Series Management</h1>
+                    <p class="hero-subtitle">Create and manage racing series and championships with professional organization</p>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn btn-primary btn-hero" id="createSeriesBtn">
+                        <i class="fas fa-plus"></i> Create New Series
+                    </button>
+                    <button class="btn btn-outline" onclick="clearAllData()" title="Clear All Test Data">
+                        <i class="fas fa-trash-alt"></i> Clear Data
+                    </button>
+                    <button class="btn btn-outline" onclick="debugEventsCount()" title="Debug Events Count">
+                        <i class="fas fa-bug"></i> Debug Events
                     </button>
                 </div>
             </div>
         </div>
 
-        <div id="listView" class="tab-content active">
+        <!-- Stats Overview -->
+        <div class="stats-overview">
             <div class="stats-grid">
-                <div class="card">
-                    <h3>Total Series</h3>
-                    <div class="stat-value" id="totalSeries">0</div>
+                <div class="stat-card stat-primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalSeries">0</div>
+                        <div class="stat-label">Total Series</div>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3>Active Series</h3>
-                    <div class="stat-value" id="activeSeries">0</div>
+                <div class="stat-card stat-success">
+                    <div class="stat-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="activeSeries">0</div>
+                        <div class="stat-label">Active Series</div>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3>Total Events</h3>
-                    <div class="stat-value" id="totalEvents">0</div>
+                <div class="stat-card stat-info">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalEvents">0</div>
+                        <div class="stat-label">Total Events</div>
+                    </div>
                 </div>
             </div>
+        </div>
 
+        <!-- Main Content Area -->
+        <div id="listView" class="content-area active">
             <!-- Skeleton loading for series -->
             <div id="seriesSkeleton" class="skeleton-loading" style="display: none;">
                 <!-- Skeleton cards will be populated by JavaScript -->
             </div>
 
-            <div id="seriesListContainer">
+            <div id="seriesListContainer" class="series-container">
                 <!-- Series list will be loaded here -->
             </div>
         </div>
@@ -640,6 +1032,7 @@
     <script src="modules/series.js"></script>
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
+    <script src="js/sidebar-nav.js"></script>
 
     <script>
         let seriesManager;
@@ -699,7 +1092,8 @@
         // Load series statistics
         async function loadSeriesStats() {
             try {
-                const stats = seriesManager.getSeriesStats();
+                const stats = await seriesManager.getSeriesStats();
+                console.log('📊 Series Stats loaded:', stats);
                 document.getElementById('totalSeries').textContent = stats.total || 0;
                 document.getElementById('activeSeries').textContent = stats.active || 0;
                 document.getElementById('totalEvents').textContent = stats.totalEvents || 0;
@@ -715,12 +1109,36 @@
             const container = document.getElementById('seriesListContainer');
             
             if (skeleton) {
-                skeleton.innerHTML = UIComponents.createSkeletonCards(6, 'card');
+                skeleton.innerHTML = createSeriesSkeletonCards(6);
                 skeleton.style.display = 'grid';
-                skeleton.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
-                skeleton.style.gap = '1.5rem';
             }
             if (container) container.style.display = 'none';
+        }
+
+        // Create modern skeleton cards for series
+        function createSeriesSkeletonCards(count) {
+            const cards = [];
+            for (let i = 0; i < count; i++) {
+                cards.push(`
+                    <div class="skeleton-card">
+                        <div class="skeleton-header">
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-status"></div>
+                        </div>
+                        <div class="skeleton-description"></div>
+                        <div class="skeleton-description"></div>
+                        <div class="skeleton-meta">
+                            <div class="skeleton-meta-item"></div>
+                            <div class="skeleton-meta-item"></div>
+                        </div>
+                        <div class="skeleton-actions">
+                            <div class="skeleton-button"></div>
+                            <div class="skeleton-button"></div>
+                        </div>
+                    </div>
+                `);
+            }
+            return cards.join('');
         }
 
         function hideSeriesSkeleton() {
@@ -772,7 +1190,7 @@
         window.configureSeries = function(seriesId) {
             const series = seriesManager.getSeries(seriesId);
             if (!series) {
-                alert('Series not found');
+                Helpers.showToast('Series not found', 'error');
                 return;
             }
             
@@ -1039,7 +1457,7 @@
             const fee = parseFloat(feeInput.value) || 0;
             
             if (!name) {
-                alert('Please enter a class name');
+                Helpers.showToast('Please enter a class name', 'warning');
                 return;
             }
             
@@ -1048,7 +1466,7 @@
             
             // Check if class already exists
             if (currentClasses.some(cls => cls.name.toLowerCase() === name.toLowerCase())) {
-                alert('A class with this name already exists');
+                Helpers.showToast('A class with this name already exists', 'warning');
                 return;
             }
             
@@ -1108,7 +1526,7 @@
                 
                 // Check if new name already exists
                 if (classes.some((c, i) => i !== index && c.name.toLowerCase() === trimmedName.toLowerCase())) {
-                    alert('A class with this name already exists');
+                    Helpers.showToast('A class with this name already exists', 'warning');
                     return;
                 }
                 
@@ -1129,11 +1547,11 @@
             const classes = getCurrentClasses();
             const cls = classes[index];
             
-            if (confirm(`Are you sure you want to remove the "${cls.name}" class?`)) {
+            window.confirmDelete(`class "${cls.name}"`, () => {
                 classes.splice(index, 1);
                 updateClassesList(classes);
-                alert(`Class "${cls.name}" removed successfully`);
-            }
+                Helpers.showToast(`Class "${cls.name}" removed successfully`, 'success');
+            });
         };
         
         // Save series configuration
@@ -1182,7 +1600,7 @@
             for (const season of seasons) {
                 if (season.startDate && season.endDate) {
                     if (new Date(season.endDate) <= new Date(season.startDate)) {
-                        alert(`End date must be after start date for season "${season.name}"`);
+                        Helpers.showToast(`End date must be after start date for season "${season.name}"`, 'warning');
                         return;
                     }
                 }
@@ -1203,7 +1621,7 @@
                         }
                         
                         console.log('✅ Series configuration saved successfully via DataManager');
-                        alert('Series configuration saved successfully!');
+                        Helpers.showToast('Series configuration saved successfully!', 'success');
                         showSeriesList();
                     } else {
                         throw new Error('Failed to update series via DataManager');
@@ -1215,13 +1633,13 @@
                     Object.assign(series, configData);
                     seriesManager.saveToStorage();
                     
-                    alert('Series configuration saved successfully!');
+                    Helpers.showToast('Series configuration saved successfully!', 'success');
                     showSeriesList();
                 }
                 
             } catch (error) {
                 console.error('❌ Error saving series configuration:', error);
-                alert('Error saving configuration: ' + error.message);
+                Helpers.showToast('Error saving configuration: ' + error.message, 'error');
             }
         }
         
@@ -1431,11 +1849,43 @@
             showSeriesList();
         };
 
+        // Wait for authentication to complete before loading data
+        async function waitForAuthentication() {
+            console.log('🔐 Series page: Waiting for authentication to complete...');
+            
+            // Wait for Auth to be available and initialized
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) { // Max 5 seconds
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+            
+            if (!window.Auth) {
+                console.warn('🔐 Series page: Auth system not available after waiting, proceeding without authentication');
+                return false;
+            }
+            
+            // Wait a bit more for session restoration to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Check if we have a valid session
+            if (!window.currentUser) {
+                console.log('🔐 Series page: No current user, authentication failed');
+                return false;
+            }
+            
+            console.log('🔐 Series page: Authentication complete, proceeding with data load');
+            return true;
+        }
+
         // Initialize page
         async function init() {
             console.log('Initializing series page...');
             
             try {
+                // Wait for authentication before initializing
+                await waitForAuthentication();
+                
                 // Initialize DataManager first
                 if (!window.dataManager) {
                     console.log('Initializing DataManager...');
@@ -1501,9 +1951,47 @@
             // Component event listeners can be added here
         }
 
+        // Debug events count function
+        window.debugEventsCount = async function() {
+            console.log('🐛 Debugging events count...');
+            try {
+                if (window.dataManager) {
+                    console.log('📊 DataManager available');
+                    console.log('📊 DataManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.dataManager)));
+                    
+                    // Try different methods to get events
+                    if (typeof window.dataManager.getEventsArray === 'function') {
+                        const events = window.dataManager.getEventsArray();
+                        console.log('📊 getEventsArray result:', events.length, events);
+                    }
+                    
+                    if (typeof window.dataManager.getEvents === 'function') {
+                        const events = await window.dataManager.getEvents({}, 1, 10000);
+                        console.log('📊 getEvents result:', events.length, events);
+                    }
+                    
+                    // Check if there are events in the data
+                    console.log('📊 DataManager events property:', window.dataManager.events);
+                    console.log('📊 DataManager events size:', window.dataManager.events?.size);
+                } else {
+                    console.log('❌ DataManager not available');
+                }
+                
+                if (seriesManager) {
+                    console.log('📊 SeriesManager available');
+                    const stats = await seriesManager.getSeriesStats();
+                    console.log('📊 SeriesManager stats:', stats);
+                } else {
+                    console.log('❌ SeriesManager not available');
+                }
+            } catch (error) {
+                console.error('🐛 Error debugging events count:', error);
+            }
+        };
+
         // Clear all data function
         window.clearAllData = async function() {
-            if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+            window.confirmClearAll(async () => {
                 try {
                     // Initialize dataManager if not already done
                     if (!window.dataManager) {
@@ -1520,12 +2008,12 @@
                         loadSeriesList();
                     }
                     
-                    alert('All data has been cleared successfully');
+                    Helpers.showToast('All data has been cleared successfully', 'success');
                 } catch (error) {
                     console.error('Error clearing data:', error);
-                    alert('Error clearing data. Please try again.');
+                    Helpers.showToast('Error clearing data. Please try again.', 'error');
                 }
-            }
+            });
         };
 
         // Wait for DOM to be ready, then initialize the app

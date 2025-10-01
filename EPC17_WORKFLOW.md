@@ -1,132 +1,61 @@
+# EPC17 - Development Workflow (ENHANCED for Cursor solo dev)
 
-# EPC17 - Development Workflow
+## High-level Flow
+1. **Plan (in-Repo)** - Add/Update `docs/feature-<name>/plan.md`. Include 3–8 tasks.
+2. **Spec/Prompt** - Create/Update `llm/prompts/<feature>/v1/PromptSpec.md` and examples.
+3. **Implement (chunked)** - Ask Cursor to implement the first task only (one file + one test). Review & run tests.
+4. **Iterate** - Fix, refactor, add next task.
+5. **Verify** - Run unit/integration tests, accessibility checks, performance smoke.
+6. **Release** - Tag, update PATCHNOTES, merge only after checklist passes.
 
-## Purpose
-This document defines the recommended development workflow for EPC17 — Professional Racing Event Management System. It's focused, practical, and designed for a small engineering team building a robust, testable, and scalable product.
+## Commit Standards
+- `[Module] Short description - files changed`
+- Small, focused commits. Every change has a test or TODO.
 
-## Versioning & Release Tags
-- Beta code format: `YYWwwrVV` (example: `25W32a09`)
-  - `YY` year (two digits)
-  - `Www` ISO week (W01..W53)
-  - `r` weekly revision (a, b, c...)
-  - `VV` base-version tie (e.g., `09` -> 0.9.X)
-- Update `PATCHNOTES.txt` and increment package version in one commit per release.
-- Tag releases in VCS using the beta string (for pre-release) and semver on official releases.
-
-## Branching Strategy
-- `main` — stable releases only; protected branch
-- `develop` — daily integration branch
-- `feature/<ticket>-short-desc` — feature work
-- `hotfix/<issue>` — critical fixes off `main`
-- `release/<version>` — release stabilization
-
-## Commit & PR Standards
-- Commit message format: `[Module] Short description - files changed`
-- Each PR must include:
-  - Purpose & scope
-  - Files changed
-  - Test plan for verification
-  - Relevant screenshots or sample outputs (for UI/LLM changes)
-- Self-review checklist before PR:
-  - Code compiles and lint passes
-  - Unit tests added/updated
-  - Basic performance check run for changed paths
-  - PromptSpec updated if prompts changed
-
-## Repo Layout (recommended)
-```
+## Repo Layout (cursor-optimized)
 /app
-  /client
-  /server
-  /llm
-  /data
-  /testing
+/client
+/components
+/pages
+/styles
+/server
+/llm/prompts
+/llm/examples
+/data
+/testing
+/docs
+EPC17_RULES.mdc
 README.md
-PATCHNOTES.txt
-```
+.patchnotes.txt
+.cursorignore
 
-## Coding Standards
-- JavaScript: ES6+ modules, async/await, JSDoc header for every module
-- Python (server): PEP 8, Flask blueprint-based API
-- HTML/CSS: semantic HTML5, ARIA attributes, CSS custom properties
-- Avoid global state; prefer injected dependencies for testability
-
-## JSDoc / Module Header Requirements
-Every JS module starts with a JSDoc block including:
-- Module purpose
-- Exports and types
-- Expected inputs/outputs
-- Failure modes & error codes
-- Version tag (beta format)
-
-## Local Development Setup
-- Flask server on port 5000
-- Client served via local dev server with hot reload
-- Mock API endpoint set under `/mock` for dev-only scenarios
-- `npm run dev` starts client; `pipenv run flask run` starts backend
+markdown
+Copy code
 
 ## Testing Strategy
-- Unit tests for all business logic (target 90% coverage for pairing/analytics)
-- Integration tests for event lifecycle and API contracts
-- End-to-end tests for critical flows (registration → race → results)
-- Performance regression tests for pairing engine with synthetic datasets
-- UI tests for core interactive components (form validation, error states)
-- Test files organized under `/testing` grouped by feature
+- Unit tests for every business function.
+- Integration tests for lifecycle + API.
+- UI tests with React Testing Library.
+- Deterministic seeds for pairing engine.
+- Tests in `/testing/<type>/`.
 
-## Pairing Engine Testing
-- Maintain a set of canonical pairing scenarios:
-  - Even number participants
-  - Odd number participants (free run)
-  - Multi-class overlaps
-  - Rematch avoidance exhaustion
-- Use deterministic seed for pseudo-random elements during tests
+## CI / Local Pipeline
+- Optional script: lint → unit → integration → smoke.
+- Performance smoke: snapshot timings for pairing engine.
 
-## CI / Pipeline
-Example stages:
-1. Lint
-2. Unit tests
-3. Integration tests
-4. Build
-5. Performance tests (smoke)
-6. Deploy to staging (if passing)
-- Keep pipeline times short; fail fast on lint/test.
+## Release Checklist
+- [ ] Tests passing
+- [ ] PromptSpec updated + examples attached
+- [ ] Performance tests OK
+- [ ] PATCHNOTES updated
 
-## Performance & Monitoring
-- Targets:
-  - Initial load < 2s (critical assets)
-  - Interaction < 100ms for live UI actions
-- Expose health and metrics endpoints on server:
-  - `/health` — basic status
-  - `/metrics` — timings, memory, event loop lag
-- Use lightweight profiling during test runs
+## Observability
+- Structured JSON logs (scrub PII).
+- `/health` and `/metrics` endpoints.
+- Save `debug_snapshots/` for deterministic debugging.
 
-## Error Handling & Observability
-- Centralized logging with structured JSON logs
-- Error levels (DEBUG / INFO / WARN / ERROR)
-- Capture stack, inputs (scrub PII), and prompt version (if LLM used)
-- Integrate alerting on high error rates or long-tail latency
-
-## Data Management
-- Use UUIDs for primary entities
-- Local JSON persistence for prototypes with scheduled backups
-- Define migration scripts for schema changes
-- Snapshot pairing state frequently for crash recovery
-
-## Release Checklist (pre-merge)
-- [ ] Tests passing (unit & integration)
-- [ ] Pairing logic validated on sample dataset
-- [ ] PromptSpec updated & example outputs attached (if applicable)
-- [ ] Performance smoke tests OK
-- [ ] README & PATCHNOTES updated
-
-## Post-Release Verification
-- Sanity tests in production (smoke)
-- Verify backups and recovery mechanisms
-- Monitor metrics for at least 24 hours for regressions
-
-## Practical Tips & "Tell it like it is" Notes
-- Keep pairing deterministic where possible — randomness hurts reproducibility.
-- Ship small, verifiable increments. Big refactors are expensive; split them.
-- If a prompt-driven feature fails nondeterministically, lower the temperature and tighten the schema — not a better narrative.
-- Prioritize correctness of race results and state persistence over flashy UI features.
-
+## Practical Notes
+- Break work into multiple prompts: plan → file patch → tests.
+- Treat Cursor like a colleague: ask for short analysis first.
+- When flaky: lower temperature, tighten schema, add failing test.
+- Keep `/templates/` with reusable patterns.
