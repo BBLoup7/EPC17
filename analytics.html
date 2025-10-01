@@ -22,7 +22,7 @@
         
         <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registr.</a></li>
+            <li><a href="registration.html">Registration</a></li>
             <li><a href="series.html">Series</a></li>
             <li><a href="events.html">Events</a></li>
             <li><a href="races.html">Races</a></li>
@@ -77,6 +77,12 @@
                 <p class="subtitle">Comprehensive racing statistics and insights</p>
             </div>
             <div class="header-actions">
+                <button id="analyticsExportPdf" class="btn btn-secondary btn-sm" onclick="exportAnalytics('pdf')" title="Export to PDF">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <button id="analyticsExportPng" class="btn btn-secondary btn-sm" onclick="exportAnalytics('png')" title="Export to PNG" style="margin-left: 8px;">
+                    <i class="fas fa-image"></i> PNG
+                </button>
                 <button class="btn btn-secondary btn-sm" onclick="refreshAnalytics()" title="Refresh Data">
                     <i class="fas fa-sync"></i>
                 </button>
@@ -167,6 +173,12 @@
                         <div class="stat-icon"><i class="fas fa-flag-checkered"></i></div>
                         <div class="stat-value" id="eventRaces">0</div>
                         <div class="stat-label">Completed Races</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-circle-check"></i></div>
+                        <div class="stat-value" id="eventCompletionPercent">0%</div>
+                        <div class="stat-label">Event Completion</div>
                     </div>
                     
                     <div class="stat-card">
@@ -625,7 +637,63 @@
     <!-- Scripts -->
     <script src="utils/event-bus.js"></script>
     <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
     <script src="utils/data-manager.js"></script>
+    <!-- Export libs -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script>
+        // Simple inline export utility
+        window.ExportUtils = {
+            defaultFileName(prefix = 'export') {
+                const ts = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
+                return `${prefix}-${ts}`;
+            },
+            async ensureDependencies() {
+                if (!window.html2canvas) throw new Error('html2canvas not loaded');
+                if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF not loaded');
+            },
+            async exportElementAsPNG(element, fileName = 'export.png', scale = 2) {
+                await this.ensureDependencies();
+                const el = typeof element === 'string' ? document.querySelector(element) : element;
+                if (!el) throw new Error('Element not found');
+                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            },
+            async exportElementAsPDF(element, fileName = 'export.pdf', options = {}) {
+                await this.ensureDependencies();
+                const el = typeof element === 'string' ? document.querySelector(element) : element;
+                if (!el) throw new Error('Element not found');
+                const { orientation = 'p', unit = 'mm', format = 'a4', scale = 2, marginMm = 5 } = options;
+                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new window.jspdf.jsPDF({ orientation, unit, format });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imageProps = pdf.getImageProperties(imgData);
+                const printableWidth = pageWidth - marginMm * 2;
+                const imgWidth = printableWidth;
+                const imgHeight = (imageProps.height * imgWidth) / imageProps.width;
+                let position = marginMm;
+                let heightLeft = imgHeight;
+                pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - marginMm * 2);
+                while (heightLeft > 0) {
+                    pdf.addPage();
+                    position = marginMm - (imgHeight - heightLeft);
+                    pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - marginMm * 2);
+                }
+                pdf.save(fileName);
+            }
+        };
+    </script>
     <script src="js/mobile-nav.js"></script>
 
     <script>
@@ -684,6 +752,39 @@
             } catch (error) {
                 console.error('Error loading analytics data:', error);
                 throw error;
+            }
+        }
+
+        // Export function for analytics
+        async function exportAnalytics(format) {
+            try {
+                console.log('ExportUtils available:', typeof window.ExportUtils);
+                
+                if (!window.ExportUtils) {
+                    console.warn('ExportUtils not loaded, falling back to print');
+                    window.print();
+                    return;
+                }
+                
+                const main = document.querySelector('main');
+                const name = (window.ExportUtils && ExportUtils.defaultFileName('analytics')) || 'analytics';
+                if (!main) return;
+                if (window.ExportUtils && typeof ExportUtils.ensureDependencies === 'function') {
+                    await ExportUtils.ensureDependencies();
+                }
+                UIComponents && UIComponents.showLoadingOverlay && UIComponents.showLoadingOverlay('Rendering export...');
+                await new Promise(r => setTimeout(r, 50));
+                if (format === 'pdf') {
+                    await ExportUtils.exportElementAsPDF(main, `${name}.pdf`, { orientation: 'p', format: 'a4', marginMm: 5, scale: 2 });
+                } else if (format === 'png') {
+                    await ExportUtils.exportElementAsPNG(main, `${name}.png`, 2);
+                }
+                showToast('Export completed successfully!', 'success');
+            } catch (e) {
+                console.error('Export failed', e);
+                showToast('Export failed. See console for details.', 'error');
+            } finally {
+                UIComponents && UIComponents.hideLoadingOverlay && UIComponents.hideLoadingOverlay();
             }
         }
 
@@ -811,6 +912,8 @@
             
             // Calculate completed races
             const eventRaces = calculateEventRaces(eventParticipants);
+            const expectedTotalRaces = calculateExpectedTotalRacesForEvent(currentEvent, eventParticipants);
+            const completionPct = expectedTotalRaces > 0 ? Math.round((eventRaces / expectedTotalRaces) * 100) : 0;
             
             // Update statistics
             document.getElementById('eventRevenue').textContent = `$${eventRevenue.toLocaleString()}`;
@@ -819,6 +922,8 @@
             document.getElementById('eventRaces').textContent = eventRaces.toLocaleString();
             document.getElementById('avgFeePerDriver').textContent = `$${avgFeePerDriver.toLocaleString()}`;
             document.getElementById('eventClasses').textContent = eventClasses.size;
+            const completionEl = document.getElementById('eventCompletionPercent');
+            if (completionEl) completionEl.textContent = `${completionPct}%`;
             
             // Load class breakdown
             loadClassBreakdown(eventParticipants);
@@ -835,23 +940,109 @@
 
         // Calculate event races
         function calculateEventRaces(eventParticipants) {
-            let totalRaces = 0;
-            
+            // Count completed races from stored histories; fallback to 0
+            let totalCompleted = 0;
             eventParticipants.forEach(participant => {
                 if (participant.statistics && participant.statistics.raceHistory) {
-                    totalRaces += participant.statistics.raceHistory.length;
+                    totalCompleted += participant.statistics.raceHistory.length;
                 }
             });
-            
-            // If no race history, estimate from classes
-            if (totalRaces === 0) {
-                const totalClasses = eventParticipants.reduce((sum, p) => {
-                    return sum + (p.selectedClasses ? p.selectedClasses.length : 1);
-                }, 0);
-                totalRaces = Math.max(1, Math.floor(totalClasses / 2)); // Rough estimate
+            return totalCompleted;
+        }
+
+        // Compute expected total races for the selected event based on class sizes and lanes per race
+        function calculateExpectedTotalRacesForEvent(event, eventParticipants) {
+            if (!event) return 0;
+            const m = parseInt(event.numberOfTracks || 4, 10);
+            const eliminationType = (event.eliminationType || 'double').toLowerCase();
+
+            const classToIds = new Map();
+            const addToClass = (cls, id) => {
+                if (!cls) return;
+                const key = String(cls).trim();
+                if (!key) return;
+                if (!classToIds.has(key)) classToIds.set(key, new Set());
+                classToIds.get(key).add(id);
+            };
+
+            (eventParticipants || []).forEach(p => {
+                if (Array.isArray(p.selectedClasses) && p.selectedClasses.length) {
+                    p.selectedClasses.forEach(c => addToClass(c, p.id));
+                } else if (Array.isArray(p.sledClasses) && p.sledClasses.length) {
+                    p.sledClasses.forEach(c => addToClass(c, p.id));
+                } else if (p.sledClass) {
+                    addToClass(p.sledClass, p.id);
+                }
+            });
+
+            if (classToIds.size === 0) {
+                const ids = new Set((eventParticipants || []).map(p => p.id));
+                classToIds.set('ALL', ids);
             }
-            
-            return totalRaces;
+
+            let total = 0;
+            for (const [, idSet] of classToIds.entries()) {
+                const n = idSet.size;
+                if (n <= 1) continue;
+                if (eliminationType === 'single') {
+                    total += expectedRacesSingleElimination(n, m);
+                } else if (eliminationType === 'double' || eliminationType === 'double_random') {
+                    total += expectedRacesDoubleElimination(n, m);
+                } else if (eliminationType === 'custom') {
+                    // Approximate: consider loss limit and outcomes
+                    const custom = Array.isArray(event.customOutcomes) ? event.customOutcomes : [];
+                    const hasLose = custom.some(x => String(x).toLowerCase() === 'lose');
+                    const lossLimit = Number.isFinite(event.customLossLimit) ? Number(event.customLossLimit) : 2;
+                    
+                    if (!hasLose || lossLimit === 1) {
+                        // No losses allowed or single loss = single elimination
+                        total += expectedRacesSingleElimination(n, m);
+                    } else if (lossLimit >= 2) {
+                        // Multiple losses allowed = similar to double elimination
+                        total += expectedRacesDoubleElimination(n, m);
+                    } else {
+                        total += expectedRacesSingleElimination(n, m);
+                    }
+                } else {
+                    total += expectedRacesDoubleElimination(n, m);
+                }
+            }
+            return total;
+        }
+
+        function expectedRacesSingleElimination(n, m) {
+            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
+            let U = n;
+            let total = 0;
+            while (U > 1) {
+                const Rw = Math.ceil(U / m);
+                total += Rw;
+                U = Rw;
+            }
+            return total;
+        }
+
+        function expectedRacesDoubleElimination(n, m) {
+            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
+            let U = n;
+            let L = 0;
+            let total = 0;
+            const Rw1 = Math.ceil(U / m);
+            total += Rw1;
+            U = Rw1;
+            L = n - Rw1;
+            while (!(U === 1 && L === 1)) {
+                const Rw = Math.ceil(U / m);
+                total += Rw;
+                const drop = U - Rw;
+                const Rl = Math.ceil((L + drop) / m);
+                total += Rl;
+                U = Rw;
+                L = Rl;
+                if (total > 100000) break;
+            }
+            total += 1; // final championship
+            return total;
         }
 
         // Load class breakdown
@@ -946,7 +1137,8 @@
                         if (!laneStats[lane]) {
                             laneStats[lane] = { races: 0, wins: 0 };
                         }
-                        laneStats[lane].races += participant.statistics.lanePerformance[lane].races || 0;
+                        // Use 'total' from lanePerformance for number of races
+                        laneStats[lane].races += participant.statistics.lanePerformance[lane].total || 0;
                         laneStats[lane].wins += participant.statistics.lanePerformance[lane].wins || 0;
                     }
                 }
@@ -983,12 +1175,14 @@
                 console.log('🔄 Setting sort direction to:', columnIndex);
             }
             
+            const activeColumn = sortDirection[tableId];
+            
             // Sort rows
             rows.sort((a, b) => {
-                const aValue = getCellValue(a.cells[Math.abs(columnIndex)], columnIndex);
-                const bValue = getCellValue(b.cells[Math.abs(columnIndex)], columnIndex);
+                const aValue = getCellValue(a.cells[Math.abs(activeColumn)], activeColumn);
+                const bValue = getCellValue(b.cells[Math.abs(activeColumn)], activeColumn);
                 
-                if (columnIndex < 0) {
+                if (activeColumn < 0) {
                     // Descending: big to small
                     return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
                 } else {
@@ -1001,7 +1195,7 @@
             rows.forEach(row => tbody.appendChild(row));
             
             // Update sort indicators
-            updateSortIndicators(table, columnIndex);
+            updateSortIndicators(table, activeColumn);
             
             console.log('✅ Sorting completed');
         }
@@ -1009,15 +1203,16 @@
         // Get cell value for sorting
         function getCellValue(cell, columnIndex) {
             const text = cell.textContent.trim();
+            const idx = Math.abs(columnIndex);
             
-            // Handle different data types
-            if (columnIndex === 0) return text.toLowerCase(); // Driver name
-            if (columnIndex === 1) return text.toLowerCase(); // Classes
-            if (columnIndex === 2) return parseInt(text) || 0; // Races
-            if (columnIndex === 3) return parseInt(text) || 0; // Wins
-            if (columnIndex === 4) return parseFloat(text) || 0; // Win %
-            if (columnIndex === 5) return text === 'N/A' ? 0 : parseFloat(text) || 0; // Avg Position
-            if (columnIndex === 6) return parseInt(text.replace(/[$,]/g, '')) || 0; // Total Fee
+            // Handle different data types based on absolute column index
+            if (idx === 0) return text.toLowerCase(); // Driver name
+            if (idx === 1) return text.toLowerCase(); // Classes
+            if (idx === 2) return parseInt(text) || 0; // Races
+            if (idx === 3) return parseInt(text) || 0; // Wins
+            if (idx === 4) return parseFloat(text) || 0; // Win %
+            if (idx === 5) return text === 'N/A' ? 0 : parseFloat(text) || 0; // Avg Position
+            if (idx === 6) return parseInt(text.replace(/[$,]/g, '')) || 0; // Total Fee
             
             return text;
         }

@@ -178,6 +178,120 @@
             margin-bottom: 0;
         }
         
+        /* Modern Header Styles */
+        .page-header-modern {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-main h1 {
+            color: var(--accent-primary);
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .header-subtitle {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .subtitle-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .event-selector {
+            max-width: 300px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-utility {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-utility:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        /* Modern Thin Tabs */
+        .tabs-modern {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 0.2rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            gap: 0.2rem;
+        }
+
+        .tab-btn-modern {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.6rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            min-height: 36px;
+        }
+
+        .tab-btn-modern:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tab-btn-modern.active {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+        }
+
+        .tab-btn-modern i {
+            font-size: 0.9rem;
+        }
+
+        .tab-btn-modern span {
+            font-weight: 500;
+        }
+
         /* Performance Warning Styles */
         .performance-warning {
             background: linear-gradient(135deg, #ff6b35, #f7931e);
@@ -707,6 +821,58 @@
                 grid-template-columns: 1fr;
                 gap: 1rem;
             }
+
+            /* Modern Header Mobile Styles */
+            .page-header-modern {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .header-main h1 {
+                font-size: 1.5rem;
+            }
+
+            .event-selector {
+                max-width: 100%;
+            }
+
+            /* Modern Tabs Mobile Styles */
+            .tabs-modern {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .tab-btn-modern {
+                justify-content: flex-start;
+                padding: 0.75rem 1rem;
+            }
+
+            .tab-btn-modern span {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header-modern {
+                padding: 0.75rem;
+            }
+
+            .header-main h1 {
+                font-size: 1.3rem;
+            }
+
+            .subtitle-text {
+                font-size: 0.9rem;
+            }
+
+            .tab-btn-modern {
+                font-size: 0.85rem;
+                padding: 0.6rem 0.8rem;
+            }
         }
 
         /* Registration Status Styles */
@@ -853,6 +1019,45 @@
             margin: 0;
             font-size: 0.9rem;
         }
+
+        /* Form Layout Improvements */
+        #formView {
+            width: 100%;
+        }
+
+        .tab-content {
+            margin-top: 0;
+        }
+
+        .tab-content.active {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Ensure form uses full width */
+        .registration-form {
+            width: 100%;
+            max-width: none;
+        }
+
+        /* Optimize spacing for single-screen fit */
+        .form-section:last-of-type {
+            margin-bottom: 1rem;
+        }
+
+        .form-actions {
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -867,16 +1072,16 @@
             </div>
         </div>
         
-        <!-- Desktop Navigation -->
+                <!-- Desktop Navigation -->
         <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
-            <li class="active"><a href="registration.html">Registr.</a></li>
+            <li class="active"><a href="registration.html">Registration</a></li>
             <li><a href="series.html">Series</a></li>
             <li><a href="events.html">Events</a></li>
             <li><a href="races.html">Races</a></li>
             <li><a href="driver-profile.html">Drivers</a></li>
             <li><a href="analytics.html">Analytics</a></li>
-                            <li><a href="live-display.html">Live Display</a></li>
+            <li><a href="live-display.html">Live Display</a></li>
         </ul>
         
         <!-- Mobile Hamburger Menu -->
@@ -934,27 +1139,42 @@
             </div>
         </div>
         
-        <div class="page-header">
-            <div>
-                <h1>Event Registration</h1>
-                <p class="subtitle">Register drivers for specific racing events</p>
-            </div>
-            <div class="header-actions">
-                <div id="eventSelectContainer">
-                    <!-- Event combo box will be created here -->
+        <!-- Modern Compact Header -->
+        <div class="page-header-modern">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1>Event Registration</h1>
+                    <div class="header-subtitle">
+                        <span class="subtitle-text">Register drivers for racing events</span>
+                        <div class="event-selector">
+                            <div id="eventSelectContainer">
+                                <!-- Event combo box will be created here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="utility-actions">
-                    <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
-                        <i class="fas fa-trash-alt"></i> Clear All Data
+                <div class="header-actions">
+                    <button class="btn-utility" onclick="clearAllData()" title="Clear All Test Data">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('form')">Registration Form</button>
-            <button class="tab-btn" onclick="switchTab('list')">Participants</button>
-            <button class="tab-btn" onclick="switchTab('addExisting')">Add Existing Driver</button>
+        <!-- Modern Thin Tabs -->
+        <div class="tabs-modern">
+            <button class="tab-btn-modern active" onclick="switchTab('form')">
+                <i class="fas fa-edit"></i>
+                <span>Registration</span>
+            </button>
+            <button class="tab-btn-modern" onclick="switchTab('list')">
+                <i class="fas fa-users"></i>
+                <span>Participants</span>
+            </button>
+            <button class="tab-btn-modern" onclick="switchTab('addExisting')">
+                <i class="fas fa-user-plus"></i>
+                <span>Add Driver</span>
+            </button>
         </div>
 
         <div id="formView" class="tab-content active">
@@ -1084,6 +1304,7 @@
     <script src="utils/performance-monitor.js"></script>
     <script src="utils/helpers.js"></script>
     <script src="utils/ui-components.js"></script>
+    <script src="utils/auth.js"></script>
     <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
     <script src="utils/event-bus.js"></script>
     <script src="modules/statistics-manager.js"></script>
@@ -1136,7 +1357,7 @@
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
+            document.querySelectorAll('.tab-btn-modern').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.getElementById(tab + 'View').classList.add('active');
@@ -2507,6 +2728,26 @@
                 setTimeout(() => document.body.removeChild(toast), 300);
             }, 3000);
         }
+
+        // Clear all data (global) for registration page
+        window.clearAllData = async function() {
+            window.confirmClearAllData(async () => {
+                try {
+                    if (!window.dataManager) {
+                        window.dataManager = new DataManager();
+                    }
+                    await window.dataManager.clearAllData();
+                    // Refresh UI after clearing
+                    await loadEvents();
+                    await loadComponents();
+                    showToast('All data has been cleared successfully', 'success');
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    showToast('Error clearing data. Please try again.', 'error');
+                    throw error; // Re-throw to show error in modal
+                }
+            });
+        };
 
         // Duplicate Detection Functions
         async function checkForDuplicateDrivers(formData) {

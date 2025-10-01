@@ -1,0 +1,39 @@
+    <!-- Scripts -->
+    <script src="utils/event-bus.js"></script>
+    <script src="utils/ui-components.js"></script>
+    <script src="utils/data-manager.js"></script>
+    <script src="js/mobile-nav.js"></script>
+    <!-- Export libs -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="utils/exporter.js"></script>
+    <script>
+        let dataManager;
+        let allEvents = [];
+        let allParticipants = [];
+        let currentEvent = null;
+        let sortDirection = {};
+
+        async function exportAnalytics(format) {
+            try {
+                const main = document.querySelector('main');
+                const name = (window.ExportUtils && ExportUtils.defaultFileName('analytics')) || 'analytics';
+                if (!main) return;
+                if (window.ExportUtils && typeof ExportUtils.ensureDependencies === 'function') {
+                    await ExportUtils.ensureDependencies();
+                }
+                UIComponents && UIComponents.showLoadingOverlay && UIComponents.showLoadingOverlay('Rendering export...');
+                await new Promise(r => setTimeout(r, 50));
+                if (format === 'pdf') {
+                    await ExportUtils.exportElementAsPDF(main, `${name}.pdf`, { orientation: 'p', format: 'a4', marginMm: 5, scale: 2 });
+                } else if (format === 'png') {
+                    await ExportUtils.exportElementAsPNG(main, `${name}.png`, 2);
+                }
+            } catch (e) {
+                console.error('Export failed', e);
+                showToast('Export failed. See console for details.', 'error');
+            } finally {
+                UIComponents && UIComponents.hideLoadingOverlay && UIComponents.hideLoadingOverlay();
+            }
+        }
+    </script>

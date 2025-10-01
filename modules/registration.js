@@ -122,9 +122,10 @@ class RegistrationManager {
                                placeholder="Team or organization name">
                     </div>
                     <div class="form-group">
-                        <label for="racingNumber">Racing Number</label>
-                        <input type="number" name="racingNumber" id="racingNumber" 
-                               placeholder="Preferred number" min="1" max="999">
+                        <label for="racingNumber">Racing Number *</label>
+                        <input type="text" name="racingNumber" id="racingNumber" 
+                               placeholder="e.g., 1, 1A, 99B" required pattern="[A-Za-z0-9]+" title="Racing number can contain numbers and letters">
+                        <small class="form-text">Required. Can contain numbers and letters. Must be unique per class in this event.</small>
                     </div>
                 </div>
 
@@ -300,11 +301,25 @@ class RegistrationManager {
                 // 🔧 NEW PARTICIPANT: Create new participant as usual
                 console.log(`🔧 Creating new participant for event ${eventId}`);
                 
+                // Validate racing number
+                const racingNumber = formData.get('racingNumber');
+                if (!racingNumber || racingNumber.trim() === '') {
+                    Helpers.showToast('Racing number is required', 'error');
+                    return;
+                }
+                
+                // Validate racing number format
+                const racingNumberRegex = /^[A-Za-z0-9]+$/;
+                if (!racingNumberRegex.test(racingNumber.trim())) {
+                    Helpers.showToast('Racing number can only contain letters and numbers', 'error');
+                    return;
+                }
+                
                 const participantData = {
                     name: formData.get('participantName'),
                     selectedClasses: selectedClasses,
                     team: formData.get('teamName') || '',
-                    racingNumber: formData.get('racingNumber') || null,
+                    racingNumber: racingNumber.trim(),
                     contact: {
                         email: formData.get('contactEmail'),
                         phone: formData.get('contactPhone'),

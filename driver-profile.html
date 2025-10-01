@@ -19,16 +19,16 @@
             </div>
         </div>
         
-        <!-- Desktop Navigation -->
+                <!-- Desktop Navigation -->
         <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
-            <li><a href="registration.html">Registr.</a></li>
+            <li><a href="registration.html">Registration</a></li>
             <li><a href="series.html">Series</a></li>
             <li><a href="events.html">Events</a></li>
             <li><a href="races.html">Races</a></li>
             <li class="active"><a href="driver-profile.html">Drivers</a></li>
             <li><a href="analytics.html">Analytics</a></li>
-                            <li><a href="live-display.html">Live Display</a></li>
+            <li><a href="live-display.html">Live Display</a></li>
         </ul>
         
         <!-- Mobile Hamburger Menu -->
@@ -95,6 +95,12 @@
                 <div id="driverSelectContainer">
                     <!-- Combo box will be populated by JavaScript -->
                 </div>
+                <button id="driverExportPdf" class="btn btn-secondary btn-sm" onclick="exportDriverProfile('pdf')" title="Export to PDF">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <button id="driverExportPng" class="btn btn-secondary btn-sm" onclick="exportDriverProfile('png')" title="Export to PNG" style="margin-left: 8px;">
+                    <i class="fas fa-image"></i> PNG
+                </button>
                 <button class="btn btn-secondary btn-sm" onclick="refreshData()" title="Refresh All Data">
                     <i class="fas fa-sync"></i>
                 </button>
@@ -134,25 +140,38 @@
                         <span id="driverTeam"></span>
                         <span id="memberSince"></span>
                     </div>
-                    <!-- Achievement Tags -->
-                    <div class="achievement-tags" id="achievementTags">
-                        <!-- Achievement tags will be populated here -->
-                    </div>
                 </div>
                 <div class="driver-actions">
                     <button class="btn btn-secondary" onclick="clearDriverSelection()">← Back to List</button>
                 </div>
             </div>
 
-            <!-- Event Filter -->
+            <!-- Filters -->
             <div class="event-filter">
                 <div class="filter-label">
                     <i class="fas fa-filter"></i>
-                    <span>Filter by Event:</span>
+                    <span>Filters:</span>
                 </div>
-                <select class="form-control" id="eventFilter" onchange="filterByEvent()">
-                    <option value="">All Events (Overall Stats)</option>
-                </select>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="seriesFilter">Series:</label>
+                        <select class="form-control" id="seriesFilter" onchange="filterBySeries()">
+                            <option value="">All Series</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="seasonFilter">Season:</label>
+                        <select class="form-control" id="seasonFilter" onchange="filterBySeason()">
+                            <option value="">All Seasons</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="min-width: 260px;">
+                        <label for="eventFilter">Event:</label>
+                        <select class="form-control" id="eventFilter" onchange="filterByEvent()">
+                            <option value="">All Events (Overall Stats)</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="filter-info">
                     <span id="filterDescription">Showing overall performance across all events</span>
                 </div>
@@ -327,6 +346,25 @@
         .event-filter select {
             width: 300px;
             margin-bottom: 10px;
+        }
+
+        .event-filter .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: end;
+            margin-top: 10px;
+        }
+
+        .event-filter .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .event-filter .filter-group label {
+            font-size: 12px;
+            color: var(--text-secondary, #b3b3b3);
         }
 
         .filter-info {
@@ -767,185 +805,7 @@
 
         /* These styles are now defined in the Lane Performance section above */
 
-        /* Achievement Tags Styles */
-        .achievement-tags {
-            margin-top: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .achievement-tag {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: help;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .achievement-tag:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .achievement-tag.rare {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-        }
-
-        .achievement-tag.epic {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .achievement-tag.legendary {
-            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
-            color: #2d3436;
-        }
-
-        .achievement-emoji {
-            font-size: 16px;
-            filter: brightness(1.1);
-        }
-
-        .achievement-title {
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-
-        /* Tooltip Styles */
-        .achievement-tooltip {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #2d3436;
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            line-height: 1.4;
-            white-space: nowrap;
-            max-width: 280px;
-            white-space: normal;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            margin-bottom: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .achievement-tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 6px solid transparent;
-            border-top-color: #2d3436;
-        }
-
-        .achievement-tag:hover .achievement-tooltip {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .achievement-details {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-top: 4px;
-        }
-
-        .no-achievements {
-            color: var(--text-secondary, #b3b3b3);
-            font-style: italic;
-            font-size: 14px;
-            padding: 8px 0;
-        }
-
-        /* Achievement Notification Styles */
-        .achievement-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--bg-secondary, #2d2d2d);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            border: 2px solid #f39c12;
-            z-index: 10000;
-            min-width: 320px;
-            max-width: 400px;
-            animation: slideInRight 0.5s ease-out;
-        }
-
-        .notification-header {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 10px 10px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .notification-header h4 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .notification-header button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background-color 0.2s;
-        }
-
-        .notification-header button:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .notification-body {
-            padding: 16px;
-            color: var(--text-primary, #ffffff);
-        }
-
-        .achievement-notification-item {
-            margin-bottom: 8px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .achievement-notification-item:last-child {
-            margin-bottom: 0;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
+        /* Achievements styles removed */
 
         /* Sync Status Styles */
         .sync-status-container {
@@ -1240,18 +1100,77 @@
     </style>
 
     <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
+    <script src="utils/helpers.js"></script>
     <script src="utils/event-bus.js"></script>
     <script src="modules/statistics-manager.js"></script>
     <script src="utils/data-manager.js"></script>
     <script src="utils/ui-components.js"></script>
-    <script src="modules/achievement-manager.js"></script>
+    <script src="utils/auth.js"></script>
+    <!-- Export libs -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script>
+        // Simple inline export utility
+        window.ExportUtils = {
+            defaultFileName(prefix = 'export') {
+                const ts = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
+                return `${prefix}-${ts}`;
+            },
+            async ensureDependencies() {
+                if (!window.html2canvas) throw new Error('html2canvas not loaded');
+                if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF not loaded');
+            },
+            async exportElementAsPNG(element, fileName = 'export.png', scale = 2) {
+                await this.ensureDependencies();
+                const el = typeof element === 'string' ? document.querySelector(element) : element;
+                if (!el) throw new Error('Element not found');
+                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            },
+            async exportElementAsPDF(element, fileName = 'export.pdf', options = {}) {
+                await this.ensureDependencies();
+                const el = typeof element === 'string' ? document.querySelector(element) : element;
+                if (!el) throw new Error('Element not found');
+                const { orientation = 'p', unit = 'mm', format = 'a4', scale = 2, marginMm = 5 } = options;
+                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new window.jspdf.jsPDF({ orientation, unit, format });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imageProps = pdf.getImageProperties(imgData);
+                const printableWidth = pageWidth - marginMm * 2;
+                const imgWidth = printableWidth;
+                const imgHeight = (imageProps.height * imgWidth) / imageProps.width;
+                let position = marginMm;
+                let heightLeft = imgHeight;
+                pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - marginMm * 2);
+                while (heightLeft > 0) {
+                    pdf.addPage();
+                    position = marginMm - (imgHeight - heightLeft);
+                    pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - marginMm * 2);
+                }
+                pdf.save(fileName);
+            }
+        };
+    </script>
+    
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
     <script>
-        let allData = { participants: [], events: [], races: [], series: [], achievements: [] };
+        let allData = { participants: [], events: [], races: [], series: [] };
         let currentDriverId = null;
         let selectedEventId = null; // Track selected event for filtering
-        let achievementManager = null;
+        let selectedSeriesId = null; // Track selected series for filtering
+        let selectedSeasonId = null; // Track selected season for filtering
+        
         let dataManager = null;
         
         // Pagination variables for race history
@@ -1263,54 +1182,7 @@
             currentRaces: []
         };
 
-        // Achievement tag definitions
-        const achievementTags = {
-            'lane-bias-index': {
-                title: '🧨 Lane Bias Index',
-                description: 'Which lane wins more than it should? Assigned if a driver wins primarily from a lane that statistically underperforms',
-                rarity: 'rare'
-            },
-            'anti-social-racer': {
-                title: '🧍‍♂️ Anti-Social Racer',
-                description: 'Fewest unique opponents - This driver keeps drawing the same people round after round',
-                rarity: 'common'
-            },
-            'bracket-comeback': {
-                title: '🎯 Bracket Comeback of the Day',
-                description: 'Deepest lower-bracket run - Dropped early, then climbed all the way to the final',
-                rarity: 'epic'
-            },
-            'rematch-count': {
-                title: '🔁 Rematch Count',
-                description: 'Most rematches in a single event - They just couldn\'t get away from their rivals',
-                rarity: 'common'
-            },
-            'silent-killer': {
-                title: '🔪 Silent Killer',
-                description: 'Most eliminations, no podium - Took out a lot of racers without placing',
-                rarity: 'rare'
-            },
-            'lane-loyalty-violation': {
-                title: '😬 Lane Loyalty Violation',
-                description: 'Never raced in the same lane twice - Switched lanes every single heat',
-                rarity: 'common'
-            },
-            'clean-sweep': {
-                title: '🧹 Clean Sweep',
-                description: 'Perfect upper-bracket run - Won every match without ever dropping',
-                rarity: 'legendary'
-            },
-            'unbreakable-wall': {
-                title: '🧱 Unbreakable Wall',
-                description: 'Eliminated the most opponents - Statistically the biggest threat on the bracket',
-                rarity: 'epic'
-            },
-            'luckiest-draw': {
-                title: '🍀 Luckiest Draw',
-                description: 'No rematches + preferred lane usage - Had the smoothest possible bracket run',
-                rarity: 'rare'
-            }
-        };
+        // Using server-provided tags via AchievementManager; removed local tag map.
 
         // Force refresh participants data
         async function refreshParticipantsData() {
@@ -1343,9 +1215,6 @@
                     await dataManager.loadFromStorage(['series', 'events', 'race-brackets', 'participants']);
                 }
                 
-                // Initialize Achievement Manager
-                achievementManager = new AchievementManager();
-                
                 // Set up real-time event listeners
                 setupEventListeners();
                 
@@ -1361,14 +1230,7 @@
                 allData.races = extractRaceHistoryFromBrackets();
                 console.log(`📊 Extracted ${allData.races.length} race records from bracket data`);
                 
-                // Load achievements
-                try {
-                    const achievementsRes = await fetch('/api/achievements');
-                    allData.achievements = await achievementsRes.json();
-                } catch (achievementError) {
-                    console.warn('Achievement loading failed, using empty array:', achievementError);
-                    allData.achievements = [];
-                }
+                // Achievements removed
 
                 populateDriverSelect();
                 displayDriverGrid();
@@ -1378,12 +1240,48 @@
                 console.log('📋 Driver Profile Data Summary:', {
                     participants: allData.participants.length,
                     events: allData.events.length,
-                    races: allData.races.length,
-                    achievements: allData.achievements.length
+                    races: allData.races.length
                 });
             } catch (error) {
                 console.error('Error loading data:', error);
                 showToast('Error loading driver data', 'error');
+            }
+        }
+
+        // Export function for driver profile
+        async function exportDriverProfile(format) {
+            try {
+                console.log('ExportUtils available:', typeof window.ExportUtils);
+                
+                if (!window.ExportUtils) {
+                    console.warn('ExportUtils not loaded, falling back to print');
+                    window.print();
+                    return;
+                }
+                
+                const main = document.querySelector('main');
+                const driverNameEl = document.getElementById('driverName');
+                const driverName = driverNameEl && driverNameEl.textContent ? driverNameEl.textContent.trim().toLowerCase().replace(/\s+/g, '-') : 'driver-profile';
+                const prefix = selectedEventId ? `${driverName}-event` : driverName;
+                const name = (window.ExportUtils && ExportUtils.defaultFileName(prefix)) || prefix;
+                if (!main) return;
+                
+                if (window.ExportUtils && typeof ExportUtils.ensureDependencies === 'function') {
+                    await ExportUtils.ensureDependencies();
+                }
+                UIComponents && UIComponents.showLoadingOverlay && UIComponents.showLoadingOverlay('Rendering export...');
+                await new Promise(r => setTimeout(r, 50));
+                if (format === 'pdf') {
+                    await ExportUtils.exportElementAsPDF(main, `${name}.pdf`, { orientation: 'p', format: 'a4', marginMm: 5, scale: 2 });
+                } else if (format === 'png') {
+                    await ExportUtils.exportElementAsPNG(main, `${name}.png`, 2);
+                }
+                showToast('Export completed successfully!', 'success');
+            } catch (e) {
+                console.error('Export failed', e);
+                showToast('Export failed. See console for details.', 'error');
+            } finally {
+                UIComponents && UIComponents.hideLoadingOverlay && UIComponents.hideLoadingOverlay();
             }
         }
 
@@ -1622,7 +1520,7 @@
         }
 
         function showProfileUpdateIndicator() {
-            const profileSections = document.querySelectorAll('.profile-section, .stats-grid, .achievement-tags');
+            const profileSections = document.querySelectorAll('.profile-section, .stats-grid');
             profileSections.forEach(section => {
                 section.classList.add('updating');
                 setTimeout(() => {
@@ -1953,13 +1851,12 @@
             document.getElementById('driverTeam').textContent = driver.team || 'No team';
             document.getElementById('memberSince').textContent = `Member since: ${new Date(driver.registrationDate || driver.dateOfBirth).toLocaleDateString()}`;
 
-            // Populate event filter dropdown
+            // Populate filters
             populateEventFilter(driver);
 
             // Update all profile sections with race data
             try {
                 await updateDriverStatistics(driver);
-                updateDriverAchievements(driver);
                 updateRaceHistory(driver);
                 updateLanePerformance(driver);
                 updateEventSummary(driver);
@@ -1994,14 +1891,62 @@
         }
 
         // Populate event filter dropdown
-        function populateEventFilter(driver) {
+        function populateEventFilter(driver, preserveSelections = false) {
             const eventFilter = document.getElementById('eventFilter');
+            const seriesFilter = document.getElementById('seriesFilter');
+            const seasonFilter = document.getElementById('seasonFilter');
             const filterDescription = document.getElementById('filterDescription');
+
+            // Preserve current selections if requested
+            const prevSeries = preserveSelections ? (seriesFilter?.value || '') : '';
+            const prevSeason = preserveSelections ? (seasonFilter?.value || '') : '';
+            const prevEvent = preserveSelections ? (eventFilter?.value || '') : '';
             
             // Get events this driver participated in
             const driverRaces = allData.races.filter(race => race.participantId === driver.id);
             const driverEventIds = [...new Set(driverRaces.map(race => race.eventId))];
-            const driverEvents = allData.events.filter(event => driverEventIds.includes(event.id));
+            let driverEvents = allData.events.filter(event => driverEventIds.includes(event.id));
+
+            // Populate Series filter based on driver's events
+            const driverSeriesIds = [...new Set(driverEvents.map(ev => ev.seriesId).filter(Boolean))];
+            seriesFilter.innerHTML = '<option value="">All Series</option>';
+            driverSeriesIds.forEach(seriesId => {
+                const series = (allData.series && allData.series.length ? allData.series : dataManager.getAllSeries()).find(s => s.id === seriesId);
+                const name = series ? series.name : 'Unknown Series';
+                const option = document.createElement('option');
+                option.value = seriesId;
+                option.textContent = name;
+                seriesFilter.appendChild(option);
+            });
+            if (preserveSelections && prevSeries) {
+                seriesFilter.value = prevSeries;
+                selectedSeriesId = prevSeries;
+            }
+
+            // Populate Season filter based on selected series or driver's events
+            const seasonsMap = new Map();
+            const seriesList = (allData.series && allData.series.length ? allData.series : dataManager.getAllSeries());
+            driverEvents.forEach(ev => {
+                if (selectedSeriesId && ev.seriesId !== selectedSeriesId) return;
+                if (ev.seasonId) {
+                    const series = seriesList.find(s => s.id === ev.seriesId);
+                    const season = series?.seasons?.find(se => se.id === ev.seasonId);
+                    if (season && !seasonsMap.has(season.id)) {
+                        seasonsMap.set(season.id, { id: season.id, name: season.name });
+                    }
+                }
+            });
+            seasonFilter.innerHTML = '<option value="">All Seasons</option>';
+            for (const season of seasonsMap.values()) {
+                const option = document.createElement('option');
+                option.value = season.id;
+                option.textContent = season.name;
+                seasonFilter.appendChild(option);
+            }
+            if (preserveSelections && prevSeason) {
+                seasonFilter.value = prevSeason;
+                selectedSeasonId = prevSeason;
+            }
             
             // Clear and populate dropdown
             eventFilter.innerHTML = '<option value="">All Events (Overall Stats)</option>';
@@ -2015,6 +1960,14 @@
             // Sort events by date (most recent first)
             driverEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
             
+            // Apply current series/season selections when building Event options
+            if (selectedSeriesId) {
+                driverEvents = driverEvents.filter(ev => ev.seriesId === selectedSeriesId);
+            }
+            if (selectedSeasonId) {
+                driverEvents = driverEvents.filter(ev => ev.seasonId === selectedSeasonId);
+            }
+
             driverEvents.forEach(event => {
                 const eventRaceCount = driverRaces.filter(race => race.eventId === event.id).length;
                 
@@ -2031,8 +1984,89 @@
             });
             
             // Reset selection
-            eventFilter.value = '';
+            // Reset or restore selections
+            if (preserveSelections) {
+                eventFilter.value = prevEvent || '';
+                if (prevEvent) selectedEventId = prevEvent;
+            } else {
+                selectedSeriesId = '';
+                selectedSeasonId = '';
+                seriesFilter.value = '';
+                seasonFilter.value = '';
+                eventFilter.value = '';
+            }
             filterDescription.textContent = `Showing overall performance across ${driverEvents.length} events`;
+        }
+
+        // Filter by series
+        async function filterBySeries() {
+            const seriesFilter = document.getElementById('seriesFilter');
+            selectedSeriesId = seriesFilter.value || null;
+
+            // Reset dependent filters
+            selectedSeasonId = null;
+            const seasonFilter = document.getElementById('seasonFilter');
+            const eventFilter = document.getElementById('eventFilter');
+            if (seasonFilter) seasonFilter.value = '';
+            if (eventFilter) eventFilter.value = '';
+            selectedEventId = null;
+
+            // Rebuild season and event dropdowns according to current selection
+            if (currentDriverId) {
+                const driver = allData.participants.find(p => p.id === currentDriverId);
+                populateEventFilter(driver, true);
+                await applyAllFiltersAndRefresh(driver);
+            }
+        }
+
+        // Filter by season
+        async function filterBySeason() {
+            const seasonFilter = document.getElementById('seasonFilter');
+            selectedSeasonId = seasonFilter.value || null;
+
+            // Reset event filter
+            const eventFilter = document.getElementById('eventFilter');
+            if (eventFilter) eventFilter.value = '';
+            selectedEventId = null;
+
+            // Rebuild event dropdowns according to current selection
+            if (currentDriverId) {
+                const driver = allData.participants.find(p => p.id === currentDriverId);
+                populateEventFilter(driver);
+                await applyAllFiltersAndRefresh(driver);
+            }
+        }
+
+        // Apply filters and refresh UI sections
+        async function applyAllFiltersAndRefresh(driver) {
+            const filterDescription = document.getElementById('filterDescription');
+
+            // Build description string
+            const parts = [];
+            if (selectedSeriesId) {
+                const series = (allData.series && allData.series.length ? allData.series : dataManager.getAllSeries()).find(s => s.id === selectedSeriesId);
+                parts.push(`Series: ${series ? series.name : 'Unknown'}`);
+            }
+            if (selectedSeasonId) {
+                const series = (allData.series && allData.series.length ? allData.series : dataManager.getAllSeries()).find(s => s.seasons?.some(se => se.id === selectedSeasonId));
+                const season = series?.seasons?.find(se => se.id === selectedSeasonId);
+                parts.push(`Season: ${season ? season.name : 'Unknown'}`);
+            }
+            if (selectedEventId) {
+                const ev = allData.events.find(e => e.id === selectedEventId);
+                const eventName = ev ? ev.name : 'Unknown Event';
+                const eventDate = ev ? new Date(ev.date).toLocaleDateString() : 'Unknown Date';
+                parts.push(`Event: ${eventName} (${eventDate})`);
+            }
+            filterDescription.textContent = parts.length ? `Showing performance filtered by ${parts.join(' • ')}` : 'Showing overall performance across all events';
+
+            // Reset pagination when changing filters
+            raceHistoryPagination.currentPage = 1;
+
+            await updateDriverStatistics(driver);
+            updateRaceHistory(driver);
+            updateLanePerformance(driver);
+            updateEventSummary(driver);
         }
 
         // Filter by event
@@ -2056,26 +2090,11 @@
             // Reset pagination when changing event filter
             raceHistoryPagination.currentPage = 1;
             
-            // Update filter description
-            if (selectedEventId) {
-                const selectedEvent = allData.events.find(e => e.id === selectedEventId);
-                const eventName = selectedEvent ? selectedEvent.name : 'Unknown Event';
-                const eventDate = selectedEvent ? new Date(selectedEvent.date).toLocaleDateString() : 'Unknown Date';
-                filterDescription.textContent = `Showing performance for ${eventName} (${eventDate})`;
-            } else {
-                const driverRaces = allData.races.filter(race => race.participantId === driver.id);
-                const driverEventIds = [...new Set(driverRaces.map(race => race.eventId))];
-                filterDescription.textContent = `Showing overall performance across ${driverEventIds.length} events`;
-            }
+            // Update filter description moved to applyAllFiltersAndRefresh
             
-            // Update all profile sections with filtered data
+            // Apply all filters and refresh
             try {
-                await updateDriverStatistics(driver);
-                updateRaceHistory(driver);
-                updateLanePerformance(driver);
-                updateEventSummary(driver);
-                
-                console.log(`📊 Profile updated for ${driver.name} - Event filter: ${selectedEventId || 'All Events'}`);
+                await applyAllFiltersAndRefresh(driver);
             } catch (error) {
                 console.error('Error updating filtered profile:', error);
                 showToast('Error updating profile with event filter', 'error');
@@ -2090,6 +2109,7 @@
                 // Try to use StatisticsManager for comprehensive stats if available
                 if (dataManager && dataManager.statisticsManager) {
                     console.log(`📊 Using StatisticsManager for ${driver.name}'s stats`);
+                    // If the statistics manager supports filtering by event/series/season in the future, wire it here.
                     stats = await dataManager.statisticsManager.calculateParticipantStatsOptimized(driver.id);
                 }
                 
@@ -2129,7 +2149,16 @@
         function calculateStatsFromRaceData(participantId, eventId = null) {
             let driverRaces = allData.races.filter(race => race.participantId === participantId);
             
-            // Filter by event if specified
+            // Apply filters: series, season, event
+            if (selectedSeriesId) {
+                const eventIdsForSeries = new Set(allData.events.filter(e => e.seriesId === selectedSeriesId).map(e => e.id));
+                driverRaces = driverRaces.filter(r => eventIdsForSeries.has(r.eventId));
+            }
+            if (selectedSeasonId) {
+                const eventIdsForSeason = new Set(allData.events.filter(e => e.seasonId === selectedSeasonId).map(e => e.id));
+                driverRaces = driverRaces.filter(r => eventIdsForSeason.has(r.eventId));
+            }
+            // Backward compatibility: explicit event filter argument
             if (eventId) {
                 driverRaces = driverRaces.filter(race => race.eventId === eventId);
             }
@@ -2181,7 +2210,15 @@
         function updateRaceHistory(driver) {
             let driverRaces = allData.races.filter(race => race.participantId === driver.id);
             
-            // Filter by selected event if specified
+            // Apply filters: series, season, event
+            if (selectedSeriesId) {
+                const eventIdsForSeries = new Set(allData.events.filter(e => e.seriesId === selectedSeriesId).map(e => e.id));
+                driverRaces = driverRaces.filter(r => eventIdsForSeries.has(r.eventId));
+            }
+            if (selectedSeasonId) {
+                const eventIdsForSeason = new Set(allData.events.filter(e => e.seasonId === selectedSeasonId).map(e => e.id));
+                driverRaces = driverRaces.filter(r => eventIdsForSeason.has(r.eventId));
+            }
             if (selectedEventId) {
                 driverRaces = driverRaces.filter(race => race.eventId === selectedEventId);
             }
@@ -2346,7 +2383,15 @@
         function updateLanePerformance(driver) {
             let driverRaces = allData.races.filter(race => race.participantId === driver.id);
             
-            // Filter by selected event if specified
+            // Apply filters: series, season, event
+            if (selectedSeriesId) {
+                const eventIdsForSeries = new Set(allData.events.filter(e => e.seriesId === selectedSeriesId).map(e => e.id));
+                driverRaces = driverRaces.filter(r => eventIdsForSeries.has(r.eventId));
+            }
+            if (selectedSeasonId) {
+                const eventIdsForSeason = new Set(allData.events.filter(e => e.seasonId === selectedSeasonId).map(e => e.id));
+                driverRaces = driverRaces.filter(r => eventIdsForSeason.has(r.eventId));
+            }
             if (selectedEventId) {
                 driverRaces = driverRaces.filter(race => race.eventId === selectedEventId);
             }
@@ -2393,7 +2438,15 @@
         function updateEventSummary(driver) {
             let driverRaces = allData.races.filter(race => race.participantId === driver.id);
             
-            // Filter by selected event if specified
+            // Apply filters: series, season, event
+            if (selectedSeriesId) {
+                const eventIdsForSeries = new Set(allData.events.filter(e => e.seriesId === selectedSeriesId).map(e => e.id));
+                driverRaces = driverRaces.filter(r => eventIdsForSeries.has(r.eventId));
+            }
+            if (selectedSeasonId) {
+                const eventIdsForSeason = new Set(allData.events.filter(e => e.seasonId === selectedSeasonId).map(e => e.id));
+                driverRaces = driverRaces.filter(r => eventIdsForSeason.has(r.eventId));
+            }
             if (selectedEventId) {
                 driverRaces = driverRaces.filter(race => race.eventId === selectedEventId);
             }
@@ -2449,7 +2502,7 @@
                 const eventDate = event ? new Date(event.date).toLocaleDateString() : 'N/A';
                 const winRate = ((data.wins / data.races.length) * 100).toFixed(1);
                 const bestPos = data.bestPosition === Infinity ? 'N/A' : data.bestPosition;
-                const hasClasses = Object.keys(data.classes).length > 1;
+                const hasClasses = Object.keys(data.classes).length >= 1;
                 const classCount = Object.keys(data.classes).length;
 
                 // Generate class breakdown rows
@@ -2497,60 +2550,7 @@
             tbody.innerHTML = eventSummary;
         }
 
-        // Update driver achievements
-        function updateDriverAchievements(driver) {
-            const achievementsContainer = document.getElementById('achievementTags');
-            const driverAchievements = allData.achievements.filter(achievement => 
-                achievement.participantId === driver.id
-            );
-
-            if (achievementManager) {
-                achievementsContainer.innerHTML = achievementManager.generateAchievementHTML(driverAchievements);
-            } else {
-                // Fallback if achievement manager isn't loaded
-                achievementsContainer.innerHTML = '<div class="no-achievements">Loading achievements...</div>';
-            }
-        }
-
-        // Calculate achievements for an event (manual trigger)
-        async function calculateEventAchievements(eventId) {
-            if (!achievementManager) {
-                console.error('Achievement Manager not initialized');
-                return;
-            }
-
-            try {
-                const result = await achievementManager.calculateEventAchievements(eventId);
-                
-                if (result.success && result.newAchievements > 0) {
-                    // Reload achievements data
-                    const achievementsRes = await fetch('/api/achievements');
-                    allData.achievements = await achievementsRes.json();
-                    
-                    // Refresh current driver's achievements if viewing a profile
-                    if (currentDriverId) {
-                        const driver = allData.participants.find(p => p.id === currentDriverId);
-                        if (driver) {
-                            updateDriverAchievements(driver);
-                        }
-                    }
-                    
-                    // Show notification
-                    achievementManager.showAchievementNotification(result.achievements, allData.participants);
-                }
-            } catch (error) {
-                console.error('Error calculating achievements:', error);
-            }
-        }
-
-        // Show achievement notification (legacy function for compatibility)
-        function showAchievementNotification(achievements) {
-            if (achievementManager) {
-                achievementManager.showAchievementNotification(achievements, allData.participants);
-            } else {
-                console.warn('Achievement Manager not available for notifications');
-            }
-        }
+        // Achievements removed from Driver Profile
 
         // Format position badge
         function formatPositionBadge(position) {
@@ -2593,7 +2593,7 @@
         function toggleEventClasses(eventId) {
             const eventRow = document.querySelector(`tr[data-event-id="${eventId}"].event-summary-row`);
             const classRows = document.querySelectorAll(`tr[data-event-id="${eventId}"].class-breakdown-row`);
-            const accordionBtn = eventRow.querySelector('.accordion-btn i');
+            const accordionBtn = eventRow ? eventRow.querySelector('.accordion-btn i') : null;
             
             const isExpanded = classRows[0] && classRows[0].style.display !== 'none';
             
@@ -2606,15 +2606,17 @@
             }
             
             // Add/remove expanded class for styling
-            eventRow.classList.toggle('expanded', !isExpanded);
+            if (eventRow) {
+                eventRow.classList.toggle('expanded', !isExpanded);
+            }
         }
 
         // Handle event row clicks
         function handleEventRowClick(eventId) {
             const eventRow = document.querySelector(`tr[data-event-id="${eventId}"].event-summary-row`);
-            const hasClasses = eventRow.querySelector('.accordion-btn');
-            
-            if (hasClasses) {
+            const classRows = document.querySelectorAll(`tr[data-event-id="${eventId}"].class-breakdown-row`);
+            // If at least one class row exists, toggle it, even for single-class events
+            if (classRows && classRows.length > 0) {
                 toggleEventClasses(eventId);
             }
         }

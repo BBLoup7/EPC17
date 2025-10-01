@@ -1,0 +1,28 @@
+[
+  {
+    "id": "admin-default",
+    "username": "Admin",
+    "password": "Admin321",
+    "permissions": [
+      "series",
+      "events",
+      "registration",
+      "races",
+      "drivers profile",
+      "analytics",
+      "live display"
+    ]
+  },
+  {
+    "id": "0bbdebb1-4e94-483c-aad3-eafd5157216c",
+    "username": "Ins",
+    "password": "Ins123",
+    "permissions": [
+      "registration"
+    ],
+    "allowedEvents": [
+      "49ecbfa3-d4d3-4b35-b192-7f08dfe325b1",
+      "73db5b82-5b73-4d01-928f-434ee0d45844"
+    ]
+  }
+]

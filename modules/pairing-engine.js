@@ -61,6 +61,16 @@ class PairingEngine {
     }
 
     /**
+     * Explicitly set the next race number for an event
+     */
+    setNextRaceNumber(eventId, nextNumber) {
+        const n = Number(nextNumber);
+        const safe = Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
+        this.eventRaceNumbers.set(eventId, safe);
+        return safe;
+    }
+
+    /**
      * Generate heats for a round using multi-lane logic with Free Run support and performance optimizations
      */
     async generateHeats(participants, numberOfLanes, roundNumber = 1, eventId = null, freeRunEnabled = false) {

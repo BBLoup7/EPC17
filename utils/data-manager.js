@@ -64,6 +64,16 @@ class DataManager {
     }
 
     /**
+     * Perform a fetch using Auth wrapper if available (adds Authorization token)
+     */
+    request(url, options = {}) {
+        if (window.Auth && typeof window.Auth.fetch === 'function') {
+            return window.Auth.fetch(url, options);
+        }
+        return fetch(url, options);
+    }
+
+    /**
      * OPTIMIZED: Load from storage with performance enhancements
      */
     async loadFromStorage(dataTypes = null, force = false) {
@@ -159,7 +169,7 @@ class DataManager {
                 url += `?${params.toString()}`;
             }
             
-            const response = await fetch(url, {
+            const response = await this.request(url, {
                 headers: {
                     'Cache-Control': this.getCacheControlHeader(type),
                     'Accept': 'application/json',
@@ -494,7 +504,7 @@ class DataManager {
         }
         
         console.log(`🔍 DEBUG - Fetching from server: ${url}`);
-        const response = await fetch(url);
+        const response = await this.request(url);
         
         if (!response.ok) {
             if (response.status === 404) {
@@ -548,7 +558,7 @@ class DataManager {
             try {
                 console.log(`💾 Saving ${endpoint} to server (attempt ${attempt}/${maxRetries})`);
                 
-                const response = await fetch(finalUrl, {
+                const response = await this.request(finalUrl, {
                     method,
                     headers: {
                         'Content-Type': 'application/json',
@@ -662,7 +672,7 @@ class DataManager {
      */
     async deleteFromServer(endpoint, id) {
         const url = `${this.baseUrl}/${endpoint}/${id}`;
-        const response = await fetch(url, {
+        const response = await this.request(url, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -1396,7 +1406,7 @@ class DataManager {
         try {
             console.log(`🔄 Updating event ${eventId} status to: ${newStatus}`);
             
-            const response = await fetch(`${this.baseUrl}/events/${eventId}`, {
+            const response = await this.request(`${this.baseUrl}/events/${eventId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1880,7 +1890,7 @@ class DataManager {
      */
     async updateRaceBracket(bracketId, bracketData) {
         try {
-            const response = await fetch(`${this.baseUrl}/race-brackets/${bracketId}`, {
+            const response = await this.request(`${this.baseUrl}/race-brackets/${bracketId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1954,7 +1964,7 @@ class DataManager {
      */
     async getServerHealth() {
         try {
-            const response = await fetch(`${this.baseUrl}/health`);
+            const response = await this.request(`${this.baseUrl}/health`);
             if (response.ok) {
             return await response.json();
             }
@@ -1990,7 +2000,7 @@ class DataManager {
             
             // Clear data from server by calling clear endpoints
             try {
-                const response = await fetch(`${this.baseUrl}/clear-all`, { method: 'DELETE' });
+                const response = await this.request(`${this.baseUrl}/clear-all`, { method: 'DELETE' });
                 if (response.ok) {
                     console.log('✅ Server data cleared');
                 } else {

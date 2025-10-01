@@ -96,6 +96,144 @@ class Helpers {
      * @param {string} phone - Phone number to format
      * @returns {string} Formatted phone number
      */
+    
+    /**
+     * Generate a display name for a participant that includes racing number if needed
+     * to distinguish from other participants with the same name in the same event
+     * @param {Object} participant - Participant object
+     * @param {Array} allParticipants - All participants in the event
+     * @param {string} eventId - Event ID
+     * @returns {string} Display name with racing number if needed
+     */
+    static generateDisplayName(participant, allParticipants, eventId) {
+        if (!participant || !allParticipants || !eventId) {
+            return participant?.name || 'Unknown Driver';
+        }
+        
+        // Get all participants in the same event
+        const eventParticipants = allParticipants.filter(p => p.eventId === eventId);
+        
+        // Count participants with the same name in this event
+        const sameNameCount = eventParticipants.filter(p => 
+            p.name && p.name.toLowerCase() === participant.name.toLowerCase()
+        ).length;
+        
+        // If there's only one participant with this name, return just the name
+        if (sameNameCount <= 1) {
+            return participant.name;
+        }
+        
+        // If there are multiple participants with the same name, include racing number
+        if (participant.racingNumber) {
+            return `${participant.name} (#${participant.racingNumber})`;
+        }
+        
+        // If no racing number but duplicate names exist, include a note
+        return `${participant.name} (No Number)`;
+    }
+    
+    /**
+     * Check if a racing number is available for a given class in an event
+     * @param {string} racingNumber - Racing number to check
+     * @param {Array} selectedClasses - Selected racing classes
+     * @param {string} eventId - Event ID
+     * @param {Array} allParticipants - All participants to check against
+     * @param {string} excludeParticipantId - Participant ID to exclude from check (for updates)
+     * @returns {Object} Result with availability status and message
+     */
+    static checkRacingNumberAvailability(racingNumber, selectedClasses, eventId, allParticipants, excludeParticipantId = null) {
+        if (!racingNumber || !selectedClasses || selectedClasses.length === 0 || !eventId) {
+            return { available: false, message: 'Missing required information' };
+        }
+        
+        try {
+            // Get participants in the same event and classes
+            const eventParticipants = allParticipants.filter(p => 
+                p.eventId === eventId && 
+                p.id !== excludeParticipantId &&
+                p.selectedClasses && 
+                p.selectedClasses.some(c => selectedClasses.includes(c))
+            );
+            
+            // Check for duplicate racing numbers
+            const duplicateFound = eventParticipants.some(p => 
+                p.racingNumber && 
+                p.racingNumber.toString().toUpperCase() === racingNumber.toString().toUpperCase()
+            );
+            
+            if (duplicateFound) {
+                return { 
+                    available: false, 
+                    message: `Racing number ${racingNumber} is already taken by another driver in one of your selected classes for this event` 
+                };
+            }
+            
+            return { available: true, message: 'Racing number is available' };
+        } catch (error) {
+            console.error('Error checking racing number availability:', error);
+            return { available: false, message: 'Error checking racing number availability' };
+        }
+    }
+    
+    /**
+     * Suggest available racing numbers for a given class in an event
+     * @param {Array} selectedClasses - Selected racing classes
+     * @param {string} eventId - Event ID
+     * @param {Array} allParticipants - All participants to check against
+     * @param {number} maxSuggestions - Maximum number of suggestions to return
+     * @returns {Array} Array of suggested racing numbers
+     */
+    static suggestRacingNumbers(selectedClasses, eventId, allParticipants, maxSuggestions = 5) {
+        if (!selectedClasses || selectedClasses.length === 0 || !eventId) {
+            return [];
+        }
+        
+        try {
+            // Get participants in the same event and classes
+            const eventParticipants = allParticipants.filter(p => 
+                p.eventId === eventId &&
+                p.selectedClasses && 
+                p.selectedClasses.some(c => selectedClasses.includes(c))
+            );
+            
+            // Get all used racing numbers
+            const usedNumbers = new Set();
+            eventParticipants.forEach(p => {
+                if (p.racingNumber) {
+                    usedNumbers.add(p.racingNumber.toString().toUpperCase());
+                }
+            });
+            
+            // Generate suggestions starting from common numbers
+            const suggestions = [];
+            const commonNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
+            
+            for (const num of commonNumbers) {
+                if (suggestions.length >= maxSuggestions) break;
+                if (!usedNumbers.has(num)) {
+                    suggestions.push(num);
+                }
+            }
+            
+            // Add some letter combinations if we need more suggestions
+            if (suggestions.length < maxSuggestions) {
+                for (let i = 1; i <= 20 && suggestions.length < maxSuggestions; i++) {
+                    for (const letter of ['A', 'B', 'C', 'D', 'E']) {
+                        const combo = `${i}${letter}`;
+                        if (!usedNumbers.has(combo)) {
+                            suggestions.push(combo);
+                            if (suggestions.length >= maxSuggestions) break;
+                        }
+                    }
+                }
+            }
+            
+            return suggestions;
+        } catch (error) {
+            console.error('Error suggesting racing numbers:', error);
+            return [];
+        }
+    }
     static formatPhone(phone) {
         if (!phone) return '';
         const cleaned = phone.replace(/\D/g, '');
@@ -612,6 +750,10 @@ window.confirmDelete = function(itemName, onConfirm) {
 };
 
 window.confirmClearAllData = function(onConfirm) {
+    if (!(window.currentUser && window.currentUser.username === 'Admin')) {
+        alert('Access Denied');
+        return Promise.resolve(false);
+    }
     return window.confirmationModal.show({
         title: 'Clear All Data',
         message: 'This will permanently delete ALL participants, events, series, races, and bracket data from both the application and server files.',

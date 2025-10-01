@@ -11,7 +11,16 @@
     --error: #e53e3e;
     --success: #38a169;
     --warning: #d69e2e;
+    --info: #3b82f6;
     --border-color: #2a2a4a;
+
+    /* Extended palette for a more colorful UI */
+    --accent-purple: #8b5cf6;
+    --accent-pink: #ec4899;
+    --accent-orange-strong: #f59e0b;
+    --accent-green-strong: #10b981;
+    --accent-red-strong: #ef4444;
+    --surface-glass: rgba(255, 255, 255, 0.06);
 }
 
 /* Base Styles */
@@ -64,11 +73,11 @@ body {
 /* Modern Navigation */
 .main-nav {
     background: var(--bg-primary);
-    padding: 1rem 2rem;
+    padding: 0.5rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -79,15 +88,15 @@ body {
 }
 
 .brand-icon {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1rem;
 }
 
 .brand-text {
@@ -96,14 +105,14 @@ body {
 }
 
 .brand-main {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: 0.5px;
 }
 
 .brand-sub {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
     font-weight: 500;
     letter-spacing: 1px;
@@ -112,24 +121,23 @@ body {
 /* New Navigation Links */
 .nav-links {
     display: flex;
-    width: 100%;
-    justify-content: space-between;
+    justify-content: center;
     text-align: center;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
     list-style: none;
     margin: 0;
     padding: 0;
 }
 
 .nav-links li {
-    padding: 1rem 2rem 1.15rem;
+    padding: 0.75rem 1.5rem 0.9rem;
     text-transform: uppercase;
     cursor: pointer;
     color: var(--text-secondary);
-    min-width: 80px;
+    min-width: 70px;
     margin: auto;
-    border-radius: 8px;
+    border-radius: 6px;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -158,6 +166,8 @@ body {
     width: 100%;
     height: 100%;
     /* Removed pointer-events: none to allow normal link navigation */
+    position: relative;
+    z-index: 1;
 }
 
 .nav-links li.active {
@@ -195,11 +205,13 @@ body {
     cursor: pointer;
 }
 
+
+
 /* Main Content */
 .main-content {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    max-width: 1400px;
+    margin: 1.5rem auto;
+    padding: 0 1.5rem;
 }
 
 .page-header {
@@ -515,6 +527,46 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
+/* Button variants for consistent styling across app */
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.btn-outline:hover {
+    background: var(--accent-primary);
+    color: #fff;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success), var(--accent-green-strong));
+    color: #fff;
+}
+
+.btn-success:hover { filter: brightness(1.05); }
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning), var(--accent-orange-strong));
+    color: #1f2937;
+}
+
+.btn-warning:hover { filter: brightness(1.05); }
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--error), var(--accent-red-strong));
+    color: #fff;
+}
+
+.btn-danger:hover { filter: brightness(1.05); }
+
+.btn-info {
+    background: linear-gradient(135deg, var(--info), var(--accent-primary));
+    color: #fff;
+}
+
+.btn-info:hover { filter: brightness(1.05); }
+
 /* Forms */
 .form-control {
     background: var(--bg-secondary);
@@ -563,6 +615,13 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 30px rgba(0,0,0,0.15);
     border-color: var(--accent-primary);
+}
+
+/* Subtle glass surface option for sections */
+.content-section,
+.glass-card { 
+    background: linear-gradient(180deg, var(--surface-glass), transparent);
+    backdrop-filter: blur(6px);
 }
 
 .race-header {
@@ -705,6 +764,22 @@ tbody tr:hover {
 .badge-error { 
     background: linear-gradient(135deg, var(--error), #8b0000);
     color: white;
+}
+
+/* Additional badge variants */
+.badge-info {
+    background: linear-gradient(135deg, var(--info), #1d4ed8);
+    color: #fff;
+}
+
+.badge-purple {
+    background: linear-gradient(135deg, var(--accent-purple), #6d28d9);
+    color: #fff;
+}
+
+.badge-pink {
+    background: linear-gradient(135deg, var(--accent-pink), #be185d);
+    color: #fff;
 }
 
 /* Modal */
@@ -850,14 +925,14 @@ tbody tr:hover {
 .brand-icon {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 1.2rem;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
 }
 
 .brand-text {
@@ -881,7 +956,7 @@ tbody tr:hover {
 }
 
 .project-badge {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
@@ -889,8 +964,28 @@ tbody tr:hover {
     font-weight: 600;
     margin-left: 1rem;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
 }
+
+/* Gradient utilities for colorful accents */
+.gradient-blue { background: linear-gradient(135deg, var(--accent-primary), var(--info)); }
+.gradient-purple { background: linear-gradient(135deg, var(--accent-purple), #6d28d9); }
+.gradient-pink { background: linear-gradient(135deg, var(--accent-pink), #be185d); }
+.gradient-orange { background: linear-gradient(135deg, var(--accent-orange-strong), #d97706); }
+.gradient-green { background: linear-gradient(135deg, var(--accent-green-strong), #059669); }
+.gradient-red { background: linear-gradient(135deg, var(--accent-red-strong), #b91c1c); }
+
+.text-accent { color: var(--accent-primary) !important; }
+.text-success { color: var(--success) !important; }
+.text-warning { color: var(--warning) !important; }
+.text-danger { color: var(--error) !important; }
+.text-info { color: var(--info) !important; }
+
+.border-accent { border-color: var(--accent-primary) !important; }
+.border-success { border-color: var(--success) !important; }
+.border-warning { border-color: var(--warning) !important; }
+.border-danger { border-color: var(--error) !important; }
+.border-info { border-color: var(--info) !important; }
 
 .hero-subtitle {
     color: var(--text-secondary);
@@ -1850,6 +1945,9 @@ tbody tr:hover {
         min-height: 44px;
         min-width: 44px;
     }
+}
+
+
 
     /* Better scrolling on touch devices */
     .table-wrapper,
