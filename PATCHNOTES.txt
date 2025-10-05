@@ -1,16 +1,126 @@
 # EPC17 Patch Notes
 
-## Version 0.9.5 (Unreleased)
-- Beta tag: TBD (will follow format `YYWwwrVV`, next after 25W40a09)
+## Version D0L9R6 (Beta)
+- **CRITICAL FIX**: Fixed class duplication bug in round 2 generation where classes appeared twice in the UI
+  - ✅ Added duplicate prevention in organizeHeatsByRound to prevent same class from appearing multiple times in the same round
+  - ✅ Added warning logging when duplicate classes are prevented
+- **CRITICAL FIX**: Fixed race bracket duplication and 404 errors causing console spam and data corruption
+  - ✅ Added automatic bracket ID generation for brackets missing IDs to prevent duplicates
+  - ✅ Implemented save queue to prevent concurrent bracket saves for the same event
+  - ✅ Enhanced cleanupDuplicateBrackets to handle 404 errors gracefully (brackets already deleted)
+  - ✅ Fixed bracket initialization in race.js to include unique ID from creation
+  - ✅ Added proper error handling for DELETE operations during cleanup
+- **CRITICAL FIX**: Resolved severe data corruption issue where participants were appearing in multiple heats simultaneously
+- **UI FIX**: Fixed race completion animation issue where last driver appeared as 1st place and other drivers lost results display during heat completion transition (prioritized heat.results over pending results when completed)
+- **UI FIX**: Fixed visual glitch during race completion where positions briefly showed incorrect values (1st/2nd appeared empty, 3rd appeared as 1st) for 1-2 seconds when selecting 3rd place finisher. Fixed by clearing pending results before async operations to prevent race conditions during UI updates.
+  - ✅ Repaired 2,775 duplicate participant assignments across 8 events
+  - ✅ All race brackets now pass validation with zero duplicate participants
+  - ✅ Added comprehensive duplicate detection and monitoring system
+- **Enhanced Data Integrity**: Added pre-validation checks before all participant operations
+- **Improved Bracket Management**: Enhanced validation during bracket initialization to prevent re-initialization of valid brackets
+- **Better Error Handling**: Added early warning alerts and monitoring for duplicate participant issues
+- **Fixed Race Result Selection**: Restored minimal 50ms click debouncing to prevent race conditions in position assignment while maintaining responsive feel
+- **Fixed Admin User Access**: Corrected admin user configuration to ensure proper access to users management page. Username "admin" updated to "Admin" to match system expectations.
+- **Added Hidden Logout Button**: Added a somewhat hidden logout button in the sidebar footer area for easy access to logout functionality.
+- **Enhanced Stress Test Generator**: Major improvements to stress test data generation
+  - ✅ Participants now have all required fields populated (contact info, sponsors, vehicle configurations, statistics)
+  - ✅ Added season support to series with one season per series
+  - ✅ Fixed event date logic for chronological ordering (Stress Event 1-1 is now earliest)
+  - ✅ Updated data structures to reflect latest app version features
+- **Fixed HTTP 500 Error**: Resolved server error when loading large participant datasets by implementing paginated loading in the client
+  - ✅ Added pagination support for loading all participants from server
+  - ✅ Prevents memory issues with large JSON responses
+  - ✅ Maintains backward compatibility with existing API
+- **Fixed Unicode Encoding Error**: Resolved 500 Internal Server Error when updating event status caused by Unicode emoji characters in server console output
+  - ✅ Replaced all emoji characters (✅, ❌, 🚀, etc.) with plain text in server.py print statements
+  - ✅ Fixed Windows console encoding issues that prevented API responses from being sent
+  - ✅ Event status updates now work properly without server crashes
+- **Fixed Participant Duplication in Bracket Generation**: Resolved duplicate participant validation errors in race brackets
+  - ✅ Added deduplication in `getActiveParticipants()` method to prevent duplicate assignments
+  - ✅ Added deduplication in pairing engine `generateHeats()` method as additional safeguard
+  - ✅ Added deduplication in `groupParticipantsByClass()` to prevent participants from being added multiple times to the same class
+  - ✅ **Fixed bracket validation logic**: Changed validation to only check for duplicates within the same round, not across entire bracket (participants can appear in multiple rounds as they advance in elimination tournaments)
+  - ✅ **Updated repair logic**: Modified repair method to only remove duplicates within rounds, preserving valid cross-round appearances
+  - ✅ Bracket validation now correctly allows participants to advance through tournament rounds
+- **Added Incomplete Race Limitation**: Enhanced pairing engine to limit how often drivers end up in races that aren't full
+  - ✅ Added `incompleteRaceHistory` tracking system to monitor how many times each driver has participated in incomplete races
+  - ✅ Modified participant selection algorithms to prioritize drivers with fewer incomplete race participations (25 point penalty per incomplete race)
+  - ✅ Updated race result recording to track when races are incomplete (fewer participants than available lanes)
+  - ✅ Enhanced heat analysis to report incomplete race distribution issues and provide recommendations
+  - ✅ Updated statistics tracking to include incomplete race counts in participant stats
+- **Added Race Spacing Logic**: Enhanced pairing engine to space out races for drivers competing in multiple classes
+  - ✅ Added `classScheduleHistory` and `eventClassOrder` tracking systems to monitor race schedules across classes
+  - ✅ Implemented circular class distance calculation (last class connects to first class for proper spacing)
+  - ✅ Modified participant selection algorithms to penalize drivers who would race in consecutive or nearly consecutive classes (40 point penalty per missing class separation)
+  - ✅ Added class context to all heat generation methods to enable spacing calculations
+  - ✅ Updated race result recording to track class schedules when results are recorded
+  - ✅ Enhanced statistics tracking to include class spacing analysis in participant stats
+
+## Version 0.9.6 (Unreleased)
+- **Fixed Position Assignment Logic**: Fixed race position assignment in races.html to be purely click-order based: first driver clicked gets 1st place, second gets 2nd place, etc. Clicking an already-assigned driver unassigns them. Removed duplicate event handlers that were causing conflicting position assignments.
+- **Fixed Race Auto-Completion**: Fixed inconsistent auto-completion behavior when false starts are marked before or after position assignments. Now uses consistent logic regardless of operation order.
+- **Fixed Driver Swap Bug**: Fixed critical bug where right-clicking to swap drivers multiple times would cause driver duplication and deletion. Enhanced validation to check for duplicates across entire bracket and added cache synchronization to prevent race conditions during rapid operations.
+- **Enhanced Bracket Data Repair**: Improved automatic detection and repair functionality for corrupted bracket data. The repair function now fixes both duplicate participants AND incorrect heat round assignments, ensuring complete data integrity restoration.
+- **Added Round Debug Tool**: Added "Debug Rounds" button to help troubleshoot round-related swap issues. Shows detailed information about which round each heat belongs to, helping users understand why cross-round swaps are blocked.
 
 ### Added
-- TBA
+- **Admin Panel Email Settings Management**: Added settings section to users.html admin panel for managing email functionality
+  - Email enable/disable toggle with proper admin-only access control
+  - Configurable email subject and body templates with placeholder support
+  - Real-time settings loading and saving with user feedback
+  - Updated settings.json with emailEnabled set to true by default
 
 ### Changed
-- TBA
+- `users.html`: Enhanced admin panel with application settings management section
+- `data/settings.json`: Updated emailEnabled to true for immediate email functionality
+- `event-analytics.html`: Fixed email address lookup to use `contact.email` field instead of `email` field
+- `js/race-ui.js`: Comprehensive improvements to participant swap functionality and data integrity
+  - Fixed variable scope issue causing ReferenceError in error handling
+  - Improved heat and participant lookup logic with proper loop breaking and validation
+  - Added atomic swap operation with rollback capability for failed operations
+  - Fixed participant duplication bug in race page swapping by updating UI refresh methods to handle both horizontal and vertical heat layouts
+  - Added validation to prevent duplicate participants in heats after swap operations
+  - Enhanced completed heat handling to allow swaps when appropriate
+  - Added comprehensive validation before and after swaps with rollback on failure
+  - Improved data persistence verification to ensure saves complete successfully
+  - Enhanced error logging with detailed debugging information for troubleshooting
+  - Fixed class detection logic for participants registered in multiple classes
+  - Added sequential save-and-refresh operations to prevent race conditions
+  - Maintains data integrity during cross-heat participant swaps
+
+## Version 0.9.5 (Unreleased)
+
+### Added
+- **Email Event Stats Feature**: After an event, export each driver's stats as a clean PDF table (not screenshot) and send via email
+  - `utils/pdf-generator.js`: PDF generation utility using jsPDF with proper table rendering
+  - `utils/email-sender.py`: Python email sender module using Gmail SMTP
+  - Backend endpoints: `/api/settings`, `/api/send-event-stats`, `/api/email-config-status`
+  - "Send Event Stats" button in event-analytics.html for bulk email sending
+  - Settings toggle for enabling/disabling email functionality (admin only)
+  - Environment variable support for EMAIL_USER and EMAIL_PASS (Gmail credentials)
+  - Internet connectivity check with graceful error handling
+  - Visual feedback popups for success/failure states
+  - `.env.example` file for email configuration documentation
+- Data file: `data/settings.json` for application settings storage
+
+### Changed
+- `event-analytics.html`: Added "Send Event Stats" button and email sending functionality
+- `server.py`: Added email and settings endpoints with proper permission checks
+- `.gitignore`: Added .env file to prevent credential leakage
 
 ### Fixed
-- TBA
+- **Races Page - Auto Complete Button**: Fixed button click handler not working when clicking on icons inside the button (now uses `.closest()` for proper event delegation and `stopPropagation()` to prevent interference from other handlers)
+- **Races Page - Right-Click Context Menu**: Fixed right-click context menu not appearing on participant elements in race management
+  - Updated participant element rendering to include proper data attributes for both completed and non-completed heats
+  - Enhanced context menu event listener to detect participant elements more reliably (`.clickable-participant`, `.participant-info`, `.lane-participant`, `.participant-horizontal`, `.lane`)
+  - Added different context menu options for completed vs non-completed heats (swap/DSQ/FS for active heats, view results/reset for completed heats)
+  - Fixed timing issue by moving context menu event listener binding to `showRaceManagement()` method
+  - Added visibility check to only intercept context menu events when race management interface is active
+  - Improved debugging logs to help diagnose context menu issues
+  - Added context menu subtitle showing heat status and lane information
+- `server.py`: Removed emoji characters from print statements to fix Unicode encoding errors on Windows systems
+- `server.py`: Comprehensive removal of all emoji characters causing 500 Internal Server Error crashes
+- `data/users.json`: Updated default admin credentials to "admin/admin321" for easier access
 
 ### Performance
 - TBA
@@ -19,7 +129,8 @@
 - TBA
 
 ### Documentation
-- TBA
+- `.env.example`: Comprehensive guide for Gmail SMTP configuration with App Passwords
+- Email configuration instructions for 2FA and App Password generation
 
 ### Data & Migrations
-- TBA
+- New `data/settings.json` file created automatically with default settings on first access
