@@ -17,7 +17,7 @@ class RegistrationManager {
      * Initialize after authentication is complete
      */
     async initAfterAuth() {
-        console.log('🔐 RegistrationManager: Waiting for authentication...');
+        window.debugLogger?.debug('Registration', 'Waiting for authentication...');
         
         // Wait for authentication to complete
         await this.waitForAuthentication();
@@ -25,7 +25,7 @@ class RegistrationManager {
         // Now initialize normally
         this.init();
         this.initialized = true;
-        console.log('✅ RegistrationManager: Initialized after authentication');
+        window.debugLogger?.debug('Registration', 'Initialized after authentication');
     }
 
     /**
@@ -49,11 +49,11 @@ class RegistrationManager {
         
         // Check if we have a valid session
         if (!window.currentUser) {
-            console.log('🔐 RegistrationManager: No current user, authentication failed');
+            window.debugLogger?.debug('Registration', 'No current user, authentication failed');
             return false;
         }
         
-        console.log('🔐 RegistrationManager: Authentication complete');
+        window.debugLogger?.debug('Registration', 'Authentication complete');
         return true;
     }
 
@@ -141,36 +141,69 @@ class RegistrationManager {
     }
 
     /**
-     * Generate registration form HTML for event registration only
+     * UNIFIED: Generate registration form HTML with mode support
+     * @param {Object} options - Form options
+     * @param {string} options.mode - 'new', 'existing', or 'edit'
+     * @param {string} options.eventId - Event ID (required for new/existing)
+     * @param {Object} options.participant - Participant data (for edit/existing modes)
      * @returns {string} Form HTML
      */
-    generateRegistrationFormHtml() {
+    generateUnifiedRegistrationForm(options = {}) {
+        const { mode = 'new', eventId = '', participant = null } = options;
+        
+        const isNewMode = mode === 'new';
+        const isExistingMode = mode === 'existing';
+        const isEditMode = mode === 'edit';
+        
+        const formTitle = isEditMode ? 'Edit Participant' : 
+                         isExistingMode ? 'Add Existing Driver to Event' : 
+                         'New Event Registration';
+        
+        const submitButtonText = isEditMode ? 'Save Changes' : 
+                                isExistingMode ? 'Add to Event' : 
+                                'Register for Event';
+        
+        // Pre-fill values if participant provided
+        const name = participant?.name || '';
+        const racingNumber = participant?.racingNumber || '';
+        const teamName = participant?.teamName || '';
+        const email = participant?.contact?.email || participant?.contactEmail || '';
+        const phone = participant?.contact?.phone || participant?.contactPhone || '';
+        const emergency = participant?.contact?.emergency || participant?.emergencyContact || '';
+        const emergencyPhone = participant?.emergencyPhone || '';
+        
         return `
-            <h3>Event Registration Form</h3>
-            <form id="registration-form" class="registration-form">
-            <div class="form-group">
-                <label for="eventId">Event *</label>
-                <select name="eventId" id="eventId" required>
-                    <option value="">Select an event...</option>
-                </select>
-            </div>
+            <h3>${formTitle}</h3>
+            <form id="unified-registration-form" class="registration-form" data-mode="${mode}">
+                ${participant ? `<input type="hidden" name="participantId" value="${participant.id}">` : ''}
+                
+                ${!isEditMode ? `
+                <div class="form-group">
+                    <label for="eventId">Event *</label>
+                    <select name="eventId" id="eventId" required ${isExistingMode ? 'readonly' : ''}>
+                        <option value="">Select an event...</option>
+                    </select>
+                </div>
+                ` : ''}
                 
                 <div class="form-group">
                     <label for="participantName">Participant Name *</label>
                     <input type="text" name="participantName" id="participantName" required 
-                           placeholder="Enter full name">
+                           placeholder="Enter full name" value="${name}"
+                           ${isExistingMode ? 'readonly' : ''}>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="teamName">Team/Organization</label>
                         <input type="text" name="teamName" id="teamName" 
-                               placeholder="Team or organization name">
+                               placeholder="Team or organization name" value="${teamName}">
                     </div>
                     <div class="form-group">
                         <label for="racingNumber">Racing Number *</label>
                         <input type="text" name="racingNumber" id="racingNumber" 
-                               placeholder="e.g., 1, 1A, 99B" required pattern="[A-Za-z0-9]+" title="Racing number can contain numbers and letters">
+                               placeholder="e.g., 1, 1A, 99B" required pattern="[A-Za-z0-9]+" 
+                               title="Racing number can contain numbers and letters" value="${racingNumber}">
                         <small class="form-text">Required. Can contain numbers and letters. Must be unique per class in this event.</small>
                     </div>
                 </div>
@@ -179,12 +212,12 @@ class RegistrationManager {
                     <div class="form-group">
                         <label for="contactEmail">Email *</label>
                         <input type="email" name="contactEmail" id="contactEmail" required 
-                               placeholder="Email address">
+                               placeholder="Email address" value="${email}">
                     </div>
                     <div class="form-group">
                         <label for="contactPhone">Phone *</label>
                         <input type="tel" name="contactPhone" id="contactPhone" required 
-                               placeholder="Phone number">
+                               placeholder="Phone number" value="${phone}">
                     </div>
                 </div>
 
@@ -192,48 +225,61 @@ class RegistrationManager {
                     <div class="form-group">
                         <label for="emergencyContact">Emergency Contact *</label>
                         <input type="text" name="emergencyContact" id="emergencyContact" required 
-                               placeholder="Emergency contact name">
+                               placeholder="Emergency contact name" value="${emergency}">
                     </div>
                     <div class="form-group">
                         <label for="emergencyPhone">Emergency Phone *</label>
                         <input type="tel" name="emergencyPhone" id="emergencyPhone" required 
-                               placeholder="Emergency contact phone">
+                               placeholder="Emergency contact phone" value="${emergencyPhone}">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Racing Classes * (Select all that apply)</label>
                     <div class="checkbox-group" id="sledClasses">
-                        ${this.generateEventClassesForRegistration()}
+                        ${this.generateEventClassesForRegistration(eventId, participant)}
                     </div>
                     <div class="payment-summary" id="paymentSummary" style="display: none;">
                         <strong>Total Registration Fee: $<span id="totalFee">0</span></strong>
                     </div>
                 </div>
 
-
-
-                    <div class="form-group">
-                        <div class="form-checkbox">
-                            <input type="checkbox" name="paymentComplete" id="paymentComplete">
-                            <label for="paymentComplete">
-                                Payment completed
-                            </label>
-                        </div>
+                <div class="form-group">
+                    <div class="form-checkbox">
+                        <input type="checkbox" name="paymentComplete" id="paymentComplete" 
+                               ${participant?.paymentComplete ? 'checked' : ''}>
+                        <label for="paymentComplete">
+                            Payment completed
+                        </label>
                     </div>
+                </div>
 
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">
-                        Register for Event
+                        ${submitButtonText}
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="this.closest('form').reset()">
                         Clear Form
                     </button>
+                    ${isEditMode || isExistingMode ? `
+                    <button type="button" class="btn btn-secondary" onclick="window.closeModal && window.closeModal()">
+                        Cancel
+                    </button>
+                    ` : ''}
                 </div>
 
                 <div id="form-errors" style="display: none;"></div>
             </form>
         `;
+    }
+
+    /**
+     * LEGACY: Generate registration form HTML for event registration only
+     * @deprecated Use generateUnifiedRegistrationForm() instead
+     * @returns {string} Form HTML
+     */
+    generateRegistrationFormHtml() {
+        return this.generateUnifiedRegistrationForm({ mode: 'new' });
     }
 
     /**
@@ -320,7 +366,7 @@ class RegistrationManager {
         try {
             if (isEditingExisting) {
                 // 🔧 EXISTING PARTICIPANT: Update their classes and register for event
-                console.log(`🔧 Adding existing participant ${editParticipantId} to event ${eventId}`);
+                window.debugLogger?.debug('Registration', `Adding existing participant ${editParticipantId} to event ${eventId}`);
                 
                 const existingParticipant = dataManager.getParticipant(editParticipantId);
                 if (!existingParticipant) {
@@ -345,7 +391,7 @@ class RegistrationManager {
                 
             } else {
                 // 🔧 NEW PARTICIPANT: Create new participant as usual
-                console.log(`🔧 Creating new participant for event ${eventId}`);
+                window.debugLogger?.debug('Registration', `Creating new participant for event ${eventId}`);
                 
                 // Validate racing number
                 const racingNumber = formData.get('racingNumber');
@@ -414,7 +460,174 @@ class RegistrationManager {
     }
 
     /**
-     * Show registration form in modal for editing
+     * UNIFIED: Show registration form with mode support
+     * @param {Object} options - Form options
+     * @param {string} options.mode - 'new', 'existing', or 'edit'
+     * @param {string} options.eventId - Event ID (required for new/existing)
+     * @param {string} options.participantId - Participant ID (for edit/existing modes)
+     * @param {string} options.containerId - Container ID (default: modal)
+     */
+    async showUnifiedForm(options = {}) {
+        const { mode = 'new', eventId = '', participantId = null, containerId = null } = options;
+        
+        window.debugLogger?.debug('Registration', `Showing unified registration form (mode: ${mode})`);
+        
+        // Get participant data if ID provided
+        let participant = null;
+        if (participantId) {
+            participant = dataManager.getParticipant(participantId);
+            if (!participant) {
+                Helpers.showToast('Participant not found', 'error');
+                return;
+            }
+        }
+        
+        // Generate unified form
+        const formHtml = this.generateUnifiedRegistrationForm({
+            mode,
+            eventId,
+            participant
+        });
+        
+        // Show in modal or container
+        if (containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = formHtml;
+                this.bindUnifiedFormEvents(mode, eventId, participant);
+            }
+        } else {
+            const title = mode === 'edit' ? 'Edit Participant' : 
+                         mode === 'existing' ? 'Add Existing Driver' : 
+                         'New Registration';
+            Helpers.showModal(title, formHtml);
+            this.bindUnifiedFormEvents(mode, eventId, participant);
+        }
+    }
+
+    /**
+     * Bind events for unified registration form
+     */
+    bindUnifiedFormEvents(mode, eventId, participant) {
+        const form = document.getElementById('unified-registration-form');
+        if (!form) return;
+        
+        // Bind submit event
+        form.addEventListener('submit', (e) => this.handleUnifiedFormSubmit(e, mode, participant));
+        
+        // Load events dropdown if needed
+        if (mode !== 'edit') {
+            this.loadEventSelect();
+            if (eventId) {
+                setTimeout(() => {
+                    const select = document.getElementById('eventId');
+                    if (select) select.value = eventId;
+                }, 100);
+            }
+        }
+        
+        // Bind class change events for fee calculation
+        const classCheckboxes = form.querySelectorAll('input[type="checkbox"][name="sledClasses"]');
+        classCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => this.updateRegistrationFee());
+        });
+    }
+
+    /**
+     * Handle unified form submission
+     */
+    async handleUnifiedFormSubmit(e, mode, participant) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        
+        try {
+            const eventId = formData.get('eventId') || participant?.eventId;
+            const participantId = formData.get('participantId') || participant?.id;
+            
+            // Collect selected classes
+            const selectedClasses = [];
+            const classCheckboxes = form.querySelectorAll('input[type="checkbox"][name="sledClasses"]:checked');
+            classCheckboxes.forEach(checkbox => selectedClasses.push(checkbox.value));
+            
+            if (selectedClasses.length === 0) {
+                Helpers.showToast('Please select at least one racing class', 'error');
+                return;
+            }
+            
+            // Build participant data with nested structure
+            const participantData = {
+                name: formData.get('participantName'),
+                racingNumber: formData.get('racingNumber'),
+                team: formData.get('teamName') || '',
+                contact: {
+                    email: formData.get('contactEmail'),
+                    phone: formData.get('contactPhone'),
+                    emergency: formData.get('emergencyContact')
+                },
+                emergencyPhone: formData.get('emergencyPhone'),
+                paymentComplete: formData.get('paymentComplete') === 'on',
+                paymentStatus: formData.get('paymentComplete') === 'on' ? 'complete' : 'pending',
+            };
+            
+            // Handle based on mode
+            if (mode === 'edit') {
+                // Update existing participant
+                await dataManager.updateParticipant(participantId, participantData);
+                Helpers.showToast('Participant updated successfully', 'success');
+            } else if (mode === 'existing') {
+                // Add existing participant to event
+                const eventClasses = participant.eventClasses || {};
+                eventClasses[eventId] = selectedClasses;
+                
+                await dataManager.updateParticipant(participantId, {
+                    eventClasses,
+                    selectedClasses: this.computeSelectedClasses(eventClasses)
+                });
+                await dataManager.registerParticipantForEvent(eventId, participantId);
+                Helpers.showToast('Driver added to event successfully', 'success');
+            } else {
+                // New registration
+                const eventClasses = {};
+                eventClasses[eventId] = selectedClasses;
+                
+                participantData.eventClasses = eventClasses;
+                participantData.selectedClasses = selectedClasses;
+                participantData.eventId = eventId;
+                participantData.registrationType = 'event';
+                
+                const savedParticipant = await dataManager.addParticipant(participantData);
+                await dataManager.registerParticipantForEvent(eventId, savedParticipant.id);
+                Helpers.showToast('Registration successful', 'success');
+            }
+            
+            // Close and refresh
+            Helpers.hideModal();
+            form.reset();
+            if (this.loadParticipantList) this.loadParticipantList();
+            
+        } catch (error) {
+            console.error('Form submission error:', error);
+            Helpers.showToast('Error: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Compute selectedClasses from eventClasses
+     */
+    computeSelectedClasses(eventClasses) {
+        const allClasses = new Set();
+        Object.values(eventClasses).forEach(classes => {
+            if (Array.isArray(classes)) {
+                classes.forEach(cls => allClasses.add(cls));
+            }
+        });
+        return Array.from(allClasses);
+    }
+
+    /**
+     * LEGACY: Show registration form in modal for editing
+     * @deprecated Use showUnifiedForm() instead
      * @param {string} participantId - Optional participant ID for editing
      */
     showRegistrationForm(participantId = null) {

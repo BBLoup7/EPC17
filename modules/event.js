@@ -1,12 +1,60 @@
 /**
- * Event Management Module for EPC17 Event Management System
- * Handles event creation, configuration, track management, and participant registration
+ * EventManager - Backward Compatibility Wrapper
+ * 
+ * REFACTORED: This class now delegates to the new modular architecture:
+ * - EventDataService: CRUD and status management
+ * - EventLogic: Pure business logic
+ * - EventUI: HTML rendering
+ * - EventController: Orchestration
+ * 
+ * Part of EPC17 Event Management System
+ * Maintains backward compatibility with existing code
  */
 
 class EventManager {
     constructor() {
+        // Initialize new architecture modules
+        this.dataService = null;
+        this.logic = null;
+        this.ui = null;
+        this.controller = null;
+        
+        // Legacy properties for backward compatibility
         this.currentEventId = null;
         this.trackAssignments = new Map();
+        
+        // Defer initialization to allow modules to load
+        this.initializeModules();
+    }
+
+    /**
+     * Initialize the modular architecture
+     */
+    initializeModules() {
+        // Wait for dataManager to be available
+        if (!window.dataManager) {
+            // Only log once to avoid spam
+            if (!this._waitingLogged) {
+                window.debugLogger?.debug('EventManager', 'Waiting for DataManager...');
+                this._waitingLogged = true;
+            }
+            setTimeout(() => this.initializeModules(), 100);
+            return;
+        }
+
+        // Initialize modules
+        this.dataService = new EventDataService(window.dataManager);
+        this.logic = EventLogic;
+        this.ui = EventUI;
+        this.controller = new EventController(
+            this.dataService,
+            this.logic,
+            this.ui
+        );
+
+        window.debugLogger?.init('EventManager', 'EventManager initialized with modular architecture');
+        
+        // Now perform init
         this.init();
     }
 
@@ -14,151 +62,124 @@ class EventManager {
      * Initialize the event management module
      */
     init() {
-        this.bindEvents();
-        this.loadEventContent();
+        if (!this.controller) {
+            console.warn('⚠️ Controller not ready, skipping init');
+            return;
+        }
+        this.controller.init();
     }
 
+    // ============================================================================
+    // DELEGATED METHODS - All delegate to controller or dataService
+    // ============================================================================
+
     /**
-     * Bind event listeners
+     * Bind event listeners (delegated to controller)
      */
     bindEvents() {
-        // New event button
-        const newEventBtn = document.getElementById('new-event');
-        if (newEventBtn) {
-            newEventBtn.addEventListener('click', () => this.showEventForm());
-        }
+        if (this.controller) return this.controller.bindEvents();
     }
 
     /**
-     * Load the event management content
+     * Load the event management content (delegated to controller)
      */
     async loadEventContent() {
-        const container = document.getElementById('events-content');
-        if (!container) return;
-
-        try {
-            const result = await dataManager.getEvents({}, 1, 1000);
-            const events = result.events || result; // Handle both paginated and direct array responses
-            
-            if (events.length === 0) {
-                this.showEmptyState(container);
-            } else {
-                this.showEventsList(container, events);
-            }
-        } catch (error) {
-            console.error('Failed to load events:', error);
-            this.showEmptyState(container);
-        }
+        if (this.controller) return await this.controller.loadEventContent();
     }
 
     /**
-     * Show empty state when no events exist
+     * Show event creation/edit form (delegated to controller)
      */
-    showEmptyState(container) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">🏁</div>
-                <h3>No Events Created</h3>
-                <p>Create your first racing event to get started. Events can be part of a series or standalone competitions.</p>
-                <button class="btn btn-primary" onclick="eventManager.showEventForm()">
-                    Create First Event
-                </button>
-            </div>
-        `;
+    showEventForm(eventId = null) {
+        if (this.controller) return this.controller.showEventForm(eventId);
     }
 
     /**
-     * Show list of existing events
+     * View detailed event information (delegated to controller)
      */
-    showEventsList(container, events) {
-        const eventsHtml = `
-            <div class="events-section">
-                <h4 class="events-section-title">🏁 All Events</h4>
-                <div class="events-grid">
-                    ${events.map(e => this.generateEventCardHtml(e)).join('')}
-                </div>
-            </div>
-        `;
-        
-        container.innerHTML = eventsHtml;
+    viewEvent(eventId) {
+        if (this.controller) return this.controller.showEventDetails(eventId);
     }
 
     /**
-     * Generate HTML for an event card
+     * Edit event (delegated to controller)
      */
-    generateEventCardHtml(event) {
-        const series = event.seriesId ? dataManager.getSeries(event.seriesId) : null;
-        const spotsAvailable = this.getSpotsAvailable(event);
-        
-        return `
-            <div class="event-card" data-event-id="${event.id}">
-                <div class="event-header">
-                    <h3 class="event-name">${Helpers.sanitizeHtml(event.name)}</h3>
-                    <div class="event-status-badges">
-                        ${event.registrationOpen ? 
-                            '<span class="registration-status open">Open</span>' : 
-                            '<span class="registration-status closed">Closed</span>'
-                        }
-                    </div>
-                </div>
-                
-                ${series ? `
-                    <div class="series-info">
-                        <span class="series-badge">${Helpers.sanitizeHtml(series.name)}</span>
-                    </div>
-                ` : ''}
-                
-                <div class="event-details">
-                    <div class="detail-row">
-                        <span class="detail-icon">📍</span>
-                        <span class="detail-text">${Helpers.sanitizeHtml(event.location)}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-icon">🏁</span>
-                        <span class="detail-text">${event.numberOfTracks} Track${event.numberOfTracks > 1 ? 's' : ''}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-icon">🎯</span>
-                        <span class="detail-text">${Helpers.capitalize(event.eliminationType)} Elimination</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-icon">👥</span>
-                        <span class="detail-text">${event.participants.length}/${event.maxParticipants || '∞'} Participants</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-icon">💰</span>
-                        <span class="detail-text">${Helpers.formatCurrency(event.entryFee || 0)} Entry Fee</span>
-                    </div>
-                </div>
-                
-                ${spotsAvailable !== null && spotsAvailable <= 5 && spotsAvailable > 0 ? `
-                    <div class="spots-warning">
-                        ⚠️ Only ${spotsAvailable} spot${spotsAvailable > 1 ? 's' : ''} remaining!
-                    </div>
-                ` : ''}
-                
-                <div class="event-actions">
-                    <button class="btn btn-primary" onclick="eventManager.viewEvent('${event.id}')">
-                        View Details
-                    </button>
-                    <button class="btn btn-success" onclick="eventManager.manageParticipants('${event.id}')">
-                        Manage Participants
-                    </button>
-                    <button class="btn btn-secondary" onclick="eventManager.editEvent('${event.id}')">
-                        Edit
-                    </button>
-                    <button class="btn btn-secondary" onclick="eventManager.viewResults('${event.id}')">
-                        Results
-                    </button>
-                </div>
-            </div>
-        `;
+    editEvent(eventId) {
+        if (this.controller) return this.controller.showEventForm(eventId);
     }
+
+    /**
+     * Manage event participants (delegated to controller)
+     */
+    manageParticipants(eventId) {
+        if (this.controller) return this.controller.showParticipantManagement(eventId);
+    }
+
+    /**
+     * Add participant to event (delegated to controller)
+     */
+    async addParticipant(eventId, participantId) {
+        if (this.controller) return await this.controller.handleParticipantAdd(eventId, participantId);
+    }
+
+    /**
+     * Remove participant from event (delegated to controller)
+     */
+    async removeParticipant(eventId, participantId) {
+        if (this.controller) return await this.controller.handleParticipantRemove(eventId, participantId);
+    }
+
+    /**
+     * Generate race bracket for event (delegated to controller)
+     */
+    async generateBracket(eventId) {
+        if (this.controller) return await this.controller.handleBracketGeneration(eventId);
+    }
+
+    /**
+     * View event results (delegated to controller)
+     */
+    viewResults(eventId) {
+        if (this.controller) return this.controller.viewResults(eventId);
+    }
+
+    /**
+     * Get event summary for dashboard (delegated to controller)
+     */
+    async getEventSummary() {
+        if (this.controller) return await this.controller.getEventSummary();
+    }
+
+    /**
+     * Switch tabs in participant management (delegated to controller)
+     */
+    switchTab(tabName) {
+        if (this.controller) return this.controller.switchTab(tabName);
+    }
+
+    /**
+     * Toggle event class enabled/disabled (delegated to controller)
+     */
+    toggleEventClass(classId, enabled) {
+        if (this.controller) return this.controller.toggleEventClass(classId, enabled);
+    }
+
+    /**
+     * Update class price (delegated to controller)
+     */
+    updateClassPrice(classId, price) {
+        if (this.controller) return this.controller.updateClassPrice(classId, price);
+    }
+
+    // ============================================================================
+    // HELPER METHODS - Use logic module
+    // ============================================================================
 
     /**
      * Check if registration is open for an event
      */
     isRegistrationOpen(event) {
+        if (this.logic) return this.logic.isRegistrationOpen(event);
         return event.registrationOpen && this.getSpotsAvailable(event) > 0;
     }
 
@@ -166,1029 +187,144 @@ class EventManager {
      * Get available spots for an event
      */
     getSpotsAvailable(event) {
+        if (this.logic) return this.logic.calculateAvailableSpots(event);
         if (!event.maxParticipants) return null;
         return Math.max(0, event.maxParticipants - event.participants.length);
     }
 
+    // ============================================================================
+    // DATA ACCESS METHODS - Use dataService
+    // ============================================================================
+
     /**
-     * Show event creation/edit form
+     * Get event by ID
      */
-    showEventForm(eventId = null) {
-        const isEdit = eventId !== null;
-        const event = isEdit ? dataManager.getEvent(eventId) : null;
-        const series = dataManager.getAllSeries();
-        const title = isEdit ? 'Edit Event' : 'Create New Event';
-        const isCompleted = isEdit && event && (event.status === 'completed' || event.status === 'finished');
-        const lockSettings = isCompleted;
-
-        const formHtml = `
-            <form id="event-form" class="event-form">
-                <div class="form-section">
-                    <h4>Basic Information</h4>
-                    
-                    <div class="form-group">
-                        <label for="eventName">Event Name *</label>
-                        <input type="text" name="eventName" id="eventName" required 
-                               placeholder="e.g., Winter Championship Race"
-                               value="${isEdit ? Helpers.sanitizeHtml(event.name) : ''}">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="location">Location *</label>
-                        <input type="text" name="location" id="location" required 
-                               placeholder="e.g., Frozen Lake Speedway"
-                               value="${isEdit ? Helpers.sanitizeHtml(event.location) : ''}">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="eventDate">Event Date *</label>
-                        <input type="date" name="eventDate" id="eventDate" required 
-                               value="${isEdit && event.date ? event.date : ''}">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="seriesId">Series (Optional)</label>
-                        <select name="seriesId" id="seriesId">
-                            <option value="">Standalone Event</option>
-                            ${series.map(s => `
-                                <option value="${s.id}" ${isEdit && event.seriesId === s.id ? 'selected' : ''}>
-                                    ${Helpers.sanitizeHtml(s.name)}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <h4>Race Configuration</h4>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="numberOfTracks">Participants per Race (Lanes) *</label>
-                            <select name="numberOfTracks" id="numberOfTracks" required>
-                                ${[2,3,4,5,6,7,8,9,10].map(num => `
-                                    <option value="${num}" ${isEdit && event.numberOfTracks === num ? 'selected' : ''}>
-                                        ${num} participants per race
-                                    </option>
-                                `).join('')}
-                            </select>
-                            <small>Number of participants racing at the same time. 1st place wins, all others lose.</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="eliminationType">Elimination Type *</label>
-                            <select name="eliminationType" id="eliminationType" required ${lockSettings ? 'disabled' : ''}>
-                                <option value="single" ${isEdit && event.eliminationType === 'single' ? 'selected' : ''}>
-                                    Single Elimination
-                                </option>
-                                <option value="double" ${isEdit && event.eliminationType === 'double' ? 'selected' : ''}>
-                                    Double Elimination
-                                </option>
-                                 <option value="double_random" ${isEdit && event.eliminationType === 'double_random' ? 'selected' : ''}>
-                                     Double Elimination (Random, no bracket)
-                                 </option>
-                                 <option value="custom" ${isEdit && event.eliminationType === 'custom' ? 'selected' : ''}>
-                                     Custom Outcomes per Position
-                                 </option>
-                            </select>
-                            ${lockSettings ? '<small class="form-help text-warning">⚠️ Cannot change elimination type for completed events</small>' : ''}
-                        </div>
-                    </div>
-
-                    <div class="track-preview" id="track-preview">
-                        <h5>Race Format Preview</h5>
-                        <div id="track-visualization"></div>
-                    </div>
-                    
-                    <div class="form-group" id="custom-outcomes-container" style="display:none;">
-                        <h5>Custom Elimination Settings</h5>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="customLossLimit">Loss Limit</label>
-                                <input type="number" id="customLossLimit" min="1" max="10" value="${isEdit && event.customLossLimit ? event.customLossLimit : 2}" style="max-width:100px;" ${lockSettings ? 'disabled' : ''}>
-                                <small>Number of losses before elimination</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="customUseBrackets">Bracket System</label>
-                                <select id="customUseBrackets" style="max-width:200px;" ${lockSettings ? 'disabled' : ''}>
-                                    <option value="false" ${isEdit && event.customUseBrackets === false ? 'selected' : ''}>No Brackets (Random pairing)</option>
-                                    <option value="true" ${isEdit && event.customUseBrackets === true ? 'selected' : ''}>Use Brackets (Structured)</option>
-                                </select>
-                                <small>How to organize matchups</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="customFinalType">Final Type</label>
-                                <select id="customFinalType" style="max-width:200px;" ${lockSettings ? 'disabled' : ''}>
-                                    <option value="unique" ${isEdit && event.customFinalType === 'unique' ? 'selected' : ''}>Unique Final (Standard)</option>
-                                    <option value="complete" ${isEdit && event.customFinalType === 'complete' ? 'selected' : ''}>Complete Elimination</option>
-                                </select>
-                                <small>How to determine final standings</small>
-                            </div>
-                        </div>
-                        ${lockSettings ? '<div class="form-help text-warning">⚠️ Tournament settings are locked for completed events to prevent data corruption</div>' : ''}
-                        
-                        <div class="form-group">
-                            <label>Outcomes per Finishing Position</label>
-                            <div id="custom-outcomes-rows"></div>
-                            <small>For each finishing position, choose the outcome: Win (no loss), Lose (adds a loss, continues), Eliminated (out of event).</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <h4>Class Pricing & Registration</h4>
-                    <div class="class-pricing-section">
-                        <div id="eventClassesList">
-                            ${this.generateEventClassesHtml(isEdit ? event.classSettings || [] : [], isEdit ? event.seriesId : null)}
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="form-checkbox">
-                            <input type="checkbox" name="registrationOpen" id="registrationOpen" 
-                                   ${isEdit && event.registrationOpen ? 'checked' : (!isEdit ? 'checked' : '')}>
-                            <label for="registrationOpen">Registration Open</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="eventDescription">Event Description</label>
-                        <textarea name="eventDescription" id="eventDescription" rows="3" 
-                                  placeholder="Optional event description, rules, or special instructions...">${isEdit ? Helpers.sanitizeHtml(event.description || '') : ''}</textarea>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <h4>Advanced Settings</h4>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="driverMeetingTime">Driver Meeting Time</label>
-                            <input type="time" name="driverMeetingTime" id="driverMeetingTime" 
-                                   value="${isEdit && event.driverMeetingTime ? event.driverMeetingTime : '08:00'}">
-                        </div>
-                        <div class="form-group">
-                            <label for="maxParticipants">Max Participants</label>
-                            <input type="number" name="maxParticipants" id="maxParticipants" min="1" 
-                                   value="${isEdit && event.maxParticipants ? event.maxParticipants : ''}" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="trackSurface">Track Surface</label>
-                            <select name="trackSurface" id="trackSurface">
-                                <option value="snow" ${isEdit && event.trackSurface === 'snow' ? 'selected' : ''}>Snow</option>
-                                <option value="ice" ${isEdit && event.trackSurface === 'ice' ? 'selected' : ''}>Ice</option>
-                                <option value="mixed" ${isEdit && event.trackSurface === 'mixed' ? 'selected' : ''}>Mixed</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="form-checkbox">
-                            <input type="checkbox" name="requiresClassSeparation" id="requiresClassSeparation" 
-                                   ${isEdit && event.requiresClassSeparation ? 'checked' : 'checked'}>
-                            <label for="requiresClassSeparation">Separate classes in bracket (recommended)</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="form-checkbox">
-                            <input type="checkbox" name="freeRunEnabled" id="freeRunEnabled" 
-                                   ${isEdit && event.freeRunEnabled ? 'checked' : ''}>
-                            <label for="freeRunEnabled">Enable Free Run races</label>
-                        </div>
-                        <small class="form-help">Free Run ON: Fill all lanes, allow solo races. Free Run OFF: Balance last 2 races so nobody races alone.<br/>
-                        Example with 5 drivers + 3 lanes: ON = [3,2], OFF = [3,2]. With 7 drivers + 4 lanes: ON = [4,3], OFF = [4,3]. With 9 drivers + 4 lanes: ON = [4,4,1], OFF = [4,3,2].</small>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">
-                        ${isEdit ? 'Update Event' : 'Create Event'}
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="Helpers.hideModal()">
-                        Cancel
-                    </button>
-                </div>
-
-                <div id="event-form-errors" style="display: none;"></div>
-            </form>
-        `;
-
-        Helpers.showModal(title, formHtml);
-
-        // Set eventId in form dataset for edit mode
-        if (isEdit && eventId) {
-            const form = document.getElementById('event-form');
-            if (form) {
-                form.dataset.eventId = eventId;
-                // Also set custom outcomes if they exist
-                if (event && Array.isArray(event.customOutcomes)) {
-                    form.dataset.customOutcomes = JSON.stringify(event.customOutcomes);
-                }
-            }
-        }
-
-        // Bind form interactions
-        this.bindFormInteractions(eventId);
+    getEvent(eventId) {
+        if (this.dataService) return this.dataService.getEvent(eventId);
+        return window.dataManager ? window.dataManager.getEvent(eventId) : null;
     }
 
-    /**
-     * Bind form interactions and real-time updates
-     */
-    bindFormInteractions(eventId = null) {
-        const form = document.getElementById('event-form');
-        if (!form) return;
-
-        // Track visualization updates
-        const trackSelect = document.getElementById('numberOfTracks');
-        const eliminationSelect = document.getElementById('eliminationType');
-        
-        const updateTrackVisualization = () => {
-            this.updateTrackVisualization();
-        };
-
-        if (trackSelect) trackSelect.addEventListener('change', updateTrackVisualization);
-        if (eliminationSelect) eliminationSelect.addEventListener('change', updateTrackVisualization);
-
-        // Initial visualization
-        updateTrackVisualization();
-
-        // Form submission
-        form.addEventListener('submit', (e) => this.handleEventFormSubmit(e, eventId));
-
-        // Series change handler
-        const seriesSelect = document.getElementById('seriesId');
-        if (seriesSelect) {
-            seriesSelect.addEventListener('change', () => {
-                this.updateEventClassesList(seriesSelect.value);
-            });
-        }
-    }
+    // ============================================================================
+    // STATUS MANAGEMENT - Delegated to dataService
+    // ============================================================================
 
     /**
-     * Update track visualization based on current settings
-     */
-    updateTrackVisualization() {
-        const tracksContainer = document.getElementById('track-visualization');
-        const numberOfTracks = parseInt(document.getElementById('numberOfTracks')?.value || 1);
-        const eliminationType = document.getElementById('eliminationType')?.value || 'single';
-        
-        if (!tracksContainer) return;
-
-        const lanesHtml = Array.from({ length: numberOfTracks }, (_, i) => `
-            <div class="participant-lane">
-                <div class="lane-number">${i + 1}</div>
-                <div class="lane-label">Participant ${i + 1}</div>
-            </div>
-        `).join('');
-
-        const baseHtml = `
-            <div class="race-format-display">
-                <div class="participants-per-race">
-                    <h6>Race Format</h6>
-                    <div class="lanes-grid">
-                        ${lanesHtml}
-                    </div>
-                </div>
-                ${eliminationType === 'custom' ? `
-                <div class="race-result">
-                    <div class="winner-indicator">Customize outcomes below for each finishing position.</div>
-                </div>` : `
-                <div class="race-result">
-                    <div class="winner-indicator">🏆 1st Place = Winner</div>
-                    <div class="loser-indicator">❌ 2nd-${numberOfTracks}th Place = ${eliminationType === 'double' || eliminationType === 'double_random' ? 'Loss (may continue)' : 'Eliminated'}</div>
-                </div>`}
-            </div>
-            <div class="layout-info">
-                <strong>Format:</strong> ${numberOfTracks} participants per race, ${eliminationType} elimination tournament
-            </div>
-        `;
-
-        tracksContainer.innerHTML = baseHtml;
-
-        // Handle custom outcomes display
-        const customContainer = document.getElementById('custom-outcomes-container');
-        const customRowsContainer = document.getElementById('custom-outcomes-rows');
-        
-        if (eliminationType === 'custom') {
-            if (customContainer) customContainer.style.display = 'block';
-            
-            if (customRowsContainer) {
-                // Get current values from edit form if available
-                const form = document.getElementById('event-form');
-                const isEdit = form && form.querySelector('input[name="eventName"]')?.value;
-                const isLocked = form && form.querySelector('select[name="eliminationType"]')?.disabled;
-                const current = (() => {
-                    try {
-                        if (isEdit) {
-                            // Try to get from existing event data first, then form dataset
-                            const eventId = form?.dataset?.eventId;
-                            if (eventId) {
-                                const event = dataManager.getEvent(eventId);
-                                if (event && Array.isArray(event.customOutcomes)) {
-                                    return event.customOutcomes;
-                                }
-                            }
-                            const raw = form?.dataset?.customOutcomes || '';
-                            return raw ? JSON.parse(raw) : [];
-                        }
-                        return [];
-                    } catch { return []; }
-                })();
-                
-                const options = ['win','lose','eliminated'];
-                const rows = Array.from({ length: numberOfTracks }, (_, idx) => {
-                    const pos = idx + 1;
-                    const sel = (current[idx] || (idx === 0 ? 'win' : 'eliminated')).toLowerCase();
-                    const opts = options.map(o => `<option value="${o}" ${sel===o?'selected':''}>${o.charAt(0).toUpperCase()+o.slice(1)}</option>`).join('');
-                    return `<div class="form-row"><label>Position ${pos}</label><select class="custom-outcome" data-position="${pos}" ${isLocked ? 'disabled' : ''}>${opts}</select></div>`;
-                }).join('');
-                
-                customRowsContainer.innerHTML = rows;
-                
-                // Persist custom selections back into the form dataset
-                if (form) {
-                    const selects = customRowsContainer.querySelectorAll('select.custom-outcome');
-                    const outcomes = Array.from(selects).map(s => s.value);
-                    form.dataset.customOutcomes = JSON.stringify(outcomes);
-                    selects.forEach(s => s.addEventListener('change', () => {
-                        const newer = Array.from(customRowsContainer.querySelectorAll('select.custom-outcome')).map(x => x.value);
-                        form.dataset.customOutcomes = JSON.stringify(newer);
-                    }));
-                }
-            }
-        } else {
-            if (customContainer) customContainer.style.display = 'none';
-        }
-    }
-
-    /**
-     * Handle event form submission
-     */
-    async handleEventFormSubmit(event, eventId = null) {
-        event.preventDefault();
-        
-        const form = event.target;
-        const formData = new FormData(form);
-        const isEdit = eventId !== null;
-
-        try {
-            Helpers.showLoading();
-
-            // Get class settings from form
-            const classSettings = this.getEventClassSettings();
-
-            // Check if this is a completed event (settings should be locked)
-            const currentEvent = isEdit ? dataManager.getEvent(eventId) : null;
-            const isCompleted = currentEvent && (currentEvent.status === 'completed' || currentEvent.status === 'finished');
-            
-            const eventData = {
-                name: formData.get('eventName'),
-                location: formData.get('location'),
-                date: formData.get('eventDate'),
-                seriesId: formData.get('seriesId') || null,
-                seasonId: formData.get('seasonId') || null, // Add season support
-                driverMeetingTime: formData.get('driverMeetingTime') || '08:00',
-                maxParticipants: parseInt(formData.get('maxParticipants')),
-                // Only update tournament settings if event is not completed
-                ...(isCompleted ? {} : {
-                    numberOfTracks: parseInt(formData.get('numberOfTracks')),
-                    eliminationType: formData.get('eliminationType'),
-                    customOutcomes: (() => { try { return JSON.parse(document.getElementById('event-form')?.dataset?.customOutcomes || '[]'); } catch { return []; } })(),
-                    customLossLimit: (() => {
-                        const input = document.getElementById('customLossLimit');
-                        return parseInt(input?.value || '2', 10);
-                    })(),
-                    customUseBrackets: (() => {
-                        const select = document.getElementById('customUseBrackets');
-                        return (select?.value || 'false') === 'true';
-                    })(),
-                    customFinalType: (() => {
-                        const select = document.getElementById('customFinalType');
-                        return select?.value || 'unique';
-                    })(),
-                    freeRunEnabled: formData.get('freeRunEnabled') === 'on'
-                }),
-                classSettings: classSettings,
-                registrationOpen: formData.get('registrationOpen') === 'on',
-                description: formData.get('eventDescription') || '',
-                trackSurface: formData.get('trackSurface') || 'snow',
-                requiresClassSeparation: formData.get('requiresClassSeparation') === 'on'
-            };
-
-            let result;
-            if (isEdit) {
-                result = dataManager.updateEvent(eventId, eventData);
-                Helpers.showToast('Event updated successfully!', 'success');
-            } else {
-                result = dataManager.addEvent(eventData);
-                Helpers.showToast('Event created successfully!', 'success');
-            }
-
-            if (result) {
-                Helpers.hideModal();
-                this.loadEventContent();
-                
-                // Update standings if part of series
-                if (eventData.seriesId && window.seriesManager) {
-                    window.seriesManager.loadSeriesContent();
-                }
-            } else {
-                Helpers.showToast('Failed to save event', 'error');
-            }
-
-        } catch (error) {
-            console.error('Event form error:', error);
-            Helpers.showToast('An error occurred while saving the event', 'error');
-        } finally {
-            Helpers.hideLoading();
-        }
-    }
-
-    /**
-     * View detailed event information
-     */
-    viewEvent(eventId) {
-        const event = dataManager.getEvent(eventId);
-        if (!event) {
-            Helpers.showToast('Event not found', 'error');
-            return;
-        }
-
-        const series = event.seriesId ? dataManager.getSeries(event.seriesId) : null;
-        const participants = event.participants.map(id => dataManager.getParticipant(id)).filter(p => p);
-        const registrationOpen = this.isRegistrationOpen(event);
-        const spotsAvailable = this.getSpotsAvailable(event);
-
-        const participantsHtml = participants.length > 0 ? 
-            participants.map(p => {
-                // Handle both old single class and new multiple classes format
-                let classDisplay = 'Unknown';
-                if (p.sledClasses && Array.isArray(p.sledClasses) && p.sledClasses.length > 0) {
-                    classDisplay = p.sledClasses[0].toUpperCase();
-                } else if (p.sledClass) {
-                    classDisplay = p.sledClass.toUpperCase();
-                }
-                
-                return `
-                    <div class="participant-item-mini">
-                        <span class="participant-name">${Helpers.sanitizeHtml(p.name)}</span>
-                        <span class="participant-class">${classDisplay}</span>
-                    </div>
-                `;
-            }).join('') : '<p><em>No participants registered yet.</em></p>';
-
-        const detailsHtml = `
-            <div class="event-details-modal">
-                <div class="event-info">
-                    <h4>${Helpers.sanitizeHtml(event.name)}</h4>
-                    
-                    ${series ? `
-                        <div class="series-badge-large">
-                            Part of ${Helpers.sanitizeHtml(series.name)}
-                        </div>
-                    ` : ''}
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <strong>Date & Time:</strong>
-                            ${Helpers.formatDate(event.date)}
-                        </div>
-                        <div class="info-item">
-                            <strong>Location:</strong>
-                            ${Helpers.sanitizeHtml(event.location)}
-                        </div>
-                        <div class="info-item">
-                            <strong>Tracks:</strong>
-                            ${event.numberOfTracks} parallel track${event.numberOfTracks > 1 ? 's' : ''}
-                        </div>
-                        <div class="info-item">
-                            <strong>Elimination:</strong>
-                            ${Helpers.capitalize(event.eliminationType)} elimination
-                        </div>
-                        <div class="info-item">
-                            <strong>Entry Fee:</strong>
-                            ${Helpers.formatCurrency(event.entryFee || 0)}
-                        </div>
-                        <div class="info-item">
-                            <strong>Capacity:</strong>
-                            ${event.participants.length}/${event.maxParticipants || '∞'} participants
-                        </div>
-                        ${event.driverMeetingTime ? `
-                            <div class="info-item">
-                                <strong>Driver Meeting:</strong>
-                                ${event.driverMeetingTime}
-                            </div>
-                        ` : ''}
-                        <div class="info-item">
-                            <strong>Registration:</strong>
-                            <span class="registration-status ${registrationOpen ? 'open' : 'closed'}">
-                                ${registrationOpen ? 'Open' : 'Closed'}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    ${event.description ? `
-                        <div class="description">
-                            <strong>Description:</strong>
-                            <p>${Helpers.sanitizeHtml(event.description)}</p>
-                        </div>
-                    ` : ''}
-                </div>
-
-                <div class="section-divider"></div>
-
-                <div class="participants-section">
-                    <h5>Participants (${participants.length})</h5>
-                    <div class="participants-list">
-                        ${participantsHtml}
-                    </div>
-                    ${registrationOpen ? `
-                        <button class="btn btn-primary" onclick="eventManager.manageParticipants('${eventId}'); Helpers.hideModal();">
-                            Manage Participants
-                        </button>
-                    ` : ''}
-                </div>
-
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="eventManager.editEvent('${eventId}'); Helpers.hideModal();">
-                        Edit Event
-                    </button>
-                    ${registrationOpen ? `
-                        <button class="btn btn-success" onclick="eventManager.registerParticipant('${eventId}'); Helpers.hideModal();">
-                            Register Participant
-                        </button>
-                    ` : ''}
-                    <button class="btn btn-secondary" onclick="Helpers.hideModal()">
-                        Close
-                    </button>
-                </div>
-            </div>
-        `;
-
-        Helpers.showModal('Event Details', detailsHtml);
-    }
-
-    /**
-     * Edit event
-     */
-    editEvent(eventId) {
-        this.showEventForm(eventId);
-    }
-
-    /**
-     * Manage event participants
-     */
-    manageParticipants(eventId) {
-        const event = dataManager.getEvent(eventId);
-        if (!event) {
-            Helpers.showToast('Event not found', 'error');
-            return;
-        }
-
-        const allParticipants = dataManager.getParticipantsArray();
-        const eventParticipants = event.participants.map(id => dataManager.getParticipant(id)).filter(p => p);
-        const availableParticipants = allParticipants.filter(p => !event.participants.includes(p.id));
-        const spotsAvailable = this.getSpotsAvailable(event);
-        const canAddMore = spotsAvailable === null || spotsAvailable > 0;
-
-        const eventParticipantsHtml = eventParticipants.length > 0 ? 
-            eventParticipants.map(p => {
-                // Handle both old single class and new multiple classes format
-                let classDisplay = 'Unknown';
-                if (p.sledClasses && Array.isArray(p.sledClasses) && p.sledClasses.length > 0) {
-                    classDisplay = p.sledClasses[0].toUpperCase();
-                } else if (p.sledClass) {
-                    classDisplay = p.sledClass.toUpperCase();
-                }
-                
-                return `
-                    <div class="participant-manage-item">
-                        <div class="participant-info">
-                            <strong>${Helpers.sanitizeHtml(p.name)}</strong>
-                            <span class="participant-class">${classDisplay}</span>
-                            <span class="participant-team">${p.team || 'No Team'}</span>
-                        </div>
-                        <button class="btn btn-danger btn-small" onclick="eventManager.removeParticipant('${eventId}', '${p.id}')">
-                            Remove
-                        </button>
-                    </div>
-                `;
-            }).join('') : '<p><em>No participants registered yet.</em></p>';
-
-        const availableParticipantsHtml = canAddMore && availableParticipants.length > 0 ? 
-            availableParticipants.map(p => {
-                // Handle both old single class and new multiple classes format
-                let classDisplay = 'Unknown';
-                if (p.sledClasses && Array.isArray(p.sledClasses) && p.sledClasses.length > 0) {
-                    classDisplay = p.sledClasses[0].toUpperCase();
-                } else if (p.sledClass) {
-                    classDisplay = p.sledClass.toUpperCase();
-                }
-                
-                return `
-                    <div class="participant-manage-item">
-                        <div class="participant-info">
-                            <strong>${Helpers.sanitizeHtml(p.name)}</strong>
-                            <span class="participant-class">${classDisplay}</span>
-                            <span class="participant-team">${p.team || 'No Team'}</span>
-                        </div>
-                        <button class="btn btn-success btn-small" onclick="eventManager.addParticipant('${eventId}', '${p.id}')">
-                            Add
-                        </button>
-                    </div>
-                `;
-            }).join('') : 
-            (canAddMore ? '<p><em>All registered participants are already in this event.</em></p>' : 
-             '<p><em>Event is at maximum capacity.</em></p>');
-
-        const manageHtml = `
-            <div class="participants-manage-modal">
-                <div class="capacity-status">
-                    <h4>Event Capacity: ${event.participants.length}/${event.maxParticipants || '∞'}</h4>
-                    ${spotsAvailable !== null ? `
-                        <p class="capacity-info ${spotsAvailable <= 5 ? 'warning' : ''}">
-                            ${spotsAvailable} spot${spotsAvailable !== 1 ? 's' : ''} remaining
-                        </p>
-                    ` : ''}
-                </div>
-
-                <div class="participants-tabs">
-                    <div class="tab-header">
-                        <button class="tab-btn active" onclick="eventManager.switchTab('registered')">
-                            Registered (${eventParticipants.length})
-                        </button>
-                        <button class="tab-btn" onclick="eventManager.switchTab('available')">
-                            Available (${availableParticipants.length})
-                        </button>
-                    </div>
-
-                    <div class="tab-content active" id="registered-tab">
-                        <h5>Registered Participants</h5>
-                        <div class="participants-manage-list">
-                            ${eventParticipantsHtml}
-                        </div>
-                    </div>
-
-                    <div class="tab-content" id="available-tab">
-                        <h5>Available Participants</h5>
-                        <div class="participants-manage-list">
-                            ${availableParticipantsHtml}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="eventManager.generateBracket('${eventId}')">
-                        Generate Race Bracket
-                    </button>
-                    <button class="btn btn-secondary" onclick="Helpers.hideModal()">
-                        Done
-                    </button>
-                </div>
-            </div>
-        `;
-
-        Helpers.showModal('Manage Participants', manageHtml);
-    }
-
-    /**
-     * Switch tabs in participant management
-     */
-    switchTab(tabName) {
-        const tabs = document.querySelectorAll('.tab-btn');
-        const contents = document.querySelectorAll('.tab-content');
-        
-        tabs.forEach(tab => tab.classList.remove('active'));
-        contents.forEach(content => content.classList.remove('active'));
-        
-        document.querySelector(`button[onclick="eventManager.switchTab('${tabName}')"]`).classList.add('active');
-        document.getElementById(`${tabName}-tab`).classList.add('active');
-    }
-
-    /**
-     * Add participant to event
-     */
-    async addParticipant(eventId, participantId) {
-        const success = await dataManager.registerParticipantForEvent(eventId, participantId);
-        
-        if (success) {
-            Helpers.showToast('Participant added successfully!', 'success');
-            this.manageParticipants(eventId); // Refresh the modal
-            this.loadEventContent(); // Refresh the main view
-        } else {
-            Helpers.showToast('Failed to add participant', 'error');
-        }
-    }
-
-    /**
-     * Remove participant from event
-     */
-    removeParticipant(eventId, participantId) {
-        const event = dataManager.getEvent(eventId);
-        if (!event) {
-            Helpers.showToast('Event not found', 'error');
-            return;
-        }
-
-        const participantIndex = event.participants.indexOf(participantId);
-        if (participantIndex === -1) {
-            Helpers.showToast('Participant not in this event', 'error');
-            return;
-        }
-
-        event.participants.splice(participantIndex, 1);
-        const success = dataManager.updateEvent(eventId, event);
-        
-        if (success) {
-            Helpers.showToast('Participant removed successfully!', 'success');
-            this.manageParticipants(eventId); // Refresh the modal
-            this.loadEventContent(); // Refresh the main view
-        } else {
-            Helpers.showToast('Failed to remove participant', 'error');
-        }
-    }
-
-    /**
-     * Generate race bracket for event
-     */
-    async generateBracket(eventId) {
-        const event = dataManager.getEvent(eventId);
-        if (!event) {
-            Helpers.showToast('Event not found', 'error');
-            return;
-        }
-
-        if (event.participants.length < 2) {
-            Helpers.showToast('Need at least 2 participants to generate bracket', 'warning');
-            return;
-        }
-
-        try {
-            const bracket = dataManager.createRaceBracket(eventId);
-            
-            if (bracket) {
-                // Automatically update event status based on race existence
-                try {
-                    await this.updateEventStatusFromRaces(eventId);
-                    console.log(`✅ Event ${eventId} status updated based on race brackets`);
-                } catch (statusError) {
-                    console.error('Warning: Failed to update event status:', statusError);
-                    // Don't fail the bracket generation if status update fails
-                }
-                
-                Helpers.showToast('Race bracket generated successfully!', 'success');
-                Helpers.hideModal();
-                
-                // Navigate to races section to view bracket
-                if (window.app) {
-                    window.app.navigateToSection('races');
-                }
-            } else {
-                Helpers.showToast('Failed to generate bracket', 'error');
-            }
-        } catch (error) {
-            console.error('Bracket generation error:', error);
-            Helpers.showToast('Error generating bracket: ' + error.message, 'error');
-        }
-    }
-
-    /**
-     * View event results (placeholder for Phase 4)
-     */
-    viewResults(eventId) {
-        Helpers.showToast('Event results will be available in Phase 4', 'info');
-    }
-
-    /**
-     * Get event summary for dashboard
-     */
-    async getEventSummary() {
-        try {
-            const result = await dataManager.getEvents({}, 1, 1000);
-            const allEvents = result.events || result; // Handle both paginated and direct array responses
-            const now = new Date();
-            
-            const upcoming = allEvents.filter(e => new Date(e.date) > now);
-            const today = allEvents.filter(e => {
-                const eventDate = new Date(e.date);
-                return eventDate.toDateString() === now.toDateString();
-            });
-            const past = allEvents.filter(e => new Date(e.date) < now);
-            
-            return {
-                total: allEvents.length,
-                upcoming: upcoming.length,
-                today: today.length,
-                past: past.length,
-                recentEvents: allEvents
-                    .sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate))
-                    .slice(0, 3)
-            };
-        } catch (error) {
-            console.error('Failed to get event summary:', error);
-            return {
-                total: 0,
-                upcoming: 0,
-                today: 0,
-                past: 0,
-                recentEvents: []
-            };
-        }
-    }
-
-    /**
-     * Generate HTML for event class pricing settings
-     */
-    generateEventClassesHtml(classSettings, seriesId) {
-        if (!seriesId) {
-            return `
-                <div class="no-series-selected">
-                    <div class="info-message">
-                        <h5>📋 Class Configuration</h5>
-                        <p>Select a series above to configure which classes are available for this event and set their pricing.</p>
-                        <p><strong>Tip:</strong> You can choose which classes from the series to offer and set custom pricing for each class.</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        const series = dataManager.getSeries(seriesId);
-        if (!series || !series.sledClasses || series.sledClasses.length === 0) {
-            return `
-                <div class="no-classes-in-series">
-                    <div class="warning-message">
-                        <h5>⚠️ No Classes Available</h5>
-                        <p>The selected series "${series?.name || 'Unknown'}" doesn't have any classes defined.</p>
-                        <p>Please go to the Series management page and add classes to this series first.</p>
-                        <button type="button" class="btn btn-secondary" onclick="window.open('series.html', '_blank')">
-                            Manage Series Classes
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        const classSettingsHtml = series.sledClasses.map((seriesClass, index) => {
-            const existingSetting = classSettings.find(cs => cs.classId === seriesClass.id);
-            const isEnabled = existingSetting ? existingSetting.enabled : true;
-            const price = existingSetting ? existingSetting.price : (seriesClass.defaultFee || 0);
-
-            return `
-                <div class="event-class-setting" data-class-id="${seriesClass.id}">
-                    <div class="class-toggle">
-                        <input type="checkbox" id="class_${index}" ${isEnabled ? 'checked' : ''} 
-                               onchange="eventManager.toggleEventClass('${seriesClass.id}', this.checked)">
-                        <label for="class_${index}" class="class-name">${Helpers.sanitizeHtml(seriesClass.name)}</label>
-                    </div>
-                    <div class="class-price-setting">
-                        <label for="price_${index}">Price ($):</label>
-                        <input type="number" id="price_${index}" value="${price}" min="0" step="0.01"
-                               ${!isEnabled ? 'disabled' : ''}
-                               onchange="eventManager.updateClassPrice('${seriesClass.id}', this.value)">
-                    </div>
-                    <div class="class-default-fee">
-                        <small>Series default: $${seriesClass.defaultFee || 0}</small>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        return `
-            <div class="class-configuration-header">
-                <h5>Available Classes from "${series.name}"</h5>
-                <p>Select which classes to offer for this event and set their pricing. Participants will only be able to register for enabled classes.</p>
-            </div>
-            ${classSettingsHtml}
-        `;
-    }
-
-    /**
-     * Toggle event class enabled/disabled
-     */
-    toggleEventClass(classId, enabled) {
-        const container = document.querySelector(`[data-class-id="${classId}"]`);
-        const priceInput = container.querySelector('input[type="number"]');
-        
-        if (priceInput) {
-            priceInput.disabled = !enabled;
-        }
-        
-        // Visual feedback
-        container.style.opacity = enabled ? '1' : '0.6';
-    }
-
-    /**
-     * Update class price
-     */
-    updateClassPrice(classId, price) {
-        // Price is updated in real-time, will be saved when form is submitted
-        console.log(`Class ${classId} price updated to $${price}`);
-    }
-
-    /**
-     * Get event class settings from form
-     */
-    getEventClassSettings() {
-        const classSettings = [];
-        const classElements = document.querySelectorAll('.event-class-setting');
-        
-        classElements.forEach(element => {
-            const classId = element.dataset.classId;
-            const checkbox = element.querySelector('input[type="checkbox"]');
-            const priceInput = element.querySelector('input[type="number"]');
-            
-            if (checkbox && priceInput) {
-                classSettings.push({
-                    classId: classId,
-                    enabled: checkbox.checked,
-                    price: parseFloat(priceInput.value) || 0
-                });
-            }
-        });
-        
-        return classSettings;
-    }
-
-    /**
-     * Update event classes list when series changes
-     */
-    updateEventClassesList(seriesId) {
-        const container = document.getElementById('eventClassesList');
-        if (container) {
-            container.innerHTML = this.generateEventClassesHtml([], seriesId);
-        }
-    }
-
-    /**
-     * Automatically update event status based on race brackets
-     * Rule: EPC17_WORKFLOW.md v1 - event status management
+     * Update event status based on race brackets
      */
     async updateEventStatusFromRaces(eventId) {
-        try {
-            const event = dataManager.getEvent(eventId);
-            if (!event) {
-                console.warn(`Event ${eventId} not found for status update`);
-                return;
-            }
-
-            const bracket = dataManager.getRaceBracket(eventId);
-            const hasRaces = bracket && bracket.classes && 
-                Object.values(bracket.classes).some(classBracket => 
-                    classBracket.rounds && classBracket.rounds.length > 0
-                );
-
-            let newStatus = event.status;
-            
-            if (hasRaces && event.status === 'upcoming') {
-                newStatus = 'active';
-                console.log(`🔄 Event ${eventId} has races - updating status from 'upcoming' to 'active'`);
-            } else if (!hasRaces && event.status === 'active') {
-                newStatus = 'upcoming';
-                console.log(`🔄 Event ${eventId} has no races - updating status from 'active' to 'upcoming'`);
-            }
-
-            if (newStatus !== event.status) {
-                await dataManager.updateEventStatus(eventId, newStatus);
-                console.log(`✅ Event ${eventId} status updated to '${newStatus}'`);
-            }
-        } catch (error) {
-            console.error(`Error updating event status from races for ${eventId}:`, error);
+        if (this.dataService) {
+            return await this.dataService.updateEventStatusFromRaces(eventId);
         }
     }
 
     /**
      * Delete race bracket for event and update status
-     * Rule: EPC17_WORKFLOW.md v1 - event status management
      */
     async deleteRaceBracket(eventId) {
-        try {
-            const event = dataManager.getEvent(eventId);
-            if (!event) {
-                Helpers.showToast('Event not found', 'error');
-                return false;
-            }
-
-            // Delete the race bracket
-            const success = dataManager.deleteRaceBracket(eventId);
-            if (success) {
-                // Update event status to 'upcoming' since no races exist
-                await dataManager.updateEventStatus(eventId, 'upcoming');
-                console.log(`✅ Race bracket deleted for event ${eventId}, status set to 'upcoming'`);
-                Helpers.showToast('Race bracket deleted successfully', 'success');
-                return true;
-            } else {
-                Helpers.showToast('Failed to delete race bracket', 'error');
-                return false;
-            }
-        } catch (error) {
-            console.error('Error deleting race bracket:', error);
-            Helpers.showToast('Error deleting race bracket: ' + error.message, 'error');
-            return false;
+        if (this.dataService) {
+            return await this.dataService.deleteRaceBracket(eventId);
         }
+    }
+
+    // ============================================================================
+    // LEGACY METHODS - Preserved for backward compatibility
+    // ============================================================================
+
+    /**
+     * Generate HTML for event classes (legacy - now in UI module)
+     */
+    generateEventClassesHtml(classSettings, seriesId) {
+        if (this.ui) {
+            return this.ui.renderClassSettings(classSettings, seriesId);
+        }
+        return '';
+    }
+
+    /**
+     * Bind form interactions (legacy - now in controller)
+     */
+    bindFormInteractions(eventId = null) {
+        if (this.controller) {
+            return this.controller.bindFormInteractions(eventId);
+        }
+    }
+
+    /**
+     * Update track visualization (legacy - now in controller)
+     */
+    updateTrackVisualization() {
+        if (this.controller) {
+            return this.controller.updateTrackVisualization();
+        }
+    }
+
+    /**
+     * Get event class settings from form (legacy - now in controller)
+     */
+    getEventClassSettings() {
+        if (this.controller) {
+            return this.controller.getEventClassSettings();
+        }
+        return [];
+    }
+
+    /**
+     * Update event classes list when series changes (legacy - now in controller)
+     */
+    updateEventClassesList(seriesId) {
+        if (this.controller) {
+            return this.controller.updateClassSettings(seriesId);
+        }
+    }
+
+    /**
+     * Handle event form submission (legacy - now in controller)
+     */
+    async handleEventFormSubmit(event, eventId = null) {
+        if (this.controller) {
+            return await this.controller.handleFormSubmit(event, eventId);
+        }
+    }
+
+    /**
+     * Show empty state (legacy - now in UI module)
+     */
+    showEmptyState(container) {
+        if (this.ui && container) {
+            container.innerHTML = this.ui.renderEmptyState();
+        }
+    }
+
+    /**
+     * Show events list (legacy - now uses controller)
+     */
+    showEventsList(container, events) {
+        if (this.ui && container) {
+            const statsMap = {};
+            events.forEach(event => {
+                statsMap[event.id] = {
+                    spotsAvailable: this.getSpotsAvailable(event),
+                    registrationOpen: this.isRegistrationOpen(event)
+                };
+            });
+            container.innerHTML = this.ui.renderEventsList(events, statsMap);
+        }
+    }
+
+    /**
+     * Generate event card HTML (legacy - now in UI module)
+     */
+    generateEventCardHtml(event) {
+        if (this.ui) {
+            const stats = {
+                spotsAvailable: this.getSpotsAvailable(event),
+                registrationOpen: this.isRegistrationOpen(event)
+            };
+            return this.ui.renderEventCard(event, stats);
+        }
+        return '';
     }
 }
 
 // Export EventManager class for global use
-window.EventManager = EventManager; 
+window.EventManager = EventManager;

@@ -6,7 +6,7 @@
     <title>EPC TECHNOLOGY - Race Management (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="styles/race.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Hero Section Styles - Consistent with Series Page */
@@ -1408,9 +1408,6 @@
                         </button>
 
                         <div class="utility-actions">
-                            <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
-                                <i class="fas fa-trash-alt"></i> Clear All Data
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1504,6 +1501,14 @@
                                 <i class="fas fa-forward"></i>
                                 Generate Next Round
                             </button>
+                            <button class="btn btn-warning" id="repair-bracket" style="display: none;">
+                                <i class="fas fa-wrench"></i>
+                                Repair Bracket Data
+                            </button>
+                            <button class="btn btn-info" id="debug-rounds" style="display: none;">
+                                <i class="fas fa-info-circle"></i>
+                                Debug Rounds
+                            </button>
                         </div>
                     </div>
                     
@@ -1559,6 +1564,9 @@
 
     <!-- Scripts -->
     <script src="utils/performance-monitor.js"></script>
+    <script src="utils/background-tasks.js"></script>
+    <script src="utils/session-persistence.js"></script>
+    <script src="js/logger.js"></script>
     <script src="utils/helpers.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
@@ -1566,12 +1574,18 @@
     <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
     <script src="utils/event-bus.js"></script>
     <script src="modules/statistics-manager.js"></script>
-    <script src="utils/data-manager.js?v=1.2"></script>
-    <script src="utils/migration-utils.js?v=1.2"></script>
-    <script src="modules/pairing-engine.js?v=1.2"></script>
-    <script src="modules/race.js?v=1.2"></script>
-    <script src="modules/event.js?v=1.2"></script>
-    <script src="js/race-ui.js?v=1.2"></script>
+    <script src="utils/data-manager.js?v=1.3"></script>
+    
+    <!-- Event System - Modular Architecture (Refactored) -->
+    <script src="modules/event-data-service.js"></script>
+    <script src="modules/event-logic.js"></script>
+    <script src="modules/event-ui.js"></script>
+    <script src="modules/event-controller.js"></script>
+    <script src="modules/event.js?v=1.3"></script>
+    
+    <script src="modules/pairing-engine.js?v=1.3"></script>
+    <script src="modules/race.js?v=1.5"></script>
+    <script src="js/race-ui.js?v=1.11"></script>
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
     <script src="js/sidebar-nav.js"></script>
@@ -1582,30 +1596,96 @@
         // Wait for authentication to complete before loading data
         async function waitForAuthentication() {
             console.log('🔐 Races page: Waiting for authentication to complete...');
-            
+
             // Wait for Auth to be available and initialized
             let attempts = 0;
             while (!window.Auth && attempts < 100) { // Max 5 seconds
                 await new Promise(resolve => setTimeout(resolve, 50));
                 attempts++;
             }
-            
+
             if (!window.Auth) {
-                console.warn('🔐 Races page: Auth system not available after waiting, proceeding without authentication');
+                console.error('🔐 Races page: Auth system not available after waiting');
+                showLoginOverlay('Authentication system not available. Please refresh the page.');
                 return false;
             }
-            
+
             // Wait a bit more for session restoration to complete
             await new Promise(resolve => setTimeout(resolve, 300));
-            
-            // Check if we have a valid session
-            if (!window.currentUser) {
-                console.log('🔐 Races page: No current user, authentication failed');
+
+            // Check if we have a valid session and token
+            if (!window.currentUser || !window.Auth.getToken()) {
+                console.log('🔐 Races page: No current user or valid token, showing login');
+                showLoginOverlayWithCallback('Please log in to manage races.', () => {
+                    // After successful login, re-run the initialization
+                    setTimeout(() => {
+                        window.location.reload(); // Simple reload to re-initialize with auth
+                    }, 500);
+                });
                 return false;
             }
-            
+
             console.log('🔐 Races page: Authentication complete, proceeding with data load');
             return true;
+        }
+
+        // Custom login overlay with success callback for races page
+        function showLoginOverlayWithCallback(message, onSuccess) {
+            const overlay = buildLoginOverlay(message);
+            overlay.classList.add('active');
+            const loginBtn = overlay.querySelector('#auth-login-btn');
+            const usernameEl = overlay.querySelector('#auth-username');
+            const passwordEl = overlay.querySelector('#auth-password');
+            const msgEl = overlay.querySelector('#auth-login-message');
+
+            function doLogin() {
+                msgEl.textContent = 'Signing in...';
+                window.Auth.login(usernameEl.value.trim(), passwordEl.value).then(ok => {
+                    if (ok) {
+                        overlay.classList.remove('active');
+                        document.body.removeChild(overlay);
+                        // Call the custom success callback instead of redirecting
+                        if (onSuccess) onSuccess();
+                    } else {
+                        msgEl.textContent = 'Invalid credentials. Try again.';
+                    }
+                });
+            }
+            loginBtn.onclick = doLogin;
+            passwordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+            usernameEl.focus();
+        }
+
+        // Helper function to build login overlay (copied from auth.js for races page use)
+        function buildLoginOverlay(message) {
+            const overlay = document.createElement('div');
+            overlay.className = 'overlay';
+            overlay.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2>Authentication Required</h2>
+                        <button class="modal-close" onclick="this.parentElement.parentElement.parentElement.classList.remove('active')">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 2rem;">
+                        <p id="auth-login-message" style="margin-bottom: 1rem; text-align: center; color: var(--text-secondary);">${message || 'Please log in to continue.'}</p>
+                        <form style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div>
+                                <label for="auth-username" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Username:</label>
+                                <input type="text" id="auth-username" placeholder="Enter username" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label for="auth-password" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password:</label>
+                                <input type="password" id="auth-password" placeholder="Enter password" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary);">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 2rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                        <button id="auth-login-btn" class="btn btn-primary">Login</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            return overlay;
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1614,14 +1694,25 @@
             
             try {
                 // Wait for authentication before initializing
-                await waitForAuthentication();
-                
+                const authSuccess = await waitForAuthentication();
+                if (!authSuccess) {
+                    console.log('🏁 RACES PAGE: Authentication failed, stopping initialization');
+                    return; // Stop initialization if authentication fails
+                }
+
                 // Initialize core modules
-                dataManager = new DataManager();
-                eventManager = new EventManager();
+                window.dataManager = new DataManager();
+                dataManager = window.dataManager; // Also set local variable
                 
                 // Wait for data to load before initializing UI
                 await dataManager.loadFromStorage();
+                
+                // Initialize Event Data Service (global instance for deprecation fallback)
+                window.eventDataService = new EventDataService(dataManager);
+                console.log('✅ EventDataService initialized globally');
+                
+                // Initialize EventManager (will use the modules we just loaded)
+                eventManager = new EventManager();
                 
                 pairingEngine = new PairingEngine();
                 raceManager = new RaceManager(dataManager, pairingEngine);
@@ -1669,89 +1760,8 @@
                     window.sidebarNav = new SidebarNavigation();
                 }
                 
-                // Test if basic JavaScript is working
-                console.log('🏁 RACES PAGE: Testing basic JavaScript functionality...');
-                document.addEventListener('click', (e) => {
-                    console.log('🏁 RACES PAGE: Click detected on:', e.target.tagName, e.target.className, e.target.id);
-                    
-                    // Check if it's a button with onclick
-                    if (e.target.tagName === 'BUTTON' && e.target.onclick) {
-                        console.log('🏁 RACES PAGE: Button with onclick found:', e.target.onclick.toString());
-                    }
-                    
-                    // Check if it's a button with specific classes
-                    if (e.target.classList.contains('btn-primary')) {
-                        console.log('🏁 RACES PAGE: Primary button clicked, checking for eventId...');
-                        const onclickAttr = e.target.getAttribute('onclick');
-                        console.log('🏁 RACES PAGE: onclick attribute:', onclickAttr);
-                        
-                        // Try to extract eventId from onclick
-                        if (onclickAttr && onclickAttr.includes('selectEventForRaces')) {
-                            const match = onclickAttr.match(/selectEventForRaces\('([^']+)'\)/);
-                            if (match) {
-                                const eventId = match[1];
-                                console.log('🏁 RACES PAGE: Extracted eventId:', eventId);
-                                console.log('🏁 RACES PAGE: Manually calling selectEventForRaces...');
-                                selectEventForRaces(eventId);
-                            }
-                        }
-                    }
-                    
-                    // Handle back to events button
-                    if (e.target && e.target.id === 'back-to-events') {
-                        console.log('🏁 RACES PAGE: Back to events button clicked (direct handler)');
-                        if (window.raceUI) {
-                            window.raceUI.showEventSelection();
-                        } else {
-                            console.error('🏁 RACES PAGE: raceUI not available for back to events');
-                        }
-                    }
-                    
-                    
-                    // Handle complete event button
-                    if (e.target && e.target.id === 'complete-event') {
-                        console.log('🏁 RACES PAGE: Complete event button clicked (direct handler)');
-                        if (window.raceUI) {
-                            window.raceUI.manuallyCompleteEvent();
-                        } else {
-                            console.error('🏁 RACES PAGE: raceUI not available for complete event');
-                        }
-                    }
-                    
-                    // Handle participant clicks
-                    if (e.target.classList.contains('clickable-participant') || 
-                        e.target.closest('.clickable-participant')) {
-                        const participantElement = e.target.classList.contains('clickable-participant') ? 
-                            e.target : e.target.closest('.clickable-participant');
-                        
-                        console.log('🏁 RACES PAGE: Participant clicked (direct handler)');
-                        console.log('🏁 RACES PAGE: Participant element:', participantElement);
-                        
-                        // Try to find participant ID from data attributes
-                        const participantId = participantElement.dataset.participantId || 
-                                            participantElement.dataset.participant || 
-                                            participantElement.getAttribute('data-participant-id');
-                        
-                        console.log('🏁 RACES PAGE: Participant ID:', participantId);
-                        
-                        if (participantId && window.raceUI) {
-                            // Call the participant selection method if it exists
-                            if (typeof window.raceUI.handleParticipantClick === 'function') {
-                                console.log('🏁 RACES PAGE: Calling handleParticipantClick with element');
-                                window.raceUI.handleParticipantClick(participantElement);
-                            } else {
-                                console.log('🏁 RACES PAGE: handleParticipantClick method not found, trying alternative...');
-                                // Try to trigger the original click handler
-                                const originalClick = participantElement.onclick;
-                                if (originalClick) {
-                                    originalClick.call(participantElement, e);
-                                }
-                            }
-                        } else {
-                            console.error('🏁 RACES PAGE: No participant ID found or raceUI not available');
-                        }
-                    }
-                });
+                // Note: Event listeners are now handled by race-ui.js to avoid conflicts
+                // No need for duplicate global click handler here
             } catch (error) {
                 console.error('Error initializing Race Management System:', error);
                 showToast('Error initializing race management system', 'error');
@@ -1940,6 +1950,84 @@
         // Add emergency cleanup to window for debugging
         window.emergencyModalCleanup = emergencyModalCleanup;
 
+        // Add bracket debugging function
+        window.debugBrackets = function(eventId) {
+            if (!window.raceUI) {
+                console.error('Race UI not available');
+                return;
+            }
+
+            const bracket = window.raceUI.raceManager.getBracket(eventId);
+            if (!bracket) {
+                console.error('No bracket found for event:', eventId);
+                return;
+            }
+
+            console.log('🔍 BRACKET DEBUG INFO:');
+            console.log('Event ID:', eventId);
+            console.log('Classes:', Object.keys(bracket.classes));
+
+            Object.entries(bracket.classes).forEach(([className, classData]) => {
+                console.log(`\n📋 Class: ${className}`);
+                console.log(`  Elimination Type: ${classData.eliminationType}`);
+                console.log(`  Current Round: ${classData.currentRound}`);
+                console.log(`  Total Rounds: ${classData.rounds.length}`);
+
+                classData.rounds.forEach((round, roundIndex) => {
+                    console.log(`  Round ${round.roundNumber} (${round.type}): ${round.heats.length} heats`);
+
+                    round.heats.forEach((heat, heatIndex) => {
+                        const upperCount = round.heats.filter(h => h.bracketType === 'upper').length;
+                        const lowerCount = round.heats.filter(h => h.bracketType === 'lower').length;
+                        const champCount = round.heats.filter(h => h.bracketType === 'championship').length;
+
+                        console.log(`    Heat ${heat.heatNumber}: bracketType=${heat.bracketType}, lanes=${heat.lanes?.length || 0}`);
+                    });
+                });
+
+                // Show participant bracket assignments
+                console.log(`  Participants:`);
+                classData.participants.forEach(p => {
+                    if (p.status === 'active') {
+                        console.log(`    ${p.name}: ${p.currentBracket} bracket, ${p.losses} losses`);
+                    }
+                });
+            });
+        };
+
+        // Add function to fix bracket elimination types
+        window.fixBracketEliminationTypes = function(eventId) {
+            if (!window.raceUI || !window.raceUI.raceManager) {
+                console.error('Race manager not available');
+                return;
+            }
+
+            const bracket = window.raceUI.raceManager.getBracket(eventId);
+            if (!bracket) {
+                console.error('No bracket found for event:', eventId);
+                return;
+            }
+
+            // Call the fix function
+            window.raceUI.raceManager.fixBracketEliminationTypes(eventId, bracket);
+        };
+
+        // Add function to force regenerate brackets
+        window.regenerateBrackets = async function(eventId) {
+            if (!window.raceUI || !window.raceUI.raceManager) {
+                console.error('Race manager not available');
+                return;
+            }
+
+            try {
+                console.log('🔄 Force regenerating brackets for event:', eventId);
+                await window.raceUI.raceManager.initializeBrackets(eventId);
+                console.log('✅ Brackets regenerated');
+            } catch (error) {
+                console.error('❌ Error regenerating brackets:', error);
+            }
+        };
+
         // Delete event function for race page
         window.deleteEventFromRacePage = async function(eventId) {
             try {
@@ -1990,27 +2078,6 @@
             }
         };
 
-        // Clear all data function
-        window.clearAllData = async function() {
-            window.confirmClearAllData(async () => {
-                try {
-                    await dataManager.clearAllData();
-                    
-                    // Reset race UI to initial state
-                    if (raceUI) {
-                        raceUI.selectedEventId = null;
-                        raceUI.showEventSelection();
-                        // showEventSelection now handles the modern rendering internally
-                    }
-                    
-                    showToast('All data has been cleared successfully', 'success');
-                } catch (error) {
-                    console.error('Error clearing data:', error);
-                    showToast('Error clearing data. Please try again.', 'error');
-                    throw error; // Re-throw to show error in modal
-                }
-            });
-        };
 
         // Export functions for global access
         window.raceManager = null;
@@ -2349,29 +2416,43 @@
         // Search and Sort Functions for Races Page
         function filterRacesEvents() {
             // Safety check: ensure required functions and data are available
-            if (typeof window.allRacesEventsData === 'undefined' || 
+            if (typeof window.allRacesEventsData === 'undefined' ||
                 typeof window.sortRacesEventsData !== 'function' ||
                 typeof window.renderRacesEventsGrid !== 'function' ||
                 typeof window.updateRacesResultsCount !== 'function') {
                 console.warn('Required functions not available, skipping filter operation');
                 return;
             }
-            
+
             const searchTerm = document.getElementById('racesSearch').value.toLowerCase().trim();
             const statusFilter = document.getElementById('racesStatusFilter').value;
             const clearButton = document.getElementById('clearRacesSearch');
-            
+
             // Update clear button visibility
             if (clearButton) {
                 clearButton.style.display = searchTerm ? 'block' : 'none';
             }
-            
+
             // Store current filters
             window.currentRacesSearchTerm = searchTerm;
             window.currentRacesStatusFilter = statusFilter;
-            
+
             // Reset to first page when filtering
             window.currentRacesPage = 1;
+
+            // Save session state
+            const sessionState = window.SessionPersistence.Races.load() || {};
+            window.SessionPersistence.Races.save(
+                sessionState.eventId,
+                sessionState.raceId,
+                sessionState.bracketRound,
+                {
+                    searchTerm,
+                    statusFilter,
+                    sortOption: window.currentRacesSortOption,
+                    currentPage: window.currentRacesPage
+                }
+            );
             
             // Apply filters
             window.filteredRacesEventsData = window.allRacesEventsData.filter(event => {
@@ -2408,10 +2489,24 @@
         function sortRacesEvents() {
             const sortOption = document.getElementById('racesSort').value;
             window.currentRacesSortOption = sortOption;
-            
+
             // Reset to first page when sorting
             window.currentRacesPage = 1;
-            
+
+            // Save session state
+            const sessionState = window.SessionPersistence.Races.load() || {};
+            window.SessionPersistence.Races.save(
+                sessionState.eventId,
+                sessionState.raceId,
+                sessionState.bracketRound,
+                {
+                    searchTerm: window.currentRacesSearchTerm,
+                    statusFilter: window.currentRacesStatusFilter,
+                    sortOption,
+                    currentPage: window.currentRacesPage
+                }
+            );
+
             sortRacesEventsData();
             renderRacesEventsGrid(window.filteredRacesEventsData);
         }

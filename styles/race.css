@@ -1,69 +1,96 @@
 /**
  * Race Management CSS for EPC17 Event Management System
- * Styles for brackets, heats, lanes, and result entry interface
+ * Enhanced styles for brackets, heats, lanes, and result entry interface
  */
 
 /* ===== EVENT SELECTION ===== */
 .event-selection {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
+    animation: fadeInUp 0.4s ease-out;
 }
 
 .section-header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
 }
 
 .section-header h2 {
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-2);
+    font-size: 1.75rem;
 }
 
 .section-header p {
     color: var(--text-secondary);
-    font-size: 1.1rem;
+    font-size: 1.0625rem;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .events-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 1.5rem;
-    margin-top: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: var(--space-5);
+    margin-top: var(--space-6);
 }
 
 .event-card {
-    background: var(--bg-secondary);
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-slow);
     position: relative;
     overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.event-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    transform: scaleX(0);
+    transition: transform var(--transition-base);
 }
 
 .event-card:hover {
-    border-color: var(--accent-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--border-accent);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl), var(--shadow-glow-sm);
+}
+
+.event-card:hover::before {
+    transform: scaleX(1);
 }
 
 .event-card.selected {
     border-color: var(--accent-primary);
-    background: var(--bg-primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-lg), 0 0 0 2px var(--accent-muted);
+}
+
+.event-card.selected::before {
+    transform: scaleX(1);
 }
 
 /* Event card status-based styling */
 .event-card.upcoming {
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid var(--accent-teal);
 }
 
 .event-card.active {
-    border-left: 4px solid #10b981;
+    border-left: 4px solid var(--accent-primary);
 }
 
 .event-card.completed {
-    border-left: 4px solid #6b7280;
+    border-left: 4px solid var(--success);
 }
 
 .event-header {
@@ -138,6 +165,7 @@
 .detail-row i {
     width: 16px;
     color: var(--accent-primary);
+    filter: drop-shadow(0 0 3px rgba(255, 96, 56, 0.4));
 }
 
 /* Modern event card detail styles */
@@ -232,13 +260,14 @@
 .stat-icon {
     width: 50px;
     height: 50px;
-    background: var(--accent-primary);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(255, 96, 56, 0.4);
 }
 
 .stat-content {
@@ -280,7 +309,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
     border: none;
     border-radius: 50px;
@@ -288,26 +317,26 @@
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+    box-shadow: 0 4px 16px rgba(255, 96, 56, 0.5);
     transition: all 0.2s ease;
     animation: scrollAnchorPulse 2s ease-in-out infinite;
 }
 
 @keyframes scrollAnchorPulse {
     0%, 100% { 
-        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+        box-shadow: 0 4px 16px rgba(255, 96, 56, 0.5);
         transform: scale(1);
     }
     50% { 
-        box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6);
+        box-shadow: 0 6px 24px rgba(255, 96, 56, 0.7);
         transform: scale(1.05);
     }
 }
 
 .scroll-anchor-btn:hover {
-    background: linear-gradient(135deg, #d97706, #b45309);
+    background: linear-gradient(135deg, var(--accent-hover), var(--accent-primary));
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+    box-shadow: 0 6px 20px rgba(255, 96, 56, 0.6);
 }
 
 .scroll-anchor-btn:active {
@@ -627,6 +656,13 @@
     margin-left: 0.5rem;
 }
 
+.context-menu-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+    color: var(--text-secondary);
+}
+
 .context-menu-item {
     padding: 0.5rem 1rem;
     cursor: pointer;
@@ -898,6 +934,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 4px 12px rgba(255, 96, 56, 0.3);
 }
 
 .class-header h3 {
@@ -1137,7 +1174,7 @@
 .lane-number {
     width: 60px;
     height: 40px;
-    background: var(--accent-primary);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
     border-radius: 6px;
     display: flex;
@@ -1146,6 +1183,7 @@
     font-weight: 600;
     font-size: 0.875rem;
     margin-right: 1rem;
+    box-shadow: 0 2px 8px rgba(255, 96, 56, 0.4);
 }
 
 .lane-participant {
@@ -1173,7 +1211,7 @@
 
 .current-position {
     display: inline-block;
-    background: var(--accent-primary);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 15px;
@@ -1181,7 +1219,7 @@
     font-weight: 600;
     text-transform: uppercase;
     animation: positionPulse 2s infinite;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 2px 8px rgba(255, 96, 56, 0.5);
 }
 
 .no-position {
@@ -1210,10 +1248,10 @@
 }
 
 .clickable-participant:hover {
-    background: linear-gradient(135deg, var(--accent-primary), #1e40af);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
     transform: scale(1.02);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 96, 56, 0.5);
 }
 
 .clickable-participant:hover .participant-name,
@@ -1813,32 +1851,6 @@
     color: var(--text-secondary);
 }
 
-/* Final Results Responsive */
-@media (max-width: 768px) {
-    .final-results-table .final-results-header,
-    .final-results-table .final-result-row {
-        grid-template-columns: 60px 1fr 120px;
-        gap: 0.5rem;
-        padding: 0.75rem;
-    }
-
-    .final-results-table .final-results-header .col-team,
-    .final-results-table .final-results-header .col-record,
-    .final-results-table .final-results-header .col-elimination {
-        display: none;
-    }
-
-    .final-result-row .col-team,
-    .final-result-row .col-record,
-    .final-result-row .col-elimination {
-        display: none;
-    }
-
-    .rank-number {
-        font-size: 1.25rem;
-    }
-}
-
 /* ===== DSQ AND FALSE START INDICATORS ===== */
 
 /* Lane status indicators */
@@ -1893,7 +1905,6 @@
 /* Final results styling for DSQ */
 .final-result-row.dsq-row {
     background: rgba(220, 38, 38, 0.02); /* Very subtle background */
-    /* Removed the red border to be less attention-grabbing */
 }
 
 .final-result-row.dsq-row:hover {

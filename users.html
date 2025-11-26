@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Users & Permissions - EPC TECHNOLOGY</title>
 	<link rel="stylesheet" href="styles.css">
-	    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+	    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -45,6 +45,54 @@
 		</div>
 
 		<div class="card">
+			<h3 style="margin-bottom:1rem;">Application Settings</h3>
+			<div class="settings-form">
+				<div class="form-group">
+					<label class="form-label">
+						<input type="checkbox" id="email-enabled" />
+						Enable Email Sending
+					</label>
+					<p class="form-help">Allow the application to send emails to drivers for event statistics and notifications.</p>
+				</div>
+
+				<div class="form-group">
+					<label class="form-label" for="email-subject">Email Subject Template</label>
+					<input id="email-subject" class="form-control" type="text" placeholder="Your Event Performance Statistics" />
+					<p class="form-help">Template for email subject line. Use {event} and {name} as placeholders.</p>
+				</div>
+
+				<div class="form-group">
+					<label class="form-label" for="email-body">Email Body Template</label>
+					<textarea id="email-body" class="form-control" rows="4" placeholder="Dear {name},&#10;&#10;Thank you for participating in {event}!&#10;&#10;Please find attached your performance statistics."></textarea>
+					<p class="form-help">Template for email body. Use {name}, {event}, and other participant data as placeholders.</p>
+				</div>
+
+				<div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+					<button id="save-settings" class="btn btn-primary">Save Settings</button>
+				</div>
+
+				<div id="settings-message" style="margin-top:0.5rem;font-size:0.9rem;"></div>
+			</div>
+		</div>
+
+		<div class="card">
+			<h3 style="margin-bottom:1rem;">Database Management</h3>
+			<div class="database-management">
+				<div class="form-group">
+					<div style="display:flex;align-items:center;gap:1rem;">
+						<button id="clear-database-btn" class="btn btn-danger" onclick="clearDatabase()">
+							<i class="fas fa-trash-alt"></i> Clear All Data
+						</button>
+						<span class="form-help" style="margin:0;">
+							⚠️ This will backup the current database and create a fresh one. All drivers, events, and series will be permanently removed.
+						</span>
+					</div>
+				</div>
+				<div id="clear-database-message" style="margin-top:1rem;font-size:0.9rem;"></div>
+			</div>
+		</div>
+
+		<div class="card">
 			<h3 style="margin-bottom:1rem;">Users</h3>
 			<div class="table-wrapper">
 				<table>
@@ -61,10 +109,12 @@
 		</div>
 	</main>
 
-	<script src="utils/auth.js"></script>
+	<script src="js/logger.js"></script>
+    <script src="utils/auth.js"></script>
 	<script src="js/sidebar-nav.js"></script>
 	<script>
 		// Central permissions registry for easy updates (categories only)
+		// Note: admin_power is handled separately and not included in "All Permissions"
 		const ALL_PERMISSIONS = [
 			{ group: 'Pages', items: [
 				{ key: 'series', label: 'Series' },
@@ -82,9 +132,57 @@
 		function renderPermissionCheckboxes(container, selected = []) {
 			container.innerHTML = '';
 			const wrap = document.createElement('div');
-			wrap.style.display = 'grid';
-			wrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
-			wrap.style.gap = '0.5rem 1rem';
+			wrap.style.display = 'flex';
+			wrap.style.flexDirection = 'column';
+			wrap.style.gap = '1rem';
+
+			// Add "All Permissions" checkbox at the top
+			const allPermsRow = document.createElement('label');
+			allPermsRow.style.display = 'flex';
+			allPermsRow.style.alignItems = 'center';
+			allPermsRow.style.gap = '0.5rem';
+			allPermsRow.style.fontWeight = '600';
+			allPermsRow.style.padding = '0.5rem';
+			allPermsRow.style.background = 'var(--bg-secondary)';
+			allPermsRow.style.borderRadius = '6px';
+			const allPermsCb = document.createElement('input');
+			allPermsCb.type = 'checkbox';
+			allPermsCb.setAttribute('data-all-permissions', 'true');
+			allPermsCb.id = `all_perms_${Math.random().toString(36).slice(2,7)}`;
+			const allPermsLabel = document.createElement('span');
+			allPermsLabel.textContent = 'All Permissions (Features Only)';
+			allPermsRow.appendChild(allPermsCb);
+			allPermsRow.appendChild(allPermsLabel);
+			wrap.appendChild(allPermsRow);
+
+			// Add "Admin Power" checkbox separately
+			const adminPowerRow = document.createElement('label');
+			adminPowerRow.style.display = 'flex';
+			adminPowerRow.style.alignItems = 'center';
+			adminPowerRow.style.gap = '0.5rem';
+			adminPowerRow.style.fontWeight = '600';
+			adminPowerRow.style.padding = '0.5rem';
+			adminPowerRow.style.background = 'var(--bg-secondary)';
+			adminPowerRow.style.borderRadius = '6px';
+			const adminPowerCb = document.createElement('input');
+			adminPowerCb.type = 'checkbox';
+			adminPowerCb.value = 'admin_power';
+			adminPowerCb.checked = selected.includes('admin_power');
+			adminPowerCb.setAttribute('data-permission', 'admin_power');
+			adminPowerCb.id = `admin_power_${Math.random().toString(36).slice(2,7)}`;
+			const adminPowerLabel = document.createElement('span');
+			adminPowerLabel.textContent = 'Admin Power (User Management)';
+			adminPowerRow.appendChild(adminPowerCb);
+			adminPowerRow.appendChild(adminPowerLabel);
+			wrap.appendChild(adminPowerRow);
+
+			// Add individual permissions
+			const permsWrap = document.createElement('div');
+			permsWrap.style.display = 'grid';
+			permsWrap.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
+			permsWrap.style.gap = '0.5rem 1rem';
+			permsWrap.setAttribute('data-permissions-list', 'true');
+			
 			ALL_PERMISSIONS.forEach(group => {
 				const groupEl = document.createElement('div');
 				const title = document.createElement('div');
@@ -101,8 +199,9 @@
 					const cb = document.createElement('input');
 					cb.type = 'checkbox';
 					cb.value = item.key;
-					cb.checked = selected.includes(item.key) || (selected.includes('*') && item.key !== '*');
+					cb.checked = selected.includes(item.key);
 					cb.setAttribute('data-permission', item.key);
+					cb.setAttribute('data-feature-permission', 'true');
 					cb.id = id;
 					const lab = document.createElement('span');
 					lab.textContent = item.label;
@@ -110,12 +209,37 @@
 					row.appendChild(lab);
 					groupEl.appendChild(row);
 				});
-				wrap.appendChild(groupEl);
+				permsWrap.appendChild(groupEl);
 			});
+			wrap.appendChild(permsWrap);
 			container.appendChild(wrap);
+
+			// Wire up "All Permissions" checkbox
+			allPermsCb.addEventListener('change', () => {
+				const checked = allPermsCb.checked;
+				container.querySelectorAll('[data-feature-permission="true"]').forEach(cb => {
+					cb.checked = checked;
+				});
+			});
+
+			// Update "All Permissions" state when individual checkboxes change
+			container.addEventListener('change', (e) => {
+				if (e.target.hasAttribute('data-feature-permission')) {
+					const allFeaturePerms = Array.from(container.querySelectorAll('[data-feature-permission="true"]'));
+					const allChecked = allFeaturePerms.every(cb => cb.checked);
+					allPermsCb.checked = allChecked;
+				}
+			});
+
+			// Set initial "All Permissions" state
+			const allFeaturePerms = Array.from(container.querySelectorAll('[data-feature-permission="true"]'));
+			if (allFeaturePerms.length > 0) {
+				allPermsCb.checked = allFeaturePerms.every(cb => cb.checked);
+			}
 		}
 		async function loadUsers() {
-			if (!window.currentUser || window.currentUser.username !== 'Admin') {
+			// Check for admin_power permission (or Admin username)
+			if (!window.currentUser || (!window.currentUser.hasPermission('admin_power') && window.currentUser.username !== 'Admin')) {
 				alert('Access Denied');
 				return;
 			}
@@ -327,7 +451,83 @@
 			});
 		}
 
+		// Load settings on page load
+		async function loadSettings() {
+			// Check for admin_power permission (or Admin username)
+			if (!window.currentUser || (!window.currentUser.hasPermission('admin_power') && window.currentUser.username !== 'Admin')) {
+				return;
+			}
+			try {
+				const res = await Auth.fetch('/api/settings');
+				if (!res.ok) return;
+				const settings = await res.json();
+
+				document.getElementById('email-enabled').checked = settings.emailEnabled || false;
+				document.getElementById('email-subject').value = settings.emailSubject || 'Your Event Performance Statistics';
+				document.getElementById('email-body').value = settings.emailBodyTemplate || 'Dear {name},\n\nThank you for participating in {event}!\n\nPlease find attached your performance statistics.';
+			} catch (error) {
+				console.error('Failed to load settings:', error);
+			}
+		}
+
+		// Save settings
+		async function saveSettings() {
+			// Check for admin_power permission (or Admin username)
+			if (!window.currentUser || (!window.currentUser.hasPermission('admin_power') && window.currentUser.username !== 'Admin')) {
+				showSettingsMessage('Access denied', 'error');
+				return;
+			}
+
+			const emailEnabled = document.getElementById('email-enabled').checked;
+			const emailSubject = document.getElementById('email-subject').value.trim();
+			const emailBody = document.getElementById('email-body').value.trim();
+
+			if (!emailSubject || !emailBody) {
+				showSettingsMessage('Please fill in all fields', 'error');
+				return;
+			}
+
+			try {
+				const settings = {
+					emailEnabled,
+					emailSubject,
+					emailBodyTemplate: emailBody,
+					updatedAt: new Date().toISOString()
+				};
+
+				const res = await Auth.fetch('/api/settings', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(settings)
+				});
+
+				if (!res.ok) {
+					showSettingsMessage('Failed to save settings', 'error');
+					return;
+				}
+
+				showSettingsMessage('Settings saved successfully!', 'success');
+			} catch (error) {
+				console.error('Failed to save settings:', error);
+				showSettingsMessage('Failed to save settings', 'error');
+			}
+		}
+
+		function showSettingsMessage(text, type) {
+			const msgEl = document.getElementById('settings-message');
+			msgEl.textContent = text;
+			msgEl.style.color = type === 'success' ? 'var(--success)' : 'var(--error)';
+
+			// Clear message after 3 seconds
+			setTimeout(() => {
+				msgEl.textContent = '';
+			}, 3000);
+		}
+
 		document.addEventListener('DOMContentLoaded', () => {
+			// Save settings button
+			document.getElementById('save-settings').addEventListener('click', saveSettings);
+
 			document.getElementById('u-create').addEventListener('click', async () => {
 				const username = document.getElementById('u-username').value.trim();
 				const password = document.getElementById('u-password').value;
@@ -408,7 +608,10 @@
 			fetchEventsList().then(list => {
 				EVENTS = list;
 				buildEventSelector(document.getElementById('u-allowed-events'), []);
-				setTimeout(loadUsers, 50);
+				setTimeout(() => {
+					loadUsers();
+					loadSettings();
+				}, 50);
 			});
 		});
 
@@ -441,14 +644,82 @@
 				msgEl.style.fontWeight = '500';
 				button.parentElement.appendChild(msgEl);
 			}
-			
+
 			msgEl.textContent = text;
 			msgEl.style.color = type === 'error' ? '#dc2626' : '#16a34a';
-			
+
 			// Clear message after 3 seconds
 			setTimeout(() => {
 				if (msgEl) msgEl.textContent = '';
 			}, 3000);
+		}
+
+		// Clear database function
+		async function clearDatabase() {
+			// Check for admin_power permission (or Admin username)
+			if (!window.currentUser || (!window.currentUser.hasPermission('admin_power') && window.currentUser.username !== 'Admin')) {
+				showClearDatabaseMessage('Access denied: Admin privileges required', 'error');
+				return;
+			}
+
+			// Show confirmation dialog
+			if (!confirm('⚠️ DANGER: This will permanently delete ALL data (drivers, events, series, races) and create a backup. This action cannot be undone!\n\nAre you sure you want to continue?')) {
+				return;
+			}
+
+			const btn = document.getElementById('clear-database-btn');
+			const originalText = btn.innerHTML;
+
+			// Show loading state
+			btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
+			btn.disabled = true;
+
+			try {
+				const res = await Auth.fetch('/api/clear-database', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' }
+				});
+
+				if (!res.ok) {
+					let errorMsg = 'Failed to clear database';
+					try {
+						const errorData = await res.json();
+						if (errorData && errorData.error) errorMsg = errorData.error;
+					} catch {}
+					showClearDatabaseMessage(errorMsg, 'error');
+					return;
+				}
+
+				const result = await res.json();
+
+				if (result.status === 'success') {
+					showClearDatabaseMessage(`✅ Database cleared successfully! Backup created at: ${result.backup_path}`, 'success');
+					// Refresh the page after successful clear
+					setTimeout(() => {
+						window.location.reload();
+					}, 2000);
+				} else {
+					showClearDatabaseMessage(`Error: ${result.error}`, 'error');
+				}
+
+			} catch (error) {
+				console.error('Error clearing database:', error);
+				showClearDatabaseMessage('Network error: Failed to clear database', 'error');
+			} finally {
+				btn.innerHTML = originalText;
+				btn.disabled = false;
+			}
+		}
+
+		function showClearDatabaseMessage(text, type) {
+			const msgEl = document.getElementById('clear-database-message');
+			msgEl.textContent = text;
+			msgEl.style.color = type === 'success' ? 'var(--success)' : 'var(--error)';
+
+			// Clear message after 5 seconds for success, 3 seconds for errors
+			setTimeout(() => {
+				msgEl.textContent = '';
+			}, type === 'success' ? 5000 : 3000);
 		}
 	</script>
 </body>

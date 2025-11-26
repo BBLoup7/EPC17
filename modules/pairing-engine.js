@@ -1,33 +1,37 @@
 /**
  * Enhanced Pairing Engine Module for EPC17 Event Management System
  * Handles multi-lane race generation, lane assignment optimization, and opponent tracking
+ * 
+ * External Dependencies:
+ * - window.showToast(message, type): Optional UI notification system for user warnings
+ * - window.PairingEngine: Global export for browser environments
+ * - Math.random(): Used for shuffling and randomization in Round 1
  */
 
 class PairingEngine {
     constructor() {
-        this.laneHistory = new Map(); // Track lane usage per driver: driverId -> {lane1: count, lane2: count, ...}
+        this.laneHistory = new Map(); // Track lane usage: driverId -> {lane1: count, lane2: count, ...}
         this.opponentHistory = new Map(); // Track opponent pairings: driverId -> Set(opponentIds)
-        this.raceHistory = new Map(); // Track all races for a driver: driverId -> [raceIds]
+        this.raceHistory = new Map(); // Track all races: driverId -> [raceIds]
+        this.incompleteRaceHistory = new Map(); // Track incomplete race participation: driverId -> count
         this.classLaneStats = new Map(); // Track lane stats per class
-        this.eventRaceNumbers = new Map(); // Track race numbers for each event: eventId -> next race number
+        this.eventRaceNumbers = new Map(); // Track race numbers: eventId -> next race number
+        this.classScheduleHistory = new Map(); // Track race schedules: driverId -> {classId: raceNumber}
+        this.eventClassOrder = new Map(); // Track class order: eventId -> [classId1, classId2, ...]
     }
 
     /**
      * Initialize tracking for an event
      */
     initializeEvent(eventId, participants, numberOfLanes) {
-        console.log(`Initializing pairing engine for event ${eventId}`, {
+        window.debugLogger.debug('Pairing', `Initializing pairing engine for event ${eventId}`, {
             participants: participants.length,
             numberOfLanes
         });
         
-        // Reset histories for this event
         this.clearHistories();
-        
-        // Initialize race numbering for this event
         this.eventRaceNumbers.set(eventId, 1);
         
-        // Initialize lane history for all participants
         participants.forEach(participant => {
             const laneStats = {};
             for (let lane = 1; lane <= numberOfLanes; lane++) {
@@ -36,9 +40,77 @@ class PairingEngine {
             this.laneHistory.set(participant.id, laneStats);
             this.opponentHistory.set(participant.id, new Set());
             this.raceHistory.set(participant.id, []);
+            this.incompleteRaceHistory.set(participant.id, 0);
         });
         
         return true;
+    }
+
+    /**
+     * Set the class order for an event (used for race spacing calculations)
+     */
+    setEventClassOrder(eventId, classOrder) {
+        if (Array.isArray(classOrder)) {
+            this.eventClassOrder.set(eventId, [...classOrder]);
+            window.debugLogger.debug('Pairing', `Set class order for event ${eventId}:`, classOrder);
+        } else {
+            console.warn(`⚠️ Invalid class order provided for event ${eventId}:`, classOrder);
+        }
+    }
+
+    /**
+     * Get the class order for an event
+     */
+    getEventClassOrder(eventId) {
+        return this.eventClassOrder.get(eventId) || [];
+    }
+
+    /**
+     * Record that a driver is scheduled to race in a specific class at a specific race number
+     */
+    recordClassSchedule(driverId, classId, raceNumber, eventId) {
+        if (!this.classScheduleHistory.has(driverId)) {
+            this.classScheduleHistory.set(driverId, {});
+        }
+        const driverSchedule = this.classScheduleHistory.get(driverId);
+        driverSchedule[classId] = raceNumber;
+        window.debugLogger.debug('Pairing', `Recorded driver ${driverId} racing in class ${classId} at race #${raceNumber}`);
+    }
+
+    /**
+     * Get the race schedule for a driver across all classes
+     */
+    getDriverClassSchedule(driverId) {
+        return this.classScheduleHistory.get(driverId) || {};
+    }
+
+    /**
+     * Calculate the minimum class spacing for a driver's schedule
+     * Returns the minimum number of classes between any two races for this driver
+     */
+    calculateDriverClassSpacing(driverId, eventId) {
+        const classOrder = this.getEventClassOrder(eventId);
+        if (classOrder.length === 0) return Infinity;
+
+        const driverSchedule = this.getDriverClassSchedule(driverId);
+        const scheduledClasses = Object.keys(driverSchedule);
+        if (scheduledClasses.length <= 1) return Infinity;
+
+        const classPositions = scheduledClasses
+            .map(classId => classOrder.indexOf(classId))
+            .filter(pos => pos !== -1)
+            .sort((a, b) => a - b);
+
+        if (classPositions.length <= 1) return Infinity;
+
+        let minSpacing = Infinity;
+        for (let i = 1; i < classPositions.length; i++) {
+            minSpacing = Math.min(minSpacing, classPositions[i] - classPositions[i - 1]);
+        }
+
+        // Check circular spacing (last to first)
+        const firstToLastSpacing = (classOrder.length - classPositions[classPositions.length - 1]) + classPositions[0];
+        return Math.min(minSpacing, firstToLastSpacing);
     }
 
     /**
@@ -72,30 +144,24 @@ class PairingEngine {
 
     /**
      * Validate that a race number hasn't been used before
-     * Rule: EPC17_WORKFLOW.md v1 - prevent race number conflicts
      */
     validateRaceNumber(eventId, raceNumber) {
         if (!Number.isFinite(raceNumber) || raceNumber <= 0) {
             console.warn(`⚠️ Invalid race number: ${raceNumber}`);
             return false;
         }
-
-        // Check if this race number is already in use
         const currentNext = this.getNextRaceNumber(eventId);
         if (raceNumber >= currentNext) {
             console.warn(`⚠️ Race number ${raceNumber} conflicts with next available number ${currentNext}`);
             return false;
         }
-
         return true;
     }
 
     /**
-     * Get all used race numbers for an event (for validation)
+     * Get all used race numbers for an event
      */
     getUsedRaceNumbers(eventId) {
-        // This would need to be implemented with access to the race data
-        // For now, we'll use a simple approach based on the next race number
         const nextNumber = this.getNextRaceNumber(eventId);
         const usedNumbers = [];
         for (let i = 1; i < nextNumber; i++) {
@@ -105,10 +171,27 @@ class PairingEngine {
     }
 
     /**
-     * Generate heats for a round using multi-lane logic with Free Run support and performance optimizations
+     * Generate heats for a round using multi-lane logic with Free Run support
+     * This is the main entry point for heat generation
      */
-    async generateHeats(participants, numberOfLanes, roundNumber = 1, eventId = null, freeRunEnabled = false) {
-        console.log(`🔧 OPTIMIZED: Generating heats for round ${roundNumber}`, {
+    async generateHeats(participants, numberOfLanes, roundNumber = 1, eventId = null, freeRunEnabled = false, classId = null) {
+        // Deduplicate participants by ID
+        const seenIds = new Set();
+        const deduplicatedParticipants = participants.filter(p => {
+            if (seenIds.has(p.id)) {
+                console.warn(`⚠️ Duplicate participant filtered out in pairing engine: ${p.name} (${p.id})`);
+                return false;
+            }
+            seenIds.add(p.id);
+            return true;
+        });
+
+        if (deduplicatedParticipants.length !== participants.length) {
+            window.debugLogger.debug('Pairing', `Deduplicated ${participants.length - deduplicatedParticipants.length} duplicate participants`);
+            participants = deduplicatedParticipants;
+        }
+
+        window.debugLogger.debug('Pairing', `Generating heats for round ${roundNumber}`, {
             participants: participants.length,
             numberOfLanes,
             isFirstRound: roundNumber === 1,
@@ -116,16 +199,12 @@ class PairingEngine {
             isLargeDataset: participants.length > 50
         });
 
-        // Performance warnings and early termination for very large datasets
+        // Performance warnings
         if (participants.length > 500) {
-            console.warn(`⚠️ PERFORMANCE WARNING: ${participants.length} participants detected. Consider breaking into smaller events for optimal performance.`);
-            
-            // Show warning to user
+            console.warn(`⚠️ PERFORMANCE WARNING: ${participants.length} participants detected.`);
             if (window.showToast) {
-                window.showToast(`Very large dataset (${participants.length} participants). Consider breaking into smaller events for better performance.`, 'warning');
+                window.showToast(`Very large dataset (${participants.length} participants). Consider breaking into smaller events.`, 'warning');
             }
-            
-            // For extremely large datasets, add more processing breaks but keep same logic
             if (participants.length > 1000) {
                 console.warn(`🚨 Processing ${participants.length} participants with extra performance optimizations`);
             }
@@ -133,44 +212,32 @@ class PairingEngine {
             console.warn(`⚠️ Large dataset detected (${participants.length} participants). Processing may take longer.`);
         }
 
-        // Debug pairing logic (reduced for performance)
+        // Debug pairing logic for small groups or first round
         if (participants.length <= 20 || roundNumber === 1) {
             this.debugPairingLogic(participants, numberOfLanes, roundNumber);
         }
 
-        if (participants.length === 0) {
-            return [];
-        }
-
-        // If fewer participants than lanes, create one final heat
+        if (participants.length === 0) return [];
         if (participants.length <= numberOfLanes) {
-            return [this.createFinalHeat(participants, numberOfLanes, roundNumber)];
+            return [this.createFinalHeat(participants, numberOfLanes, roundNumber, eventId)];
         }
 
-        const heats = [];
         let availableParticipants = [...participants];
-        let heatNumber = 1;
-
-        // For first round, shuffle participants completely randomly
+        
+        // Shuffle for first round
         if (roundNumber === 1) {
-            console.log('First round detected - applying full randomization');
+            window.debugLogger.debug('Pairing', 'First round detected - applying full randomization');
             availableParticipants = this.shuffleArray(availableParticipants);
         }
 
-        // Apply Free Run logic for heat assignment with performance optimization
-        if (freeRunEnabled) {
-            console.log('🏃 Free Run Mode ENABLED - Fill races to capacity first');
-            const generatedHeats = await this.generateHeatsWithFreeRunOptimized(availableParticipants, numberOfLanes, roundNumber, eventId);
-            heats.push(...generatedHeats);
-        } else {
-            console.log('⚖️ Balanced Mode ENABLED - Balance last races');
-            const generatedHeats = await this.generateHeatsBalancedOptimized(availableParticipants, numberOfLanes, roundNumber, eventId);
-            heats.push(...generatedHeats);
-        }
+        // Generate heats based on mode
+        const heats = freeRunEnabled
+            ? await this.generateHeatsWithFreeRun(availableParticipants, numberOfLanes, roundNumber, eventId, classId)
+            : await this.generateHeatsBalanced(availableParticipants, numberOfLanes, roundNumber, eventId, classId);
 
-        console.log(`✅ Generated ${heats.length} heats for round ${roundNumber} (Free Run: ${freeRunEnabled})`);
+        window.debugLogger.debug('Pairing', `Generated ${heats.length} heats for round ${roundNumber} (Free Run: ${freeRunEnabled})`);
         
-        // Safety check - ensure we always return an array
+        // Safety check
         if (!Array.isArray(heats)) {
             console.error('❌ CRITICAL ERROR: generateHeats did not return an array:', heats);
             return [];
@@ -180,423 +247,287 @@ class PairingEngine {
     }
 
     /**
-     * Generate heats with Free Run enabled - fill to capacity first
+     * Generate heats with Free Run mode - fill to capacity first
+     * Unified async implementation (replaces both optimized and non-optimized versions)
      */
-    generateHeatsWithFreeRun(participants, numberOfLanes, roundNumber, eventId) {
-        const heats = [];
-        let availableParticipants = [...participants];
-        let heatNumber = 1;
-
-        console.log(`🏃 Free Run Mode: ${availableParticipants.length} drivers, ${numberOfLanes} lanes`);
-
-        // Generate heats until all participants are assigned
-        while (availableParticipants.length > 0) {
-            const participantsRemaining = availableParticipants.length;
-            
-            if (participantsRemaining <= numberOfLanes) {
-                // Last heat - take all remaining participants
-                const finalHeat = this.createFinalHeat(availableParticipants, numberOfLanes, roundNumber, eventId);
-                heats.push(finalHeat);
-                console.log(`🏃 Free Run: Final heat with ${participantsRemaining} drivers`);
-                break;
-            } else {
-                // Take full lanes worth (fill to capacity)
-                const heat = this.createOptimalHeat(
-                    availableParticipants, 
-                    numberOfLanes, 
-                    roundNumber, 
-                    heatNumber,
-                    eventId
-                );
-                
-                if (heat) {
-                    heats.push(heat);
-                    console.log(`🏃 Free Run: Heat ${heatNumber} with ${numberOfLanes} drivers (filled to capacity)`);
-                    
-                    // Remove assigned participants
-                    heat.lanes.forEach(laneAssignment => {
-                        if (laneAssignment.participant) {
-                            const index = availableParticipants.findIndex(p => 
-                                p.id === laneAssignment.participant.id
-                            );
-                            if (index !== -1) {
-                                availableParticipants.splice(index, 1);
-                            }
-                        }
-                    });
-                    
-                    heatNumber++;
-                } else {
-                    break;
-                }
-            }
-        }
-
-        return heats;
-    }
-
-    /**
-     * OPTIMIZED: Generate heats with Free Run enabled - with chunked processing
-     */
-    async generateHeatsWithFreeRunOptimized(participants, numberOfLanes, roundNumber, eventId) {
+    async generateHeatsWithFreeRun(participants, numberOfLanes, roundNumber, eventId, classId) {
         const heats = [];
         let availableParticipants = [...participants];
         let heatNumber = 1;
         const startTime = Date.now();
 
-        console.log(`🔧 OPTIMIZED Free Run Mode: ${availableParticipants.length} drivers, ${numberOfLanes} lanes`);
+        window.debugLogger.debug('Pairing', `Free Run Mode: ${availableParticipants.length} drivers, ${numberOfLanes} lanes`);
 
-        // Process in chunks to prevent UI blocking - optimized for different dataset sizes
+        // Adaptive chunk size based on dataset size
         const isLargeDataset = participants.length > 200;
         const isVeryLargeDataset = participants.length > 1000;
-        
-        // More frequent breaks for larger datasets but same logic
         const chunkSize = isVeryLargeDataset ? 2 : (isLargeDataset ? 5 : 10);
         let processedHeats = 0;
 
-        // Generate heats until all participants are assigned
         while (availableParticipants.length > 0) {
             const participantsRemaining = availableParticipants.length;
             
             if (participantsRemaining <= numberOfLanes) {
-                // Last heat - take all remaining participants
                 const finalHeat = this.createFinalHeat(availableParticipants, numberOfLanes, roundNumber, eventId);
                 heats.push(finalHeat);
-                console.log(`🏃 Optimized Free Run: Final heat with ${participantsRemaining} drivers`);
+                window.debugLogger.debug('Pairing', `Free Run: Final heat with ${participantsRemaining} drivers`);
                 break;
-            } else {
-                // Take full lanes worth (fill to capacity)
-                const heat = await this.createOptimalHeatOptimized(
-                    availableParticipants, 
-                    numberOfLanes, 
-                    roundNumber, 
-                    heatNumber,
-                    eventId
-                );
-                
-                if (heat) {
-                    heats.push(heat);
-                    console.log(`🏃 Optimized Free Run: Heat ${heatNumber} with ${numberOfLanes} drivers`);
-                    
-                    // Remove assigned participants
-                    heat.lanes.forEach(laneAssignment => {
-                        if (laneAssignment.participant) {
-                            const index = availableParticipants.findIndex(p => 
-                                p.id === laneAssignment.participant.id
-                            );
-                            if (index !== -1) {
-                                availableParticipants.splice(index, 1);
-                            }
-                        }
-                    });
-                    
-                    heatNumber++;
-                    processedHeats++;
-                    
-                    // Yield control every chunk to prevent UI blocking
-                    if (processedHeats % chunkSize === 0) {
-                        await new Promise(resolve => setTimeout(resolve, 5));
-                        
-                        // Performance monitoring and user feedback for large datasets
-                        const elapsed = Date.now() - startTime;
-                        if (isVeryLargeDataset && processedHeats % 50 === 0) {
-                            console.log(`🔧 Progress: Generated ${processedHeats} heats, ${availableParticipants.length} participants remaining (${elapsed}ms elapsed)`);
-                        }
-                        
-                        // Reasonable timeout for extremely large datasets (but keep processing)
-                        if (elapsed > 120000) { // 2 minute timeout - much more generous
-                            console.warn(`⚠️ Heat generation taking longer than expected (${elapsed}ms). Continuing but consider breaking into smaller events.`);
-                            // Don't break - just warn and continue with same logic
-                        }
+            }
+            
+            const heat = await this.createOptimalHeat(
+                availableParticipants,
+                numberOfLanes,
+                roundNumber,
+                heatNumber,
+                eventId,
+                classId
+            );
+            
+            if (!heat) break;
+            
+            heats.push(heat);
+            window.debugLogger.debug('Pairing', `Free Run: Heat ${heatNumber} with ${numberOfLanes} drivers (filled to capacity)`);
+            
+            // Remove assigned participants
+            heat.lanes.forEach(laneAssignment => {
+                if (laneAssignment.participant) {
+                    const index = availableParticipants.findIndex(p => p.id === laneAssignment.participant.id);
+                    if (index !== -1) {
+                        availableParticipants.splice(index, 1);
                     }
-                } else {
-                    break;
+                }
+            });
+            
+            heatNumber++;
+            processedHeats++;
+            
+            // Yield control to prevent UI blocking
+            if (processedHeats % chunkSize === 0) {
+                await new Promise(resolve => setTimeout(resolve, 5));
+                
+                const elapsed = Date.now() - startTime;
+                if (isVeryLargeDataset && processedHeats % 50 === 0) {
+                    window.debugLogger.debug('Pairing', `Progress: ${processedHeats} heats, ${availableParticipants.length} remaining (${elapsed}ms)`);
+                }
+                if (elapsed > 120000) {
+                    console.warn(`⚠️ Heat generation taking longer than expected (${elapsed}ms).`);
                 }
             }
         }
 
         const totalTime = Date.now() - startTime;
-        console.log(`✅ Optimized Free Run completed: ${heats.length} heats in ${totalTime}ms (avg: ${Math.round(totalTime/heats.length)}ms per heat)`);
-        return heats;
-    }
 
-    /**
-     * Generate heats with balanced mode - balance the last 2 races optimally
-     */
-    generateHeatsBalanced(participants, numberOfLanes, roundNumber, eventId) {
-        const heats = [];
-        let availableParticipants = [...participants];
-        let heatNumber = 1;
-
-        const totalParticipants = availableParticipants.length;
-        console.log(`⚖️ Balanced Mode: ${totalParticipants} drivers, ${numberOfLanes} lanes`);
-
-        // Calculate optimal distribution for balanced racing
-        const optimalDistribution = this.calculateOptimalBalancedDistribution(totalParticipants, numberOfLanes);
-        console.log(`⚖️ Optimal distribution:`, optimalDistribution);
-
-        // Generate heats according to optimal distribution
-        for (let i = 0; i < optimalDistribution.length; i++) {
-            const participantsForThisHeat = optimalDistribution[i];
-            
-            // Take the required number of participants
-            const selectedParticipants = availableParticipants.splice(0, participantsForThisHeat);
-            
-            const heat = this.createOptimalHeat(
-                selectedParticipants, 
-                numberOfLanes, 
-                roundNumber, 
-                heatNumber,
-                eventId
-            );
-            
-            if (heat) {
-                heats.push(heat);
-                console.log(`⚖️ Balanced: Heat ${heatNumber} with ${participantsForThisHeat} drivers`);
-                heatNumber++;
-            }
+        // Validate and repair duplicates
+        const duplicates = this.validateAndRepairDuplicates(heats);
+        if (duplicates.repaired > 0) {
+            window.debugLogger.debug('Pairing', `Repaired ${duplicates.repaired} duplicate assignments in free run generation`);
         }
 
+        window.debugLogger.debug('Pairing', `Free Run completed: ${heats.length} heats in ${totalTime}ms (avg: ${Math.round(totalTime/heats.length)}ms per heat)`);
         return heats;
     }
 
     /**
-     * OPTIMIZED: Generate heats with balanced mode - with performance optimizations
+     * Generate heats with balanced mode - balance the last 2 races
+     * Unified async implementation (replaces both optimized and non-optimized versions)
      */
-    async generateHeatsBalancedOptimized(participants, numberOfLanes, roundNumber, eventId) {
+    async generateHeatsBalanced(participants, numberOfLanes, roundNumber, eventId, classId) {
         const heats = [];
         let availableParticipants = [...participants];
         let heatNumber = 1;
         const startTime = Date.now();
 
         const totalParticipants = availableParticipants.length;
-        console.log(`🔧 OPTIMIZED Balanced Mode: ${totalParticipants} drivers, ${numberOfLanes} lanes`);
+        window.debugLogger.debug('Pairing', `Balanced Mode: ${totalParticipants} drivers, ${numberOfLanes} lanes`);
 
-        // Calculate optimal distribution for balanced racing
         const optimalDistribution = this.calculateOptimalBalancedDistribution(totalParticipants, numberOfLanes);
-        console.log(`⚖️ Optimal distribution:`, optimalDistribution);
+        window.debugLogger.debug('Pairing', `Optimal distribution:`, optimalDistribution);
 
-        // Process in chunks to prevent UI blocking - optimized for different dataset sizes  
+        // Adaptive chunk size
         const isLargeDataset = totalParticipants > 200;
         const isVeryLargeDataset = totalParticipants > 1000;
-        
-        // More frequent breaks for larger datasets but same logic
         const chunkSize = isVeryLargeDataset ? 2 : (isLargeDataset ? 3 : 5);
         let processedHeats = 0;
 
-        // Generate heats according to optimal distribution
         for (let i = 0; i < optimalDistribution.length; i++) {
             const participantsForThisHeat = optimalDistribution[i];
-            
-            // Take the required number of participants
             const selectedParticipants = availableParticipants.splice(0, participantsForThisHeat);
             
-            const heat = await this.createOptimalHeatOptimized(
-                selectedParticipants, 
-                numberOfLanes, 
-                roundNumber, 
+            const heat = await this.createOptimalHeat(
+                selectedParticipants,
+                numberOfLanes,
+                roundNumber,
                 heatNumber,
-                eventId
+                eventId,
+                classId
             );
             
             if (heat) {
                 heats.push(heat);
-                console.log(`⚖️ Optimized Balanced: Heat ${heatNumber} with ${participantsForThisHeat} drivers`);
+                window.debugLogger.debug('Pairing', `Balanced: Heat ${heatNumber} with ${participantsForThisHeat} drivers`);
                 heatNumber++;
                 processedHeats++;
                 
-                // Yield control every chunk to prevent UI blocking
+                // Yield control
                 if (processedHeats % chunkSize === 0) {
                     await new Promise(resolve => setTimeout(resolve, 5));
                     
-                    // Performance monitoring and user feedback for large datasets
                     const elapsed = Date.now() - startTime;
                     if (isVeryLargeDataset && processedHeats % 50 === 0) {
-                        console.log(`🔧 Balanced Progress: Generated ${processedHeats} heats (${elapsed}ms elapsed)`);
+                        window.debugLogger.debug('Pairing', `Balanced Progress: ${processedHeats} heats (${elapsed}ms)`);
                     }
-                    
-                    // Reasonable timeout for extremely large datasets (but keep processing)
-                    if (elapsed > 120000) { // 2 minute timeout - much more generous
-                        console.warn(`⚠️ Balanced heat generation taking longer than expected (${elapsed}ms). Continuing but consider breaking into smaller events.`);
-                        // Don't break - just warn and continue with same logic
+                    if (elapsed > 120000) {
+                        console.warn(`⚠️ Balanced generation taking longer than expected (${elapsed}ms).`);
                     }
                 }
             }
         }
 
         const totalTime = Date.now() - startTime;
-        console.log(`✅ Optimized Balanced completed: ${heats.length} heats in ${totalTime}ms (avg: ${Math.round(totalTime/heats.length)}ms per heat)`);
+
+        // Validate and repair duplicates
+        const duplicates = this.validateAndRepairDuplicates(heats);
+        if (duplicates.repaired > 0) {
+            window.debugLogger.debug('Pairing', `Repaired ${duplicates.repaired} duplicate assignments in balanced generation`);
+        }
+
+        window.debugLogger.debug('Pairing', `Balanced completed: ${heats.length} heats in ${totalTime}ms (avg: ${Math.round(totalTime/heats.length)}ms per heat)`);
         return heats;
+    }
+
+    /**
+     * Validate heats for duplicate participants and repair if found
+     */
+    validateAndRepairDuplicates(heats) {
+        const participantLocations = new Map();
+        
+        for (const heat of heats) {
+            for (const lane of heat.lanes) {
+                if (lane.participant?.id) {
+                    const participantId = lane.participant.id;
+                    if (!participantLocations.has(participantId)) {
+                        participantLocations.set(participantId, []);
+                    }
+                    participantLocations.get(participantId).push({ heatId: heat.id, lane: lane.lane });
+                }
+            }
+        }
+
+        const duplicates = [];
+        for (const [participantId, locations] of participantLocations) {
+            if (locations.length > 1) {
+                const participant = heats.flatMap(h => h.lanes).find(l => l.participant?.id === participantId)?.participant;
+                duplicates.push(`${participant?.name || participantId} appears in ${locations.length} heats`);
+            }
+        }
+
+        if (duplicates.length > 0) {
+            console.error(`❌ CRITICAL: Heat generation created duplicates: ${duplicates.join(', ')}`);
+            
+            const usedParticipants = new Set();
+            for (const heat of heats) {
+                for (const lane of heat.lanes) {
+                    if (lane.participant?.id) {
+                        if (usedParticipants.has(lane.participant.id)) {
+                            lane.participant = null;
+                        } else {
+                            usedParticipants.add(lane.participant.id);
+                        }
+                    }
+                }
+            }
+            return { found: duplicates.length, repaired: duplicates.length };
+        }
+
+        return { found: 0, repaired: 0 };
     }
 
     /**
      * Calculate optimal balanced distribution for the last 2 races
-     * Examples:
-     * - 6 drivers, 5 lanes = [3, 3] (2 races of 3)
-     * - 7 drivers, 5 lanes = [4, 3] (1 race of 4, 1 race of 3)
-     * - 4 drivers, 3 lanes = [2, 2] (2 races of 2)
      */
     calculateOptimalBalancedDistribution(totalParticipants, numberOfLanes) {
-        if (totalParticipants <= numberOfLanes) {
-            // Single race if participants <= lanes
-            return [totalParticipants];
-        }
+        if (totalParticipants <= numberOfLanes) return [totalParticipants];
 
         const fullHeats = Math.floor(totalParticipants / numberOfLanes);
         const remainingParticipants = totalParticipants % numberOfLanes;
 
-        console.log(`⚖️ Distribution calculation: ${totalParticipants} total, ${fullHeats} full heats, ${remainingParticipants} remaining`);
+        window.debugLogger.debug('Pairing', `Distribution: ${totalParticipants} total, ${fullHeats} full heats, ${remainingParticipants} remaining`);
 
         if (remainingParticipants === 0) {
-            // Perfect fit - all heats are full
             return Array(fullHeats).fill(numberOfLanes);
         }
 
-        // We have remaining participants to distribute optimally
         const distribution = [];
 
         if (fullHeats === 0) {
-            // All participants fit in one heat, but we want to balance
-            if (totalParticipants <= 2) {
-                return [totalParticipants];
-            } else {
-                // Split into 2 balanced races
-                const firstRace = Math.ceil(totalParticipants / 2);
-                const secondRace = totalParticipants - firstRace;
-                return [firstRace, secondRace];
-            }
+            if (totalParticipants <= 2) return [totalParticipants];
+            const firstRace = Math.ceil(totalParticipants / 2);
+            return [firstRace, totalParticipants - firstRace];
         }
 
-        // Add full heats first
+        // Add full heats except last one
         for (let i = 0; i < fullHeats - 1; i++) {
             distribution.push(numberOfLanes);
         }
 
-        // Now handle the last 2 races optimally
-        const participantsForLastTwoRaces = numberOfLanes + remainingParticipants;
+        // Balance last 2 races
+        const participantsForLastTwo = numberOfLanes + remainingParticipants;
         
-        if (participantsForLastTwoRaces <= numberOfLanes * 2) {
-            // We can balance the last 2 races
-            const firstOfLastTwo = Math.ceil(participantsForLastTwoRaces / 2);
-            const secondOfLastTwo = participantsForLastTwoRaces - firstOfLastTwo;
-            
-            distribution.push(firstOfLastTwo);
-            distribution.push(secondOfLastTwo);
+        if (participantsForLastTwo <= numberOfLanes * 2) {
+            const firstOfLastTwo = Math.ceil(participantsForLastTwo / 2);
+            distribution.push(firstOfLastTwo, participantsForLastTwo - firstOfLastTwo);
         } else {
-            // We need more than 2 races for the remaining participants
-            // Add one more full heat and handle the rest
             distribution.push(numberOfLanes);
-            
-            // Handle the final remaining participants
             if (remainingParticipants <= 2) {
-                // Split remaining into 2 races if possible
                 if (remainingParticipants === 1) {
-                    // Take 1 from the last full heat to create 2 balanced races
-                    const lastFullHeat = distribution[distribution.length - 1];
-                    distribution[distribution.length - 1] = lastFullHeat - 1;
-                    distribution.push(2); // 1 moved + 1 remaining
+                    distribution[distribution.length - 1]--;
+                    distribution.push(2);
                 } else {
                     distribution.push(remainingParticipants);
                 }
             } else {
-                // Split remaining participants optimally
                 const firstRemaining = Math.ceil(remainingParticipants / 2);
-                const secondRemaining = remainingParticipants - firstRemaining;
-                distribution.push(firstRemaining);
-                distribution.push(secondRemaining);
+                distribution.push(firstRemaining, remainingParticipants - firstRemaining);
             }
         }
 
-        console.log(`⚖️ Final balanced distribution:`, distribution);
+        window.debugLogger.debug('Pairing', `Final balanced distribution:`, distribution);
         return distribution;
     }
 
     /**
      * Create an optimal heat assignment
+     * Unified async implementation
      */
-    createOptimalHeat(availableParticipants, numberOfLanes, roundNumber, heatNumber, eventId = null) {
+    async createOptimalHeat(availableParticipants, numberOfLanes, roundNumber, heatNumber, eventId = null, classId = null) {
         const participantsToAssign = Math.min(availableParticipants.length, numberOfLanes);
-        
-        if (participantsToAssign === 0) {
-            return null;
-        }
+        if (participantsToAssign === 0) return null;
 
         let selectedParticipants;
         
-        // First round: completely random selection
         if (roundNumber === 1) {
             selectedParticipants = availableParticipants.slice(0, participantsToAssign);
-            console.log(`Round 1: Selected first ${participantsToAssign} participants randomly`);
-        } else {
-            // Subsequent rounds: apply constraints
-            selectedParticipants = this.selectOptimalParticipants(
-                availableParticipants, 
-                participantsToAssign,
-                roundNumber
-            );
-            console.log(`Round ${roundNumber}: Applied constraints for participant selection`);
-        }
-
-        // Assign lanes optimally (always apply lane distribution logic)
-        const laneAssignments = this.assignLanesOptimally(selectedParticipants, numberOfLanes, roundNumber);
-
-        // Get race number for this event
-        const raceNumber = eventId ? this.incrementRaceNumber(eventId) : heatNumber;
-        
-        console.log(`🏁 Assigned Race #${raceNumber} to heat ${heatNumber} in round ${roundNumber}${eventId ? ` for event ${eventId}` : ''}`);
-
-        return {
-            id: `heat-r${roundNumber}-h${heatNumber}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            round: roundNumber,
-            heatNumber,
-            raceNumber,
-            numberOfLanes,
-            lanes: laneAssignments,
-            status: 'pending',
-            results: null,
-            startTime: null,
-            endTime: null
-        };
-    }
-
-    /**
-     * OPTIMIZED: Create an optimal heat assignment with performance optimizations
-     */
-    async createOptimalHeatOptimized(availableParticipants, numberOfLanes, roundNumber, heatNumber, eventId = null) {
-        const participantsToAssign = Math.min(availableParticipants.length, numberOfLanes);
-        
-        if (participantsToAssign === 0) {
-            return null;
-        }
-
-        let selectedParticipants;
-        
-        // First round: completely random selection
-        if (roundNumber === 1) {
-            selectedParticipants = availableParticipants.slice(0, participantsToAssign);
-            if (participantsToAssign <= 10) { // Only log for smaller groups to reduce console spam
-                console.log(`Round 1: Selected first ${participantsToAssign} participants randomly`);
+            if (participantsToAssign <= 10) {
+                window.debugLogger.debug('Pairing', `Round 1: Selected first ${participantsToAssign} participants randomly`);
             }
         } else {
-            // Subsequent rounds: apply constraints with performance optimization
-            selectedParticipants = await this.selectOptimalParticipantsOptimized(
-                availableParticipants, 
+            selectedParticipants = await this.selectOptimalParticipants(
+                availableParticipants,
                 participantsToAssign,
-                roundNumber
+                roundNumber,
+                eventId,
+                classId
             );
-            if (participantsToAssign <= 10) { // Only log for smaller groups
-                console.log(`Round ${roundNumber}: Applied optimized constraints for participant selection`);
+            if (participantsToAssign <= 10) {
+                window.debugLogger.debug('Pairing', `Round ${roundNumber}: Applied constraints for participant selection`);
             }
         }
 
-        // Assign lanes optimally with performance optimization
-        const laneAssignments = await this.assignLanesOptimallyOptimized(selectedParticipants, numberOfLanes, roundNumber);
-
-        // Get race number for this event
+        const laneAssignments = await this.assignLanesOptimally(selectedParticipants, numberOfLanes, roundNumber);
         const raceNumber = eventId ? this.incrementRaceNumber(eventId) : heatNumber;
         
-        if (heatNumber <= 5 || heatNumber % 10 === 0) { // Reduced logging frequency
-            console.log(`🏁 Assigned Race #${raceNumber} to heat ${heatNumber} in round ${roundNumber}${eventId ? ` for event ${eventId}` : ''}`);
+        if (heatNumber <= 5 || heatNumber % 10 === 0) {
+            window.debugLogger.debug('Pairing', `Assigned Race #${raceNumber} to heat ${heatNumber} in round ${roundNumber}${eventId ? ` for event ${eventId}` : ''}`);
         }
 
         return {
@@ -617,12 +548,29 @@ class PairingEngine {
      * Create a final heat (when participants <= lanes)
      */
     createFinalHeat(participants, numberOfLanes, roundNumber = 1, eventId = null) {
-        const laneAssignments = this.assignLanesOptimally(participants, numberOfLanes, roundNumber);
-        
-        // Get race number for this event
+        const laneAssignments = [];
+        for (let lane = 1; lane <= numberOfLanes; lane++) {
+            laneAssignments.push({ lane, participant: null });
+        }
+
+        // Randomly assign participants to lanes for Round 1, otherwise use optimization
+        if (roundNumber === 1) {
+            const shuffled = this.shuffleArray([...participants]);
+            shuffled.forEach((participant, index) => {
+                if (index < numberOfLanes) {
+                    laneAssignments[index].participant = participant;
+                }
+            });
+        } else {
+            participants.forEach((participant, index) => {
+                if (index < numberOfLanes) {
+                    laneAssignments[index].participant = participant;
+                }
+            });
+        }
+
         const raceNumber = eventId ? this.incrementRaceNumber(eventId) : 1;
-        
-        console.log(`🏁 Assigned Race #${raceNumber} to FINAL heat in round ${roundNumber}${eventId ? ` for event ${eventId}` : ''}`);
+        window.debugLogger.debug('Pairing', `Assigned Race #${raceNumber} to FINAL heat in round ${roundNumber}${eventId ? ` for event ${eventId}` : ''}`);
 
         return {
             id: `final-heat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -648,7 +596,7 @@ class PairingEngine {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
-        console.log('Array shuffled:', {
+        window.debugLogger.debug('Pairing', 'Array shuffled:', {
             original: array.map(p => p.name),
             shuffled: shuffled.map(p => p.name)
         });
@@ -656,415 +604,44 @@ class PairingEngine {
     }
 
     /**
-     * Select optimal participants for a heat based on lane diversity and opponent history
+     * Select optimal participants for a heat
+     * Unified async implementation with adaptive strategies
      */
-    selectOptimalParticipants(availableParticipants, count, roundNumber = 1) {
+    async selectOptimalParticipants(availableParticipants, count, roundNumber = 1, eventId = null, classId = null) {
         if (availableParticipants.length <= count) {
             return [...availableParticipants];
         }
 
-        // For first round, just return first participants (they're already shuffled)
         if (roundNumber === 1) {
             return availableParticipants.slice(0, count);
         }
 
-        console.log(`Applying constraints for round ${roundNumber} participant selection (prioritizing lane diversity)`);
-
-        // Enhanced selection that prioritizes lane diversity
-        return this.selectParticipantsWithLaneDiversity(availableParticipants, count, roundNumber);
-    }
-
-    /**
-     * Select participants prioritizing those with different least-used lanes
-     */
-    selectParticipantsWithLaneDiversity(availableParticipants, count, roundNumber) {
-        console.log(`Selecting ${count} participants with lane diversity priority`);
-        
-        // Get each participant's least used lane
-        const participantLanePrefs = availableParticipants.map(participant => {
-            const laneStats = this.laneHistory.get(participant.id) || {};
-            const leastUsedLane = this.getLeastUsedLane(laneStats);
-            const opponents = this.opponentHistory.get(participant.id) || new Set();
-            
-            return {
-                participant,
-                leastUsedLane: leastUsedLane.lane,
-                leastUsedCount: leastUsedLane.count,
-                opponentCount: opponents.size
-            };
-        });
-
-        console.log('Participant lane preferences:', participantLanePrefs.map(p => 
-            `${p.participant.name}: lane ${p.leastUsedLane} (used ${p.leastUsedCount} times)`
-        ));
-
-        // Try to find the best combination with diverse lanes and minimal rematches
-        if (availableParticipants.length <= 10) {
-            // For small groups, use exhaustive search
-            const combinations = this.generateCombinations(availableParticipants, count, roundNumber);
-            let bestCombination = null;
-            let bestScore = Infinity;
-
-            combinations.forEach(combination => {
-                const score = this.calculateDiverseCombinationScore(combination);
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestCombination = combination;
-                }
-            });
-
-            const result = bestCombination || availableParticipants.slice(0, count);
-            console.log(`Selected via exhaustive search:`, result.map(p => p.name));
-            return result;
-        } else {
-            // For large groups, use improved greedy selection
-            const result = this.greedySelectionWithLaneDiversity(participantLanePrefs, count);
-            console.log(`Selected via greedy lane diversity:`, result.map(p => p.name));
-            return result;
-        }
-    }
-
-    /**
-     * Greedy selection prioritizing lane diversity
-     */
-    greedySelectionWithLaneDiversity(participantPrefs, count) {
-        const selected = [];
-        const available = [...participantPrefs];
-        const usedLanes = new Set();
-
-        console.log('Starting greedy selection with lane diversity...');
-
-        // Select participants with different least-used lanes first
-        while (selected.length < count && available.length > 0) {
-            let bestParticipant = null;
-            let bestScore = Infinity;
-
-            available.forEach((participantPref, index) => {
-                const participant = participantPref.participant;
-                const leastUsedLane = participantPref.leastUsedLane;
-                
-                // Calculate score based on lane diversity and rematch avoidance
-                let score = 0;
-                
-                // Bonus for using a lane that hasn't been used by other selected participants
-                if (!usedLanes.has(leastUsedLane)) {
-                    score -= 100; // Big bonus for lane diversity
-                    console.log(`  ${participant.name}: Lane diversity bonus (lane ${leastUsedLane})`);
-                }
-                
-                // Penalty for rematches
-                const selectedParticipants = selected.map(s => s.participant);
-                selectedParticipants.forEach(other => {
-                    if (this.haveRacedBefore(participant.id, other.id)) {
-                        score += 50; // Penalty for rematch
-                        console.log(`  ${participant.name}: Rematch penalty vs ${other.name}`);
-                    }
-                });
-                
-                // Slight bonus for lower lane usage count
-                score += participantPref.leastUsedCount;
-                
-                console.log(`  ${participant.name}: Score ${score} (lane ${leastUsedLane}, used ${participantPref.leastUsedCount} times)`);
-                
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestParticipant = { participantPref, index };
-                }
-            });
-
-            if (bestParticipant) {
-                const participantPref = bestParticipant.participantPref;
-                selected.push(participantPref);
-                usedLanes.add(participantPref.leastUsedLane);
-                available.splice(bestParticipant.index, 1);
-                
-                console.log(`Selected ${participantPref.participant.name} (lane ${participantPref.leastUsedLane}, score: ${bestScore})`);
-            } else {
-                break;
-            }
-        }
-
-        return selected.map(p => p.participant);
-    }
-
-    /**
-     * Calculate combination score considering lane diversity and rematches
-     */
-    calculateDiverseCombinationScore(participants) {
-        let score = 0;
-        
-        // Get lane preferences for each participant
-        const lanePrefs = participants.map(p => {
-            const laneStats = this.laneHistory.get(p.id) || {};
-            return this.getLeastUsedLane(laneStats).lane;
-        });
-        
-        // Bonus for lane diversity (unique least-used lanes)
-        const uniqueLanes = new Set(lanePrefs);
-        const diversityBonus = uniqueLanes.size * -20; // More unique lanes = better score
-        score += diversityBonus;
-        
-        // Penalty for rematches
-        for (let i = 0; i < participants.length; i++) {
-            for (let j = i + 1; j < participants.length; j++) {
-                if (this.haveRacedBefore(participants[i].id, participants[j].id)) {
-                    score += 30; // Rematch penalty
-                }
-            }
-        }
-        
-        return score;
-    }
-
-    /**
-     * Generate all possible combinations of participants
-     */
-    generateCombinations(participants, count, roundNumber = 1) {
-        if (count > participants.length) {
-            return [participants];
-        }
-
-        // For performance, limit to reasonable number of combinations
-        if (participants.length > 10) {
-            // Use greedy approach for large groups
-            return [this.greedySelection(participants, count, roundNumber)];
-        }
-
-        const combinations = [];
-        const generate = (start, current) => {
-            if (current.length === count) {
-                combinations.push([...current]);
-                return;
-            }
-            
-            for (let i = start; i < participants.length; i++) {
-                current.push(participants[i]);
-                generate(i + 1, current);
-                current.pop();
-            }
-        };
-
-        generate(0, []);
-        return combinations;
-    }
-
-    /**
-     * Greedy selection for large participant groups
-     */
-    greedySelection(participants, count, roundNumber = 1) {
-        const selected = [];
-        const available = [...participants];
-
-        // For first round, select completely randomly
-        if (roundNumber === 1) {
-            console.log('Greedy selection: First round - selecting randomly');
-            const shuffled = this.shuffleArray(available);
-            return shuffled.slice(0, count);
-        }
-
-        console.log('Greedy selection: Applying rematch constraints');
-
-        // Select first participant randomly
-        const firstIndex = Math.floor(Math.random() * available.length);
-        selected.push(available.splice(firstIndex, 1)[0]);
-
-        // Select remaining participants to minimize rematches
-        while (selected.length < count && available.length > 0) {
-            let bestParticipant = null;
-            let bestScore = Infinity;
-
-            available.forEach(participant => {
-                const score = this.calculateParticipantScore(participant, selected);
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestParticipant = participant;
-                }
-            });
-
-            if (bestParticipant) {
-                selected.push(bestParticipant);
-                const index = available.indexOf(bestParticipant);
-                available.splice(index, 1);
-                console.log(`Selected ${bestParticipant.name} (score: ${bestScore})`);
-            }
-        }
-
-        return selected;
-    }
-
-    /**
-     * Calculate score for a participant when paired with others
-     */
-    calculateParticipantScore(participant, otherParticipants) {
-        let score = 0;
-        const participantOpponents = this.opponentHistory.get(participant.id) || new Set();
-
-        otherParticipants.forEach(other => {
-            if (participantOpponents.has(other.id)) {
-                score += 10; // Heavy penalty for rematches
-            }
-        });
-
-        return score;
-    }
-
-    /**
-     * Calculate compatibility score for a combination of participants
-     */
-    calculateCombinationScore(participants) {
-        let score = 0;
-
-        // Check all pairwise opponent histories
-        for (let i = 0; i < participants.length; i++) {
-            for (let j = i + 1; j < participants.length; j++) {
-                const p1Opponents = this.opponentHistory.get(participants[i].id) || new Set();
-                if (p1Opponents.has(participants[j].id)) {
-                    score += 10; // Penalty for rematch
-                }
-            }
-        }
-
-        return score;
-    }
-
-    /**
-     * Assign lanes optimally using points-based system to minimize lane repetition
-     */
-    assignLanesOptimally(participants, numberOfLanes, roundNumber = 1) {
-        const laneAssignments = [];
-        
-        // Initialize all lanes as empty
-        for (let lane = 1; lane <= numberOfLanes; lane++) {
-            laneAssignments.push({
-                lane,
-                participant: null
-            });
-        }
-
-        // If no participants, return empty lanes
-        if (participants.length === 0) {
-            return laneAssignments;
-        }
-
-        // For first round, assign lanes randomly
-        if (roundNumber === 1) {
-            console.log('Round 1: Assigning lanes randomly');
-            const shuffledParticipants = this.shuffleArray([...participants]);
-            
-            shuffledParticipants.forEach((participant, index) => {
-                if (index < numberOfLanes) {
-                    laneAssignments[index].participant = participant;
-                }
-            });
-            
-            console.log('Round 1 lane assignments:', laneAssignments.map(la => ({
-                lane: la.lane,
-                participant: la.participant?.name || 'Empty'
-            })));
-            
-            return laneAssignments;
-        }
-
-        console.log(`Round ${roundNumber}: Applying enhanced points-based lane optimization`);
-
-        // Use improved points-based lane assignment algorithm
-        return this.assignLanesWithPointsSystem(participants, numberOfLanes, laneAssignments);
-    }
-
-    /**
-     * OPTIMIZED: Assign lanes optimally with performance optimizations
-     */
-    async assignLanesOptimallyOptimized(participants, numberOfLanes, roundNumber = 1) {
-        const laneAssignments = [];
-        
-        // Initialize all lanes as empty
-        for (let lane = 1; lane <= numberOfLanes; lane++) {
-            laneAssignments.push({
-                lane,
-                participant: null
-            });
-        }
-
-        // If no participants, return empty lanes
-        if (participants.length === 0) {
-            return laneAssignments;
-        }
-
-        // For first round, assign lanes randomly (no optimization needed)
-        if (roundNumber === 1) {
-            if (participants.length <= 10) { // Reduce logging
-                console.log('Round 1: Assigning lanes randomly');
-            }
-            const shuffledParticipants = this.shuffleArray([...participants]);
-            
-            shuffledParticipants.forEach((participant, index) => {
-                if (index < numberOfLanes) {
-                    laneAssignments[index].participant = participant;
-                }
-            });
-            
-            if (participants.length <= 10) { // Reduce logging
-                console.log('Round 1 lane assignments:', laneAssignments.map(la => ({
-                    lane: la.lane,
-                    participant: la.participant?.name || 'Empty'
-                })));
-            }
-            
-            return laneAssignments;
-        }
-
-        if (participants.length <= 10) { // Reduce logging
-            console.log(`Round ${roundNumber}: Applying optimized points-based lane optimization`);
-        }
-
-        // Use optimized points-based lane assignment algorithm
-        return await this.assignLanesWithPointsSystemOptimized(participants, numberOfLanes, laneAssignments);
-    }
-
-    /**
-     * OPTIMIZED: Select optimal participants with performance optimizations
-     */
-    async selectOptimalParticipantsOptimized(availableParticipants, count, roundNumber = 1) {
-        if (availableParticipants.length <= count) {
-            return [...availableParticipants];
-        }
-
-        // For first round, just return first participants (they're already shuffled)
-        if (roundNumber === 1) {
-            return availableParticipants.slice(0, count);
-        }
-
-        // For large datasets, use simplified selection to avoid performance bottlenecks
+        // Simplified selection for very large datasets
         if (availableParticipants.length > 50) {
-            console.log(`🔧 Large dataset (${availableParticipants.length} participants): Using simplified selection for performance`);
+            window.debugLogger.debug('Pairing', `Large dataset (${availableParticipants.length}): Using simplified selection`);
             return this.selectParticipantsSimplified(availableParticipants, count, roundNumber);
         }
 
-        if (availableParticipants.length <= 20) { // Only log for smaller groups
-            console.log(`Applying optimized constraints for round ${roundNumber} participant selection`);
+        if (availableParticipants.length <= 20) {
+            window.debugLogger.debug('Pairing', `Applying constraints for round ${roundNumber} participant selection`);
         }
 
-        // For smaller datasets, use the full optimization with async processing
-        return await this.selectParticipantsWithLaneDiversityOptimized(availableParticipants, count, roundNumber);
+        return await this.selectParticipantsWithLaneDiversity(availableParticipants, count, roundNumber, eventId, classId);
     }
 
     /**
      * Simplified participant selection for large datasets
      */
     selectParticipantsSimplified(availableParticipants, count, roundNumber) {
-        // Simple approach: randomize order and take first N, with basic rematch avoidance
         const shuffled = this.shuffleArray([...availableParticipants]);
-        
-        // Try to avoid obvious rematches by checking first few participants
         const selected = [];
         const used = new Set();
         
         for (const participant of shuffled) {
             if (selected.length >= count) break;
             
-            // Simple rematch check: avoid if recently raced with someone already selected
             let hasRecentRematch = false;
-            if (roundNumber > 2) { // Only check for rematch avoidance after round 2
+            if (roundNumber > 2) {
                 for (const otherParticipant of selected) {
                     if (this.haveRacedBefore(participant.id, otherParticipant.id)) {
                         hasRecentRematch = true;
@@ -1094,39 +671,39 @@ class PairingEngine {
     }
 
     /**
-     * OPTIMIZED: Select participants with lane diversity - async version
+     * Select participants with lane diversity priority
+     * Unified async implementation
      */
-    async selectParticipantsWithLaneDiversityOptimized(availableParticipants, count, roundNumber) {
-        console.log(`Selecting ${count} participants with optimized lane diversity priority`);
+    async selectParticipantsWithLaneDiversity(availableParticipants, count, roundNumber, eventId = null, classId = null) {
+        window.debugLogger.debug('Pairing', `Selecting ${count} participants with lane diversity priority`);
         
-        // Get each participant's least used lane
         const participantLanePrefs = availableParticipants.map(participant => {
             const laneStats = this.laneHistory.get(participant.id) || {};
             const leastUsedLane = this.getLeastUsedLane(laneStats);
             const opponents = this.opponentHistory.get(participant.id) || new Set();
-            
+            const incompleteRaceCount = this.incompleteRaceHistory.get(participant.id) || 0;
+
             return {
                 participant,
                 leastUsedLane: leastUsedLane.lane,
                 leastUsedCount: leastUsedLane.count,
-                opponentCount: opponents.size
+                opponentCount: opponents.size,
+                incompleteRaceCount
             };
         });
 
-        if (availableParticipants.length <= 20) { // Reduce logging
-            console.log('Participant lane preferences:', participantLanePrefs.map(p => 
-                `${p.participant.name}: lane ${p.leastUsedLane} (used ${p.leastUsedCount} times)`
+        if (availableParticipants.length <= 20) {
+            window.debugLogger.debug('Pairing', 'Participant lane preferences:', participantLanePrefs.map(p =>
+                `${p.participant.name}: lane ${p.leastUsedLane} (used ${p.leastUsedCount}x, incomplete: ${p.incompleteRaceCount})`
             ));
         }
 
-        // Try to find the best combination with diverse lanes and minimal rematches
-        if (availableParticipants.length <= 8) { // Reduced threshold for exhaustive search
-            // For small groups, use exhaustive search
+        // Exhaustive search for small groups
+        if (availableParticipants.length <= 8) {
             const combinations = this.generateCombinations(availableParticipants, count, roundNumber);
             let bestCombination = null;
             let bestScore = Infinity;
 
-            // Process combinations in chunks to prevent blocking
             const chunkSize = 50;
             for (let i = 0; i < combinations.length; i += chunkSize) {
                 const chunk = combinations.slice(i, i + chunkSize);
@@ -1139,45 +716,43 @@ class PairingEngine {
                     }
                 });
                 
-                // Yield control every chunk
                 if (i + chunkSize < combinations.length) {
                     await new Promise(resolve => setTimeout(resolve, 1));
                 }
             }
 
             const result = bestCombination || availableParticipants.slice(0, count);
-            if (availableParticipants.length <= 10) { // Reduce logging
-                console.log(`Selected via optimized exhaustive search:`, result.map(p => p.name));
-            }
-            return result;
-        } else {
-            // For larger groups, use improved greedy selection
-            const result = await this.greedySelectionWithLaneDiversityOptimized(participantLanePrefs, count);
-            if (availableParticipants.length <= 20) { // Reduce logging
-                console.log(`Selected via optimized greedy lane diversity:`, result.map(p => p.name));
+            if (availableParticipants.length <= 10) {
+                window.debugLogger.debug('Pairing', `Selected via exhaustive search:`, result.map(p => p.name));
             }
             return result;
         }
+
+        // Greedy selection for larger groups
+        const result = await this.greedySelectionWithLaneDiversity(participantLanePrefs, count, eventId, classId);
+        if (availableParticipants.length <= 20) {
+            window.debugLogger.debug('Pairing', `Selected via greedy lane diversity:`, result.map(p => p.name));
+        }
+        return result;
     }
 
     /**
-     * OPTIMIZED: Greedy selection with performance improvements
+     * Greedy selection with lane diversity priority
+     * Unified async implementation
      */
-    async greedySelectionWithLaneDiversityOptimized(participantPrefs, count) {
+    async greedySelectionWithLaneDiversity(participantPrefs, count, eventId = null, classId = null) {
         const selected = [];
         const available = [...participantPrefs];
         const usedLanes = new Set();
 
-        if (participantPrefs.length <= 10) { // Reduce logging
-            console.log('Starting optimized greedy selection with lane diversity...');
+        if (participantPrefs.length <= 10) {
+            window.debugLogger.debug('Pairing', 'Starting greedy selection with lane diversity...');
         }
 
-        // Select participants with different least-used lanes first
         while (selected.length < count && available.length > 0) {
             let bestParticipant = null;
             let bestScore = Infinity;
 
-            // Process available participants in chunks for large datasets
             const chunkSize = Math.min(20, available.length);
             for (let i = 0; i < available.length; i += chunkSize) {
                 const chunk = available.slice(i, Math.min(i + chunkSize, available.length));
@@ -1187,32 +762,41 @@ class PairingEngine {
                     const participant = participantPref.participant;
                     const leastUsedLane = participantPref.leastUsedLane;
                     
-                    // Calculate score based on lane diversity and rematch avoidance
                     let score = 0;
-                    
-                    // Bonus for using a lane that hasn't been used by other selected participants
+
+                    // Lane diversity bonus
                     if (!usedLanes.has(leastUsedLane)) {
-                        score -= 100; // Big bonus for lane diversity
+                        score -= 100;
                     }
-                    
-                    // Penalty for rematches
+
+                    // Rematch penalty
                     const selectedParticipants = selected.map(s => s.participant);
                     selectedParticipants.forEach(other => {
                         if (this.haveRacedBefore(participant.id, other.id)) {
-                            score += 50; // Penalty for rematch
+                            score += 50;
                         }
                     });
-                    
-                    // Slight bonus for lower lane usage count
+
+                    // Lane usage
                     score += participantPref.leastUsedCount;
-                    
+
+                    // Incomplete race penalty
+                    score += participantPref.incompleteRaceCount * 25;
+
+                    // Class spacing penalty
+                    if (classId && eventId) {
+                        const currentSpacing = this.calculateDriverClassSpacing(participant.id, eventId);
+                        if (currentSpacing !== Infinity && currentSpacing < 2) {
+                            score += (2 - currentSpacing) * 40;
+                        }
+                    }
+
                     if (score < bestScore) {
                         bestScore = score;
                         bestParticipant = { participantPref, index: actualIndex };
                     }
                 });
                 
-                // Yield control every chunk for large datasets
                 if (available.length > 50 && i + chunkSize < available.length) {
                     await new Promise(resolve => setTimeout(resolve, 1));
                 }
@@ -1224,8 +808,8 @@ class PairingEngine {
                 usedLanes.add(participantPref.leastUsedLane);
                 available.splice(bestParticipant.index, 1);
                 
-                if (participantPrefs.length <= 10) { // Reduce logging
-                    console.log(`Selected ${participantPref.participant.name} (lane ${participantPref.leastUsedLane}, score: ${bestScore})`);
+                if (participantPrefs.length <= 10) {
+                    window.debugLogger.debug('Pairing', `Selected ${participantPref.participant.name} (lane ${participantPref.leastUsedLane}, score: ${bestScore})`);
                 }
             } else {
                 break;
@@ -1236,37 +820,170 @@ class PairingEngine {
     }
 
     /**
-     * OPTIMIZED: Points-based lane assignment with performance improvements
+     * Calculate combination score considering lane diversity and rematches
      */
-    async assignLanesWithPointsSystemOptimized(participants, numberOfLanes, laneAssignments) {
-        if (participants.length <= 10) { // Reduce logging
-            console.log('🎯 Assigning lanes with optimized points-based system...');
-            console.log(`   Participants: ${participants.length}, Available lanes: ${numberOfLanes}`);
+    calculateDiverseCombinationScore(participants) {
+        let score = 0;
+        
+        // Lane diversity bonus
+        const lanePrefs = participants.map(p => {
+            const laneStats = this.laneHistory.get(p.id) || {};
+            return this.getLeastUsedLane(laneStats).lane;
+        });
+        const uniqueLanes = new Set(lanePrefs);
+        score += uniqueLanes.size * -20;
+        
+        // Rematch penalty
+        for (let i = 0; i < participants.length; i++) {
+            for (let j = i + 1; j < participants.length; j++) {
+                if (this.haveRacedBefore(participants[i].id, participants[j].id)) {
+                    score += 30;
+                }
+            }
         }
         
-        // Calculate points for each participant-lane combination
+        return score;
+    }
+
+    /**
+     * Generate all possible combinations of participants
+     */
+    generateCombinations(participants, count, roundNumber = 1) {
+        if (count > participants.length) {
+            return [participants];
+        }
+
+        if (participants.length > 10) {
+            return [this.greedySelection(participants, count, roundNumber)];
+        }
+
+        const combinations = [];
+        const generate = (start, current) => {
+            if (current.length === count) {
+                combinations.push([...current]);
+                return;
+            }
+            for (let i = start; i < participants.length; i++) {
+                current.push(participants[i]);
+                generate(i + 1, current);
+                current.pop();
+            }
+        };
+
+        generate(0, []);
+        return combinations;
+    }
+
+    /**
+     * Greedy selection fallback for large participant groups
+     */
+    greedySelection(participants, count, roundNumber = 1) {
+        const selected = [];
+        const available = [...participants];
+
+        if (roundNumber === 1) {
+            const shuffled = this.shuffleArray(available);
+            return shuffled.slice(0, count);
+        }
+
+        const firstIndex = Math.floor(Math.random() * available.length);
+        selected.push(available.splice(firstIndex, 1)[0]);
+
+        while (selected.length < count && available.length > 0) {
+            let bestParticipant = null;
+            let bestScore = Infinity;
+
+            available.forEach(participant => {
+                const score = this.calculateParticipantScore(participant, selected);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestParticipant = participant;
+                }
+            });
+
+            if (bestParticipant) {
+                selected.push(bestParticipant);
+                const index = available.indexOf(bestParticipant);
+                available.splice(index, 1);
+            }
+        }
+
+        return selected;
+    }
+
+    /**
+     * Calculate score for a participant when paired with others
+     */
+    calculateParticipantScore(participant, otherParticipants) {
+        let score = 0;
+        const participantOpponents = this.opponentHistory.get(participant.id) || new Set();
+
+        otherParticipants.forEach(other => {
+            if (participantOpponents.has(other.id)) {
+                score += 10;
+            }
+        });
+
+        return score;
+    }
+
+    /**
+     * Assign lanes optimally using points-based system
+     * Unified async implementation
+     */
+    async assignLanesOptimally(participants, numberOfLanes, roundNumber = 1) {
+        const laneAssignments = [];
+        for (let lane = 1; lane <= numberOfLanes; lane++) {
+            laneAssignments.push({ lane, participant: null });
+        }
+
+        if (participants.length === 0) return laneAssignments;
+
+        // Round 1: random assignment
+        if (roundNumber === 1) {
+            if (participants.length <= 10) {
+                window.debugLogger.debug('Pairing', 'Round 1: Assigning lanes randomly');
+            }
+            const shuffledParticipants = this.shuffleArray([...participants]);
+            shuffledParticipants.forEach((participant, index) => {
+                if (index < numberOfLanes) {
+                    laneAssignments[index].participant = participant;
+                }
+            });
+            return laneAssignments;
+        }
+
+        if (participants.length <= 10) {
+            window.debugLogger.debug('Pairing', `Round ${roundNumber}: Applying points-based lane optimization`);
+        }
+
+        return await this.assignLanesWithPointsSystem(participants, numberOfLanes, laneAssignments);
+    }
+
+    /**
+     * Assign lanes using points-based system
+     * Points: 2 for first race on lane, +1 for each additional
+     * Unified async implementation
+     */
+    async assignLanesWithPointsSystem(participants, numberOfLanes, laneAssignments) {
+        if (participants.length <= 10) {
+            window.debugLogger.debug('Pairing', 'Assigning lanes with points-based system...');
+            window.debugLogger.debug('Pairing', `   Participants: ${participants.length}, Available lanes: ${numberOfLanes}`);
+        }
+        
         const participantLaneScores = participants.map(participant => {
             const laneStats = this.laneHistory.get(participant.id) || {};
             const laneScores = [];
             
             for (let lane = 1; lane <= numberOfLanes; lane++) {
                 const usage = laneStats[lane] || 0;
-                // Points system: 2 points for first race, +1 for each additional
                 let points = 0;
                 if (usage > 0) {
-                    points = 2 + (usage - 1); // 2 for first, +1 for each additional
+                    points = 2 + (usage - 1);
                 }
-                // If never raced on this lane, 0 points (best option)
-                
-                laneScores.push({
-                    lane,
-                    usage,
-                    points,
-                    participant
-                });
+                laneScores.push({ lane, usage, points, participant });
             }
             
-            // Sort by points (lowest first - best lanes)
             laneScores.sort((a, b) => a.points - b.points);
             
             return {
@@ -1277,24 +994,21 @@ class PairingEngine {
             };
         });
 
-        if (participants.length <= 10) { // Reduce logging
-            console.log('📊 Participant lane scores:');
+        if (participants.length <= 10) {
+            window.debugLogger.debug('Pairing', 'Participant lane scores:');
             participantLaneScores.forEach(p => {
                 const topLanes = p.laneScores.slice(0, 3).map(ls => `L${ls.lane}:${ls.points}pts`).join(', ');
-                console.log(`   ${p.participant.name}: ${topLanes}`);
+                window.debugLogger.debug('Pairing', `   ${p.participant.name}: ${topLanes}`);
             });
         }
 
-        // Check for rematches among participants
         const rematchCount = this.countRematches(participants);
-        if (participants.length <= 10) { // Reduce logging
-            console.log(`⚠️  Rematch count: ${rematchCount} pairs have raced before`);
+        if (participants.length <= 10) {
+            window.debugLogger.debug('Pairing', `Rematch count: ${rematchCount} pairs have raced before`);
         }
 
-        // Find optimal assignment using optimized algorithm
-        const assignment = await this.findOptimalPointsAssignmentOptimized(participantLaneScores, numberOfLanes);
+        const assignment = await this.findOptimalPointsAssignment(participantLaneScores, numberOfLanes);
         
-        // Apply the assignment and calculate total points
         let totalPoints = 0;
         assignment.forEach(({ participant, lane }) => {
             const participantScore = participantLaneScores.find(p => p.participant.id === participant.id);
@@ -1303,51 +1017,49 @@ class PairingEngine {
             laneAssignments[lane - 1].participant = participant;
             totalPoints += laneScore.points;
             
-            if (participants.length <= 10) { // Reduce logging
-                console.log(`   ✅ ${participant.name} -> Lane ${lane} (${laneScore.points} pts, usage: ${laneScore.usage})`);
+            if (participants.length <= 10) {
+                window.debugLogger.debug('Pairing', `${participant.name} -> Lane ${lane} (${laneScore.points} pts, usage: ${laneScore.usage})`);
             }
         });
 
-        if (participants.length <= 10) { // Reduce logging
-            console.log(`🎯 Total assignment points: ${totalPoints} (lower is better)`);
-            console.log(`📈 Average points per participant: ${(totalPoints / participants.length).toFixed(1)}`);
+        if (participants.length <= 10) {
+            window.debugLogger.debug('Pairing', `Total assignment points: ${totalPoints} (lower is better)`);
+            window.debugLogger.debug('Pairing', `Average points per participant: ${(totalPoints / participants.length).toFixed(1)}`);
         }
 
         return laneAssignments;
     }
 
     /**
-     * OPTIMIZED: Find optimal lane assignment with performance improvements
+     * Find optimal lane assignment using points-based optimization
+     * Unified async implementation
      */
-    async findOptimalPointsAssignmentOptimized(participantLaneScores, numberOfLanes) {
+    async findOptimalPointsAssignment(participantLaneScores, numberOfLanes) {
         const participants = participantLaneScores.map(p => p.participant);
         
-        // For small groups, try exhaustive search (reduced threshold)
-        if (participants.length <= 4) { // Reduced from 5 to 4
-            return await this.exhaustivePointsSearchOptimized(participantLaneScores, numberOfLanes);
-        } else {
-            // For larger groups, use improved greedy algorithm
-            return await this.greedyPointsAssignmentOptimized(participantLaneScores, numberOfLanes);
+        if (participants.length <= 4) {
+            return await this.exhaustivePointsSearch(participantLaneScores, numberOfLanes);
         }
+        
+        return await this.greedyPointsAssignment(participantLaneScores, numberOfLanes);
     }
 
     /**
-     * OPTIMIZED: Exhaustive search with chunked processing
+     * Exhaustive search for optimal points assignment
+     * Unified async implementation
      */
-    async exhaustivePointsSearchOptimized(participantLaneScores, numberOfLanes) {
+    async exhaustivePointsSearch(participantLaneScores, numberOfLanes) {
         const participants = participantLaneScores.map(p => p.participant);
-        
         let bestAssignment = null;
         let bestScore = Infinity;
         let processedCount = 0;
         
-        if (participants.length <= 10) { // Reduce logging
-            console.log('🔍 Using optimized exhaustive search for optimal assignment...');
+        if (participants.length <= 10) {
+            window.debugLogger.debug('Pairing', 'Using exhaustive search for optimal assignment...');
         }
         
         const startTime = Date.now();
         
-        // Generate all possible lane assignments with chunked processing
         const generateAssignments = async (participantIndex, currentAssignment, usedLanes) => {
             if (participantIndex >= participants.length) {
                 const score = this.calculatePointsAssignmentScore(currentAssignment, participantLaneScores);
@@ -1357,14 +1069,11 @@ class PairingEngine {
                 }
                 processedCount++;
                 
-                // Yield control periodically to prevent blocking
                 if (processedCount % 100 === 0) {
                     await new Promise(resolve => setTimeout(resolve, 1));
-                    
-                    // Early termination for long-running searches
                     const elapsed = Date.now() - startTime;
-                    if (elapsed > 5000) { // 5 second timeout
-                        console.warn(`⚠️ Exhaustive search timeout reached (${elapsed}ms). Using best found so far.`);
+                    if (elapsed > 5000) {
+                        console.warn(`⚠️ Exhaustive search timeout (${elapsed}ms). Using best found.`);
                         return;
                     }
                 }
@@ -1372,16 +1081,12 @@ class PairingEngine {
             }
             
             const participant = participants[participantIndex];
-            
-            // Try each available lane for this participant
             for (let lane = 1; lane <= numberOfLanes; lane++) {
                 if (!usedLanes.has(lane)) {
                     const newUsedLanes = new Set(usedLanes);
                     newUsedLanes.add(lane);
                     currentAssignment.push({ participant, lane });
-                    
                     await generateAssignments(participantIndex + 1, currentAssignment, newUsedLanes);
-                    
                     currentAssignment.pop();
                 }
             }
@@ -1389,8 +1094,8 @@ class PairingEngine {
         
         await generateAssignments(0, [], new Set());
         
-        if (participants.length <= 10) { // Reduce logging
-            console.log(`🎯 Optimized exhaustive search found solution with score: ${bestScore} (processed ${processedCount} combinations)`);
+        if (participants.length <= 10) {
+            window.debugLogger.debug('Pairing', `Exhaustive search found solution with score: ${bestScore} (${processedCount} combinations)`);
         }
         
         return bestAssignment || participants.map((participant, index) => ({
@@ -1400,28 +1105,24 @@ class PairingEngine {
     }
 
     /**
-     * OPTIMIZED: Greedy assignment with async processing
+     * Greedy points-based assignment
+     * Unified async implementation
      */
-    async greedyPointsAssignmentOptimized(participantLaneScores, numberOfLanes) {
+    async greedyPointsAssignment(participantLaneScores, numberOfLanes) {
         const assignment = [];
         const usedLanes = new Set();
         
-        if (participantLaneScores.length <= 10) { // Reduce logging
-            console.log('🎯 Using optimized greedy points-based assignment for large group...');
+        if (participantLaneScores.length <= 10) {
+            window.debugLogger.debug('Pairing', 'Using greedy points-based assignment...');
         }
         
-        // Sort participants by their best available lane score (lowest first)
-        const sortedParticipants = [...participantLaneScores].sort((a, b) => {
-            return a.bestPoints - b.bestPoints;
-        });
+        const sortedParticipants = [...participantLaneScores].sort((a, b) => a.bestPoints - b.bestPoints);
         
-        // Assign participants in order of their best lane preference
         for (let i = 0; i < sortedParticipants.length; i++) {
             const participantScore = sortedParticipants[i];
             let bestLane = null;
             let bestPoints = Infinity;
             
-            // Find the best available lane for this participant
             participantScore.laneScores.forEach(laneScore => {
                 if (!usedLanes.has(laneScore.lane) && laneScore.points < bestPoints) {
                     bestPoints = laneScore.points;
@@ -1430,18 +1131,14 @@ class PairingEngine {
             });
             
             if (bestLane) {
-                assignment.push({
-                    participant: participantScore.participant,
-                    lane: bestLane
-                });
+                assignment.push({ participant: participantScore.participant, lane: bestLane });
                 usedLanes.add(bestLane);
                 
-                if (participantLaneScores.length <= 10) { // Reduce logging
-                    console.log(`   📍 ${participantScore.participant.name} -> Lane ${bestLane} (${bestPoints} pts)`);
+                if (participantLaneScores.length <= 10) {
+                    window.debugLogger.debug('Pairing', `${participantScore.participant.name} -> Lane ${bestLane} (${bestPoints} pts)`);
                 }
             }
             
-            // Yield control periodically for large datasets
             if (i > 0 && i % 10 === 0 && sortedParticipants.length > 20) {
                 await new Promise(resolve => setTimeout(resolve, 1));
             }
@@ -1451,76 +1148,16 @@ class PairingEngine {
     }
 
     /**
-     * Assign lanes using enhanced points-based system
-     * Points: 2 for first race on lane, +1 for each additional race
-     * Prioritizes avoiding rematches, then minimizes total points
+     * Calculate total score for a points-based assignment
      */
-    assignLanesWithPointsSystem(participants, numberOfLanes, laneAssignments) {
-        console.log('🎯 Assigning lanes with points-based system...');
-        console.log(`   Participants: ${participants.length}, Available lanes: ${numberOfLanes}`);
-        
-        // Calculate points for each participant-lane combination
-        const participantLaneScores = participants.map(participant => {
-            const laneStats = this.laneHistory.get(participant.id) || {};
-            const laneScores = [];
-            
-            for (let lane = 1; lane <= numberOfLanes; lane++) {
-                const usage = laneStats[lane] || 0;
-                // Points system: 2 points for first race, +1 for each additional
-                let points = 0;
-                if (usage > 0) {
-                    points = 2 + (usage - 1); // 2 for first, +1 for each additional
-                }
-                // If never raced on this lane, 0 points (best option)
-                
-                laneScores.push({
-                    lane,
-                    usage,
-                    points,
-                    participant
-                });
-            }
-            
-            // Sort by points (lowest first - best lanes)
-            laneScores.sort((a, b) => a.points - b.points);
-            
-            return {
-                participant,
-                laneScores,
-                bestLane: laneScores[0].lane,
-                bestPoints: laneScores[0].points
-            };
-        });
-
-        console.log('📊 Participant lane scores:');
-        participantLaneScores.forEach(p => {
-            const topLanes = p.laneScores.slice(0, 3).map(ls => `L${ls.lane}:${ls.points}pts`).join(', ');
-            console.log(`   ${p.participant.name}: ${topLanes}`);
-        });
-
-        // Check for rematches among participants
-        const rematchCount = this.countRematches(participants);
-        console.log(`⚠️  Rematch count: ${rematchCount} pairs have raced before`);
-
-        // Find optimal assignment using points-based Hungarian-style algorithm
-        const assignment = this.findOptimalPointsAssignment(participantLaneScores, numberOfLanes);
-        
-        // Apply the assignment and calculate total points
-        let totalPoints = 0;
+    calculatePointsAssignmentScore(assignment, participantLaneScores) {
+        let totalScore = 0;
         assignment.forEach(({ participant, lane }) => {
             const participantScore = participantLaneScores.find(p => p.participant.id === participant.id);
             const laneScore = participantScore.laneScores.find(ls => ls.lane === lane);
-            
-            laneAssignments[lane - 1].participant = participant;
-            totalPoints += laneScore.points;
-            
-            console.log(`   ✅ ${participant.name} -> Lane ${lane} (${laneScore.points} pts, usage: ${laneScore.usage})`);
+            totalScore += laneScore.points;
         });
-
-        console.log(`🎯 Total assignment points: ${totalPoints} (lower is better)`);
-        console.log(`📈 Average points per participant: ${(totalPoints / participants.length).toFixed(1)}`);
-
-        return laneAssignments;
+        return totalScore;
     }
 
     /**
@@ -1539,326 +1176,20 @@ class PairingEngine {
     }
 
     /**
-     * Find optimal lane assignment using points-based optimization
-     */
-    findOptimalPointsAssignment(participantLaneScores, numberOfLanes) {
-        const participants = participantLaneScores.map(p => p.participant);
-        
-        // For small groups, try exhaustive search
-        if (participants.length <= 5) {
-            return this.exhaustivePointsSearch(participantLaneScores, numberOfLanes);
-        } else {
-            // For larger groups, use improved greedy algorithm
-            return this.greedyPointsAssignment(participantLaneScores, numberOfLanes);
-        }
-    }
-
-    /**
-     * Exhaustive search for optimal points assignment (small groups)
-     */
-    exhaustivePointsSearch(participantLaneScores, numberOfLanes) {
-        const participants = participantLaneScores.map(p => p.participant);
-        
-        let bestAssignment = null;
-        let bestScore = Infinity;
-        
-        console.log('🔍 Using exhaustive search for optimal assignment...');
-        
-        // Generate all possible lane assignments
-        const generateAssignments = (participantIndex, currentAssignment, usedLanes) => {
-            if (participantIndex >= participants.length) {
-                const score = this.calculatePointsAssignmentScore(currentAssignment, participantLaneScores);
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestAssignment = [...currentAssignment];
-                }
-                return;
-            }
-            
-            const participant = participants[participantIndex];
-            
-            // Try each available lane for this participant
-            for (let lane = 1; lane <= numberOfLanes; lane++) {
-                if (!usedLanes.has(lane)) {
-                    const newUsedLanes = new Set(usedLanes);
-                    newUsedLanes.add(lane);
-                    currentAssignment.push({ participant, lane });
-                    
-                    generateAssignments(participantIndex + 1, currentAssignment, newUsedLanes);
-                    
-                    currentAssignment.pop();
-                }
-            }
-        };
-        
-        generateAssignments(0, [], new Set());
-        
-        console.log(`🎯 Exhaustive search found solution with score: ${bestScore}`);
-        
-        return bestAssignment || participants.map((participant, index) => ({
-            participant,
-            lane: Math.min(index + 1, numberOfLanes)
-        }));
-    }
-
-    /**
-     * Greedy points-based assignment for larger groups
-     */
-    greedyPointsAssignment(participantLaneScores, numberOfLanes) {
-        const assignment = [];
-        const usedLanes = new Set();
-        
-        console.log('🎯 Using greedy points-based assignment for large group...');
-        
-        // Sort participants by their best available lane score (lowest first)
-        const sortedParticipants = [...participantLaneScores].sort((a, b) => {
-            return a.bestPoints - b.bestPoints;
-        });
-        
-        // Assign participants in order of their best lane preference
-        sortedParticipants.forEach(participantScore => {
-            let bestLane = null;
-            let bestPoints = Infinity;
-            
-            // Find the best available lane for this participant
-            participantScore.laneScores.forEach(laneScore => {
-                if (!usedLanes.has(laneScore.lane) && laneScore.points < bestPoints) {
-                    bestPoints = laneScore.points;
-                    bestLane = laneScore.lane;
-                }
-            });
-            
-            if (bestLane) {
-                assignment.push({
-                    participant: participantScore.participant,
-                    lane: bestLane
-                });
-                usedLanes.add(bestLane);
-                console.log(`   📍 ${participantScore.participant.name} -> Lane ${bestLane} (${bestPoints} pts)`);
-            }
-        });
-        
-        return assignment;
-    }
-
-    /**
-     * Calculate total score for a points-based assignment
-     */
-    calculatePointsAssignmentScore(assignment, participantLaneScores) {
-        let totalScore = 0;
-        
-        assignment.forEach(({ participant, lane }) => {
-            const participantScore = participantLaneScores.find(p => p.participant.id === participant.id);
-            const laneScore = participantScore.laneScores.find(ls => ls.lane === lane);
-            totalScore += laneScore.points;
-        });
-        
-        return totalScore;
-    }
-
-    /**
-     * LEGACY: Assign lanes prioritizing diversity and least-used lanes (keeping for compatibility)
-     */
-    assignLanesWithDiversityPriority(participants, numberOfLanes, laneAssignments) {
-        console.log('Assigning lanes with diversity priority...');
-        
-        // Get each participant's lane preferences (least used first)
-        const participantPreferences = participants.map(participant => {
-            const laneStats = this.laneHistory.get(participant.id) || {};
-            const preferences = [];
-            
-            for (let lane = 1; lane <= numberOfLanes; lane++) {
-                const usage = laneStats[lane] || 0;
-                preferences.push({
-                    lane,
-                    usage,
-                    participant
-                });
-            }
-            
-            // Sort by usage (least used first)
-            preferences.sort((a, b) => a.usage - b.usage);
-            
-            return {
-                participant,
-                preferences,
-                leastUsedLane: preferences[0].lane,
-                leastUsedCount: preferences[0].usage
-            };
-        });
-
-        console.log('Participant lane preferences:', participantPreferences.map(p => 
-            `${p.participant.name}: prefers lane ${p.leastUsedLane} (used ${p.leastUsedCount} times)`
-        ));
-
-        // Try optimal assignment using the Hungarian algorithm approach
-        const assignment = this.findOptimalLaneAssignment(participantPreferences, numberOfLanes);
-        
-        // Apply the assignment
-        assignment.forEach(({ participant, lane }) => {
-            laneAssignments[lane - 1].participant = participant;
-            const laneStats = this.laneHistory.get(participant.id) || {};
-            const usage = laneStats[lane] || 0;
-            console.log(`Assigned ${participant.name} to lane ${lane} (usage: ${usage})`);
-        });
-
-        return laneAssignments;
-    }
-
-    /**
-     * Find optimal lane assignment to minimize total usage and maximize diversity
-     */
-    findOptimalLaneAssignment(participantPreferences, numberOfLanes) {
-        const participants = participantPreferences.map(p => p.participant);
-        
-        // For small numbers of participants, try all permutations
-        if (participants.length <= 6) {
-            return this.exhaustiveAssignmentSearch(participantPreferences, numberOfLanes);
-        } else {
-            // For larger groups, use greedy algorithm
-            return this.greedyLaneAssignment(participantPreferences, numberOfLanes);
-        }
-    }
-
-    /**
-     * Exhaustive search for optimal lane assignment (small groups)
-     */
-    exhaustiveAssignmentSearch(participantPreferences, numberOfLanes) {
-        const participants = participantPreferences.map(p => p.participant);
-        const availableLanes = Array.from({length: numberOfLanes}, (_, i) => i + 1);
-        
-        let bestAssignment = null;
-        let bestScore = Infinity;
-        
-        // Generate all possible lane assignments
-        const generateAssignments = (participantIndex, currentAssignment, usedLanes) => {
-            if (participantIndex >= participants.length) {
-                const score = this.calculateAssignmentScore(currentAssignment, participantPreferences);
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestAssignment = [...currentAssignment];
-                }
-                return;
-            }
-            
-            const participant = participants[participantIndex];
-            
-            // Try each available lane for this participant
-            for (let lane = 1; lane <= numberOfLanes; lane++) {
-                if (!usedLanes.has(lane)) {
-                    const newUsedLanes = new Set(usedLanes);
-                    newUsedLanes.add(lane);
-                    currentAssignment.push({ participant, lane });
-                    
-                    generateAssignments(participantIndex + 1, currentAssignment, newUsedLanes);
-                    
-                    currentAssignment.pop();
-                }
-            }
-        };
-        
-        generateAssignments(0, [], new Set());
-        
-        return bestAssignment || participants.map((participant, index) => ({
-            participant,
-            lane: Math.min(index + 1, numberOfLanes)
-        }));
-    }
-
-    /**
-     * Greedy lane assignment for larger groups
-     */
-    greedyLaneAssignment(participantPreferences, numberOfLanes) {
-        const assignment = [];
-        const usedLanes = new Set();
-        const unassignedParticipants = [...participantPreferences];
-        
-        console.log('Using greedy lane assignment for large group...');
-        
-        // First, try to assign each participant to their least-used lane if available
-        for (let i = unassignedParticipants.length - 1; i >= 0; i--) {
-            const participantPref = unassignedParticipants[i];
-            const leastUsedLane = participantPref.leastUsedLane;
-            
-            if (!usedLanes.has(leastUsedLane)) {
-                assignment.push({
-                    participant: participantPref.participant,
-                    lane: leastUsedLane
-                });
-                usedLanes.add(leastUsedLane);
-                unassignedParticipants.splice(i, 1);
-                console.log(`Direct assignment: ${participantPref.participant.name} -> lane ${leastUsedLane}`);
-            }
-        }
-        
-        // Assign remaining participants to best available lanes
-        unassignedParticipants.forEach(participantPref => {
-            let bestLane = null;
-            let bestUsage = Infinity;
-            
-            for (let lane = 1; lane <= numberOfLanes; lane++) {
-                if (!usedLanes.has(lane)) {
-                    const laneStats = this.laneHistory.get(participantPref.participant.id) || {};
-                    const usage = laneStats[lane] || 0;
-                    
-                    if (usage < bestUsage) {
-                        bestUsage = usage;
-                        bestLane = lane;
-                    }
-                }
-            }
-            
-            if (bestLane) {
-                assignment.push({
-                    participant: participantPref.participant,
-                    lane: bestLane
-                });
-                usedLanes.add(bestLane);
-                console.log(`Secondary assignment: ${participantPref.participant.name} -> lane ${bestLane} (usage: ${bestUsage})`);
-            }
-        });
-        
-        return assignment;
-    }
-
-    /**
-     * Calculate score for a lane assignment (lower is better)
-     */
-    calculateAssignmentScore(assignment, participantPreferences) {
-        let score = 0;
-        
-        assignment.forEach(({ participant, lane }) => {
-            const participantPref = participantPreferences.find(p => p.participant.id === participant.id);
-            if (participantPref) {
-                const laneUsage = participantPref.preferences.find(p => p.lane === lane)?.usage || 0;
-                score += laneUsage; // Penalty for higher usage
-                
-                // Bonus if this is their least-used lane
-                if (lane === participantPref.leastUsedLane) {
-                    score -= 10; // Bonus for optimal assignment
-                }
-            }
-        });
-        
-        return score;
-    }
-
-    /**
      * Record race results and update histories
      */
-    recordRaceResult(heat, results) {
-        console.log('Recording race result for heat:', heat.id);
-        
+    recordRaceResult(heat, results, classId = null, eventId = null) {
+        window.debugLogger.debug('Pairing', 'Recording race result for heat:', heat.id);
+
         if (!results || !Array.isArray(results)) {
             console.warn('Invalid results provided');
             return false;
         }
 
-        // Update opponent history
-        const participants = heat.lanes
-            .filter(lane => lane.participant)
-            .map(lane => lane.participant);
+        const participants = heat.lanes.filter(lane => lane.participant).map(lane => lane.participant);
+        const isIncompleteRace = participants.length < heat.numberOfLanes;
 
+        // Update opponent history
         participants.forEach(participant1 => {
             const opponents = this.opponentHistory.get(participant1.id) || new Set();
             participants.forEach(participant2 => {
@@ -1885,27 +1216,41 @@ class PairingEngine {
             this.raceHistory.set(participant.id, races);
         });
 
-        console.log('Race result recorded successfully');
+        // Update incomplete race history
+        if (isIncompleteRace) {
+            participants.forEach(participant => {
+                const currentCount = this.incompleteRaceHistory.get(participant.id) || 0;
+                this.incompleteRaceHistory.set(participant.id, currentCount + 1);
+            });
+            window.debugLogger.debug('Pairing', `Recorded incomplete race for ${participants.length} participants (${heat.numberOfLanes} lanes available)`);
+        }
+
+        // Record class schedules
+        if (classId && eventId && heat.raceNumber) {
+            participants.forEach(participant => {
+                this.recordClassSchedule(participant.id, classId, heat.raceNumber, eventId);
+            });
+        }
+
+        window.debugLogger.debug('Pairing', 'Race result recorded successfully');
         return true;
     }
 
     /**
-     * Reverse a race result - remove it from all tracking histories
+     * Reverse a race result - remove from all tracking histories
      */
-    reverseRaceResult(heat, results) {
-        console.log('Reversing race result for heat:', heat.id);
-        
+    reverseRaceResult(heat, results, classId = null) {
+        window.debugLogger.debug('Pairing', 'Reversing race result for heat:', heat.id);
+
         if (!results || !Array.isArray(results)) {
             console.warn('Invalid results provided for reversal');
             return false;
         }
 
-        // Get participants from the heat
-        const participants = heat.lanes
-            .filter(lane => lane.participant)
-            .map(lane => lane.participant);
+        const participants = heat.lanes.filter(lane => lane.participant).map(lane => lane.participant);
+        const isIncompleteRace = participants.length < heat.numberOfLanes;
 
-        // Reverse opponent history - remove this heat's opponents
+        // Reverse opponent history
         participants.forEach(participant1 => {
             const opponents = this.opponentHistory.get(participant1.id) || new Set();
             participants.forEach(participant2 => {
@@ -1916,7 +1261,7 @@ class PairingEngine {
             this.opponentHistory.set(participant1.id, opponents);
         });
 
-        // Reverse lane history - decrement lane usage
+        // Reverse lane history
         heat.lanes.forEach(laneAssignment => {
             if (laneAssignment.participant) {
                 const laneStats = this.laneHistory.get(laneAssignment.participant.id) || {};
@@ -1927,7 +1272,7 @@ class PairingEngine {
             }
         });
 
-        // Reverse race history - remove this heat from race counts
+        // Reverse race history
         participants.forEach(participant => {
             const races = this.raceHistory.get(participant.id) || [];
             const index = races.indexOf(heat.id);
@@ -1937,7 +1282,27 @@ class PairingEngine {
             this.raceHistory.set(participant.id, races);
         });
 
-        console.log('Race result reversed successfully');
+        // Reverse incomplete race history
+        if (isIncompleteRace) {
+            participants.forEach(participant => {
+                const currentCount = this.incompleteRaceHistory.get(participant.id) || 0;
+                this.incompleteRaceHistory.set(participant.id, Math.max(0, currentCount - 1));
+            });
+            window.debugLogger.debug('Pairing', `Reversed incomplete race tracking for ${participants.length} participants`);
+        }
+
+        // Reverse class schedules
+        if (classId) {
+            participants.forEach(participant => {
+                const driverSchedule = this.classScheduleHistory.get(participant.id);
+                if (driverSchedule && driverSchedule[classId]) {
+                    delete driverSchedule[classId];
+                    window.debugLogger.debug('Pairing', `Removed class schedule for driver ${participant.id} in class ${classId}`);
+                }
+            });
+        }
+
+        window.debugLogger.debug('Pairing', 'Race result reversed successfully');
         return true;
     }
 
@@ -1948,7 +1313,8 @@ class PairingEngine {
         return {
             laneHistory: this.laneHistory.get(participantId) || {},
             opponents: Array.from(this.opponentHistory.get(participantId) || []),
-            raceCount: (this.raceHistory.get(participantId) || []).length
+            raceCount: (this.raceHistory.get(participantId) || []).length,
+            incompleteRaceCount: this.incompleteRaceHistory.get(participantId) || 0
         };
     }
 
@@ -1960,10 +1326,10 @@ class PairingEngine {
             totalParticipants: this.laneHistory.size,
             laneUsageStats: {},
             opponentMatchStats: {},
-            raceCountStats: {}
+            raceCountStats: {},
+            incompleteRaceStats: {}
         };
 
-        // Collect lane usage statistics
         this.laneHistory.forEach((laneStats, participantId) => {
             const totalRaces = Object.values(laneStats).reduce((sum, count) => sum + count, 0);
             const laneDistribution = {};
@@ -1983,7 +1349,6 @@ class PairingEngine {
             };
         });
 
-        // Collect opponent match statistics
         this.opponentHistory.forEach((opponents, participantId) => {
             stats.opponentMatchStats[participantId] = {
                 uniqueOpponents: opponents.size,
@@ -1991,9 +1356,17 @@ class PairingEngine {
             };
         });
 
-        // Collect race count statistics
         this.raceHistory.forEach((races, participantId) => {
             stats.raceCountStats[participantId] = races.length;
+        });
+
+        this.incompleteRaceHistory.forEach((count, participantId) => {
+            const totalRaces = (this.raceHistory.get(participantId) || []).length;
+            stats.incompleteRaceStats[participantId] = {
+                incompleteCount: count,
+                totalRaces,
+                incompletePercentage: totalRaces > 0 ? Math.round((count / totalRaces) * 100) : 0
+            };
         });
 
         return stats;
@@ -2040,12 +1413,11 @@ class PairingEngine {
         const analysis = {
             rematches: [],
             laneRepeats: [],
+            incompleteRaceDistribution: [],
             recommendations: []
         };
 
-        const participants = heat.lanes
-            .filter(lane => lane.participant)
-            .map(lane => lane.participant);
+        const participants = heat.lanes.filter(lane => lane.participant).map(lane => lane.participant);
 
         // Check for rematches
         for (let i = 0; i < participants.length; i++) {
@@ -2064,7 +1436,7 @@ class PairingEngine {
             }
         }
 
-        // Check for lane repetition concerns
+        // Check for lane repetition
         heat.lanes.forEach(laneAssignment => {
             if (laneAssignment.participant) {
                 const stats = this.getParticipantStats(laneAssignment.participant.id);
@@ -2072,10 +1444,9 @@ class PairingEngine {
                 const currentLane = laneAssignment.lane;
                 const currentLaneUsage = laneHistory[currentLane] || 0;
                 const totalRaces = Object.values(laneHistory).reduce((sum, count) => sum + count, 0);
-                
+
                 if (totalRaces > 0) {
                     const usagePercentage = (currentLaneUsage / totalRaces) * 100;
-                    
                     if (usagePercentage > 50) {
                         analysis.laneRepeats.push({
                             participant: laneAssignment.participant.name,
@@ -2090,16 +1461,44 @@ class PairingEngine {
             }
         });
 
+        // Check incomplete race distribution
+        const isIncompleteHeat = participants.length < heat.numberOfLanes;
+        participants.forEach(participant => {
+            const stats = this.getParticipantStats(participant.id);
+            const incompleteCount = stats.incompleteRaceCount;
+            const totalRaces = stats.raceCount;
+
+            if (totalRaces > 0) {
+                const incompletePercentage = (incompleteCount / totalRaces) * 100;
+                if (incompletePercentage > 40) {
+                    analysis.incompleteRaceDistribution.push({
+                        participant: participant.name,
+                        participantId: participant.id,
+                        incompleteCount,
+                        totalRaces,
+                        incompletePercentage: Math.round(incompletePercentage),
+                        isInIncompleteHeat: isIncompleteHeat
+                    });
+                }
+            }
+        });
+
         // Generate recommendations
         if (analysis.rematches.length > 0) {
             analysis.recommendations.push(`${analysis.rematches.length} rematch(es) detected - consider rearranging if possible`);
         }
-        
         if (analysis.laneRepeats.length > 0) {
             analysis.recommendations.push(`${analysis.laneRepeats.length} participant(s) assigned to frequently used lanes`);
         }
-        
-        if (analysis.rematches.length === 0 && analysis.laneRepeats.length === 0) {
+        if (analysis.incompleteRaceDistribution.length > 0) {
+            const inIncompleteHeat = analysis.incompleteRaceDistribution.filter(p => p.isInIncompleteHeat);
+            if (inIncompleteHeat.length > 0) {
+                analysis.recommendations.push(`${inIncompleteHeat.length} participant(s) with high incomplete race history assigned to another incomplete heat`);
+            } else {
+                analysis.recommendations.push(`${analysis.incompleteRaceDistribution.length} participant(s) have disproportionately high incomplete race participation`);
+            }
+        }
+        if (analysis.rematches.length === 0 && analysis.laneRepeats.length === 0 && analysis.incompleteRaceDistribution.length === 0) {
             analysis.recommendations.push('Heat follows optimal pairing constraints');
         }
 
@@ -2116,7 +1515,6 @@ class PairingEngine {
 
         for (let lane = 1; lane <= numberOfLanes; lane++) {
             if (excludeLanes.includes(lane)) continue;
-            
             const usage = laneStats[lane] || 0;
             if (usage < lowestUsage) {
                 lowestUsage = usage;
@@ -2142,8 +1540,11 @@ class PairingEngine {
         this.laneHistory.clear();
         this.opponentHistory.clear();
         this.raceHistory.clear();
+        this.incompleteRaceHistory.clear();
         this.classLaneStats.clear();
         this.eventRaceNumbers.clear();
+        this.classScheduleHistory.clear();
+        this.eventClassOrder.clear();
     }
 
     /**
@@ -2158,7 +1559,10 @@ class PairingEngine {
                 Array.from(this.opponentHistory.entries()).map(([id, opponents]) => [id, Array.from(opponents)])
             ),
             raceHistory: Object.fromEntries(this.raceHistory),
-            eventRaceNumbers: Object.fromEntries(this.eventRaceNumbers)
+            incompleteRaceHistory: Object.fromEntries(this.incompleteRaceHistory),
+            eventRaceNumbers: Object.fromEntries(this.eventRaceNumbers),
+            classScheduleHistory: Object.fromEntries(this.classScheduleHistory),
+            eventClassOrder: Object.fromEntries(this.eventClassOrder)
         };
     }
 
@@ -2177,8 +1581,17 @@ class PairingEngine {
         if (data.raceHistory) {
             this.raceHistory = new Map(Object.entries(data.raceHistory));
         }
+        if (data.incompleteRaceHistory) {
+            this.incompleteRaceHistory = new Map(Object.entries(data.incompleteRaceHistory));
+        }
         if (data.eventRaceNumbers) {
             this.eventRaceNumbers = new Map(Object.entries(data.eventRaceNumbers));
+        }
+        if (data.classScheduleHistory) {
+            this.classScheduleHistory = new Map(Object.entries(data.classScheduleHistory));
+        }
+        if (data.eventClassOrder) {
+            this.eventClassOrder = new Map(Object.entries(data.eventClassOrder));
         }
     }
 
@@ -2186,39 +1599,39 @@ class PairingEngine {
      * Debug method to verify pairing logic
      */
     debugPairingLogic(participants, numberOfLanes, roundNumber) {
-        console.log('=== PAIRING DEBUG ===');
-        console.log('Round:', roundNumber);
-        console.log('Participants:', participants.map(p => p.name));
-        console.log('Number of lanes:', numberOfLanes);
-        console.log('Is first round:', roundNumber === 1);
+        window.debugLogger.debug('Pairing', '=== PAIRING DEBUG ===');
+        window.debugLogger.debug('Pairing', 'Round:', roundNumber);
+        window.debugLogger.debug('Pairing', 'Participants:', participants.map(p => p.name));
+        window.debugLogger.debug('Pairing', 'Number of lanes:', numberOfLanes);
+        window.debugLogger.debug('Pairing', 'Is first round:', roundNumber === 1);
         
         if (roundNumber > 1) {
-            console.log('Opponent history:');
+            window.debugLogger.debug('Pairing', 'Opponent history:');
             this.opponentHistory.forEach((opponents, participantId) => {
                 const participant = participants.find(p => p.id === participantId);
                 if (participant) {
-                    console.log(`  ${participant.name}: raced against ${opponents.size} opponents`);
+                    window.debugLogger.debug('Pairing', `  ${participant.name}: raced against ${opponents.size} opponents`);
                 }
             });
             
-            console.log('Lane history:');
+            window.debugLogger.debug('Pairing', 'Lane history:');
             this.laneHistory.forEach((laneStats, participantId) => {
                 const participant = participants.find(p => p.id === participantId);
                 if (participant) {
                     const totalRaces = Object.values(laneStats).reduce((sum, count) => sum + count, 0);
-                    console.log(`  ${participant.name}: ${totalRaces} total races`, laneStats);
+                    window.debugLogger.debug('Pairing', `  ${participant.name}: ${totalRaces} total races`, laneStats);
                 }
             });
         }
         
-        console.log('=== END DEBUG ===');
+        window.debugLogger.debug('Pairing', '=== END DEBUG ===');
     }
 
     /**
      * Test method to verify race balancing logic
      */
     testRaceBalancing() {
-        console.log('🧪 Testing Race Balancing Logic...');
+        window.debugLogger.debug('Pairing', 'Testing Race Balancing Logic...');
         
         const testCases = [
             { drivers: 6, lanes: 5, expected: { freeRun: [5, 1], balanced: [3, 3] } },
@@ -2229,15 +1642,13 @@ class PairingEngine {
         ];
 
         testCases.forEach((testCase, index) => {
-            console.log(`\n🧪 Test Case ${index + 1}: ${testCase.drivers} drivers, ${testCase.lanes} lanes`);
+            window.debugLogger.debug('Pairing', `Test Case ${index + 1}: ${testCase.drivers} drivers, ${testCase.lanes} lanes`);
             
-            // Test Free Run mode
             const freeRunDistribution = this.calculateFreeRunDistribution(testCase.drivers, testCase.lanes);
-            console.log(`🏃 Free Run: ${freeRunDistribution.join(', ')} (expected: ${testCase.expected.freeRun.join(', ')})`);
+            window.debugLogger.debug('Pairing', `Free Run: ${freeRunDistribution.join(', ')} (expected: ${testCase.expected.freeRun.join(', ')})`);
             
-            // Test Balanced mode
             const balancedDistribution = this.calculateOptimalBalancedDistribution(testCase.drivers, testCase.lanes);
-            console.log(`⚖️ Balanced: ${balancedDistribution.join(', ')} (expected: ${testCase.expected.balanced.join(', ')})`);
+            window.debugLogger.debug('Pairing', `Balanced: ${balancedDistribution.join(', ')} (expected: ${testCase.expected.balanced.join(', ')})`);
         });
     }
 
@@ -2260,16 +1671,19 @@ class PairingEngine {
         
         return distribution;
     }
-
-
 }
 
-// Ensure global availability
+/**
+ * Global export for browser environments
+ * Depends on window object being available
+ */
 if (typeof window !== 'undefined') {
     window.PairingEngine = PairingEngine;
 }
 
-// Export for module systems
+/**
+ * Export for CommonJS module systems (Node.js)
+ */
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = PairingEngine;
-} 
+}

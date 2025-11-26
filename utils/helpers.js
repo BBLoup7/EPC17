@@ -403,10 +403,11 @@ class Helpers {
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                z-index: 10000;
+                z-index: 10001;
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
+                pointer-events: none;
             `;
             document.body.appendChild(toastContainer);
         }
@@ -425,6 +426,7 @@ class Helpers {
             transform: translateX(100%);
             transition: all 0.3s ease;
             cursor: pointer;
+            pointer-events: auto;
         `;
 
         // Set background color based on type

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Event Analytics Dashboard (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="analytics-dashboard">
@@ -337,6 +337,10 @@
                             <span>Driver Rankings & Statistics</span>
                         </div>
                         <div class="table-actions">
+                            <button id="sendEventStatsBtn" class="btn-modern btn-primary" onclick="sendEventStatsToDrivers()" title="Send Event Stats to All Drivers">
+                                <i class="fas fa-paper-plane"></i>
+                                <span>Send Event Stats</span>
+                            </button>
                             <button class="btn-icon" title="Export Data">
                                 <i class="fas fa-download"></i>
                             </button>
@@ -1968,6 +1972,7 @@
     </style>
 
     <!-- Scripts -->
+    <script src="js/logger.js"></script>
     <script src="utils/event-bus.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
@@ -1975,6 +1980,8 @@
     <!-- Export libs -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <!-- PDF Generator -->
+    <script src="utils/pdf-generator.js"></script>
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script>
@@ -3334,6 +3341,219 @@
             document.getElementById('eventTimeEfficiency').textContent = `${timeEfficiency}%`;
             document.getElementById('eventTimeEfficiencyBar').style.width = `${timeEfficiency}%`;
         }
+
+        /**
+         * Send Event Stats to Drivers via Email
+         * Generates PDFs for all drivers and sends them via email
+         */
+        async function sendEventStatsToDrivers() {
+            try {
+                // Check if an event is selected
+                if (!currentEvent) {
+                    showPopup('Please select an event first', 'error');
+                    return;
+                }
+
+                // Check if email is enabled
+                const settings = await fetch('/api/settings').then(r => r.json());
+                if (!settings.emailEnabled) {
+                    showPopup('Email sending is disabled in settings. Please enable it in the admin panel.', 'error');
+                    return;
+                }
+
+                // Get drivers data
+                const eventParticipants = allParticipants.filter(p => p.eventId === currentEvent.id);
+                
+                if (eventParticipants.length === 0) {
+                    showPopup('No participants found for this event', 'error');
+                    return;
+                }
+
+                // Filter out participants without email
+                const driversWithEmail = eventParticipants.filter(p => p.contact && p.contact.email && p.contact.email.trim() !== '');
+                
+                if (driversWithEmail.length === 0) {
+                    showPopup('No participants have email addresses configured', 'error');
+                    return;
+                }
+
+                showPopup(`Generating PDFs for ${driversWithEmail.length} drivers...`, 'info');
+                console.log(`📧 Starting email send process for ${driversWithEmail.length} drivers`);
+
+                // Initialize PDF generator
+                const pdfGenerator = new PDFGenerator();
+
+                // Prepare event data
+                const eventData = {
+                    name: currentEvent.name,
+                    date: currentEvent.date,
+                    location: currentEvent.location,
+                    status: currentEvent.status
+                };
+
+                // Generate PDFs for all drivers
+                const pdfResults = [];
+                for (const participant of driversWithEmail) {
+                    // Prepare driver data
+                    const driverData = {
+                        id: participant.id,
+                        name: participant.name,
+                        email: participant.contact.email,
+                        classes: participant.selectedClasses ? participant.selectedClasses.join(', ') : 'N/A',
+                        races: participant.totalRaces || 0,
+                        wins: participant.totalWins || 0,
+                        winRate: participant.winRate || 0,
+                        avgPosition: participant.avgPosition || 0,
+                        lanePerformance: participant.lanePerformance || {}
+                    };
+
+                    try {
+                        const pdf = await pdfGenerator.generateDriverStatsPDF(driverData, eventData);
+                        const blob = pdf.output('blob');
+                        const base64 = await blobToBase64(blob);
+                        
+                        pdfResults.push({
+                            name: driverData.name,
+                            email: driverData.email,
+                            pdfData: base64,
+                            fileName: `${driverData.name.replace(/[^a-zA-Z0-9]/g, '_')}_stats.pdf`
+                        });
+
+                        console.log(`✅ Generated PDF for ${driverData.name}`);
+                    } catch (error) {
+                        console.error(`❌ Failed to generate PDF for ${driverData.name}:`, error);
+                    }
+                }
+
+                if (pdfResults.length === 0) {
+                    showPopup('Failed to generate any PDFs', 'error');
+                    return;
+                }
+
+                // Show sending progress
+                showPopup(`Sending emails to ${pdfResults.length} drivers...`, 'info');
+
+                // Send emails via backend
+                const response = await fetch('/api/send-event-stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionStorage.getItem('epc17_auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        eventName: eventData.name,
+                        recipients: pdfResults
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    // Handle specific error cases
+                    if (result.offline) {
+                        showPopup('Could not send emails – no internet.', 'error');
+                    } else if (result.disabled) {
+                        showPopup('Email sending is disabled in settings', 'error');
+                    } else if (result.config_error) {
+                        showPopup('Email not configured. Set EMAIL_USER and EMAIL_PASS environment variables.', 'error');
+                    } else {
+                        showPopup(`Failed to send emails: ${result.error || 'Unknown error'}`, 'error');
+                    }
+                    return;
+                }
+
+                // Success!
+                if (result.successCount > 0) {
+                    showPopup(`Emails sent to ${result.successCount} drivers`, 'success');
+                    console.log(`✅ Successfully sent ${result.successCount} emails`);
+                    
+                    if (result.failedCount > 0) {
+                        console.warn(`⚠️  ${result.failedCount} emails failed to send`);
+                        console.table(result.details.filter(d => d.status === 'failed'));
+                    }
+                } else {
+                    showPopup(`Failed to send emails to all drivers`, 'error');
+                }
+
+            } catch (error) {
+                console.error('❌ Error sending event stats:', error);
+                showPopup(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Convert Blob to Base64
+         */
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        /**
+         * Show popup notification
+         */
+        function showPopup(message, type = 'info') {
+            const popup = document.createElement('div');
+            popup.className = `popup-notification popup-${type}`;
+            popup.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+                color: white;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease;
+                max-width: 400px;
+            `;
+            
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+            popup.innerHTML = `<strong>${icon}</strong> ${message}`;
+            
+            document.body.appendChild(popup);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                popup.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (popup.parentNode) {
+                        document.body.removeChild(popup);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Add keyframe animations for popup
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

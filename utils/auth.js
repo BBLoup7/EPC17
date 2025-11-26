@@ -1,18 +1,30 @@
 // Rule: EPC17_WORKFLOW.md - simple local auth overlay; no external libs
 (function() {
 	const TOKEN_KEY = 'epc17_auth_token';
+	const USER_KEY = 'epc17_user';
 	let session = null;
 
 	function setToken(token) {
-		if (token) {
-			sessionStorage.setItem(TOKEN_KEY, token);
-		} else {
-			sessionStorage.removeItem(TOKEN_KEY);
-		}
+		try {
+			if (token) {
+				localStorage.setItem(TOKEN_KEY, token);
+			} else {
+				localStorage.removeItem(TOKEN_KEY);
+			}
+		} catch {}
 	}
 
 	function getToken() {
-		return sessionStorage.getItem(TOKEN_KEY) || '';
+		try {
+			return localStorage.getItem(TOKEN_KEY) || '';
+		} catch {
+			return '';
+		}
+	}
+
+	function redirectToLogin(message) {
+		const q = message ? `?msg=${encodeURIComponent(message)}` : '';
+		window.location.href = `/login.html${q}`;
 	}
 
 	async function authFetch(url, options = {}) {
@@ -28,7 +40,7 @@
 		const response = await fetch(url, { ...options, headers });
 		console.log('🔐 Response status for', url, ':', response.status);
 		if (response.status === 401) {
-			showLoginOverlay('Your session expired. Please log in.');
+			redirectToLogin('expired');
 		}
 		return response;
 	}
@@ -65,9 +77,9 @@
 				'analytics.html': 'analytics',
 				'driver-profile.html': 'drivers profile',
 				'live-display.html': 'live display',
-				'users.html': '__admin__'
+				'users.html': 'admin_power'
 			}[href];
-			const allowed = pagePerm === '__admin__' ? (session && session.username === 'Admin') : userHasPermission(pagePerm);
+			const allowed = userHasPermission(pagePerm);
 			if (pagePerm && !allowed) {
 				a.parentElement.style.display = 'none';
 			}
@@ -75,21 +87,81 @@
 	}
 
 	function showAccessDenied() {
-		// Show a more informative access denied message
-		const message = 'Access Denied\n\nYou do not have permission to access this feature. Please contact an administrator if you believe this is an error.';
-		alert(message);
+		// Show a more informative access denied message using a styled toast/notification
+		showAccessDeniedNotification('You do not have permission to access this feature.');
+	}
+
+	function showAccessDeniedNotification(message, redirectTo = null) {
+		// Create a styled notification instead of ugly alert
+		let notification = document.getElementById('access-denied-notification');
+		if (!notification) {
+			notification = document.createElement('div');
+			notification.id = 'access-denied-notification';
+			notification.style.cssText = `
+				position: fixed;
+				top: 20px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: linear-gradient(135deg, #dc3545, #c82333);
+				color: white;
+				padding: 16px 24px;
+				border-radius: 8px;
+				box-shadow: 0 4px 20px rgba(220, 53, 69, 0.4);
+				z-index: 10000;
+				font-family: inherit;
+				font-size: 14px;
+				font-weight: 500;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				max-width: 90%;
+				animation: slideDown 0.3s ease-out;
+			`;
+			// Add animation keyframes
+			const style = document.createElement('style');
+			style.textContent = `
+				@keyframes slideDown {
+					from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+					to { opacity: 1; transform: translateX(-50%) translateY(0); }
+				}
+				@keyframes slideUp {
+					from { opacity: 1; transform: translateX(-50%) translateY(0); }
+					to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+				}
+			`;
+			document.head.appendChild(style);
+			document.body.appendChild(notification);
+		}
+		
+		notification.innerHTML = `
+			<span style="font-size: 18px;">🚫</span>
+			<span>Access Denied: ${message}</span>
+		`;
+		notification.style.display = 'flex';
+		notification.style.animation = 'slideDown 0.3s ease-out';
+		
+		// Auto-hide after 3 seconds and optionally redirect
+		setTimeout(() => {
+			notification.style.animation = 'slideUp 0.3s ease-out';
+			setTimeout(() => {
+				notification.style.display = 'none';
+				if (redirectTo) {
+					window.location.href = redirectTo;
+				}
+			}, 300);
+		}, 2500);
 	}
 
 	function ensureAdminLink() {
-		if (!session || session.username !== 'Admin') return;
+		// Show Users link if user has admin_power permission
+		if (!session || !userHasPermission('admin_power')) return;
 		const nav = document.querySelector('.nav-links');
 		if (!nav) return;
 		if (nav.querySelector('[data-admin-link]')) return;
 		const li = document.createElement('li');
 		li.setAttribute('data-admin-link', 'true');
 		const a = document.createElement('a');
-		const token = getToken();
-		a.href = token ? `users.html?token=${encodeURIComponent(token)}` : 'users.html';
+		a.href = 'users.html';
 		a.textContent = 'Users';
 		a.title = 'Users & Permissions';
 		li.appendChild(a);
@@ -148,29 +220,8 @@
 		return overlay;
 	}
 
-	function showLoginOverlay(message) {
-		const overlay = buildLoginOverlay(message);
-		overlay.classList.add('active');
-		const loginBtn = overlay.querySelector('#auth-login-btn');
-		const usernameEl = overlay.querySelector('#auth-username');
-		const passwordEl = overlay.querySelector('#auth-password');
-		const msgEl = overlay.querySelector('#auth-login-message');
-		function doLogin() {
-			msgEl.textContent = 'Signing in...';
-			login(usernameEl.value.trim(), passwordEl.value).then(ok => {
-				if (ok) {
-					overlay.classList.remove('active');
-					document.body.removeChild(overlay);
-					// Refresh page and redirect to home after login to ensure proper UI state
-					window.location.href = '/';
-				} else {
-					msgEl.textContent = 'Invalid credentials. Try again.';
-				}
-			});
-		}
-		loginBtn.onclick = doLogin;
-		passwordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
-		usernameEl.focus();
+function showLoginOverlay(message) {
+		redirectToLogin(message || '');
 	}
 
 	async function login(username, password) {
@@ -191,12 +242,9 @@
 		}
 	}
 
-	async function restoreSession() {
-		const token = getToken();
-		console.log('🔐 Restoring session, token exists:', !!token);
-		if (!token) return false;
+async function restoreSession() {
 		try {
-			const res = await authFetch('/api/auth/me');
+			const res = await fetch('/api/auth/me');
 			console.log('🔐 Auth /me response status:', res.status);
 			if (!res.ok) {
 				console.log('🔐 Auth /me failed, status:', res.status);
@@ -210,6 +258,7 @@
 			}
 			session = { username: data.username, permissions: data.permissions, allowedEvents: data.allowedEvents || [] };
 			setCurrentUser();
+			try { localStorage.setItem(USER_KEY, JSON.stringify(window.currentUser)); } catch {}
 			console.log('🔐 Session restored successfully');
 			return true;
 		} catch (e) {
@@ -222,8 +271,9 @@
 		setToken('');
 		session = null;
 		setCurrentUser();
+		try { localStorage.removeItem(USER_KEY); } catch {}
 		fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-			showLoginOverlay();
+			redirectToLogin();
 		});
 		ensureLogoutButton();
 	}
@@ -240,10 +290,18 @@
 
 	async function initAuth() {
 		console.log('🔐 Initializing authentication...');
+		// Migrate any legacy sessionStorage token
+		try {
+			const ssToken = sessionStorage.getItem(TOKEN_KEY);
+			if (ssToken && !getToken()) {
+				localStorage.setItem(TOKEN_KEY, ssToken);
+			}
+			sessionStorage.removeItem(TOKEN_KEY);
+		} catch {}
 		const ok = await restoreSession();
 		if (!ok) {
-			console.log('🔐 No valid session found, showing login overlay');
-			showLoginOverlay();
+			console.log('🔐 No valid session found, redirecting to login');
+			redirectToLogin();
 			return;
 		}
 		console.log('🔐 Session restored successfully:', { username: session?.username, permissions: session?.permissions });
@@ -265,21 +323,19 @@
 			'/live-display.html': ['live display'],
 			// Rule: EPC17_WORKFLOW.md - add animator page gating
 			'/animator.html': ['animator'],
-			'/users.html': ['__admin__']
+			'/users.html': ['admin_power']
 		};
 		const path = window.location.pathname;
 		if (pagePermMap[path]) {
 			const perms = session.permissions || [];
-			// Admin bypass: Admin has access to all pages
+			// Admin username has access to all pages
 			const isAdmin = !!(session && session.username === 'Admin');
-			const allowed = isAdmin || pagePermMap[path].some(p => p === '__admin__' ? isAdmin : perms.includes(p));
+			const allowed = isAdmin || pagePermMap[path].some(p => perms.includes(p));
 			console.log('🔐 Page access check:', { path, perms, isAdmin, allowed });
 			if (!allowed) {
 				console.log('🔐 Access denied for page:', path);
-				alert('Access Denied');
-				showLoginOverlay('Access Denied');
-				// Prevent further page loading by redirecting to home
-				window.location.href = '/';
+				// Show notification and redirect to home page instead of logging out
+				showAccessDeniedNotification('You do not have permission to access this page.', '/index.html');
 				return;
 			}
 		}
@@ -290,6 +346,7 @@
 		init: initAuth,
 		login,
 		logout,
+		getToken,
 		hasPermission: userHasPermission,
 		fetch: authFetch,
 		showAccessDenied

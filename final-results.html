@@ -6,7 +6,7 @@
     <title>EPC TECHNOLOGY - Final Results (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="styles/race.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Hero Section Styles - Consistent with other pages */
@@ -216,6 +216,61 @@
             background: linear-gradient(135deg, #cd7f32, #daa520) !important;
             color: #fff !important;
             font-weight: 600;
+        }
+
+        .row-dsq {
+            background: rgba(244, 67, 54, 0.15) !important;
+            color: var(--text-primary) !important;
+        }
+
+        .row-dsq:hover {
+            background: rgba(244, 67, 54, 0.25) !important;
+        }
+
+        /* Badge Styles */
+        .badge-dsq {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+        }
+
+        .badge-fs {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+        }
+
+        .badge-champion {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(255, 215, 0, 0.4);
+        }
+
+        .status-cell {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .notes-cell {
+            font-size: 0.875rem;
         }
 
         .no-results {
@@ -569,6 +624,8 @@
 
     <!-- Scripts -->
     <script src="utils/performance-monitor.js"></script>
+    <script src="utils/session-persistence.js"></script>
+    <script src="js/logger.js"></script>
     <script src="utils/helpers.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
@@ -576,10 +633,16 @@
     <script src="utils/event-bus.js"></script>
     <script src="modules/statistics-manager.js"></script>
     <script src="utils/data-manager.js?v=1.2"></script>
-    <script src="utils/migration-utils.js?v=1.2"></script>
+    
+    <!-- Event System - Modular Architecture (Refactored) -->
+    <script src="modules/event-data-service.js"></script>
+    <script src="modules/event-logic.js"></script>
+    <script src="modules/event-ui.js"></script>
+    <script src="modules/event-controller.js"></script>
+    <script src="modules/event.js?v=1.2"></script>
+    
     <script src="modules/pairing-engine.js?v=1.2"></script>
     <script src="modules/race.js?v=1.2"></script>
-    <script src="modules/event.js?v=1.2"></script>
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
     <script src="js/sidebar-nav.js"></script>
@@ -624,20 +687,44 @@
                 await waitForAuthentication();
                 
                 // Initialize core modules
-                dataManager = new DataManager();
-                eventManager = new EventManager();
+                window.dataManager = new DataManager();
+                dataManager = window.dataManager; // Also set local variable
                 
                 // Wait for data to load before initializing UI
                 await dataManager.loadFromStorage();
+                
+                // Initialize Event Data Service (global instance for deprecation fallback)
+                window.eventDataService = new EventDataService(dataManager);
+                console.log('✅ EventDataService initialized globally');
+                
+                // Initialize EventManager (will use the modules we just loaded)
+                eventManager = new EventManager();
                 
                 // Initialize events data for results page
                 const allEvents = dataManager.getEventsArray();
                 window.allResultsEventsData = [...allEvents];
                 window.filteredResultsEventsData = [...allEvents];
                 
-                // Load and display events
-                loadEvents();
-                
+                // Restore session state if available
+                const sessionState = window.SessionPersistence.FinalResults.load();
+                if (sessionState && sessionState.eventId) {
+                    console.log('🔄 Restoring final results session state:', sessionState);
+                    // Restore previous event selection after a short delay to ensure events are loaded
+                    setTimeout(() => {
+                        const eventExists = dataManager.getEvent(sessionState.eventId);
+                        if (eventExists) {
+                            console.log('🔄 Auto-selecting previous event:', sessionState.eventId);
+                            viewFinalResults(sessionState.eventId);
+                        } else {
+                            console.log('🔄 Previous event no longer exists, clearing session state');
+                            window.SessionPersistence.clearState();
+                        }
+                    }, 500);
+                } else {
+                    // Load and display events normally
+                    loadEvents();
+                }
+
                 console.log('🏆 FINAL RESULTS PAGE: Final Results System initialized successfully');
                 
             } catch (error) {
@@ -727,30 +814,48 @@
                 return;
             }
 
+            // Initialize RaceManager if not already initialized
+            if (!window.raceManager) {
+                const pairingEngine = new PairingEngine(dataManager);
+                window.raceManager = new RaceManager(dataManager, pairingEngine);
+                console.log('✅ RaceManager initialized for final results');
+            }
+
             // Hide event selection and show results
             document.getElementById('event-selection').style.display = 'none';
             document.getElementById('final-results').style.display = 'block';
 
-            // Update header
-            document.getElementById('selected-event-name').textContent = event.name;
+            // Update header and store event ID
+            const headerElement = document.getElementById('selected-event-name');
+            headerElement.textContent = event.name;
+            headerElement.dataset.eventId = eventId; // Store event ID for later use
+            
             document.getElementById('selected-event-details').textContent = 
                 `${event.location} • ${new Date(event.date).toLocaleDateString()}`;
 
             // Load and display final results
             loadFinalResults(eventId);
+
+            // Save session state
+            window.SessionPersistence.FinalResults.save(eventId);
         }
 
-        function loadFinalResults(eventId) {
+        async function loadFinalResults(eventId) {
             const container = document.getElementById('final-results-container');
             if (!container) return;
 
-            // Get race bracket data
-            const bracket = dataManager.getRaceBracket(eventId);
-            if (!bracket || !bracket.classes) {
+            console.log('🏆 Loading final results for event:', eventId);
+
+            // Get race bracket data (this is async, returns a Promise)
+            const bracket = await dataManager.getRaceBracket(eventId);
+            console.log('📊 Race bracket data:', bracket);
+            
+            if (!bracket) {
+                console.warn('❌ No bracket found for event:', eventId);
                 container.innerHTML = `
                     <div class="no-results">
                         <h3>No Results Available</h3>
-                        <p>No race results are available for this event.</p>
+                        <p>No race bracket data found for this event.</p>
                         <button class="btn btn-secondary" onclick="goBackToEvents()">
                             <i class="fas fa-arrow-left"></i> Back to Events
                         </button>
@@ -758,13 +863,33 @@
                 `;
                 return;
             }
+            
+            if (!bracket.classes) {
+                console.warn('❌ No classes found in bracket for event:', eventId);
+                container.innerHTML = `
+                    <div class="no-results">
+                        <h3>No Results Available</h3>
+                        <p>No race classes are configured for this event.</p>
+                        <button class="btn btn-secondary" onclick="goBackToEvents()">
+                            <i class="fas fa-arrow-left"></i> Back to Events
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            console.log('✅ Found', Object.keys(bracket.classes).length, 'classes in bracket');
 
             // Generate final results for each class
             let resultsHtml = '';
             
             Object.entries(bracket.classes).forEach(([className, classData]) => {
+                console.log(`🏁 Processing class: ${className}`, classData);
+                
                 const classResults = generateClassResults(className, classData);
-                if (classResults.length > 0) {
+                console.log(`📊 Results for ${className}:`, classResults);
+                
+                if (classResults && classResults.length > 0) {
                     resultsHtml += `
                         <div class="results-class">
                             <h4>${className}</h4>
@@ -772,25 +897,34 @@
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Position</th>
+                                            <th>Rank</th>
                                             <th>Driver</th>
-                                            <th>Team</th>
-                                            <th>Points</th>
+                                            <th>Status</th>
+                                            <th>Rounds</th>
+                                            <th>Last Result</th>
+                                            <th>Avg Finish</th>
                                             <th>Wins</th>
-                                            <th>Races</th>
+                                            <th>Notes</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${classResults.map((result, index) => `
-                                            <tr class="position-${index + 1}">
-                                                <td>${index + 1}</td>
-                                                <td>${result.driverName}</td>
-                                                <td>${result.team || 'N/A'}</td>
-                                                <td>${result.points}</td>
-                                                <td>${result.wins}</td>
-                                                <td>${result.races}</td>
+                                        ${classResults.map((result) => {
+                                            const rank = result.finalRank;
+                                            const isDSQ = rank === 'DSQ';
+                                            const rowClass = isDSQ ? 'row-dsq' : (rank <= 3 ? `position-${rank}` : '');
+                                            
+                                            return `
+                                            <tr class="${rowClass}">
+                                                <td><strong>${rank}</strong></td>
+                                                <td>${result.participant.name}</td>
+                                                <td class="status-cell">${formatDriverStatus(result)}</td>
+                                                <td>${result.roundsCompleted || 0}</td>
+                                                <td>P${result.latestRacePosition || '-'}</td>
+                                                <td>${result.averageFinish ? result.averageFinish.toFixed(1) : '-'}</td>
+                                                <td>${result.totalWins || 0}</td>
+                                                <td class="notes-cell">${formatNotes(result)}</td>
                                             </tr>
-                                        `).join('')}
+                                        `}).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -814,61 +948,96 @@
             }
         }
 
-        function generateClassResults(className, classData) {
-            const results = [];
-            const participantStats = {};
-
-            // Process all rounds and heats to calculate statistics
-            if (classData.rounds) {
-                classData.rounds.forEach(round => {
-                    if (round.heats) {
-                        round.heats.forEach(heat => {
-                            if (heat.results && heat.results.length > 0) {
-                                heat.results.forEach(result => {
-                                    const participantId = result.participantId;
-                                    
-                                    if (!participantStats[participantId]) {
-                                        // Get participant details
-                                        const participant = dataManager.getParticipant(participantId);
-                                        participantStats[participantId] = {
-                                            driverName: participant ? participant.name : 'Unknown Driver',
-                                            team: participant ? participant.team : null,
-                                            points: 0,
-                                            wins: 0,
-                                            races: 0
-                                        };
-                                    }
-
-                                    participantStats[participantId].races++;
-                                    
-                                    // Award points based on position (simple scoring system)
-                                    if (result.position === 1) {
-                                        participantStats[participantId].wins++;
-                                        participantStats[participantId].points += 10;
-                                    } else if (result.position === 2) {
-                                        participantStats[participantId].points += 7;
-                                    } else if (result.position === 3) {
-                                        participantStats[participantId].points += 5;
-                                    } else if (result.position === 4) {
-                                        participantStats[participantId].points += 3;
-                                    } else if (result.position === 5) {
-                                        participantStats[participantId].points += 2;
-                                    } else {
-                                        participantStats[participantId].points += 1;
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
+        /**
+         * Format driver status string for display
+         */
+        function formatDriverStatus(result) {
+            if (result.finalRank === 'DSQ') {
+                return `<span class="badge-dsq">DSQ in R${result.disqualifiedRound || '?'}</span>`;
             }
+            
+            let status = '';
+            const inFinal = result.eliminatedInRound === 'final';
+            
+            if (inFinal) {
+                if (result.latestRacePosition === 1) {
+                    status = `<span class="badge-champion">Champion</span>`;
+                } else {
+                    status = `Finalist P${result.latestRacePosition}`;
+                }
+            } else {
+                status = `Eliminated R${result.eliminatedInRound}`;
+            }
+            
+            status += ` • Latest: P${result.latestRacePosition} • Avg: ${result.averageFinish.toFixed(1)}`;
+            
+            return status;
+        }
 
-            // Convert to array and sort by points (descending)
-            Object.values(participantStats).forEach(stats => {
-                results.push(stats);
-            });
+        /**
+         * Format notes for display
+         */
+        function formatNotes(result) {
+            if (!result.notes || result.notes.length === 0) {
+                return '-';
+            }
+            
+            return result.notes.map(note => {
+                if (note.includes('FS')) {
+                    return `<span class="badge-fs">${note}</span>`;
+                } else if (note.includes('DSQ')) {
+                    return `<span class="badge-dsq">${note}</span>`;
+                }
+                return note;
+            }).join(' ');
+        }
 
-            return results.sort((a, b) => b.points - a.points);
+        function generateClassResults(className, classData) {
+            console.log(`🔧 generateClassResults called for class: ${className}`);
+            
+            // Check if RaceManager is available
+            if (!window.raceManager) {
+                console.error('❌ RaceManager not initialized');
+                return [];
+            }
+            
+            if (!window.raceManager.calculateClassFinalResults) {
+                console.error('❌ calculateClassFinalResults method not found on RaceManager');
+                return [];
+            }
+            
+            // Check if classData has required structure
+            if (!classData) {
+                console.warn(`⚠️ No class data for ${className}`);
+                return [];
+            }
+            
+            if (!classData.participants || classData.participants.length === 0) {
+                console.warn(`⚠️ No participants in class ${className}`);
+                return [];
+            }
+            
+            if (!classData.rounds || classData.rounds.length === 0) {
+                console.warn(`⚠️ No rounds in class ${className}`);
+                return [];
+            }
+            
+            console.log(`✅ Class ${className} has ${classData.participants.length} participants and ${classData.rounds.length} rounds`);
+            
+            // Use the RaceManager's calculateClassFinalResults method
+            try {
+                const currentEventId = document.getElementById('selected-event-name')?.dataset?.eventId;
+                console.log(`📊 Calling calculateClassFinalResults for ${className}, eventId: ${currentEventId}`);
+                
+                const results = window.raceManager.calculateClassFinalResults(classData, className, currentEventId);
+                
+                console.log(`✅ Got ${results.length} results for class ${className}`);
+                return results;
+            } catch (error) {
+                console.error(`❌ Error calculating final results for ${className}:`, error);
+                console.error('Stack trace:', error.stack);
+                return [];
+            }
         }
 
         function goBackToEvents() {

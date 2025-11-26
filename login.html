@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - EPC TECHNOLOGY</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, var(--accent-subtle) 0%, transparent 30%),
+                        radial-gradient(circle at 70% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 30%);
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .main-content {
+            width: 100%;
+            max-width: 100%;
+            padding: var(--space-4);
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-container {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: var(--space-10);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur-strong);
+            -webkit-backdrop-filter: var(--glass-blur-strong);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl), 0 0 60px rgba(255, 96, 56, 0.05);
+            animation: fadeInUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-teal));
+            border-radius: var(--radius-full) var(--radius-full) 0 0;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+
+        .login-logo {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto var(--space-5);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: white;
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+
+        .login-header h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 var(--space-2) 0;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.9375rem;
+        }
+
+        .login-message {
+            min-height: 1.5rem;
+            font-size: 0.875rem;
+            margin: 0 0 var(--space-4) 0;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            display: none;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .login-message:not(:empty) {
+            display: flex;
+        }
+
+        .login-message.error {
+            color: var(--error);
+            background: var(--error-muted);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .login-message.info {
+            color: var(--text-secondary);
+            background: var(--surface-glass-strong);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .login-message.success {
+            color: var(--success);
+            background: var(--success-muted);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-5);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--space-2);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: var(--space-4);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all var(--transition-base);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-muted), var(--shadow-glow-sm);
+            background: var(--bg-elevated);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .login-actions {
+            margin-top: var(--space-6);
+        }
+
+        .login-actions .btn-primary {
+            width: 100%;
+            padding: var(--space-4);
+            font-size: 1rem;
+        }
+
+        .login-actions .btn-primary:disabled {
+            opacity: 0.7;
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color var(--transition-fast);
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Decorative elements */
+        .login-decoration {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: var(--accent-subtle);
+            filter: blur(80px);
+            pointer-events: none;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .login-decoration.top-right {
+            top: -100px;
+            right: -100px;
+        }
+
+        .login-decoration.bottom-left {
+            bottom: -100px;
+            left: -100px;
+            background: rgba(59, 130, 246, 0.08);
+            animation-delay: 2s;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: var(--space-6);
+            }
+
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+    <script src="js/logger.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('login-form');
+        const usernameEl = document.getElementById('username');
+        const passwordEl = document.getElementById('password');
+        const submitBtn = document.getElementById('login-btn');
+        const msgEl = document.getElementById('login-msg');
+
+        // Show message from query string if present
+        const params = new URLSearchParams(window.location.search);
+        const reason = params.get('msg') || '';
+        if (reason === 'expired') {
+            msgEl.textContent = 'Your session expired. Please log in.';
+            msgEl.className = 'login-message info';
+        } else if (reason === 'denied') {
+            msgEl.textContent = 'Access denied. Please sign in as an authorized user.';
+            msgEl.className = 'login-message error';
+        } else {
+            msgEl.textContent = '';
+            msgEl.className = 'login-message';
+        }
+
+        function setBusy(isBusy) {
+            submitBtn.disabled = isBusy;
+            if (isBusy) {
+                submitBtn.classList.add('loading');
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            } else {
+                submitBtn.classList.remove('loading');
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+            }
+        }
+
+        async function doLogin(e) {
+            e && e.preventDefault();
+            const username = usernameEl.value.trim();
+            const password = passwordEl.value;
+            if (!username || !password) {
+                msgEl.textContent = 'Please enter username and password.';
+                msgEl.className = 'login-message error';
+                return;
+            }
+            try {
+                setBusy(true);
+                msgEl.textContent = '';
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                if (!res.ok) {
+                    let err = 'Invalid credentials. Try again.';
+                    try { const data = await res.json(); if (data && data.error) err = data.error; } catch {}
+                    msgEl.textContent = err;
+                    msgEl.className = 'login-message error';
+                    return;
+                }
+                const data = await res.json();
+                // Mirror to localStorage for lightweight client access
+                try {
+                    localStorage.setItem('epc17_auth_token', data.token || '');
+                    localStorage.setItem('epc17_user', JSON.stringify({
+                        username: data.username,
+                        permissions: data.permissions || [],
+                        allowedEvents: data.allowedEvents || []
+                    }));
+                } catch {}
+                // Redirect home (cookie is source of truth)
+                window.location.href = '/';
+            } catch (err) {
+                msgEl.textContent = 'Network error. Please try again.';
+                msgEl.className = 'login-message error';
+            } finally {
+                setBusy(false);
+            }
+        }
+
+        form.addEventListener('submit', doLogin);
+        passwordEl.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') doLogin(ev); });
+        usernameEl.focus();
+    });
+    </script>
+</head>
+<body>
+    <main class="main-content">
+        <div class="login-container">
+            <div class="login-decoration top-right"></div>
+            <div class="login-decoration bottom-left"></div>
+            
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="fas fa-flag-checkered"></i>
+                </div>
+                <h1>Welcome Back</h1>
+                <p class="login-subtitle">Sign in to EPC Technology</p>
+            </div>
+            
+            <form id="login-form">
+                <div id="login-msg" class="login-message"></div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="username">
+                        <i class="fas fa-user"></i> Username
+                    </label>
+                    <input id="username" class="form-control" type="text" autocomplete="username" placeholder="Enter your username" />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input id="password" class="form-control" type="password" autocomplete="current-password" placeholder="Enter your password" />
+                </div>
+                
+                <div class="login-actions">
+                    <button id="login-btn" class="btn btn-primary" type="submit">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </div>
+            </form>
+            
+            <div class="footer-links">
+                <a href="/"><i class="fas fa-arrow-left"></i> Back to Home</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+
+

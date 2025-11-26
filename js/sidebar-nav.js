@@ -36,6 +36,9 @@ class SidebarNavigation {
         
         // Set active navigation item
         this.setActiveNavItem();
+
+        // Load version from server
+        this.loadVersion();
     }
 
     createSidebar() {
@@ -106,7 +109,13 @@ class SidebarNavigation {
                 </ul>
             </nav>
             <div class="sidebar-footer">
-                <div class="sidebar-version">0.9.5</div>
+                <div class="sidebar-footer-content">
+                    <button class="sidebar-logout-btn" title="Logout" aria-label="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="logout-text">Logout</span>
+                    </button>
+                    <div class="sidebar-version" id="sidebar-version">Loading...</div>
+                </div>
             </div>
         `;
         
@@ -155,6 +164,14 @@ class SidebarNavigation {
             if (e.target.closest('.nav-group-header')) {
                 e.preventDefault();
                 this.toggleNavGroup(e.target.closest('.nav-group-header'));
+            }
+
+            // Handle logout button
+            if (e.target.closest('.sidebar-logout-btn')) {
+                e.preventDefault();
+                if (window.Auth && window.Auth.logout) {
+                    window.Auth.logout();
+                }
             }
             
             // Close sidebar when clicking overlay
@@ -380,8 +397,35 @@ class SidebarNavigation {
         
         // Update layout to ensure proper positioning
         this.updateLayout();
-        
+
         return topTabs;
+    }
+
+    // Method to load and display version from server
+    async loadVersion() {
+        try {
+            const response = await fetch('/api/version');
+            if (response.ok) {
+                const data = await response.json();
+                const versionElement = document.getElementById('sidebar-version');
+                if (versionElement) {
+                    versionElement.textContent = data.version;
+                }
+            } else {
+                // Fallback to unknown version
+                const versionElement = document.getElementById('sidebar-version');
+                if (versionElement) {
+                    versionElement.textContent = 'unknown';
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load version from server:', error);
+            // Fallback to unknown version
+            const versionElement = document.getElementById('sidebar-version');
+            if (versionElement) {
+                versionElement.textContent = 'unknown';
+            }
+        }
     }
 
     // Method to remove top tabs

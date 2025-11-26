@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Participants (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Hero Section Styles - Consistent with other pages */
@@ -593,6 +593,8 @@
 
     <!-- Scripts -->
     <script src="utils/performance-monitor.js"></script>
+    <script src="utils/session-persistence.js"></script>
+    <script src="js/logger.js"></script>
     <script src="utils/helpers.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
@@ -600,8 +602,8 @@
     <script src="utils/event-bus.js"></script>
     <script src="modules/statistics-manager.js"></script>
     <script src="utils/data-manager.js?v=1.2"></script>
-    <script src="utils/migration-utils.js?v=1.2"></script>
     <script src="modules/registration.js?v=1.2"></script>
+    <script src="modules/driver-edit-form.js"></script>
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
     <script src="js/sidebar-nav.js"></script>
@@ -652,10 +654,36 @@
                 // Wait for data to load before initializing UI
                 await dataManager.loadFromStorage();
                 
-                // Initialize UI
-                loadParticipantsStats();
-                loadFilterOptions();
-                loadParticipantsList();
+                // Restore session state if available
+                const sessionState = window.SessionPersistence.Participants.load();
+                if (sessionState) {
+                    console.log('🔄 Restoring participants session state:', sessionState);
+                    // Restore filters after a short delay to ensure DOM is ready
+                    setTimeout(() => {
+                        if (sessionState.searchTerm && document.getElementById('participantsSearch')) {
+                            document.getElementById('participantsSearch').value = sessionState.searchTerm;
+                        }
+                        if (sessionState.filters && sessionState.filters.eventFilter && document.getElementById('participantsEventFilter')) {
+                            document.getElementById('participantsEventFilter').value = sessionState.filters.eventFilter;
+                        }
+                        if (sessionState.filters && sessionState.filters.classFilter && document.getElementById('participantsClassFilter')) {
+                            document.getElementById('participantsClassFilter').value = sessionState.filters.classFilter;
+                        }
+                        if (sessionState.selectedParticipantId) {
+                            // TODO: Implement participant selection restoration if needed
+                        }
+                        // Trigger filter update to apply restored state
+                        filterParticipants();
+                    }, 100);
+                } else {
+                    // Initialize UI normally
+                    loadParticipantsStats();
+                    loadFilterOptions();
+                    loadParticipantsList();
+                }
+
+                // Setup driver update listener for cross-page sync
+                setupDriverUpdateListener();
                 
                 console.log('👥 PARTICIPANTS PAGE: Participants System initialized successfully');
                 
@@ -664,6 +692,28 @@
                 showToast('Error initializing participants system', 'error');
             }
         });
+        
+        // Listen for driver updates from the unified edit form (cross-page sync)
+        function setupDriverUpdateListener() {
+            if (window.globalEventBus) {
+                window.globalEventBus.on('driver:updated', (data) => {
+                    console.log('Driver updated via EventBus:', data);
+                    
+                    // Refresh the participants list
+                    loadParticipantsList();
+                    loadParticipantsStats();
+                });
+            }
+        }
+        
+        // Open driver info edit form (for personal info only)
+        function editDriverInfo(participantId) {
+            if (window.DriverEditForm) {
+                window.DriverEditForm.show(participantId);
+            } else {
+                showToast('Driver edit form not available', 'error');
+            }
+        }
 
         // Global utility functions
         function showToast(message, type = 'info') {
@@ -744,236 +794,247 @@
         let totalPages = 0;
 
         // Load participants list with pagination
-        function loadParticipantsList() {
+        async function loadParticipantsList() {
             const container = document.getElementById('participants-list');
             const paginationContainer = document.getElementById('participants-pagination');
             if (!container) return;
 
-            const allParticipants = getFilteredParticipants();
-            totalParticipants = allParticipants.length;
-            totalPages = Math.ceil(totalParticipants / itemsPerPage);
-            
-            // Ensure current page is valid
-            if (currentPage > totalPages && totalPages > 0) {
-                currentPage = totalPages;
-            }
-            if (currentPage < 1) {
-                currentPage = 1;
-            }
-            
-            if (allParticipants.length === 0) {
+            // Show loading state
+            container.innerHTML = '<div class="empty-state"><div class="loading-spinner"></div><h3>Loading Participants...</h3></div>';
+
+            try {
+                // Get current filters
+                const searchTerm = document.getElementById('participantsSearch')?.value.trim() || '';
+                const eventFilter = document.getElementById('participantsEventFilter')?.value || '';
+                const classFilter = document.getElementById('participantsClassFilter')?.value || '';
+
+                // Prepare filters object
+                const filters = {};
+                if (searchTerm) filters.search = searchTerm;
+                if (eventFilter) filters.eventId = eventFilter;
+                if (classFilter) filters.class = classFilter;
+
+                // Fetch paginated data from server
+                console.log('Fetching participants page:', currentPage, 'limit:', itemsPerPage, 'filters:', filters);
+                const result = await dataManager.fetchParticipantsPage(filters, currentPage, itemsPerPage);
+                
+                const pageParticipants = result.participants;
+                totalParticipants = result.total;
+                totalPages = result.totalPages;
+                currentPage = result.page; // Sync in case server adjusted it
+
+                if (pageParticipants.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👥</div>
+                            <h3>No Participants Found</h3>
+                            <p>No participants match your current filters. Try adjusting your search criteria.</p>
+                            <button class="btn btn-secondary" onclick="clearAllFilters()">
+                                <i class="fas fa-times"></i>
+                                Clear Filters
+                            </button>
+                        </div>
+                    `;
+                    if (paginationContainer) paginationContainer.innerHTML = '';
+                    return;
+                }
+
+                const participantsHtml = pageParticipants.map(participant => {
+                    const statusClass = participant.status === 'active' ? 'status-active' : 'status-inactive';
+                    const statusText = participant.status === 'active' ? 'Active' : 'Inactive';
+                    
+                    // Get participant's events - check eventClasses mapping (primary), then legacy fields
+                    let eventNames = [];
+                    if (participant.eventClasses && typeof participant.eventClasses === 'object') {
+                        // NEW: Use eventClasses mapping as primary source
+                        eventNames = Object.keys(participant.eventClasses).map(eventId => {
+                            const event = dataManager.getEvent(eventId);
+                            return event ? event.name : null;
+                        }).filter(name => name);
+                    } else if (participant.eventIds && Array.isArray(participant.eventIds)) {
+                        // LEGACY: eventIds array
+                        eventNames = participant.eventIds.map(eventId => {
+                            const event = dataManager.getEvent(eventId);
+                            return event ? event.name : null;
+                        }).filter(name => name);
+                    } else if (participant.eventId) {
+                        // LEGACY: single eventId
+                        const event = dataManager.getEvent(participant.eventId);
+                        if (event) eventNames.push(event.name);
+                    }
+                    const participantEvents = eventNames.length > 0 ? eventNames.join(', ') : 'No events';
+                    
+                    // Get participant's classes - use selectedClasses (computed aggregate)
+                    const participantClasses = Array.isArray(participant.selectedClasses) ? participant.selectedClasses : [];
+                    
+                    // Get contact information from nested object
+                    const email = participant.contact?.email || participant.contactEmail || 'N/A';
+                    const phone = participant.contact?.phone || participant.contactPhone || 'N/A';
+                    const emergencyContact = participant.contact?.emergency || participant.emergencyContact || 'N/A';
+                    
+                    // Get vehicle information if available
+                    let vehicleInfo = 'N/A';
+                    if (participant.sledConfigurations && Object.keys(participant.sledConfigurations).length > 0) {
+                        const configs = Object.values(participant.sledConfigurations);
+                        vehicleInfo = configs.map(config => {
+                            const parts = [];
+                            if (config.year) parts.push(config.year);
+                            if (config.make) parts.push(config.make);
+                            if (config.model) parts.push(config.model);
+                            return parts.join(' ');
+                        }).filter(v => v).join(', ') || 'N/A';
+                    }
+                    
+                    // Get sponsors if available (ensure it's an array)
+                    const sponsorsArray = Array.isArray(participant.sponsors) ? participant.sponsors : [];
+                    const sponsors = sponsorsArray.length > 0
+                        ? sponsorsArray.join(', ')
+                        : null;
+                    
+                    // Format DOB if available
+                    let formattedDob = 'N/A';
+                    if (participant.dob) {
+                        try {
+                            formattedDob = new Date(participant.dob).toLocaleDateString();
+                        } catch (e) {
+                            formattedDob = participant.dob;
+                        }
+                    }
+                    
+                    return `
+                        <div class="participant-card" data-participant-id="${participant.id}">
+                            <div class="participant-header">
+                                <h4>${participant.name}${participant.nickname ? ` "${participant.nickname}"` : ''}</h4>
+                                <div class="header-actions">
+                                    <span class="participant-status ${statusClass}">${statusText}</span>
+                                    <button class="btn btn-sm btn-secondary" onclick="editParticipant('${participant.id}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteParticipant('${participant.id}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="participant-details">
+                                <div class="detail-row">
+                                    <span class="label">Racing #:</span>
+                                    <span class="value">${participant.racingNumber || 'Not assigned'}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Date of Birth:</span>
+                                    <span class="value">${formattedDob}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Email:</span>
+                                    <span class="value">${email}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Phone:</span>
+                                    <span class="value">${phone}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Emergency Contact:</span>
+                                    <span class="value">${emergencyContact}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Vehicle(s):</span>
+                                    <span class="value">${vehicleInfo}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Events:</span>
+                                    <span class="value">${participantEvents}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Total Fee:</span>
+                                    <span class="value">$${participant.totalFee || 0}</span>
+                                </div>
+                            </div>
+                            ${participantClasses.length > 0 ? `
+                                <div class="participant-classes">
+                                    <h5>All Classes Ever Registered:</h5>
+                                    <div class="class-tags">
+                                        ${participantClasses.map(cls => `<span class="class-tag">${cls}</span>`).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${participant.eventClasses && Object.keys(participant.eventClasses).length > 0 ? `
+                                <div class="participant-classes" style="margin-top: 1rem;">
+                                    <h5>Classes by Event:</h5>
+                                    ${Object.entries(participant.eventClasses).map(([eventId, classes]) => {
+                                        const event = dataManager.getEvent(eventId);
+                                        const eventName = event ? event.name : `Event ${eventId}`;
+                                        return `
+                                            <div style="margin-bottom: 0.5rem;">
+                                                <strong style="font-size: 0.85rem; color: var(--text-secondary);">${eventName}:</strong>
+                                                <div class="class-tags" style="margin-top: 0.25rem;">
+                                                    ${classes.map(cls => `<span class="class-tag" style="font-size: 0.8rem;">${cls}</span>`).join('')}
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            ` : ''}
+                            ${sponsors ? `
+                                <div class="participant-classes">
+                                    <h5>Sponsors:</h5>
+                                    <div class="class-tags">
+                                        ${Array.isArray(participant.sponsors) ? participant.sponsors.map(sponsor => `<span class="class-tag" style="background: var(--accent-secondary);">${sponsor}</span>`).join('') : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                container.innerHTML = participantsHtml;
+                
+                // Render pagination
+                renderPagination(paginationContainer);
+
+            } catch (error) {
+                console.error('Error loading participants list:', error);
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">👥</div>
-                        <h3>No Participants Found</h3>
-                        <p>No participants match your current filters. Try adjusting your search criteria.</p>
-                        <button class="btn btn-secondary" onclick="clearAllFilters()">
-                            <i class="fas fa-times"></i>
-                            Clear Filters
-                        </button>
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>Error Loading Participants</h3>
+                        <p>${error.message}</p>
+                        <button class="btn btn-primary" onclick="loadParticipantsList()">Retry</button>
                     </div>
                 `;
-                if (paginationContainer) paginationContainer.innerHTML = '';
-                return;
             }
-
-            // Calculate pagination range
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, allParticipants.length);
-            const pageParticipants = allParticipants.slice(startIndex, endIndex);
-
-            const participantsHtml = pageParticipants.map(participant => {
-                const statusClass = participant.status === 'active' ? 'status-active' : 'status-inactive';
-                const statusText = participant.status === 'active' ? 'Active' : 'Inactive';
-                
-                // Get participant's events - check both eventIds and eventId arrays
-                let eventNames = [];
-                if (participant.eventIds && Array.isArray(participant.eventIds)) {
-                    eventNames = participant.eventIds.map(eventId => {
-                        const event = dataManager.getEvent(eventId);
-                        return event ? event.name : null;
-                    }).filter(name => name);
-                } else if (participant.eventId) {
-                    const event = dataManager.getEvent(participant.eventId);
-                    if (event) eventNames.push(event.name);
-                }
-                const participantEvents = eventNames.length > 0 ? eventNames.join(', ') : 'No events';
-                
-                // Get participant's classes - check multiple possible field names
-                const participantClasses = participant.selectedClasses || participant.sledClasses || [];
-                
-                // Get contact information from nested object
-                const email = participant.contact?.email || participant.contactEmail || 'N/A';
-                const phone = participant.contact?.phone || participant.contactPhone || 'N/A';
-                const emergencyContact = participant.contact?.emergency || participant.emergencyContact || 'N/A';
-                
-                // Get vehicle information if available
-                let vehicleInfo = 'N/A';
-                if (participant.sledConfigurations && Object.keys(participant.sledConfigurations).length > 0) {
-                    const configs = Object.values(participant.sledConfigurations);
-                    vehicleInfo = configs.map(config => {
-                        const parts = [];
-                        if (config.year) parts.push(config.year);
-                        if (config.make) parts.push(config.make);
-                        if (config.model) parts.push(config.model);
-                        return parts.join(' ');
-                    }).filter(v => v).join(', ') || 'N/A';
-                }
-                
-                // Get sponsors if available
-                const sponsors = participant.sponsors && participant.sponsors.length > 0 
-                    ? participant.sponsors.join(', ') 
-                    : null;
-                
-                // Format DOB if available
-                let formattedDob = 'N/A';
-                if (participant.dob) {
-                    try {
-                        formattedDob = new Date(participant.dob).toLocaleDateString();
-                    } catch (e) {
-                        formattedDob = participant.dob;
-                    }
-                }
-                
-                return `
-                    <div class="participant-card" data-participant-id="${participant.id}">
-                        <div class="participant-header">
-                            <h4>${participant.name}${participant.nickname ? ` "${participant.nickname}"` : ''}</h4>
-                            <div class="header-actions">
-                                <span class="participant-status ${statusClass}">${statusText}</span>
-                                <button class="btn btn-sm btn-secondary" onclick="editParticipant('${participant.id}')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteParticipant('${participant.id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="participant-details">
-                            <div class="detail-row">
-                                <span class="label">Racing #:</span>
-                                <span class="value">${participant.racingNumber || 'Not assigned'}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Date of Birth:</span>
-                                <span class="value">${formattedDob}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Email:</span>
-                                <span class="value">${email}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Phone:</span>
-                                <span class="value">${phone}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Emergency Contact:</span>
-                                <span class="value">${emergencyContact}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Vehicle(s):</span>
-                                <span class="value">${vehicleInfo}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Events:</span>
-                                <span class="value">${participantEvents}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Total Fee:</span>
-                                <span class="value">$${participant.totalFee || 0}</span>
-                            </div>
-                        </div>
-                        ${participantClasses.length > 0 ? `
-                            <div class="participant-classes">
-                                <h5>All Classes Ever Registered:</h5>
-                                <div class="class-tags">
-                                    ${participantClasses.map(cls => `<span class="class-tag">${cls}</span>`).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        ${participant.eventClasses && Object.keys(participant.eventClasses).length > 0 ? `
-                            <div class="participant-classes" style="margin-top: 1rem;">
-                                <h5>Classes by Event:</h5>
-                                ${Object.entries(participant.eventClasses).map(([eventId, classes]) => {
-                                    const event = dataManager.getEvent(eventId);
-                                    const eventName = event ? event.name : `Event ${eventId}`;
-                                    return `
-                                        <div style="margin-bottom: 0.5rem;">
-                                            <strong style="font-size: 0.85rem; color: var(--text-secondary);">${eventName}:</strong>
-                                            <div class="class-tags" style="margin-top: 0.25rem;">
-                                                ${classes.map(cls => `<span class="class-tag" style="font-size: 0.8rem;">${cls}</span>`).join('')}
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        ` : ''}
-                        ${sponsors ? `
-                            <div class="participant-classes">
-                                <h5>Sponsors:</h5>
-                                <div class="class-tags">
-                                    ${participant.sponsors.map(sponsor => `<span class="class-tag" style="background: var(--accent-secondary);">${sponsor}</span>`).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = participantsHtml;
-            
-            // Render pagination
-            renderPagination(paginationContainer);
         }
 
-        // Get filtered participants based on current filters
-        function getFilteredParticipants() {
-            const searchTerm = document.getElementById('participantsSearch').value.toLowerCase().trim();
-            const eventFilter = document.getElementById('participantsEventFilter').value;
-            const classFilter = document.getElementById('participantsClassFilter').value;
-            
-            let participants = dataManager.getParticipantsArray();
-            
-            // Apply search filter
-            if (searchTerm) {
-                participants = participants.filter(participant => {
-                    const nameMatch = participant.name && participant.name.toLowerCase().includes(searchTerm);
-                    const emailMatch = participant.email && participant.email.toLowerCase().includes(searchTerm);
-                    const phoneMatch = participant.phone && participant.phone.toLowerCase().includes(searchTerm);
-                    return nameMatch || emailMatch || phoneMatch;
-                });
-            }
-            
-            // Apply event filter
-            if (eventFilter) {
-                participants = participants.filter(participant => {
-                    return participant.events && participant.events.includes(eventFilter);
-                });
-            }
-            
-            // Apply class filter
-            if (classFilter) {
-                participants = participants.filter(participant => {
-                    return participant.classes && participant.classes.includes(classFilter);
-                });
-            }
-            
-            return participants;
-        }
 
         // Filter participants
         function filterParticipants() {
             const clearButton = document.getElementById('clearParticipantsSearch');
             const searchInput = document.getElementById('participantsSearch');
-            
+            const eventFilter = document.getElementById('participantsEventFilter');
+            const classFilter = document.getElementById('participantsClassFilter');
+
             // Update clear button visibility
             if (clearButton && searchInput) {
                 clearButton.style.display = searchInput.value.trim() ? 'block' : 'none';
             }
-            
+
             // Reset to first page when filtering
             currentPage = 1;
-            
+
+            // Save session state
+            const searchTerm = searchInput ? searchInput.value.trim() : '';
+            const eventFilterValue = eventFilter ? eventFilter.value : '';
+            const classFilterValue = classFilter ? classFilter.value : '';
+
+            window.SessionPersistence.Participants.save(
+                searchTerm,
+                {
+                    eventFilter: eventFilterValue,
+                    classFilter: classFilterValue
+                },
+                null, // selectedParticipantId
+                0 // scrollPosition
+            );
+
             // Reload participants list with filters
             loadParticipantsList();
         }
@@ -1068,27 +1129,31 @@
         }
 
         // Edit participant
-        function editParticipant(participantId) {
-            console.log('📝 Opening comprehensive edit form for participant:', participantId);
+        // REFACTORED: Use unified registration form for editing
+        async function editParticipant(participantId) {
+            console.log('📝 Opening unified edit form for participant:', participantId);
             
             try {
-                const participant = dataManager.getParticipant(participantId);
-                if (!participant) {
-                    alert('Participant not found');
-                    return;
+                // Use unified registration form in edit mode
+                if (window.registrationManager && window.registrationManager.showUnifiedForm) {
+                    await window.registrationManager.showUnifiedForm({
+                        mode: 'edit',
+                        participantId: participantId
+                    });
+                } else {
+                    // Fallback to legacy edit modal if registrationManager not available
+                    console.warn('⚠️ RegistrationManager not available, using legacy edit modal');
+                    const participant = dataManager.getParticipant(participantId);
+                    if (!participant) {
+                        alert('Participant not found');
+                        return;
+                    }
+                    const editModalHtml = createEditParticipantModal(participant);
+                    showEditModal('Edit Participant', editModalHtml);
+                    setTimeout(() => {
+                        initializeEditForm(participant);
+                    }, 100);
                 }
-                
-                // Create comprehensive edit modal HTML
-                const editModalHtml = createEditParticipantModal(participant);
-                
-                // Show the modal
-                showEditModal('Edit Participant', editModalHtml);
-                
-                // Initialize form after modal is shown
-                setTimeout(() => {
-                    initializeEditForm(participant);
-                }, 100);
-                
             } catch (error) {
                 console.error('Error opening edit form:', error);
                 alert('Error opening edit form. Please try again.');
@@ -1757,7 +1822,8 @@
             });
             
             const classOptionsHtml = Array.from(allClasses).sort().map(className => {
-                const isSelected = participant.selectedClasses && participant.selectedClasses.includes(className);
+                const selectedClassesArray = Array.isArray(participant.selectedClasses) ? participant.selectedClasses : [];
+                const isSelected = selectedClassesArray.includes(className);
                 return `
                     <div class="class-option ${isSelected ? 'selected' : ''}" data-class="${className}">
                         <h5>${className}</h5>
@@ -1834,11 +1900,10 @@
             container.innerHTML = '';
             
             // Load configurations for each selected class
-            if (participant.selectedClasses) {
-                participant.selectedClasses.forEach(className => {
-                    addEditVehicleConfig(className, participant);
-                });
-            }
+            const selectedClassesArray = Array.isArray(participant.selectedClasses) ? participant.selectedClasses : [];
+            selectedClassesArray.forEach(className => {
+                addEditVehicleConfig(className, participant);
+            });
         }
 
         // Add vehicle configuration for a class
@@ -1896,8 +1961,8 @@
             container.innerHTML = '';
             
             // Load existing sponsors from participant data
-            const existingSponsors = participant.sponsors || [];
-            existingSponsors.forEach(sponsor => {
+            const sponsorsArray = Array.isArray(participant.sponsors) ? participant.sponsors : [];
+            sponsorsArray.forEach(sponsor => {
                 addEditSponsorTag(sponsor);
             });
         }
@@ -1988,9 +2053,10 @@
         // Handle edit form submission
         async function handleEditFormSubmit(event) {
             event.preventDefault();
-            
+
             try {
                 const participantId = document.getElementById('editParticipantId').value;
+                const participant = dataManager.getParticipant(participantId);
                 
                 // Gather form data
                 const selectedClassElements = document.querySelectorAll('.class-option.selected');

@@ -761,58 +761,6 @@
         </div>
     </main>
 
-    <!-- Driver Edit Modal -->
-    <div id="driverEditModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Driver Information</h3>
-                <button type="button" class="modal-close" onclick="closeDriverEditModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="edit-form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="editDriverName" name="editDriverName">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nickname</label>
-                        <input type="text" class="form-control" id="editDriverNickname" name="editDriverNickname">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Racing Number</label>
-                        <input type="number" class="form-control" id="editDriverNumber" name="editDriverNumber" min="1" max="999">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" id="editDriverEmail" name="editDriverEmail">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Phone</label>
-                        <input type="tel" class="form-control" id="editDriverPhone" name="editDriverPhone">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Team</label>
-                        <input type="text" class="form-control" id="editDriverTeam" name="editDriverTeam">
-                    </div>
-                    <div class="form-group full-width">
-                        <label class="form-label">Notes</label>
-                        <textarea class="form-control" id="editDriverNotes" name="editDriverNotes" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeDriverEditModal()">
-                        Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="saveDriverEdit()">
-                        Save Changes
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
@@ -825,8 +773,8 @@
     <script src="utils/event-bus.js"></script>
     <script src="modules/statistics-manager.js"></script>
     <script src="utils/data-manager.js?v=1.2"></script>
-    <script src="utils/migration-utils.js?v=1.2"></script>
     <script src="modules/registration.js?v=1.2"></script>
+    <script src="modules/driver-edit-form.js"></script>
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
     <script src="js/sidebar-nav.js"></script>
@@ -888,6 +836,9 @@
                 
                 // Check for edit mode from URL parameters
                 await handleEditMode();
+                
+                // Setup driver update listener for cross-page sync
+                setupDriverUpdateListener();
                 
                 console.log('👤 EXISTING DRIVERS PAGE: Existing Drivers System initialized successfully');
                 
@@ -1342,66 +1293,41 @@
             completeBtn.disabled = !canComplete;
         }
 
-        // Edit driver info
+        // Edit driver info - uses unified DriverEditForm component
         function editDriverInfo() {
             if (!selectedDriver) {
                 showToast('Please select a driver first', 'warning');
                 return;
             }
             
-            // Populate edit form
-            document.getElementById('editDriverName').value = selectedDriver.name || '';
-            document.getElementById('editDriverNickname').value = selectedDriver.nickname || '';
-            document.getElementById('editDriverNumber').value = selectedDriver.racingNumber || '';
-            document.getElementById('editDriverEmail').value = selectedDriver.email || '';
-            document.getElementById('editDriverPhone').value = selectedDriver.phone || '';
-            document.getElementById('editDriverTeam').value = selectedDriver.team || '';
-            document.getElementById('editDriverNotes').value = selectedDriver.notes || '';
-            
-            // Show modal
-            document.getElementById('driverEditModal').style.display = 'flex';
-        }
-
-        // Close driver edit modal
-        function closeDriverEditModal() {
-            document.getElementById('driverEditModal').style.display = 'none';
-        }
-
-        // Save driver edit
-        async function saveDriverEdit() {
-            if (!selectedDriver) {
-                showToast('No driver selected', 'error');
-                return;
+            // Use unified driver edit form
+            if (window.DriverEditForm) {
+                window.DriverEditForm.show(selectedDriver.id);
+            } else {
+                showToast('Driver edit form not available', 'error');
             }
-            
-            try {
-                // Update driver data
-                selectedDriver.name = document.getElementById('editDriverName').value;
-                selectedDriver.nickname = document.getElementById('editDriverNickname').value;
-                selectedDriver.racingNumber = parseInt(document.getElementById('editDriverNumber').value) || null;
-                selectedDriver.email = document.getElementById('editDriverEmail').value;
-                selectedDriver.phone = document.getElementById('editDriverPhone').value;
-                selectedDriver.team = document.getElementById('editDriverTeam').value;
-                selectedDriver.notes = document.getElementById('editDriverNotes').value;
-                
-                // Save to data manager
-                await dataManager.updateParticipant(selectedDriver.id, selectedDriver);
-                
-                // Update UI
-                showDriverSummary(selectedDriver);
-                loadDriversList();
-                
-                // Close modal
-                closeDriverEditModal();
-                
-                showToast('Driver information updated successfully', 'success');
-            } catch (error) {
-                console.error('Error updating driver:', error);
-                showToast('Error updating driver information', 'error');
+        }
+
+        // Listen for driver updates from the unified edit form
+        function setupDriverUpdateListener() {
+            if (window.globalEventBus) {
+                window.globalEventBus.on('driver:updated', (data) => {
+                    console.log('Driver updated via EventBus:', data);
+                    
+                    // Update selected driver if it's the one that was updated
+                    if (selectedDriver && selectedDriver.id === data.driverId) {
+                        selectedDriver = data.driver;
+                        showDriverSummary(selectedDriver);
+                    }
+                    
+                    // Refresh drivers list
+                    loadDriversList();
+                });
             }
         }
 
         // Complete add existing registration
+        // REFACTORED: Use unified registration form for existing drivers
         async function completeAddExisting() {
             if (!selectedDriver || selectedClasses.length === 0) {
                 showToast('Please select a driver and at least one class', 'warning');
@@ -1414,40 +1340,30 @@
             }
             
             try {
-                // Update participant's selected classes for this event
+                // Use DataManager's auto-computation for selectedClasses aggregate
                 const classNames = selectedClasses.map(cls => cls.name);
                 
-                // Maintain event-specific class mappings
+                // Update eventClasses mapping - DataManager will auto-compute selectedClasses
                 const eventClasses = selectedDriver.eventClasses || {};
                 eventClasses[selectedEventId] = classNames;
-                
-                // Aggregate all unique classes across all events for the participant's profile
-                const allClassesSet = new Set(selectedDriver.selectedClasses || []);
-                classNames.forEach(className => allClassesSet.add(className));
-                const allClassesArray = Array.from(allClassesSet);
-                
-                const updatedParticipant = {
-                    ...selectedDriver,
-                    selectedClasses: allClassesArray, // All classes ever registered (aggregate)
-                    eventClasses: eventClasses, // Event-specific class mapping: { eventId: [classes] }
-                    eventId: selectedEventId, // Current/last event
-                    sledClasses: allClassesArray // Legacy compatibility
-                };
                 
                 console.log('Updating participant with event-specific classes:');
                 console.log('- Event:', selectedEventId);
                 console.log('- Classes for this event:', classNames);
-                console.log('- All classes ever registered:', allClassesArray);
                 console.log('- Event classes mapping:', eventClasses);
                 
-                // Update participant with new classes
-                await dataManager.updateParticipant(selectedDriver.id, updatedParticipant);
+                // Update participant - DataManager will auto-compute selectedClasses from eventClasses
+                await dataManager.updateParticipant(selectedDriver.id, {
+                    eventClasses: eventClasses
+                    // selectedClasses will be auto-computed by normalizeParticipantData()
+                });
                 
                 // Register participant for the event
                 const success = await dataManager.registerParticipantForEvent(selectedEventId, selectedDriver.id);
                 if (success) {
                     console.log('✅ Participant registered for event:', selectedEventId);
                     console.log('✅ Classes registered for this event:', classNames);
+                    console.log('✅ selectedClasses auto-computed from eventClasses');
                     showToast(`Registration completed successfully! Registered for ${classNames.length} class(es).`, 'success');
                     
                     // Reset form but keep event selection

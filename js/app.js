@@ -2,7 +2,7 @@
 if (window.debugLogger) {
     window.debugLogger.init('App', 'Initializing EPC17 Event Management System');
 } else {
-    console.log('🏁 Initializing EPC17 Event Management System...');
+    window.debugLogger?.init('App', 'Initializing EPC17 Event Management System...');
 }
 
 // Initialize performance monitor first (with fallback)
@@ -64,9 +64,9 @@ if (window.debugLogger) {
     window.debugLogger.info('App', 'Event Bus: ' + (eventBus ? 'Ready' : 'Not Available'));
     window.debugLogger.info('App', 'Performance Monitor: ' + (performanceMonitor ? 'Ready' : 'Not Available'));
 } else {
-    console.log('📊 Statistics Manager:', statisticsManager ? 'Ready' : 'Not Available');
-    console.log('📡 Event Bus:', eventBus ? 'Ready' : 'Not Available');
-    console.log('📊 Performance Monitor:', performanceMonitor ? 'Ready' : 'Not Available');
+    window.debugLogger?.debug('App', 'Statistics Manager:', statisticsManager ? 'Ready' : 'Not Available');
+    window.debugLogger?.debug('App', 'Event Bus:', eventBus ? 'Ready' : 'Not Available');
+    window.debugLogger?.debug('App', 'Performance Monitor:', performanceMonitor ? 'Ready' : 'Not Available');
 }
 
 // Performance monitoring functions
@@ -97,7 +97,7 @@ class App {
         if (window.debugLogger) {
             window.debugLogger.success('App', 'App initialized with performance optimizations');
         } else {
-            console.log('🚀 App initialized with performance optimizations');
+            window.debugLogger?.debug('App', 'App initialized with performance optimizations');
         }
     }
 
@@ -161,7 +161,7 @@ class App {
             console.warn('⚠️ Performance issues detected:', health.issues);
             this.handlePerformanceIssues(health.issues);
         } else if (health.overallHealth === 'needs_improvement') {
-            console.log('💡 Performance could be improved:', health.issues);
+            window.debugLogger?.debug('App', 'Performance could be improved:', health.issues);
         }
     }
 
@@ -171,18 +171,18 @@ class App {
     performFullPerformanceAudit() {
         if (!window.performanceMonitor) return;
         
-        console.log('🔍 Performing full performance audit...');
+        window.debugLogger?.debug('App', 'Performing full performance audit...');
         const report = window.performanceMonitor.getPerformanceReport();
         
         // Log summary for debugging
-        console.log('📊 Performance Audit Results:');
-        console.log(`Memory: ${(report.memory.current / 1024 / 1024).toFixed(2)}MB (${report.memory.trend})`);
-        console.log(`Operations tracked: ${Object.keys(report.operations).length}`);
+        window.debugLogger?.debug('App', 'Performance Audit Results:');
+        window.debugLogger?.debug('App', `Memory: ${(report.memory.current / 1024 / 1024).toFixed(2)}MB (${report.memory.trend})`);
+        window.debugLogger?.debug('App', `Operations tracked: ${Object.keys(report.operations).length}`);
         
         if (report.recommendations.length > 0) {
-            console.log('💡 Performance Recommendations:');
+            window.debugLogger?.debug('App', 'Performance Recommendations:');
             report.recommendations.forEach((rec, index) => {
-                console.log(`${index + 1}. ${rec.suggestion}`);
+                window.debugLogger?.debug('App', `${index + 1}. ${rec.suggestion}`);
             });
         }
         
@@ -197,15 +197,15 @@ class App {
         issues.forEach(issue => {
             switch (issue.operation) {
                 case 'participant_data_load':
-                    console.log('🔧 Auto-optimizing participant data loading...');
+                    window.debugLogger?.debug('App', 'Auto-optimizing participant data loading...');
                     this.optimizeParticipantLoading();
                     break;
                 case 'bracket_render':
-                    console.log('🔧 Auto-optimizing bracket rendering...');
+                    window.debugLogger?.debug('App', 'Auto-optimizing bracket rendering...');
                     this.optimizeBracketRendering();
                     break;
                 case 'page_change':
-                    console.log('🔧 Auto-optimizing page changes...');
+                    window.debugLogger?.debug('App', 'Auto-optimizing page changes...');
                     this.optimizePageChanges();
                     break;
             }
@@ -218,7 +218,7 @@ class App {
     autoOptimizeIfNeeded(report) {
         // Check memory usage
         if (report.memory.trend === 'increasing') {
-            console.log('🧹 Memory trend increasing - triggering cleanup...');
+            window.debugLogger?.debug('App', 'Memory trend increasing - triggering cleanup...');
             this.performDeepCleanup();
         }
         
@@ -227,7 +227,7 @@ class App {
             .reduce((sum, op) => sum + op.count, 0);
             
         if (operationCounts > 1000) {
-            console.log('🔧 High operation count detected - optimizing...');
+            window.debugLogger?.debug('App', 'High operation count detected - optimizing...');
             this.optimizeHighTrafficOperations();
         }
     }
@@ -239,7 +239,7 @@ class App {
         // Increase cache TTL
         if (window.performanceCache) {
             window.performanceCache.cacheTTL = Math.min(window.performanceCache.cacheTTL * 1.5, 300000);
-            console.log(`📊 Increased cache TTL to ${window.performanceCache.cacheTTL}ms`);
+            window.debugLogger?.debug('App', `Increased cache TTL to ${window.performanceCache.cacheTTL}ms`);
         }
         
         // Trigger cache rebuild
@@ -256,7 +256,7 @@ class App {
         const containers = document.querySelectorAll('.bracket-container, .brackets-container');
         containers.forEach(container => {
             if (container.children.length > 100) {
-                console.log('🧹 Clearing heavy bracket container...');
+                window.debugLogger?.debug('App', 'Clearing heavy bracket container...');
                 const firstChild = container.firstChild;
                 container.innerHTML = '';
                 if (firstChild) container.appendChild(firstChild);
@@ -281,7 +281,7 @@ class App {
     optimizeHighTrafficOperations() {
         // Clear operation history to reset counters
         if (window.performanceMonitor) {
-            console.log('🔄 Clearing performance monitoring data...');
+            window.debugLogger?.debug('App', 'Clearing performance monitoring data...');
             window.performanceMonitor.clearData();
         }
         
@@ -293,7 +293,7 @@ class App {
      * Perform light cleanup
      */
     performLightCleanup() {
-        console.log('🧹 Performing light memory cleanup...');
+        window.debugLogger?.debug('App', 'Performing light memory cleanup...');
         
         // Clear UI component cache
         if (window.UIComponents) {
@@ -310,7 +310,7 @@ class App {
      * Perform deep cleanup
      */
     performDeepCleanup() {
-        console.log('🧹 Performing deep memory cleanup...');
+        window.debugLogger?.debug('App', 'Performing deep memory cleanup...');
         
         // UI Components cleanup
         if (window.UIComponents) {
@@ -320,7 +320,7 @@ class App {
         // Clear large data caches
         if (window.performanceCache) {
             if (window.performanceCache.participantEventMap.size > 1000) {
-                console.log('🧹 Clearing large participant event cache...');
+                window.debugLogger?.debug('App', 'Clearing large participant event cache...');
                 window.performanceCache.participantEventMap.clear();
                 window.performanceCache.lastCacheUpdate = 0;
             }
@@ -352,7 +352,7 @@ class App {
             const criticalTypes = ['participants', 'events'];
             criticalTypes.forEach(type => {
                 if (!window.dataManager.data[type] || window.dataManager.data[type].length === 0) {
-                    console.log(`⏳ Preloading critical data: ${type}`);
+                    window.debugLogger?.debug('App', `Preloading critical data: ${type}`);
                     window.dataManager.loadFromStorage([type]);
                 }
             });
@@ -368,7 +368,7 @@ class App {
         const likelyNext = this.getLikelyNextSection(currentSection);
         
         if (likelyNext) {
-            console.log(`⏳ Prefetching likely next section: ${likelyNext}`);
+            window.debugLogger?.debug('App', `Prefetching likely next section: ${likelyNext}`);
             this.prefetchSection(likelyNext);
         }
     }
@@ -411,7 +411,7 @@ class App {
 
 // Wait for authentication to complete before loading data
 async function waitForAuthentication() {
-    console.log('🔐 Waiting for authentication to complete...');
+    window.debugLogger?.debug('App', 'Waiting for authentication to complete...');
     
     // Wait for Auth to be available and initialized
     let attempts = 0;
@@ -430,17 +430,17 @@ async function waitForAuthentication() {
     
     // Check if we have a valid session
     if (!window.currentUser) {
-        console.log('🔐 No current user, authentication failed');
+        window.debugLogger?.debug('App', 'No current user, authentication failed');
         return false;
     }
     
-    console.log('🔐 Authentication complete, proceeding with data load');
+    window.debugLogger?.debug('App', 'Authentication complete, proceeding with data load');
     return true;
 }
 
 // Initialize data loading on app start with performance tracking
 async function initializeApp() {
-    console.log('🚀 Initializing application (SIMPLIFIED)...');
+    window.debugLogger?.debug('App', 'Initializing application (SIMPLIFIED)...');
     
     try {
         // Wait for authentication to complete before loading data
@@ -453,7 +453,7 @@ async function initializeApp() {
             
             // Initialize RaceUI after authentication and data loading
             if (raceUI && typeof raceUI.init === 'function') {
-                console.log('🔐 Initializing RaceUI after authentication...');
+                window.debugLogger?.debug('App', 'Initializing RaceUI after authentication...');
                 await raceUI.init();
             }
             
@@ -466,12 +466,12 @@ async function initializeApp() {
         // Add manual statistics recalculation function for testing
         window.recalculateAllStats = async function() {
             if (statisticsManager) {
-                console.log('📊 Manual statistics recalculation triggered...');
+                window.debugLogger?.debug('App', 'Manual statistics recalculation triggered...');
                 try {
                     const count = await performanceMonitor.trackOperation('statistics_recalculation', async () => {
                         return await statisticsManager.recalculateAllStats();
                     });
-                    console.log(`✅ Statistics recalculated for ${count} participants`);
+                    window.debugLogger?.debug('App', `Statistics recalculated for ${count} participants`);
                     if (typeof showToast === 'function') {
                         showToast(`Statistics recalculated for ${count} participants`, 'success');
                     }
@@ -489,7 +489,7 @@ async function initializeApp() {
         // Add event bus debugging function
         window.debugEventBus = function() {
             if (eventBus) {
-                console.log('📡 Event Bus Debug Info:', eventBus.getDebugInfo());
+                window.debugLogger?.debug('App', 'Event Bus Debug Info:', eventBus.getDebugInfo());
                 return eventBus.getDebugInfo();
             } else {
                 console.warn('⚠️ Event Bus not available');
@@ -499,7 +499,7 @@ async function initializeApp() {
 
         // Add UI integration testing function
         window.testUIIntegration = function() {
-            console.log('🎨 Testing UI integration features...');
+            window.debugLogger?.debug('App', 'Testing UI integration features...');
             
             const tests = {
                 eventBus: eventBus !== null,
@@ -508,7 +508,7 @@ async function initializeApp() {
                 dataManager: dataManager !== null
             };
             
-            console.log('✅ UI Integration Test Results:', tests);
+            window.debugLogger?.debug('App', 'UI Integration Test Results:', tests);
             
             return tests;
         };
@@ -517,14 +517,14 @@ async function initializeApp() {
         window.startPerformanceMonitoring = function() {
             if (performanceMonitor) {
                 performanceMonitor.startMonitoring();
-                console.log('📊 Performance monitoring started');
+                window.debugLogger?.debug('App', 'Performance monitoring started');
             }
         };
 
         window.stopPerformanceMonitoring = function() {
             if (performanceMonitor) {
                 performanceMonitor.stopMonitoring();
-                console.log('📊 Performance monitoring stopped');
+                window.debugLogger?.debug('App', 'Performance monitoring stopped');
             }
         };
 
@@ -543,7 +543,7 @@ async function initializeApp() {
             if (dataManager) {
                 try {
                     const health = await dataManager.getServerHealth();
-                    console.log('🏥 Server health check:', health);
+                    window.debugLogger?.debug('App', 'Server health check:', health);
                     return health;
                 } catch (error) {
                     console.error('❌ Server health check failed:', error);
@@ -555,7 +555,7 @@ async function initializeApp() {
             }
         };
 
-        console.log('✅ Application initialization complete (SIMPLIFIED)');
+        window.debugLogger?.debug('App', 'Application initialization complete (SIMPLIFIED)');
         
         // Show performance summary after initialization
         setTimeout(() => {
