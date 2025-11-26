@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Registration (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Modern Hero Section Styles */
@@ -1955,6 +1955,7 @@
 
     <!-- Load helper utilities first -->
     <script src="utils/performance-monitor.js"></script>
+    <script src="js/logger.js"></script>
     <script src="utils/helpers.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
@@ -1964,6 +1965,12 @@
     <script src="utils/data-manager.js"></script>
     <!-- Load modules -->
     <script src="modules/registration.js"></script>
+    <script src="modules/driver-edit-form.js"></script>
+    <!-- Series modules - must be loaded before series.js -->
+    <script src="modules/series-data.js"></script>
+    <script src="modules/series-logic.js"></script>
+    <script src="modules/series-ui.js"></script>
+    <script src="modules/series-form.js"></script>
     <script src="modules/series.js"></script>
     <!-- Mobile Navigation -->
     <script src="js/sidebar-nav.js"></script>
@@ -2007,9 +2014,10 @@
             // Wait for authentication before initializing
             await waitForAuthentication();
             
-            // Initialize data manager and load data
+            // Initialize data manager and load only required data types
+            // (registration page doesn't need race-brackets which requires 'races' permission)
             dataManager = new DataManager();
-            await dataManager.loadFromStorage();
+            await dataManager.loadFromStorage(['participants', 'events', 'series']);
             
             registrationManager = new RegistrationManager();
             seriesManager = new SeriesManager();
@@ -2032,6 +2040,9 @@
             if (!window.sidebarNav) {
                 window.sidebarNav = new SidebarNavigation();
             }
+            
+            // Setup driver update listener for cross-page sync
+            setupDriverUpdateListener();
             
         });
 
@@ -3263,88 +3274,44 @@
             console.log('resetRegistrationStep called - no longer needed');
         }
 
-        // Edit driver information
+        // Edit driver information - uses unified DriverEditForm
         window.editDriverInfo = function() {
-            const driver = dataManager.getParticipant(window.selectedDriverId);
-            if (!driver) {
-                alert('Driver not found');
+            if (!window.selectedDriverId) {
+                showToast('Please select a driver first', 'warning');
                 return;
             }
-
-            // Populate edit form with current driver data
-            document.getElementById('editDriverName').value = driver.name || '';
-            document.getElementById('editDriverNickname').value = driver.nickname || '';
-            document.getElementById('editDriverNumber').value = driver.racingNumber || '';
-            document.getElementById('editDriverEmail').value = driver.contact?.email || driver.contactEmail || '';
-            const phoneField = document.getElementById('editDriverPhone');
-            phoneField.value = driver.contact?.phone || driver.contactPhone || '';
             
-            // Format the phone number if it's just digits
-            if (phoneField.value && window.formatExistingPhoneNumber) {
-                window.formatExistingPhoneNumber(phoneField);
+            // Use unified driver edit form
+            if (window.DriverEditForm) {
+                window.DriverEditForm.show(window.selectedDriverId);
+            } else {
+                showToast('Driver edit form not available', 'error');
             }
-            document.getElementById('editDriverEmergency').value = driver.contact?.emergency || '';
-
-            // Show modal
-            document.getElementById('driverEditModal').style.display = 'flex';
         };
 
-        // Close driver edit modal
+        // Setup driver update listener for cross-page sync
+        function setupDriverUpdateListener() {
+            if (window.globalEventBus) {
+                window.globalEventBus.on('driver:updated', (data) => {
+                    console.log('Driver updated via EventBus:', data);
+                    
+                    // If the updated driver is currently selected, refresh the display
+                    if (window.selectedDriverId === data.driverId) {
+                        showRegistrationStep(data.driver, window.selectedEventId);
+                    }
+                });
+            }
+        }
+        
+        // Legacy close/cancel functions (kept for backward compatibility)
         window.closeDriverEditModal = function() {
-            document.getElementById('driverEditModal').style.display = 'none';
+            if (window.DriverEditForm) {
+                window.DriverEditForm.close();
+            }
         };
 
-        // Cancel editing driver information (legacy)
         window.cancelEditDriver = function() {
             window.closeDriverEditModal();
-        };
-
-        // Save driver edits
-        window.saveDriverEdits = async function() {
-            try {
-                const driver = dataManager.getParticipant(window.selectedDriverId);
-                if (!driver) {
-                    alert('Driver not found');
-                    return;
-                }
-
-                // Collect edited data
-                const editedData = {
-                    ...driver,
-                    name: document.getElementById('editDriverName').value.trim(),
-                    nickname: document.getElementById('editDriverNickname').value.trim(),
-                    racingNumber: document.getElementById('editDriverNumber').value || null,
-                    contact: {
-                        ...driver.contact,
-                        email: document.getElementById('editDriverEmail').value.trim(),
-                        phone: document.getElementById('editDriverPhone').value.trim(),
-                        emergency: document.getElementById('editDriverEmergency').value.trim()
-                    }
-                };
-
-                // Validate required fields
-                if (!editedData.name) {
-                    alert('Driver name is required');
-                    return;
-                }
-
-                // Update driver in data manager
-                const success = await dataManager.updateParticipant(window.selectedDriverId, editedData);
-                if (success) {
-                    // Update the displayed driver info
-                    showRegistrationStep(editedData, window.selectedEventId);
-                    
-                    // Hide edit section
-                    cancelEditDriver();
-                    
-                    showToast('Driver information updated successfully', 'success');
-                } else {
-                    alert('Failed to update driver information');
-                }
-            } catch (error) {
-                console.error('Error saving driver edits:', error);
-                alert('Error saving driver information. Please try again.');
-            }
         };
 
         // Load available events for add existing

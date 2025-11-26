@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Events Management (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Hero Section Styles - Consistent with Series Page */
@@ -1032,6 +1032,7 @@
     </div>
 
     <script src="utils/performance-monitor.js"></script>
+    <script src="js/logger.js"></script>
     <script src="utils/helpers.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
@@ -1039,7 +1040,21 @@
     <script src="utils/event-bus.js"></script>
     <script src="modules/statistics-manager.js"></script>
     <script src="utils/data-manager.js"></script>
+    
+    <!-- Series System - Modular Architecture (Refactored) -->
+    <script src="modules/series-data.js"></script>
+    <script src="modules/series-logic.js"></script>
+    <script src="modules/series-ui.js"></script>
+    <script src="modules/series-form.js"></script>
     <script src="modules/series.js"></script>
+    
+    <!-- Event System - Modular Architecture (Refactored) -->
+    <script src="modules/event-data-service.js"></script>
+    <script src="modules/event-logic.js"></script>
+    <script src="modules/event-ui.js"></script>
+    <script src="modules/event-controller.js"></script>
+    <script src="modules/event.js"></script>
+    
     <!-- Mobile Navigation -->
     <script src="js/mobile-nav.js"></script>
     <script src="js/sidebar-nav.js"></script>
@@ -1085,11 +1100,27 @@
             await waitForAuthentication();
             
             // Initialize data manager and load data
-            dataManager = new DataManager();
+            window.dataManager = new DataManager();
+            dataManager = window.dataManager; // Also set local variable
             await dataManager.loadFromStorage();
+            
+            // Initialize Event Data Service (global instance for deprecation fallback)
+            window.eventDataService = new EventDataService(dataManager);
+            console.log('✅ EventDataService initialized globally');
             
             // Initialize series manager and ensure it uses DataManager's data
             seriesManager = new SeriesManager();
+            
+            // Wait for SeriesManager to initialize
+            let attempts = 0;
+            while (!seriesManager.initialized && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (!seriesManager.initialized) {
+                console.warn('⚠️ SeriesManager initialization timed out');
+            }
             
             // Sync series data between managers
             const seriesFromDataManager = dataManager.getAllSeries();

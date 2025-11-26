@@ -1,15 +1,11 @@
-﻿/**
+/**
  * Enhanced Race UI Module for EPC17 Event Management System
  * Handles race management interface, bracket visualization, and result entry
  */
 
 class RaceUI {
     constructor(raceManager, dataManager) {
-        if (window.debugLogger) {
-            window.debugLogger.init('RaceUI', 'Initializing Enhanced RaceUI');
-        } else {
-            console.log('🔍 RaceUI: Constructor called, setting up event listeners...');
-        }
+        window.debugLogger?.init('RaceUI', 'Initializing Enhanced RaceUI');
         this.raceManager = raceManager;
         this.dataManager = dataManager;
         // Achievements removed
@@ -17,8 +13,8 @@ class RaceUI {
         this.selectedClass = null;
         this.pendingResults = new Map(); // Store pending race results
         this.lastKnownHeatCount = 0; // Track heat count to detect new rounds
-        this.lastClickTime = 0; // Track last click time for debouncing
-        this.clickDebounceDelay = 150; // Minimum delay between clicks in ms
+        this.lastClickTime = 0; // Track last click time for minimal debouncing
+        this.clickDebounceDelay = 50; // Very short delay to prevent race conditions
         
         
         // Scroll anchor tracking
@@ -27,6 +23,9 @@ class RaceUI {
         this.lastScrollPosition = 0;
         this.scrollThreshold = 100; // Pixels to scroll past before showing indicator
         
+        // Queue for serializing background save operations
+        this.saveQueue = Promise.resolve();
+
         // Don't initialize immediately - wait for explicit call after authentication
     }
 
@@ -35,25 +34,76 @@ class RaceUI {
      */
     async init() {
         this.bindEventListeners();
-        
+
         // Wait for authentication before loading data
         await this.waitForAuthentication();
-        
+
+        // Restore previous session state if available
+        const sessionState = window.SessionPersistence.Races.load();
+        let shouldRestoreState = false;
+
+        if (sessionState && sessionState.eventId) {
+            window.debugLogger?.debug('RaceUI', 'Restoring previous session state:', sessionState);
+            shouldRestoreState = true;
+        }
+
+        // Restore filter state if available
+        if (sessionState && sessionState.filters) {
+            window.debugLogger?.debug('RaceUI', 'Restoring filter state:', sessionState.filters);
+            // Restore filters after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                if (sessionState.filters.searchTerm && document.getElementById('racesSearch')) {
+                    document.getElementById('racesSearch').value = sessionState.filters.searchTerm;
+                    window.currentRacesSearchTerm = sessionState.filters.searchTerm;
+                }
+                if (sessionState.filters.statusFilter && document.getElementById('racesStatusFilter')) {
+                    document.getElementById('racesStatusFilter').value = sessionState.filters.statusFilter;
+                    window.currentRacesStatusFilter = sessionState.filters.statusFilter;
+                }
+                if (sessionState.filters.sortOption && document.getElementById('racesSort')) {
+                    document.getElementById('racesSort').value = sessionState.filters.sortOption;
+                    window.currentRacesSortOption = sessionState.filters.sortOption;
+                }
+                if (sessionState.filters.currentPage) {
+                    window.currentRacesPage = sessionState.filters.currentPage;
+                }
+            }, 100);
+        }
+
         // Use modern rendering system if available, otherwise fall back to loadEvents
-        if (typeof window.renderRacesEventsGrid === 'function' && 
+        if (typeof window.renderRacesEventsGrid === 'function' &&
             typeof window.allRacesEventsData !== 'undefined') {
-            console.log('Using modern rendering system for initialization');
-            this.refreshEventsForModernInterface();
+            window.debugLogger?.debug('RaceUI', 'Using modern rendering system for initialization');
+            await this.refreshEventsForModernInterface();
+
+            // Restore previous state after loading events
+            if (shouldRestoreState && sessionState.eventId) {
+                setTimeout(async () => {
+                    try {
+                        const eventExists = this.dataManager.getEvent(sessionState.eventId);
+                        if (eventExists) {
+                            window.debugLogger?.debug('RaceUI', 'Auto-selecting previous event:', sessionState.eventId);
+                            await this.selectEvent(sessionState.eventId);
+                        } else {
+                            window.debugLogger?.debug('RaceUI', 'Previous event no longer exists, clearing session state');
+                            window.SessionPersistence.clearState();
+                        }
+                    } catch (error) {
+                        console.warn('Failed to restore session state:', error);
+                        window.SessionPersistence.clearState();
+                    }
+                }, 500);
+            }
         } else {
-            console.log('Using fallback rendering system for initialization');
+            window.debugLogger?.debug('RaceUI', Using fallback rendering system for initialization');
             this.loadEvents();
         }
-        
+
         // Refresh events when page becomes visible (user returns from another tab/page)
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && !this.selectedEventId) {
                 // Use modern rendering system if available
-                if (typeof window.renderRacesEventsGrid === 'function' && 
+                if (typeof window.renderRacesEventsGrid === 'function' &&
                     typeof window.allRacesEventsData !== 'undefined') {
                     this.refreshEventsForModernInterface();
                 } else {
@@ -64,10 +114,120 @@ class RaceUI {
     }
 
     /**
+     * Show processing indicator overlay
+     * @param {String} message - Message to display
+     * @param {String} heatId - Optional heat ID to position indicator
+     */
+    showProcessingIndicator(message = 'Processing race results...', heatId = null) {
+        // Remove any existing indicators
+        this.hideProcessingIndicator();
+
+        const indicator = document.createElement('div');
+        indicator.className = 'race-processing-indicator';
+        indicator.id = 'race-processing-indicator';
+        
+        indicator.innerHTML = `
+            <div class="processing-indicator-content">
+                <div class="processing-spinner"></div>
+                <div class="processing-message">${message}</div>
+            </div>
+        `;
+
+        // Add styles if not already added
+        if (!document.getElementById('race-processing-styles')) {
+            const style = document.createElement('style');
+            style.id = 'race-processing-styles';
+            style.textContent = `
+                .race-processing-indicator {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.6);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 100;
+                    border-radius: 8px;
+                }
+                .processing-indicator-content {
+                    background: var(--bg-primary);
+                    padding: 1.5rem 2rem;
+                    border-radius: 12px;
+                    border: 1px solid var(--border-color);
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }
+                .processing-spinner {
+                    width: 24px;
+                    height: 24px;
+                    border: 3px solid var(--border-color);
+                    border-top-color: var(--accent-primary);
+                    border-radius: 50%;
+                    animation: processing-spin 0.8s linear infinite;
+                }
+                .processing-message {
+                    color: var(--text-primary);
+                    font-weight: 500;
+                    font-size: 0.95rem;
+                }
+                @keyframes processing-spin {
+                    to { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Position indicator
+        if (heatId) {
+            // Position over specific heat card
+            const heatCard = document.querySelector(`[data-heat-id="${heatId}"]`);
+            if (heatCard) {
+                heatCard.style.position = 'relative';
+                heatCard.appendChild(indicator);
+            } else {
+                // Fallback to brackets container
+                const bracketsContainer = document.getElementById('brackets-container');
+                if (bracketsContainer) {
+                    bracketsContainer.style.position = 'relative';
+                    bracketsContainer.appendChild(indicator);
+                } else {
+                    document.body.appendChild(indicator);
+                }
+            }
+        } else {
+            // Position over brackets container
+            const bracketsContainer = document.getElementById('brackets-container');
+            if (bracketsContainer) {
+                bracketsContainer.style.position = 'relative';
+                bracketsContainer.appendChild(indicator);
+            } else {
+                document.body.appendChild(indicator);
+            }
+        }
+
+        window.debugLogger?.debug('RaceUI', ? Processing indicator shown:', message);
+    }
+
+    /**
+     * Hide processing indicator overlay
+     */
+    hideProcessingIndicator() {
+        const indicator = document.getElementById('race-processing-indicator');
+        if (indicator) {
+            indicator.remove();
+            window.debugLogger?.debug('RaceUI', ? Processing indicator hidden');
+        }
+    }
+
+    /**
      * Wait for authentication to complete before loading data
      */
     async waitForAuthentication() {
-        console.log('🔐 RaceUI: Waiting for authentication to complete...');
+        window.debugLogger?.debug('RaceUI', ?? RaceUI: Waiting for authentication to complete...');
         
         // Wait for Auth to be available and initialized
         let attempts = 0;
@@ -77,7 +237,7 @@ class RaceUI {
         }
         
         if (!window.Auth) {
-            console.warn('🔐 RaceUI: Auth system not available after waiting, proceeding without authentication');
+            console.warn('?? RaceUI: Auth system not available after waiting, proceeding without authentication');
             return false;
         }
         
@@ -86,11 +246,11 @@ class RaceUI {
         
         // Check if we have a valid session
         if (!window.currentUser) {
-            console.log('🔐 RaceUI: No current user, authentication failed');
+            window.debugLogger?.debug('RaceUI', ?? RaceUI: No current user, authentication failed');
             return false;
         }
         
-        console.log('🔐 RaceUI: Authentication complete, proceeding with data load');
+        window.debugLogger?.debug('RaceUI', ?? RaceUI: Authentication complete, proceeding with data load');
         return true;
     }
 
@@ -106,7 +266,7 @@ class RaceUI {
             if (window.debugLogger) {
                 window.debugLogger.debug('RaceUI', `Toast (${type}): ${message}`);
             } else {
-                console.log(`Toast (${type}): ${message}`);
+                window.debugLogger?.debug('RaceUI', `Toast (${type}): ${message}`);
             }
         }
     }
@@ -115,11 +275,19 @@ class RaceUI {
      * Bind all event listeners
      */
     bindEventListeners() {
+        if (this.listenersBound) {
+            window.debugLogger?.debug('RaceUI', RaceUI: Event listeners already bound, skipping');
+            return;
+        }
+
         if (window.debugLogger) {
             window.debugLogger.debug('RaceUI', 'Binding event listeners');
         } else {
-            console.log('Binding event listeners');
+            window.debugLogger?.debug('RaceUI', Binding event listeners');
         }
+
+        // Mark as bound to prevent duplication
+        this.listenersBound = true;
 
         // Event selection
         const eventsGrid = document.getElementById('events-grid');
@@ -128,13 +296,13 @@ class RaceUI {
                 const eventCard = e.target.closest('.event-card');
                 if (eventCard) {
                     const eventId = eventCard.dataset.eventId;
-                    console.log('🔍 Event card clicked:', eventCard);
-                    console.log('🔍 Event ID from dataset:', eventId);
+                    window.debugLogger?.debug('RaceUI', ?? Event card clicked:', eventCard);
+                    window.debugLogger?.debug('RaceUI', ?? Event ID from dataset:', eventId);
                     
                     if (!eventId) {
-                        console.error('❌ Event ID is undefined or empty');
-                        console.error('❌ Event card dataset:', eventCard.dataset);
-                        console.error('❌ Event card HTML:', eventCard.outerHTML);
+                        console.error('? Event ID is undefined or empty');
+                        console.error('? Event card dataset:', eventCard.dataset);
+                        console.error('? Event card HTML:', eventCard.outerHTML);
                         return;
                     }
                     
@@ -145,19 +313,104 @@ class RaceUI {
 
         // Back to events button - use event delegation since it's in a hidden section initially
         document.addEventListener('click', (e) => {
-            console.log('🔍 RaceUI: Click detected on:', e.target.tagName, e.target.id, e.target.className);
+            window.debugLogger?.debug('RaceUI', ?? RaceUI: Click detected on:', e.target.tagName, e.target.id, e.target.className);
             if (e.target && e.target.id === 'back-to-events') {
-                console.log('🔍 Back to events button clicked');
+                window.debugLogger?.debug('RaceUI', ?? Back to events button clicked');
                 this.showEventSelection();
             }
         });
         
-        console.log('🔍 RaceUI: Event listeners set up successfully');
+        window.debugLogger?.debug('RaceUI', ?? RaceUI: Event listeners set up successfully');
+    }
+
+    /**
+     * Bind context menu event listener for participant elements
+     * This is called separately when race management interface is shown
+     */
+    bindContextMenuListener() {
+        if (this.contextMenuBound) {
+            return;
+        }
+
+        if (window.debugLogger) {
+            window.debugLogger.debug('RaceUI', 'Binding context menu event listener');
+        } else {
+            window.debugLogger?.debug('RaceUI', ?? RaceUI: Binding context menu event listener');
+        }
+
+        // Mark as bound
+        this.contextMenuBound = true;
+
+        // Right-click context menu for participants
+        document.addEventListener('contextmenu', async (e) => {
+            // Only intercept context menu if race management interface is visible
+            const raceManagementSection = document.getElementById('race-management');
+            if (!raceManagementSection || raceManagementSection.style.display === 'none') {
+                window.debugLogger?.debug('RaceUI', ?? RaceUI: Race management not visible, allowing default context menu');
+                return;
+            }
+
+            window.debugLogger?.debug('RaceUI', ?? RaceUI: contextmenu event triggered on:', e.target);
+            window.debugLogger?.debug('RaceUI', ?? RaceUI: Target element:', e.target.tagName, e.target.className, e.target.id);
+            window.debugLogger?.debug('RaceUI', ?? RaceUI: Target data attributes:', e.target.dataset);
+
+            // Check if clicking on a participant element (clickable or info)
+            const clickableElement = e.target.closest('.clickable-participant, .participant-info, .lane-participant, .participant-horizontal, .lane');
+
+            if (clickableElement) {
+                window.debugLogger?.debug('RaceUI', ?? RaceUI: Found clickable element:', clickableElement);
+                window.debugLogger?.debug('RaceUI', ?? RaceUI: Element classes:', clickableElement.className);
+                window.debugLogger?.debug('RaceUI', ?? RaceUI: Element data attributes:', clickableElement.dataset);
+
+                // Only show context menu if the element has the required data attributes
+                const participantId = clickableElement.dataset.participantId;
+                const heatId = clickableElement.dataset.heatId;
+
+                window.debugLogger?.debug('RaceUI', ?? RaceUI: participantId:', participantId, 'heatId:', heatId);
+
+                if (participantId && heatId) {
+                    window.debugLogger?.debug('RaceUI', ? RaceUI: Showing context menu and preventing default');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await this.showParticipantContextMenu(e, clickableElement);
+                    return;
+                } else {
+                    window.debugLogger?.debug('RaceUI', ? RaceUI: Missing participantId or heatId - cannot show context menu');
+                    window.debugLogger?.debug('RaceUI', ? RaceUI: Available data attributes:', Object.keys(clickableElement.dataset));
+                }
+            }
+
+            // Also check parent participant-horizontal or lane containers
+            if (!clickableElement) {
+                const participantElement = e.target.closest('.participant-horizontal, .lane');
+                if (participantElement) {
+                    window.debugLogger?.debug('RaceUI', ?? RaceUI: Found parent participant element:', participantElement);
+                    const innerClickable = participantElement.querySelector('.clickable-participant, .participant-info[data-participant-id], .lane-participant[data-participant-id]');
+                    window.debugLogger?.debug('RaceUI', ?? RaceUI: Looking for inner clickable elements...');
+
+                    if (innerClickable) {
+                        window.debugLogger?.debug('RaceUI', ?? RaceUI: Found inner clickable:', innerClickable);
+                        window.debugLogger?.debug('RaceUI', ?? RaceUI: Inner element data:', innerClickable.dataset);
+
+                        if (innerClickable.dataset.participantId && innerClickable.dataset.heatId) {
+                            window.debugLogger?.debug('RaceUI', ? RaceUI: Showing context menu (from parent) and preventing default');
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await this.showParticipantContextMenu(e, innerClickable);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // If we get here, no participant element was found - let the default context menu show
+            window.debugLogger?.debug('RaceUI', ?? RaceUI: No participant element found, allowing default context menu');
+        });
 
         // Complete event button - use event delegation since it's in a hidden section initially
         document.addEventListener('click', (e) => {
             if (e.target && e.target.id === 'complete-event') {
-                console.log('🔍 Complete event button clicked');
+                window.debugLogger?.debug('RaceUI', ?? Complete event button clicked');
                 this.manuallyCompleteEvent();
             }
         });
@@ -166,8 +419,18 @@ class RaceUI {
         // Initialize brackets button - use event delegation since it's in a hidden section initially
         document.addEventListener('click', (e) => {
             if (e.target && e.target.id === 'initialize-brackets') {
-                console.log('🔍 Initialize brackets button clicked');
+                window.debugLogger?.debug('RaceUI', ?? Initialize brackets button clicked');
                 this.initializeBrackets();
+            }
+
+            if (e.target && e.target.id === 'repair-bracket') {
+                window.debugLogger?.debug('RaceUI', ?? Repair bracket button clicked');
+                this.repairCorruptedBracket(this.selectedEventId);
+            }
+
+            if (e.target && e.target.id === 'debug-rounds') {
+                window.debugLogger?.debug('RaceUI', ?? Debug rounds button clicked');
+                this.debugRoundInformation();
             }
         });
 
@@ -196,28 +459,28 @@ class RaceUI {
         }, { passive: true });
 
         // Pairing statistics button
-        document.addEventListener('click', (e) => {
+        document.addEventListener('click', async (e) => {
             if (e.target.classList.contains('show-pairing-stats-btn')) {
-                this.showFullPairingStats();
+                await this.showFullPairingStats();
             }
         });
 
         // Delegate click on icon within the button
-        document.addEventListener('click', (e) => {
+        document.addEventListener('click', async (e) => {
             const iconBtn = e.target.closest('.show-pairing-stats-btn');
             if (iconBtn) {
-                this.showFullPairingStats();
+                await this.showFullPairingStats();
             }
         });
 
         // Result entry handling (legacy button-based)
-        document.addEventListener('click', (e) => {
+        document.addEventListener('click', async (e) => {
             if (e.target.classList.contains('result-position')) {
-                this.handleResultClick(e.target);
+                await this.handleResultClick(e.target);
             }
         });
 
-        // Participant click handling (expanded to full box) - Improved responsiveness
+        // Participant click handling (expanded to full box) - Minimal debouncing for race condition prevention
         document.addEventListener('click', (e) => {
             const participantElement = e.target.closest('.participant-horizontal, .lane');
             if (participantElement && participantElement.querySelector('.clickable-participant')) {
@@ -226,43 +489,54 @@ class RaceUI {
             }
         });
 
-        // Right-click context menu for participants
-        document.addEventListener('contextmenu', (e) => {
-            const participantElement = e.target.closest('.participant-horizontal, .lane');
-            if (participantElement && participantElement.querySelector('.clickable-participant')) {
-                e.preventDefault();
-                const clickableElement = participantElement.querySelector('.clickable-participant');
-                this.showParticipantContextMenu(e, clickableElement);
-            }
-        });
-
         // Heat management
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('start-heat-btn')) {
-                const heatId = e.target.dataset.heatId;
-                this.startHeat(heatId);
+        document.addEventListener('click', async (e) => {
+            // Start heat button - use closest() to handle clicks on child elements
+            const startBtn = e.target.closest('.start-heat-btn');
+            if (startBtn) {
+                window.debugLogger?.debug('RaceUI', ? RaceUI: Start heat button clicked, heatId:', startBtn.dataset.heatId);
+                const heatId = startBtn.dataset.heatId;
+                if (heatId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.startHeat(heatId);
+                }
+                return;
+            }
+
+            // Complete heat button - use closest() to handle clicks on child elements (icons, etc.)
+            const completeBtn = e.target.closest('.complete-heat-btn');
+            if (completeBtn) {
+                window.debugLogger?.debug('RaceUI', ? RaceUI: Complete heat button clicked, heatId:', completeBtn.dataset.heatId);
+                const heatId = completeBtn.dataset.heatId;
+                if (heatId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await this.manualCompleteHeat(heatId);
+                }
+                return;
             }
             
-            if (e.target.classList.contains('complete-heat-btn')) {
-                const heatId = e.target.dataset.heatId;
-                this.manualCompleteHeat(heatId);
-            }
-            
-            if (e.target.classList.contains('reset-heat-btn') || e.target.closest('.reset-heat-btn')) {
-                const button = e.target.classList.contains('reset-heat-btn') ? e.target : e.target.closest('.reset-heat-btn');
-                
+            // Reset heat button - use closest() to handle clicks on child elements
+            const resetBtn = e.target.closest('.reset-heat-btn');
+            if (resetBtn) {
+                window.debugLogger?.debug('RaceUI', ? RaceUI: Reset heat button clicked, heatId:', resetBtn.dataset.heatId);
                 // Handle disabled reset buttons (show advanced options)
-                if (button.disabled || button.classList.contains('disabled')) {
-                    const heatId = button.dataset.heatId;
+                if (resetBtn.disabled || resetBtn.classList.contains('disabled')) {
+                    const heatId = resetBtn.dataset.heatId;
                     if (heatId) {
-                        this.showAdvancedResetOptions(heatId);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        await this.showAdvancedResetOptions(heatId);
                     }
                     return;
                 }
                 
-                const heatId = button.dataset.heatId;
+                const heatId = resetBtn.dataset.heatId;
                 if (heatId) {
-                    this.resetHeat(heatId);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await this.resetHeat(heatId);
                 }
             }
         });
@@ -276,7 +550,7 @@ class RaceUI {
             if (window.debugLogger) {
                 window.debugLogger.loading('RaceUI', 'Loading events with performance optimizations');
             } else {
-                console.log('Loading events with performance optimizations...');
+                window.debugLogger?.debug('RaceUI', Loading events with performance optimizations...');
             }
             
             // Use performance monitoring if available
@@ -315,7 +589,7 @@ class RaceUI {
         if (window.debugLogger) {
             window.debugLogger.loading('RaceUI', `Events loaded: ${events.length}`);
         } else {
-            console.log('Events loaded:', events.length);
+            window.debugLogger?.debug('RaceUI', Events loaded:', events.length);
         }
         
         const eventsGrid = document.getElementById('events-grid');
@@ -379,7 +653,7 @@ class RaceUI {
             if (window.debugLogger) {
                 window.debugLogger.loading('RaceUI', 'No events found, showing empty state');
             } else {
-                console.log('No events found, showing empty state');
+                window.debugLogger?.debug('RaceUI', No events found, showing empty state');
             }
             this.showEmptyEventsState(eventsGrid);
             return;
@@ -388,7 +662,7 @@ class RaceUI {
         if (window.debugLogger) {
             window.debugLogger.loading('RaceUI', `Rendering ${events.length} event cards with optimization`);
         } else {
-            console.log('Rendering', events.length, 'event cards with optimization');
+            window.debugLogger?.debug('RaceUI', Rendering', events.length, 'event cards with optimization');
         }
         
         // Use DocumentFragment for efficient DOM manipulation
@@ -417,7 +691,7 @@ class RaceUI {
         if (window.debugLogger) {
             window.debugLogger.success('RaceUI', `Rendered ${events.length} event cards efficiently`);
         } else {
-            console.log(`✅ Rendered ${events.length} event cards efficiently`);
+            window.debugLogger?.debug('RaceUI', `? Rendered ${events.length} event cards efficiently`);
         }
     }
 
@@ -661,35 +935,35 @@ class RaceUI {
      * Select an event for race management
      */
     async selectEvent(eventId) {
-        console.log('🔍 RaceUI.selectEvent called with eventId:', eventId);
-        
+        window.debugLogger?.debug('RaceUI', ?? RaceUI.selectEvent called with eventId:', eventId);
+
         try {
             // Check if eventId is valid
             if (!eventId || eventId === 'undefined' || eventId === 'null') {
-                console.error('❌ Invalid eventId provided:', eventId);
+                console.error('? Invalid eventId provided:', eventId);
                 throw new Error('Invalid event ID provided');
             }
-            
+
             // Check if dataManager is available
             if (!this.dataManager) {
-                console.error('❌ DataManager not available in RaceUI');
+                console.error('? DataManager not available in RaceUI');
                 throw new Error('DataManager not available');
             }
-            
-            // 🔧 FIX: Force refresh event data to ensure we have the latest classOrder
-            console.log('🔧 Force refreshing event data in selectEvent...');
+
+            // ?? FIX: Force refresh event data to ensure we have the latest classOrder
+            window.debugLogger?.debug('RaceUI', ?? Force refreshing event data in selectEvent...');
             this.dataManager.loadedDataTypes.delete('events');
             await this.dataManager.loadFromStorage(['events']);
-            
+
             this.selectedEventId = eventId;
             const event = this.dataManager.getEvent(eventId);
-            
+
             if (!event) {
-                console.error(`❌ Event ${eventId} not found in DataManager`);
+                console.error(`? Event ${eventId} not found in DataManager`);
                 throw new Error('Event not found');
             }
-            
-            console.log('🔧 Event data loaded:', {
+
+            window.debugLogger?.debug('RaceUI', ?? Event data loaded:', {
                 id: event.id,
                 name: event.name,
                 classOrder: event.classOrder,
@@ -697,19 +971,22 @@ class RaceUI {
             });
 
             // Update UI
-            this.showRaceManagement();
-            this.updateEventInfo(event);
-            this.updateEventStats(event);
-            this.updateCompleteEventButton();
-            
+        this.showRaceManagement();
+        this.updateEventInfo(event);
+        await this.updateEventStats(event);
+        this.updateCompleteEventButton();
+
             // Load bracket if exists
-            const bracket = this.raceManager.getBracket(eventId);
+            const bracket = await this.raceManager.getBracket(eventId);
             if (bracket) {
                 await this.renderBrackets(bracket);
                 this.updateGenerateButton(bracket);
             } else {
                 this.showBracketInitialization();
             }
+
+            // Save session state
+            window.SessionPersistence.Races.save(eventId);
 
         } catch (error) {
             console.error('Error selecting event:', error);
@@ -737,12 +1014,12 @@ class RaceUI {
         // Use modern rendering system if available, otherwise fall back to loadEvents
         if (typeof window.renderRacesEventsGrid === 'function' && 
             typeof window.allRacesEventsData !== 'undefined') {
-            console.log('Using modern rendering system for event selection');
+            window.debugLogger?.debug('RaceUI', Using modern rendering system for event selection');
             
             // Refresh events data and re-render with modern interface
             this.refreshEventsForModernInterface();
         } else {
-            console.log('Using fallback rendering system for event selection');
+            window.debugLogger?.debug('RaceUI', Using fallback rendering system for event selection');
             // Refresh events list to show any changes made on other pages
             this.loadEvents();
         }
@@ -777,7 +1054,7 @@ class RaceUI {
                 window.updateRacesResultsCount();
             }
             
-            console.log('Events refreshed with modern interface');
+            window.debugLogger?.debug('RaceUI', Events refreshed with modern interface');
         } catch (error) {
             console.error('Error refreshing events with modern interface:', error);
             // Fallback to old method
@@ -791,21 +1068,27 @@ class RaceUI {
     showRaceManagement() {
         document.getElementById('event-selection').style.display = 'none';
         document.getElementById('race-management').style.display = 'block';
-        
+
         // Show/hide complete event button based on current event status
         this.updateCompleteEventButton();
+
+        // Ensure context menu event listener is attached when race management is shown
+        this.bindContextMenuListener();
     }
 
     /**
      * Update event statistics
      */
-    updateEventStats(event) {
+    async updateEventStats(event) {
         const statsContainer = document.getElementById('event-stats');
         if (!statsContainer) return;
 
-        const participantCount = event.participants ? event.participants.length : 0;
-        const bracket = this.raceManager.getBracket(event.id);
-        const stats = bracket ? this.raceManager.getTournamentStats(event.id) : null;
+        // Get proper participant statistics from data manager
+        const participantStats = this.dataManager.getEventParticipantStats(event.id);
+        const participantCount = participantStats ? participantStats.uniqueDrivers : 0;
+
+        const bracket = await this.raceManager.getBracket(event.id);
+        const stats = bracket ? await this.raceManager.getTournamentStats(event.id) : null;
 
         statsContainer.innerHTML = `
             <div class="stat-card">
@@ -901,6 +1184,10 @@ class RaceUI {
                         <i class="fas fa-rocket"></i>
                         Initialize Brackets
                     </button>
+                    <button class="btn btn-warning btn-lg" onclick="raceUI.repairBracketDuplicates()" style="margin-left: 10px;">
+                        <i class="fas fa-wrench"></i>
+                        Repair Duplicates
+                    </button>
                 ` : `
                     <p class="warning">
                         <i class="fas fa-exclamation-triangle"></i>
@@ -925,7 +1212,7 @@ class RaceUI {
      * Initialize brackets for the selected event with performance monitoring
      */
     async initializeBrackets() {
-        console.log('Initializing brackets for event:', this.selectedEventId);
+        window.debugLogger?.debug('RaceUI', Initializing brackets for event:', this.selectedEventId);
         
         try {
             // Check if event can have brackets initialized
@@ -954,11 +1241,11 @@ class RaceUI {
                     return;
                 }
                 // Allow initialization for active events without races
-                console.log('✅ Active event without races - allowing bracket initialization');
+                window.debugLogger?.debug('RaceUI', ? Active event without races - allowing bracket initialization');
             }
 
-            // 🔧 FIX: Force refresh event data to get latest classOrder
-            console.log('🔧 Force refreshing event data to get latest classOrder...');
+            // ?? FIX: Force refresh event data to get latest classOrder
+            window.debugLogger?.debug('RaceUI', ?? Force refreshing event data to get latest classOrder...');
             this.dataManager.loadedDataTypes.delete('events');
             await this.dataManager.loadFromStorage(['events']);
             
@@ -968,7 +1255,7 @@ class RaceUI {
                 throw new Error('Event not found after refresh');
             }
             
-            console.log('🔧 Event data after refresh:', {
+            window.debugLogger?.debug('RaceUI', ?? Event data after refresh:', {
                 id: event.id,
                 name: event.name,
                 classOrder: event.classOrder,
@@ -986,8 +1273,8 @@ class RaceUI {
             this.showInitializationProgress(participantCount);
             this.disableGenerationButtons();
             
-            // 🔧 FIX: Ensure participants are loaded before initializing brackets
-            console.log('🔧 Ensuring participants are loaded...');
+            // ?? FIX: Ensure participants are loaded before initializing brackets
+            window.debugLogger?.debug('RaceUI', ?? Ensuring participants are loaded...');
             // Force reload participants to get fresh data from server
             this.dataManager.loadedDataTypes.delete('participants');
             await this.dataManager.loadFromStorage(['participants']);
@@ -1200,17 +1487,17 @@ class RaceUI {
      * Generate next round for all classes with loading states and progress tracking
      */
     async generateNextRound() {
-        console.log('Generating next round for event:', this.selectedEventId);
-        
+        window.debugLogger?.debug('RaceUI', Generating next round for event:', this.selectedEventId);
+
         try {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found');
             }
 
             // Get classes that can advance
             const classesToGenerate = Object.keys(bracket.classes).filter(className => 
-                this.raceManager.canGenerateNextRound(this.selectedEventId, className)
+                this.raceManager.canGenerateNextRound(this.selectedEventId, className, bracket)
             );
 
             if (classesToGenerate.length === 0) {
@@ -1263,7 +1550,7 @@ class RaceUI {
 
             if (generatedAny) {
                 // Update UI
-                const updatedBracket = this.raceManager.getBracket(this.selectedEventId);
+                const updatedBracket = await this.raceManager.getBracket(this.selectedEventId);
                 await this.renderBracketsOptimized(updatedBracket);
                 this.updateGenerateButton(updatedBracket);
                 
@@ -1291,20 +1578,40 @@ class RaceUI {
      */
     updateGenerateButton(bracket) {
         const generateBtns = document.querySelectorAll('.generate-next-round-btn');
-        if (generateBtns.length === 0) return;
+        const repairBtn = document.getElementById('repair-bracket');
 
         // Check if any class can generate next round
         let canGenerate = false;
-        for (const className of Object.keys(bracket.classes)) {
-            if (this.raceManager.canGenerateNextRound(this.selectedEventId, className)) {
-                canGenerate = true;
-                break;
+        if (bracket && bracket.classes && typeof bracket.classes === 'object') {
+            for (const className of Object.keys(bracket.classes)) {
+                if (this.raceManager.canGenerateNextRound(this.selectedEventId, className, bracket)) {
+                    canGenerate = true;
+                    break;
+                }
             }
         }
 
-        generateBtns.forEach(generateBtn => {
-            generateBtn.style.display = canGenerate ? 'inline-block' : 'none';
-        });
+        // Check for duplicates in the bracket
+        const validationResult = this.validateNoDuplicateParticipants(bracket, []);
+        const hasDuplicates = !validationResult.isValid;
+
+        // Show repair button if there are duplicates, otherwise show generate button
+        const debugBtn = document.getElementById('debug-rounds');
+        if (hasDuplicates) {
+            window.debugLogger?.debug('RaceUI', ?? Bracket has duplicates - showing repair button');
+            generateBtns.forEach(generateBtn => {
+                generateBtn.style.display = 'none';
+            });
+            if (repairBtn) repairBtn.style.display = 'inline-block';
+            if (debugBtn) debugBtn.style.display = 'none';
+        } else {
+            generateBtns.forEach(generateBtn => {
+                generateBtn.style.display = canGenerate ? 'inline-block' : 'none';
+            });
+            if (repairBtn) repairBtn.style.display = 'none';
+            // Show debug button for troubleshooting round issues
+            if (debugBtn) debugBtn.style.display = 'inline-block';
+        }
     }
 
     /**
@@ -1592,24 +1899,77 @@ class RaceUI {
     }
 
     /**
+     * Restore pending results from incomplete heats to enable result selection functionality
+     * Optimized to preserve existing pending results if they exist locally
+     */
+    restorePendingResultsFromHeats(bracket) {
+        window.debugLogger?.debug('RaceUI', Restoring pending results from incomplete heats...');
+        window.debugLogger?.debug('RaceUI', Bracket data:', { hasBracket: !!bracket, hasClasses: !!(bracket && bracket.classes), classKeys: bracket?.classes ? Object.keys(bracket.classes) : [] });
+
+        // DO NOT clear pending results blindly - merge them instead
+        // this.pendingResults.clear(); 
+
+        if (!bracket || !bracket.classes) {
+            window.debugLogger?.debug('RaceUI', No bracket or classes found, skipping restoration');
+            return;
+        }
+
+        // Iterate through all classes and rounds to find incomplete heats
+        Object.values(bracket.classes).forEach(classBracket => {
+            if (!classBracket.rounds) return;
+
+            classBracket.rounds.forEach(round => {
+                if (!round.heats) return;
+
+                round.heats.forEach(heat => {
+                    // Only restore results for active heats (not completed)
+                    // AND only if we don't already have pending results for this heat locally
+                    if (heat.status === 'active' && heat.results && heat.results.length > 0) {
+                        if (!this.pendingResults.has(heat.id)) {
+                            window.debugLogger?.debug('RaceUI', `Restoring pending results for active heat ${heat.id} with ${heat.results.length} results`);
+
+                            // Create pending results from existing heat results
+                            const pendingResults = heat.results.map(result => ({
+                                participantId: result.participantId,
+                                position: result.position,
+                                timestamp: result.timestamp || new Date().toISOString()
+                            }));
+
+                            this.pendingResults.set(heat.id, pendingResults);
+                            window.debugLogger?.debug('RaceUI', `Set pending results for heat ${heat.id}:`, pendingResults);
+                        } else {
+                            window.debugLogger?.debug('RaceUI', `Skipping restore for heat ${heat.id} - local pending results exist`);
+                        }
+                    }
+                });
+            });
+        });
+
+        window.debugLogger?.debug('RaceUI', `Pending results managed for ${this.pendingResults.size} heats`);
+    }
+
+    /**
      * Render tournament brackets
      */
     async renderBrackets(bracket) {
-        console.log('Rendering brackets...', bracket);
+        window.debugLogger?.debug('RaceUI', Rendering brackets...', bracket);
         const bracketsContainer = document.getElementById('brackets-container');
         if (!bracketsContainer) {
-            console.log('Brackets container not found');
+            window.debugLogger?.debug('RaceUI', Brackets container not found');
             return;
         }
 
         if (!bracket || !bracket.classes || Object.keys(bracket.classes).length === 0) {
-            console.log('No bracket data, showing initialization');
+            window.debugLogger?.debug('RaceUI', No bracket data, showing initialization');
             this.showBracketInitialization();
             return;
         }
 
-        console.log('Rendering brackets for classes:', Object.keys(bracket.classes));
-        
+        window.debugLogger?.debug('RaceUI', Rendering brackets for classes:', Object.keys(bracket.classes));
+
+        // Restore pending results for incomplete heats to enable result selection
+        this.restorePendingResultsFromHeats(bracket);
+
         // Organize heats by round number across all classes (now async)
         const roundsData = await this.organizeHeatsByRound(bracket);
         
@@ -1624,7 +1984,7 @@ class RaceUI {
         html += this.renderGenerateNextRoundButton(bracket);
 
         bracketsContainer.innerHTML = html;
-        console.log('Brackets rendered successfully');
+        window.debugLogger?.debug('RaceUI', Brackets rendered successfully');
         
         // Update heat count tracking
         this.lastKnownHeatCount = this.getCurrentHeatCount();
@@ -1639,21 +1999,21 @@ class RaceUI {
     async organizeHeatsByRound(bracket) {
         const roundsMap = new Map();
         
-        // 🔧 FIX: Force refresh event data to get latest classOrder for rendering
-        console.log('🔧 Force refreshing event data for bracket rendering...');
+        // ?? FIX: Force refresh event data to get latest classOrder for rendering
+        window.debugLogger?.debug('RaceUI', ?? Force refreshing event data for bracket rendering...');
         this.dataManager.loadedDataTypes.delete('events');
         try {
             await this.dataManager.loadFromStorage(['events']);
-            console.log('🔧 Event data refreshed for rendering');
+            window.debugLogger?.debug('RaceUI', ?? Event data refreshed for rendering');
         } catch (error) {
-            console.error('🔧 Error refreshing event data for rendering:', error);
+            console.error('?? Error refreshing event data for rendering:', error);
         }
         
         // Get event data to access class order (now with fresh data)
         const event = this.dataManager.getEvent(this.selectedEventId);
         const classOrder = event?.classOrder || [];
         
-        console.log('🔧 organizeHeatsByRound using classOrder:', classOrder);
+        window.debugLogger?.debug('RaceUI', ?? organizeHeatsByRound using classOrder:', classOrder);
         
         // Create ordered array of class names
         const orderedClassNames = this.getOrderedClassNames(bracket, classOrder);
@@ -1662,22 +2022,30 @@ class RaceUI {
         orderedClassNames.forEach(className => {
             const classBracket = bracket.classes[className];
             if (!classBracket) return;
-            
+
             classBracket.rounds.forEach(round => {
                 const roundKey = round.roundNumber;
-                
+
                 if (!roundsMap.has(roundKey)) {
                     roundsMap.set(roundKey, {
                         roundNumber: roundKey,
                         classes: []
                     });
                 }
-                
-                roundsMap.get(roundKey).classes.push({
-                    className,
-                    classBracket,
-                    round
-                });
+
+                const roundClasses = roundsMap.get(roundKey).classes;
+
+                // ?? FIX: Prevent duplicate classes in the same round
+                const classAlreadyInRound = roundClasses.some(classData => classData.className === className);
+                if (!classAlreadyInRound) {
+                    roundClasses.push({
+                        className,
+                        classBracket,
+                        round
+                    });
+                } else {
+                    console.warn(`?? Prevented duplicate class ${className} in round ${roundKey}`);
+                }
             });
         });
         
@@ -1697,7 +2065,7 @@ class RaceUI {
     getOrderedClassNames(bracket, classOrder) {
         const availableClasses = Object.keys(bracket.classes);
         
-        console.log('🔧 getOrderedClassNames called with:', {
+        window.debugLogger?.debug('RaceUI', ?? getOrderedClassNames called with:', {
             availableClasses,
             classOrder,
             selectedEventId: this.selectedEventId
@@ -1705,7 +2073,7 @@ class RaceUI {
         
         if (!classOrder || classOrder.length === 0) {
             // No order specified, return alphabetical order
-            console.log('🔧 No class order specified, using alphabetical order');
+            window.debugLogger?.debug('RaceUI', ?? No class order specified, using alphabetical order');
             return availableClasses.sort();
         }
         
@@ -1722,9 +2090,9 @@ class RaceUI {
             if (classSetting && availableClasses.includes(classSetting.className)) {
                 orderedClasses.push(classSetting.className);
                 usedClasses.add(classSetting.className);
-                console.log(`🔧 Added class ${classSetting.className} in order position ${orderedClasses.length}`);
+                window.debugLogger?.debug('RaceUI', `?? Added class ${classSetting.className} in order position ${orderedClasses.length}`);
             } else {
-                console.log(`🔧 Warning: Class ID ${classId} not found in classSettings or not available in bracket`);
+                window.debugLogger?.debug('RaceUI', `?? Warning: Class ID ${classId} not found in classSettings or not available in bracket`);
             }
         });
         
@@ -1732,11 +2100,11 @@ class RaceUI {
         availableClasses.forEach(className => {
             if (!usedClasses.has(className)) {
                 orderedClasses.push(className);
-                console.log(`🔧 Added remaining class ${className} at end`);
+                window.debugLogger?.debug('RaceUI', `?? Added remaining class ${className} at end`);
             }
         });
         
-        console.log('🔧 Final ordered class names for rendering:', orderedClasses);
+        window.debugLogger?.debug('RaceUI', ?? Final ordered class names for rendering:', orderedClasses);
         return orderedClasses;
     }
 
@@ -1843,7 +2211,18 @@ class RaceUI {
         const upperBracketHeats = round.heats.filter(h => h.bracketType === 'upper');
         const lowerBracketHeats = round.heats.filter(h => h.bracketType === 'lower');
         const championshipHeats = round.heats.filter(h => h.bracketType === 'championship');
-        
+
+        window.debugLogger?.debug('RaceUI', `?? Rendering double elimination heats for ${className}:`);
+        window.debugLogger?.debug('RaceUI', `  Total heats: ${round.heats.length}`);
+        window.debugLogger?.debug('RaceUI', `  Upper bracket heats: ${upperBracketHeats.length}`);
+        window.debugLogger?.debug('RaceUI', `  Lower bracket heats: ${lowerBracketHeats.length}`);
+        window.debugLogger?.debug('RaceUI', `  Championship heats: ${championshipHeats.length}`);
+
+        // Debug: Log each heat's bracket type
+        round.heats.forEach((heat, index) => {
+            window.debugLogger?.debug('RaceUI', `    Heat ${index + 1}: bracketType=${heat.bracketType}, heatNumber=${heat.heatNumber}`);
+        });
+
         let html = '';
         
         if (upperBracketHeats.length > 0) {
@@ -2055,15 +2434,18 @@ class RaceUI {
         const participant = lane.participant;
         const result = heat.results ? heat.results.find(r => r.participantId === participant?.id) : null;
         const position = result ? result.position : null;
-        
+
         // Get pending result for this participant
         const heatResults = this.pendingResults.get(heat.id) || [];
         const pendingResult = heatResults.find(r => r.participantId === participant?.id);
+
+        // Prioritize pending results over heat.results to prevent visual glitches during completion
+        // Only use heat.results if there are no pending results for this participant
         const currentPosition = pendingResult ? pendingResult.position : position;
-        
+
         // Heat is truly completed only if it has both completed status AND actual results
         const actuallyCompleted = isCompleted && heat.results && heat.results.length > 0;
-        
+
         if (!participant) {
             return `
                 <div class="participant-horizontal empty">
@@ -2076,8 +2458,8 @@ class RaceUI {
         return `
             <div class="participant-horizontal ${currentPosition ? `position-${currentPosition}` : ''}" data-participant-id="${participant.id}">
                 <div class="lane-label">Lane ${lane.lane}</div>
-                <div class="participant-info ${!actuallyCompleted ? 'clickable-participant' : ''}" 
-                     ${!actuallyCompleted ? `data-participant-id="${participant.id}" data-heat-id="${heat.id}" data-max-lanes="${heat.numberOfLanes}"` : ''}>
+                <div class="participant-info ${!actuallyCompleted ? 'clickable-participant' : ''}"
+                     data-participant-id="${participant.id}" data-heat-id="${heat.id}" data-max-lanes="${heat.numberOfLanes}">
                     <div class="participant-name">${participant.name}</div>
                     ${participant.team ? `<div class="participant-team">${participant.team}</div>` : ''}
                     ${!actuallyCompleted ? `
@@ -2151,15 +2533,18 @@ class RaceUI {
         const participant = lane.participant;
         const result = heat.results ? heat.results.find(r => r.participantId === participant?.id) : null;
         const position = result ? result.position : null;
-        
+
         // Get pending result for this participant
         const heatResults = this.pendingResults.get(heat.id) || [];
         const pendingResult = heatResults.find(r => r.participantId === participant?.id);
+
+        // Prioritize pending results over heat.results to prevent visual glitches during completion
+        // Only use heat.results if there are no pending results for this participant
         const currentPosition = pendingResult ? pendingResult.position : position;
-        
+
         // Heat is truly completed only if it has both completed status AND actual results
         const actuallyCompleted = isCompleted && heat.results && heat.results.length > 0;
-        
+
         if (!participant) {
             return `
                 <div class="lane empty">
@@ -2188,8 +2573,8 @@ class RaceUI {
         return `
             <div class="lane ${currentPosition ? `position-${currentPosition}` : ''}${statusClasses}" data-participant-id="${participant.id}">
                 <div class="lane-number">Lane ${lane.lane}</div>
-                <div class="lane-participant ${!actuallyCompleted ? 'clickable-participant' : ''}" 
-                     ${!actuallyCompleted ? `data-participant-id="${participant.id}" data-heat-id="${heat.id}" data-max-lanes="${heat.numberOfLanes}"` : ''}>
+                <div class="lane-participant ${!actuallyCompleted ? 'clickable-participant' : ''}"
+                     data-participant-id="${participant.id}" data-heat-id="${heat.id}" data-max-lanes="${heat.numberOfLanes}">
                     <span class="participant-name">${participant.name}</span>
                     ${participant.team ? `<span class="participant-team">${participant.team}</span>` : ''}
                     ${statusIndicator}
@@ -2262,35 +2647,43 @@ class RaceUI {
     }
 
     /**
-     * Handle participant click with debouncing for better responsiveness
+     * Handle participant click with minimal debouncing to prevent race conditions
      */
-    handleParticipantClickWithDebounce(participantElement) {
+    async handleParticipantClickWithDebounce(participantElement) {
         const now = Date.now();
         if (now - this.lastClickTime < this.clickDebounceDelay) {
-            console.log('Click debounced - too soon after last click');
+            window.debugLogger?.debug('RaceUI', Click debounced - too soon after last click (race condition prevention)');
             return;
         }
         this.lastClickTime = now;
-        
-        // Add visual feedback for click
-        participantElement.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            participantElement.style.transform = '';
-        }, 100);
-        
-        this.handleParticipantClick(participantElement);
+
+        await this.handleParticipantClick(participantElement);
     }
 
     /**
      * Handle participant name click (new simplified method)
      */
-    handleParticipantClick(participantElement) {
+    async handleParticipantClick(participantElement) {
         const participantId = participantElement.dataset.participantId;
         const heatId = participantElement.dataset.heatId;
         const maxLanes = parseInt(participantElement.dataset.maxLanes);
-        
-        console.log('Participant click:', { participantId, heatId, maxLanes });
-        
+
+        window.debugLogger?.debug('RaceUI', Participant click:', { participantId, heatId, maxLanes, selectedEventId: this.selectedEventId });
+        window.debugLogger?.debug('RaceUI', Participant element dataset:', participantElement.dataset);
+
+        // Validate required data
+        if (!this.selectedEventId) {
+            console.error('No selected event - cannot handle participant click');
+            this.showToast('No event selected - please select an event first', 'error');
+            return;
+        }
+
+        if (!participantId || !heatId) {
+            console.error('Missing participant or heat ID', { participantId, heatId });
+            this.showToast('Missing participant or heat data - please refresh the page', 'error');
+            return;
+        }
+
         // Get or create pending result for this heat
         if (!this.pendingResults.has(heatId)) {
             this.pendingResults.set(heatId, []);
@@ -2299,8 +2692,35 @@ class RaceUI {
         const heatResults = this.pendingResults.get(heatId);
         
         // Get current heat data
-        const currentHeat = this.raceManager.getHeat(this.selectedEventId, heatId);
-        const actualParticipantCount = currentHeat.lanes.filter(lane => lane.participant).length;
+        const currentHeat = await this.raceManager.getHeat(this.selectedEventId, heatId);
+        if (!currentHeat) {
+            console.error(`Heat ${heatId} not found for event ${this.selectedEventId}`);
+            this.showToast('Heat data not found - please refresh the page', 'error');
+            return;
+        }
+
+        // Try to get participant count from lanes, or fall back to numberOfLanes or results
+        let actualParticipantCount = 0;
+
+        if (currentHeat.lanes) {
+            actualParticipantCount = currentHeat.lanes.filter(lane => lane.participant).length;
+        } else if (currentHeat.numberOfLanes) {
+            actualParticipantCount = currentHeat.numberOfLanes;
+            window.debugLogger?.debug('RaceUI', `Using participant count from numberOfLanes: ${actualParticipantCount}`);
+        } else {
+            console.warn(`Heat ${heatId} has no lanes data, trying to determine participant count from other sources`);
+
+            // Try to get count from existing results
+            if (currentHeat.results && Array.isArray(currentHeat.results)) {
+                const uniqueParticipantIds = new Set(currentHeat.results.map(r => r.participantId));
+                actualParticipantCount = uniqueParticipantIds.size;
+                window.debugLogger?.debug('RaceUI', `Using participant count from results: ${actualParticipantCount}`);
+            } else {
+                // Last resort: use the maxLanes from the dataset, or default to 4
+                actualParticipantCount = maxLanes || 4; // Default to 4 lanes if nothing else works
+                console.warn(`Using default participant count: ${actualParticipantCount}`);
+            }
+        }
         
         // Check if this participant has a false start or disqualification result
         const heatResult = currentHeat.results ? currentHeat.results.find(r => r.participantId === participantId) : null;
@@ -2308,7 +2728,7 @@ class RaceUI {
         const hasFalseStart = heatResult && (heatResult.falseStart || heatResult.position === 'FS');
         
         if (hasDisqualification || hasFalseStart) {
-            console.log(`Participant ${participantId} is disqualified or has false start, cannot change position`);
+            window.debugLogger?.debug('RaceUI', `Participant ${participantId} is disqualified or has false start, cannot change position`);
             this.showToast('Cannot change position for disqualified or false started participants', 'warning');
             return;
         }
@@ -2322,14 +2742,18 @@ class RaceUI {
         
         const maxPosition = actualParticipantCount; // Only assign positions up to participant count
         
-        console.log(`Heat has ${actualParticipantCount} participants, max position: ${maxPosition}`);
-        console.log('Heat lanes:', currentHeat.lanes);
-        console.log('Participants in lanes:', currentHeat.lanes.map(lane => ({
-            lane: lane.lane,
-            hasParticipant: !!lane.participant,
-            participantId: lane.participant?.id,
-            participantName: lane.participant?.name
-        })));
+        window.debugLogger?.debug('RaceUI', `Heat has ${actualParticipantCount} participants, max position: ${maxPosition}`);
+        window.debugLogger?.debug('RaceUI', Heat lanes:', currentHeat.lanes || 'No lanes data available');
+        if (currentHeat.lanes) {
+            window.debugLogger?.debug('RaceUI', Participants in lanes:', currentHeat.lanes.map(lane => ({
+                lane: lane.lane,
+                hasParticipant: !!lane.participant,
+                participantId: lane.participant?.id,
+                participantName: lane.participant?.name
+            })));
+        } else {
+            window.debugLogger?.debug('RaceUI', Cannot display lane participants - lanes data missing');
+        }
         
         // Remove existing result for this participant first
         if (existingResult) {
@@ -2347,27 +2771,31 @@ class RaceUI {
         // Note: False Start participants can now have regular positions assigned
         const effectiveMaxPosition = hasDisqualificationResults ? maxPosition - disqualificationResults.length : maxPosition;
         
-        // Find next available position or cycle through positions
+        // Assign positions based on click order: first click = 1st, second click = 2nd, etc.
         let nextPosition;
-        
+
         if (currentPosition === 0) {
-            // If unassigned, find the lowest available position
-            nextPosition = this.findNextAvailablePosition(heatResults, effectiveMaxPosition);
-            console.log(`Assigning first available position: ${nextPosition} (effective max: ${effectiveMaxPosition})`);
-        } else {
-            // If already assigned, cycle to next position or unassign
-            nextPosition = currentPosition + 1;
-            if (nextPosition > effectiveMaxPosition) {
-                nextPosition = 0; // Reset to unassigned
-                console.log(`Cycling from position ${currentPosition} to unassigned (effective max: ${effectiveMaxPosition})`);
-            } else {
-                // Check if next position is available, if not find next available
-                const isNextPositionTaken = heatResults.some(r => r.position === nextPosition);
-                if (isNextPositionTaken) {
-                    nextPosition = this.findNextAvailablePosition(heatResults, effectiveMaxPosition, nextPosition);
+            // If unassigned, find the next available position
+            const takenPositions = new Set(heatResults.filter(r => r.position > 0).map(r => r.position));
+            window.debugLogger?.debug('RaceUI', Taken positions:', Array.from(takenPositions));
+
+            // Find the smallest available position
+            for (let pos = 1; pos <= effectiveMaxPosition; pos++) {
+                if (!takenPositions.has(pos)) {
+                    nextPosition = pos;
+                    window.debugLogger?.debug('RaceUI', `Assigning position ${nextPosition} (next available from ${Array.from(takenPositions)})`);
+                    break;
                 }
-                console.log(`Cycling from position ${currentPosition} to ${nextPosition} (effective max: ${effectiveMaxPosition})`);
             }
+
+            if (nextPosition === undefined) {
+                nextPosition = 0; // No more positions available
+                window.debugLogger?.debug('RaceUI', `No more positions available: taken=${Array.from(takenPositions)}, max=${effectiveMaxPosition}`);
+            }
+        } else {
+            // If already assigned, clicking again removes the position (unassign)
+            nextPosition = 0; // Unassign this participant
+            window.debugLogger?.debug('RaceUI', `Unassigning position ${currentPosition} (clicking assigned participant)`);
         }
         
         // Add new result if position is valid
@@ -2380,18 +2808,17 @@ class RaceUI {
         }
         
         // Update UI - simple approach to avoid duplication
-        this.updateParticipantPositionDisplay(heatId);
-        
-        // Auto-complete if all positions are filled - requires at least 2 results
-        // and the user has assigned positions to all participants (excluding special results)
-        const participantsNeedingPositions = actualParticipantCount - disqualificationResults.length;
-        if (heatResults.length >= 2 && heatResults.length >= participantsNeedingPositions) {
-            // Auto-complete the heat without confirmation
-            this.completeHeat(heatId, heatResults);
+        await this.updateParticipantPositionDisplay(heatId);
+
+        // Check if heat should be automatically completed (consistent with false start/disqualification logic)
+        // But don't update UI again if completion is triggered - let completeHeat handle it
+        const shouldAutoComplete = await this.shouldAutoCompleteHeat(heatId);
+        if (shouldAutoComplete) {
+            await this.checkAndAutoCompleteHeat(heatId);
         }
-        
+
         // Update scroll anchor tracking after position change
-        this.updateScrollAnchor();
+        await this.updateScrollAnchor();
     }
 
     /**
@@ -2400,7 +2827,7 @@ class RaceUI {
     createScrollAnchorIndicator() {
         if (this.scrollAnchorIndicator) return;
         
-        console.log('Creating scroll anchor indicator...');
+        window.debugLogger?.debug('RaceUI', Creating scroll anchor indicator...');
         
         this.scrollAnchorIndicator = document.createElement('div');
         this.scrollAnchorIndicator.className = 'scroll-anchor-indicator';
@@ -2417,20 +2844,20 @@ class RaceUI {
         });
         
         document.body.appendChild(this.scrollAnchorIndicator);
-        console.log('Scroll anchor indicator created and added to DOM');
+        window.debugLogger?.debug('RaceUI', Scroll anchor indicator created and added to DOM');
     }
 
     /**
      * Update the scroll anchor based on current incomplete races
      */
-    updateScrollAnchor() {
+    async updateScrollAnchor() {
         if (!this.selectedEventId) return;
-        
-        console.log('Updating scroll anchor...');
-        
-        const bracket = this.raceManager.getBracket(this.selectedEventId);
+
+        window.debugLogger?.debug('RaceUI', Updating scroll anchor...');
+
+        const bracket = this.raceManager.getCachedBracket(this.selectedEventId);
         if (!bracket || !bracket.classes) {
-            console.log('No bracket data available');
+            window.debugLogger?.debug('RaceUI', No bracket data available');
             return;
         }
         
@@ -2451,7 +2878,7 @@ class RaceUI {
                                     const rect = heatElement.getBoundingClientRect();
                                     const position = rect.top + window.scrollY;
                                     
-                                    console.log(`Found incomplete heat ${heat.id} (Race #${heat.raceNumber || heat.heatNumber}) at position ${position}`);
+                                    window.debugLogger?.debug('RaceUI', `Found incomplete heat ${heat.id} (Race #${heat.raceNumber || heat.heatNumber}) at position ${position}`);
                                     
                                     // Find the highest race number (lowest position in document)
                                     if (position < lowestPosition) {
@@ -2466,7 +2893,7 @@ class RaceUI {
                                         };
                                     }
                                 } else {
-                                    console.log(`Heat element not found for heat ${heat.id}`);
+                                    window.debugLogger?.debug('RaceUI', `Heat element not found for heat ${heat.id}`);
                                 }
                             }
                         });
@@ -2475,16 +2902,16 @@ class RaceUI {
             }
         });
         
-        console.log(`Found ${incompleteCount} incomplete races, highest race at position ${lowestPosition}`);
+        window.debugLogger?.debug('RaceUI', `Found ${incompleteCount} incomplete races, highest race at position ${lowestPosition}`);
         
         this.scrollAnchor = highestIncomplete;
         
         // Create indicator if we have incomplete races
         if (this.scrollAnchor) {
-            console.log(`Creating scroll anchor indicator for highest incomplete race: ${this.scrollAnchor.className} - Race #${this.scrollAnchor.raceNumber || this.scrollAnchor.heatNumber}`);
+            window.debugLogger?.debug('RaceUI', `Creating scroll anchor indicator for highest incomplete race: ${this.scrollAnchor.className} - Race #${this.scrollAnchor.raceNumber || this.scrollAnchor.heatNumber}`);
             this.createScrollAnchorIndicator();
         } else if (this.scrollAnchorIndicator) {
-            console.log('Removing scroll anchor indicator - no incomplete races');
+            window.debugLogger?.debug('RaceUI', Removing scroll anchor indicator - no incomplete races');
             this.scrollAnchorIndicator.remove();
             this.scrollAnchorIndicator = null;
         }
@@ -2504,17 +2931,17 @@ class RaceUI {
         const anchorRect = anchorElement.getBoundingClientRect();
         const anchorTop = anchorRect.top + currentScrollY;
         
-        console.log(`Scroll: ${currentScrollY}, Anchor: ${anchorTop}, Threshold: ${this.scrollThreshold}`);
+        window.debugLogger?.debug('RaceUI', `Scroll: ${currentScrollY}, Anchor: ${anchorTop}, Threshold: ${this.scrollThreshold}`);
         
         // Show indicator if we've scrolled past the anchor (anchor is above viewport)
         if (anchorTop < currentScrollY - this.scrollThreshold) {
             if (!this.scrollAnchorIndicator.classList.contains('visible')) {
-                console.log('Showing scroll anchor indicator - scrolled past anchor');
+                window.debugLogger?.debug('RaceUI', Showing scroll anchor indicator - scrolled past anchor');
                 this.scrollAnchorIndicator.classList.add('visible');
             }
         } else {
             if (this.scrollAnchorIndicator.classList.contains('visible')) {
-                console.log('Hiding scroll anchor indicator - anchor in view');
+                window.debugLogger?.debug('RaceUI', Hiding scroll anchor indicator - anchor in view');
                 this.scrollAnchorIndicator.classList.remove('visible');
             }
         }
@@ -2557,12 +2984,12 @@ class RaceUI {
     /**
      * Handle result position click (legacy method for numbered buttons)
      */
-    handleResultClick(button) {
+    async handleResultClick(button) {
         const position = parseInt(button.dataset.position);
         const participantId = button.dataset.participantId;
         const heatId = button.dataset.heatId;
         
-        console.log('Result click:', { position, participantId, heatId });
+        window.debugLogger?.debug('RaceUI', Result click:', { position, participantId, heatId });
         
         // Get or create pending result for this heat
         if (!this.pendingResults.has(heatId)) {
@@ -2600,12 +3027,12 @@ class RaceUI {
     /**
      * Update participant position display for horizontal layout
      */
-    updateParticipantPositionDisplay(heatId) {
-        console.log('Updating participant position display for heat:', heatId);
+    async updateParticipantPositionDisplay(heatId) {
+        window.debugLogger?.debug('RaceUI', Updating participant position display for heat:', heatId);
         const heatResults = this.pendingResults.get(heatId) || [];
         
         // Get current heat data to check for special results
-        const currentHeat = this.raceManager.getHeat(this.selectedEventId, heatId);
+        const currentHeat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         
         // Find all heat elements with this ID (works for both horizontal and vertical layouts)
         const allHeatElements = document.querySelectorAll(`[data-heat-id="${heatId}"]`);
@@ -2616,7 +3043,7 @@ class RaceUI {
             const verticalParticipants = heatElement.querySelectorAll('.lane-participant.clickable-participant');
             const allParticipants = [...horizontalParticipants, ...verticalParticipants];
             
-            console.log(`Found ${horizontalParticipants.length} horizontal participants and ${verticalParticipants.length} vertical participants`);
+            window.debugLogger?.debug('RaceUI', `Found ${horizontalParticipants.length} horizontal participants and ${verticalParticipants.length} vertical participants`);
             
             allParticipants.forEach(participant => {
                 const participantId = participant.dataset.participantId;
@@ -2639,7 +3066,7 @@ class RaceUI {
                 // Note: False Start participants can now have regular positions assigned
                 // and will be treated like regular participants for position display
                 
-                console.log(`Updating participant ${participantId}: position ${currentPosition} (DSQ: ${hasDisqualification}, FS: ${hasFalseStart})`);
+                window.debugLogger?.debug('RaceUI', `Updating participant ${participantId}: position ${currentPosition} (DSQ: ${hasDisqualification}, FS: ${hasFalseStart})`);
                 
                 // Update position display (for uncompleted heats)
                 let positionDisplay = participant.querySelector('.position-display');
@@ -2657,33 +3084,39 @@ class RaceUI {
                             displayText = this.getOrdinal(currentPosition);
                             displayClass = 'current-position';
                         }
-                        
+
                         positionDisplay.innerHTML = `<span class="${displayClass}">${displayText}</span>`;
-                        console.log(`Set position to ${displayText} for participant ${participantId}`);
+                        window.debugLogger?.debug('RaceUI', `Set position to ${displayText} for participant ${participantId}`);
                     } else {
-                        // Remove position display when no position assigned
-                        positionDisplay.remove();
-                        console.log(`Removed position display for participant ${participantId}`);
+                        // Update to show "Click to set position" for unassigned participants
+                        positionDisplay.innerHTML = `<span class="no-position">Click to set position</span>`;
+                        window.debugLogger?.debug('RaceUI', `Set "Click to set position" for participant ${participantId}`);
                     }
-                } else if (currentPosition > 0 || hasDisqualification || hasFalseStart) {
-                    // Create position display if it doesn't exist but we have a position
+                } else {
+                    // Create position display for all participants (assigned or not)
                     const newPositionDisplay = document.createElement('div');
                     newPositionDisplay.className = 'position-display';
                     let displayText, displayClass;
-                    if (hasDisqualification) {
-                        displayText = currentPosition;
-                        displayClass = 'dsq-position';
-                    } else if (hasFalseStart) {
-                        displayText = currentPosition; // Will be 'FS'
-                        displayClass = 'fs-position';
+
+                    if (currentPosition > 0 || hasDisqualification || hasFalseStart) {
+                        if (hasDisqualification) {
+                            displayText = currentPosition;
+                            displayClass = 'dsq-position';
+                        } else if (hasFalseStart) {
+                            displayText = currentPosition; // Will be 'FS'
+                            displayClass = 'fs-position';
+                        } else {
+                            displayText = this.getOrdinal(currentPosition);
+                            displayClass = 'current-position';
+                        }
                     } else {
-                        displayText = this.getOrdinal(currentPosition);
-                        displayClass = 'current-position';
+                        displayText = 'Click to set position';
+                        displayClass = 'no-position';
                     }
-                    
+
                     newPositionDisplay.innerHTML = `<span class="${displayClass}">${displayText}</span>`;
                     participant.appendChild(newPositionDisplay);
-                    console.log(`Created position display for participant ${participantId}`);
+                    window.debugLogger?.debug('RaceUI', `Created position display for participant ${participantId}: ${displayText}`);
                 }
                 
                 // Update position badge (for completed heats)
@@ -2719,41 +3152,41 @@ class RaceUI {
                     // Add appropriate class based on status
                     if (hasDisqualification) {
                         participantContainer.classList.add('participant-disqualified');
-                        console.log(`Added disqualified class for participant ${participantId}`);
+                        window.debugLogger?.debug('RaceUI', `Added disqualified class for participant ${participantId}`);
                     } else if (hasFalseStart) {
                         participantContainer.classList.add('participant-false-start');
-                        console.log(`Added false start class for participant ${participantId}`);
+                        window.debugLogger?.debug('RaceUI', `Added false start class for participant ${participantId}`);
                     } else if (currentPosition > 0) {
                         participantContainer.classList.add(`position-${currentPosition}`);
-                        console.log(`Added position-${currentPosition} class to participant container`);
+                        window.debugLogger?.debug('RaceUI', `Added position-${currentPosition} class to participant container`);
                     }
                 }
             });
         });
         
-        console.log(`Updated position display for ${allHeatElements.length} heat elements`);
+        window.debugLogger?.debug('RaceUI', `Updated position display for ${allHeatElements.length} heat elements`);
     }
 
     /**
      * Show lane usage analysis for a specific driver
      */
-    showPairingAnalysis(heatId, participantId) {
-        const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
+    async showPairingAnalysis(heatId, participantId) {
+        const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         if (!heat || !this.raceManager.pairingEngine) {
-            console.log('Heat or pairing engine not found');
+            window.debugLogger?.debug('RaceUI', Heat or pairing engine not found');
             return;
         }
 
         // Get participant info
         const participant = heat.lanes.find(lane => lane.participant?.id === participantId)?.participant;
         if (!participant) {
-            console.log('Participant not found in heat');
+            window.debugLogger?.debug('RaceUI', Participant not found in heat');
             return;
         }
 
         // Get lane usage statistics for this participant
         const participantStats = this.raceManager.pairingEngine.getParticipantStats(participantId);
-        console.log('Participant Lane Usage:', participantStats);
+        window.debugLogger?.debug('RaceUI', Participant Lane Usage:', participantStats);
 
         // Get all events this participant is in
         const allEvents = this.dataManager.getEventsArray();
@@ -2923,8 +3356,8 @@ class RaceUI {
     /**
      * Show per-heat matching logic and outcomes
      */
-    showHeatLogic(heatId) {
-        const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
+    async showHeatLogic(heatId) {
+        const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         if (!heat) {
             this.showToast('Heat not found', 'error');
             return;
@@ -2982,7 +3415,7 @@ class RaceUI {
                 z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto;
             ">
                 <h3 style="color: var(--accent-primary); margin-bottom: 0.25rem;">
-                    <i class="fas fa-eye"></i> Race #${heat.raceNumber || heat.heatNumber} – ${roundText}
+                    <i class="fas fa-eye"></i> Race #${heat.raceNumber || heat.heatNumber} � ${roundText}
                 </h3>
                 <p style="color: var(--text-secondary); margin: 0 0 0.75rem;">Class: <strong style="color: var(--text-primary);">${this.escapeHtml(heat.className || '')}</strong></p>
 
@@ -3009,13 +3442,13 @@ class RaceUI {
     /**
      * Show overall pairing statistics for current event (lane usage and opponents)
      */
-    showFullPairingStats() {
+    async showFullPairingStats() {
         if (!this.selectedEventId || !this.raceManager || !this.raceManager.pairingEngine) {
             this.showToast('Statistics not available yet', 'warning');
             return;
         }
 
-        const bracket = this.raceManager.getBracket(this.selectedEventId);
+        const bracket = await this.raceManager.getBracket(this.selectedEventId);
         if (!bracket) {
             this.showToast('No bracket data available', 'warning');
             return;
@@ -3199,10 +3632,10 @@ class RaceUI {
     /**
      * Get participant name by ID
      */
-    getParticipantName(participantId) {
+    async getParticipantName(participantId) {
         // Try to find participant name from current event data
         if (this.selectedEventId) {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (bracket) {
                 for (const className in bracket.classes) {
                     const participant = bracket.classes[className].participants.find(p => p.id === participantId);
@@ -3218,20 +3651,23 @@ class RaceUI {
     /**
      * Show context menu for participant actions
      */
-    showParticipantContextMenu(event, participantElement) {
+    async showParticipantContextMenu(event, participantElement) {
         const participantId = participantElement.dataset.participantId;
         const heatId = participantElement.dataset.heatId;
-        
+
         // Remove existing context menu
         const existingMenu = document.querySelector('.participant-context-menu');
         if (existingMenu) {
             existingMenu.remove();
         }
-        
+
         // Get participant info
-        const currentHeat = this.raceManager.getHeat(this.selectedEventId, heatId);
-        const participant = currentHeat.lanes.find(lane => lane.participant?.id === participantId)?.participant;
-        
+        const currentHeat = await this.raceManager.getHeat(this.selectedEventId, heatId);
+        if (!currentHeat || !currentHeat.lanes) return;
+
+        const laneWithParticipant = currentHeat.lanes.find(lane => lane.participant?.id === participantId);
+        const participant = laneWithParticipant?.participant;
+
         if (!participant) return;
         
         // Create context menu
@@ -3240,36 +3676,56 @@ class RaceUI {
         menu.style.position = 'fixed';
         menu.style.zIndex = '1000';
         
+        // Check if heat is completed to show appropriate actions
+        const isHeatCompleted = currentHeat.status === 'completed';
+
         menu.innerHTML = `
             <div class="context-menu-header">
                 <strong>${participant.name}</strong>
                 ${participant.team ? `<span class="team">(${participant.team})</span>` : ''}
+                <div class="context-menu-subtitle">${isHeatCompleted ? 'Heat Completed' : 'Lane ' + (laneWithParticipant?.lane || 'N/A')}</div>
             </div>
-            <div class="context-menu-item" data-action="swap-participant">
-                <i class="fas fa-exchange-alt"></i>
-                Swap with Another Driver
-            </div>
-            <div class="context-menu-item" data-action="swap-same-heat">
-                <i class="fas fa-sync-alt"></i>
-                Swap Within Same Heat
-            </div>
-            <div class="context-menu-item" data-action="move-to-empty">
-                <i class="fas fa-arrow-right"></i>
-                Move to Empty Lane
-            </div>
-            <div class="context-menu-item" data-action="move-to-other-heat">
-                <i class="fas fa-external-link-alt"></i>
-                Move to Other Heat
-            </div>
-            <div class="context-menu-separator"></div>
-                                    <div class="context-menu-item" data-action="false-start">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Mark False Start (FS - Last Place)
-                        </div>
-            <div class="context-menu-item danger" data-action="disqualify">
-                <i class="fas fa-ban"></i>
-                Disqualify (Eliminate)
-            </div>
+            ${!isHeatCompleted ? `
+                <div class="context-menu-item" data-action="swap-participant">
+                    <i class="fas fa-exchange-alt"></i>
+                    Swap with Another Driver
+                </div>
+                <div class="context-menu-item" data-action="swap-same-heat">
+                    <i class="fas fa-sync-alt"></i>
+                    Swap Within Same Heat
+                </div>
+                <div class="context-menu-item" data-action="move-to-empty">
+                    <i class="fas fa-arrow-right"></i>
+                    Move to Empty Lane
+                </div>
+                <div class="context-menu-item" data-action="move-to-other-heat">
+                    <i class="fas fa-external-link-alt"></i>
+                    Move to Other Heat
+                </div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item" data-action="false-start">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Mark False Start (FS - Last Place)
+                </div>
+                <div class="context-menu-item danger" data-action="disqualify">
+                    <i class="fas fa-ban"></i>
+                    Disqualify (Eliminate)
+                </div>
+            ` : `
+                <div class="context-menu-item" data-action="view-results">
+                    <i class="fas fa-eye"></i>
+                    View Race Results
+                </div>
+                <div class="context-menu-item" data-action="reset-heat" ${currentHeat.status !== 'completed' ? 'style="display: none;"' : ''}>
+                    <i class="fas fa-undo"></i>
+                    Reset Heat Results
+                </div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item danger" data-action="disqualify-retroactive">
+                    <i class="fas fa-ban"></i>
+                    Retroactive Disqualification
+                </div>
+            `}
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="pairing-analysis">
                 <i class="fas fa-chart-line"></i>
@@ -3281,7 +3737,8 @@ class RaceUI {
         menu.addEventListener('click', (e) => {
             const action = e.target.closest('.context-menu-item')?.dataset.action;
             if (action) {
-                this.handleParticipantAction(action, participantId, heatId, currentHeat);
+                // Pass lane metadata to downstream handlers so swaps/moves are lane-accurate
+                this.handleParticipantAction(action, participantId, heatId, currentHeat, laneWithParticipant?.lane);
                 menu.remove();
             }
         });
@@ -3345,26 +3802,35 @@ class RaceUI {
     /**
      * Handle participant context menu actions
      */
-    async handleParticipantAction(action, participantId, heatId, currentHeat) {
+    async handleParticipantAction(action, participantId, heatId, currentHeat, laneNumber = null) {
         try {
             switch (action) {
                 case 'swap-participant':
-                    await this.handleSwapParticipant(participantId, heatId, currentHeat);
+                    await this.handleSwapParticipant(participantId, heatId, currentHeat, laneNumber);
                     break;
                 case 'swap-same-heat':
-                    await this.handleSwapSameHeat(participantId, heatId, currentHeat);
+                    await this.handleSwapSameHeat(participantId, heatId, currentHeat, laneNumber);
                     break;
                 case 'move-to-empty':
-                    await this.handleMoveToEmpty(participantId, heatId, currentHeat);
+                    await this.handleMoveToEmpty(participantId, heatId, currentHeat, laneNumber);
                     break;
                 case 'move-to-other-heat':
-                    await this.handleMoveToOtherHeat(participantId, heatId, currentHeat);
+                    await this.handleMoveToOtherHeat(participantId, heatId, currentHeat, laneNumber);
                     break;
                 case 'false-start':
                     await this.handleFalseStart(participantId, heatId, currentHeat);
                     break;
                 case 'disqualify':
                     await this.handleDisqualify(participantId, heatId, currentHeat);
+                    break;
+                case 'view-results':
+                    await this.showHeatResults(heatId);
+                    break;
+                case 'reset-heat':
+                    await this.resetCompletedHeat(heatId);
+                    break;
+                case 'disqualify-retroactive':
+                    await this.handleRetroactiveDisqualify(participantId, heatId, currentHeat);
                     break;
                 case 'pairing-analysis':
                     this.showPairingAnalysis(heatId, participantId);
@@ -3379,18 +3845,18 @@ class RaceUI {
     /**
      * Handle swapping participant with another driver
      */
-    async handleSwapParticipant(participantId, heatId, currentHeat) {
+    async handleSwapParticipant(participantId, heatId, currentHeat, laneNumber = null) {
         try {
-            console.log('🔄 Starting participant swap for:', participantId, 'in heat:', heatId);
+            window.debugLogger?.debug('RaceUI', ?? Starting participant swap for:', participantId, 'in heat:', heatId);
             
             // Get all participants in the same class for this event
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found for this event');
             }
             
             const className = currentHeat.className || this.determineHeatClass(heatId, bracket);
-            console.log('🔄 Determined class:', className);
+            window.debugLogger?.debug('RaceUI', ?? Determined class:', className);
             
             const classBracket = bracket.classes[className];
             if (!classBracket) {
@@ -3402,8 +3868,8 @@ class RaceUI {
                 .filter(lane => lane.participant)
                 .map(lane => lane.participant.id);
             
-            console.log('🔄 Current heat participants:', currentHeatParticipantIds);
-            console.log('🔄 All class participants:', classBracket.participants.map(p => ({ id: p.id, name: p.name, status: p.status })));
+            window.debugLogger?.debug('RaceUI', ?? Current heat participants:', currentHeatParticipantIds);
+            window.debugLogger?.debug('RaceUI', ?? All class participants:', classBracket.participants.map(p => ({ id: p.id, name: p.name, status: p.status })));
             
             // Get all participants in the same class and round, excluding those in completed heats
             const availableParticipants = [];
@@ -3418,7 +3884,7 @@ class RaceUI {
                 for (const heat of round.heats || []) {
                     // Skip completed heats
                     if (heat.status === 'completed') {
-                        console.log('🔄 Skipping completed heat:', heat.heatNumber || heat.id);
+                        window.debugLogger?.debug('RaceUI', ?? Skipping completed heat:', heat.heatNumber || heat.id);
                         continue;
                     }
                     
@@ -3438,7 +3904,7 @@ class RaceUI {
                 }
             }
             
-            console.log('🔄 Available participants for swap:', availableParticipants.map(p => ({ id: p.id, name: p.name, status: p.status })));
+            window.debugLogger?.debug('RaceUI', ?? Available participants for swap:', availableParticipants.map(p => ({ id: p.id, name: p.name, status: p.status })));
             
             if (availableParticipants.length === 0) {
                 this.showToast('No available participants to swap with in this class', 'warning');
@@ -3452,10 +3918,10 @@ class RaceUI {
             );
             
             if (selectedParticipant) {
-                console.log('🔄 User selected participant:', selectedParticipant.name, 'ID:', selectedParticipant.id);
+                window.debugLogger?.debug('RaceUI', ?? User selected participant:', selectedParticipant.name, 'ID:', selectedParticipant.id);
                 // Find which heat the selected participant is in
                 const targetHeatId = this.findParticipantHeat(selectedParticipant.id, bracket);
-                console.log('🔄 Target heat ID for selected participant:', targetHeatId);
+                window.debugLogger?.debug('RaceUI', ?? Target heat ID for selected participant:', targetHeatId);
                 
                 if (!targetHeatId) {
                     this.showToast(`Could not find heat for participant ${selectedParticipant.name}`, 'error');
@@ -3463,16 +3929,19 @@ class RaceUI {
                 }
                 
                 // Check the status of both heats before attempting swap
-                const sourceHeat = this.raceManager.getHeat(this.selectedEventId, heatId);
-                const targetHeat = this.raceManager.getHeat(this.selectedEventId, targetHeatId);
-                console.log('🔄 Source heat status:', sourceHeat?.status, 'Target heat status:', targetHeat?.status);
+                const sourceHeat = await this.raceManager.getHeat(this.selectedEventId, heatId);
+                const targetHeat = await this.raceManager.getHeat(this.selectedEventId, targetHeatId);
+                window.debugLogger?.debug('RaceUI', ?? Source heat status:', sourceHeat?.status, 'Target heat status:', targetHeat?.status);
                 
                 // Perform cross-heat swap
-                await this.performCrossHeatSwap(participantId, heatId, selectedParticipant.id, targetHeatId);
-                this.showToast(`Swapped ${this.getParticipantName(participantId)} with ${selectedParticipant.name}`, 'success');
+                await this.performCrossHeatSwap(participantId, heatId, selectedParticipant.id, targetHeatId, {
+                    laneNumber1: laneNumber,
+                    laneNumber2: null
+                });
+                this.showToast(`Swapped ${await this.getParticipantName(participantId)} with ${selectedParticipant.name}`, 'success');
             }
         } catch (error) {
-            console.error('❌ Error in handleSwapParticipant:', error);
+            console.error('? Error in handleSwapParticipant:', error);
             this.showToast(`Swap failed: ${error.message}`, 'error');
         }
     }
@@ -3480,7 +3949,7 @@ class RaceUI {
     /**
      * Handle moving participant to empty lane in the same heat
      */
-    async handleMoveToEmpty(participantId, heatId, currentHeat) {
+    async handleMoveToEmpty(participantId, heatId, currentHeat, laneNumber = null) {
         // Find empty lanes in the current heat
         const emptyLanes = currentHeat.lanes.filter(lane => !lane.participant);
         
@@ -3503,7 +3972,7 @@ class RaceUI {
         }
         
         if (targetLane) {
-            await this.moveParticipantToLane(participantId, heatId, targetLane.lane);
+            await this.moveParticipantToLane(participantId, heatId, targetLane.lane, laneNumber);
             this.showToast('Participant moved to empty lane', 'success');
         }
     }
@@ -3511,9 +3980,9 @@ class RaceUI {
     /**
      * Handle swapping participants within the same heat
      */
-    async handleSwapSameHeat(participantId, heatId, currentHeat) {
+    async handleSwapSameHeat(participantId, heatId, currentHeat, laneNumber = null) {
         try {
-            console.log('🔄 Starting same-heat swap for:', participantId, 'in heat:', heatId);
+            window.debugLogger?.debug('RaceUI', ?? Starting same-heat swap for:', participantId, 'in heat:', heatId);
             
             // Check if heat is completed
             if (currentHeat.status === 'completed') {
@@ -3524,7 +3993,7 @@ class RaceUI {
             // Get other participants in the same heat
             const otherParticipants = currentHeat.lanes
                 .filter(lane => lane.participant && lane.participant.id !== participantId)
-                .map(lane => lane.participant);
+                .map(lane => ({ ...lane.participant, laneNumber: lane.lane }));
             
             if (otherParticipants.length === 0) {
                 this.showToast('No other participants in this heat to swap with', 'warning');
@@ -3538,13 +4007,16 @@ class RaceUI {
             );
             
             if (selectedParticipant) {
-                console.log('🔄 User selected participant for same-heat swap:', selectedParticipant.name);
+                window.debugLogger?.debug('RaceUI', ?? User selected participant for same-heat swap:', selectedParticipant.name);
                 // Perform the swap
-                await this.performParticipantSwap(participantId, selectedParticipant.id, heatId);
-                this.showToast(`Swapped ${this.getParticipantName(participantId)} with ${selectedParticipant.name}`, 'success');
+                await this.performParticipantSwap(participantId, selectedParticipant.id, heatId, {
+                    laneNumber1: laneNumber,
+                    laneNumber2: selectedParticipant.laneNumber
+                });
+                this.showToast(`Swapped ${await this.getParticipantName(participantId)} with ${selectedParticipant.name}`, 'success');
             }
         } catch (error) {
-            console.error('❌ Error in handleSwapSameHeat:', error);
+            console.error('? Error in handleSwapSameHeat:', error);
             this.showToast(`Same-heat swap failed: ${error.message}`, 'error');
         }
     }
@@ -3552,9 +4024,9 @@ class RaceUI {
     /**
      * Handle moving participant to empty lane in other heats
      */
-    async handleMoveToOtherHeat(participantId, heatId, currentHeat) {
+    async handleMoveToOtherHeat(participantId, heatId, currentHeat, laneNumber = null) {
         try {
-            console.log('🔄 Starting move to other heat for:', participantId, 'from heat:', heatId);
+            window.debugLogger?.debug('RaceUI', ?? Starting move to other heat for:', participantId, 'from heat:', heatId);
             
             // Check if source heat is completed
             if (currentHeat.status === 'completed') {
@@ -3563,7 +4035,7 @@ class RaceUI {
             }
             
             // Get bracket and class info
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found for this event');
             }
@@ -3620,12 +4092,12 @@ class RaceUI {
                 
                 if (selectedLane) {
                     // Move participant to the selected heat and lane
-                    await this.moveParticipantToOtherHeat(participantId, heatId, selectedHeatOption.heat.id, selectedLane);
-                    this.showToast(`Moved ${this.getParticipantName(participantId)} to Heat ${selectedHeatOption.heatNumber}, Lane ${selectedLane}`, 'success');
+                    await this.moveParticipantToOtherHeat(participantId, heatId, selectedHeatOption.heat.id, selectedLane, laneNumber);
+                    this.showToast(`Moved ${await this.getParticipantName(participantId)} to Heat ${selectedHeatOption.heatNumber}, Lane ${selectedLane}`, 'success');
                 }
             }
         } catch (error) {
-            console.error('❌ Error in handleMoveToOtherHeat:', error);
+            console.error('? Error in handleMoveToOtherHeat:', error);
             this.showToast(`Move to other heat failed: ${error.message}`, 'error');
         }
     }
@@ -3874,6 +4346,10 @@ class RaceUI {
      * Determine which class a heat belongs to
      */
     determineHeatClass(heatId, bracket) {
+        if (!bracket.classes || typeof bracket.classes !== 'object') {
+            return null;
+        }
+
         for (const [className, classBracket] of Object.entries(bracket.classes)) {
             for (const round of classBracket.rounds) {
                 for (const heat of round.heats) {
@@ -3889,19 +4365,24 @@ class RaceUI {
     /**
      * Placeholder methods for actual functionality (to be implemented)
      */
-    async performParticipantSwap(participantId1, participantId2, heatId) {
-        console.log('Swapping participants:', participantId1, participantId2, 'in heat:', heatId);
-        
+    async performParticipantSwap(participantId1, participantId2, heatId, laneHints = null) {
+        window.debugLogger?.debug('RaceUI', Swapping participants:', participantId1, participantId2, 'in heat:', heatId);
+
         try {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found for event');
+            }
+
+            // Ensure bracket has classes property
+            if (!bracket.classes || typeof bracket.classes !== 'object') {
+                throw new Error('Bracket does not have valid classes structure');
             }
 
             // Find the specific heat first
             let targetHeat = null;
             let className = null;
-            
+
             // Search for the specific heat
             for (const [classKey, classBracket] of Object.entries(bracket.classes)) {
                 for (const round of classBracket.rounds) {
@@ -3926,15 +4407,20 @@ class RaceUI {
                 throw new Error('Cannot swap participants in completed heats');
             }
 
-            // Find both participants in the specific heat only
+            // Find both participants in the specific heat only (prefer lane hints)
             let lane1 = null, lane2 = null;
-            
-            for (const lane of targetHeat.lanes) {
-                if (lane.participant?.id === participantId1) {
-                    lane1 = lane;
-                }
-                if (lane.participant?.id === participantId2) {
-                    lane2 = lane;
+            if (laneHints?.laneNumber1 != null) {
+                const hinted = targetHeat.lanes.find(l => l.lane === laneHints.laneNumber1);
+                if (hinted?.participant?.id === participantId1) lane1 = hinted;
+            }
+            if (laneHints?.laneNumber2 != null) {
+                const hinted2 = targetHeat.lanes.find(l => l.lane === laneHints.laneNumber2);
+                if (hinted2?.participant?.id === participantId2) lane2 = hinted2;
+            }
+            if (!lane1 || !lane2) {
+                for (const lane of targetHeat.lanes) {
+                    if (!lane1 && lane.participant?.id === participantId1) lane1 = lane;
+                    if (!lane2 && lane.participant?.id === participantId2) lane2 = lane;
                 }
             }
 
@@ -3950,22 +4436,459 @@ class RaceUI {
             lane1.participant = lane2.participant;
             lane2.participant = temp;
 
+            // Validate that no heat contains duplicate participants
+            const validationResult = this.validateNoDuplicateParticipants(bracket, [heatId], { scope: 'heats-only' });
+            if (!validationResult.isValid) {
+                throw new Error(`Swap would create duplicate participants: ${validationResult.errors.join(', ')}`);
+            }
+
+            window.debugLogger?.debug('RaceUI', ? Duplicate participant validation passed');
+
             // Save the updated bracket
             await this.dataManager.saveRaceBracket(this.selectedEventId, bracket);
 
             // Update both local caches with the modified bracket
             this.raceManager.eventBrackets.set(this.selectedEventId, bracket);
             this.dataManager.data.raceBrackets[this.selectedEventId] = bracket;
-            
-            // Refresh the affected heat
-            this.refreshHeatDisplay(heatId);
 
-            console.log('✅ Participant swap completed successfully');
+            // Force synchronization between caches to prevent race conditions
+            this.synchronizeBracketCaches(this.selectedEventId);
+
+            // Refresh the affected heat
+            await this.refreshHeatDisplay(heatId);
+
+            window.debugLogger?.debug('RaceUI', ? Participant swap completed successfully');
 
         } catch (error) {
-            console.error('❌ Error swapping participants:', error);
+            console.error('? Error swapping participants:', error);
             this.showToast(`Error swapping participants: ${error.message}`, 'error');
             throw error;
+        }
+    }
+
+    /**
+     * Validate that specified heats don't contain duplicate participants
+     * Also checks for cross-bracket duplicates to prevent the swap bug
+     */
+    validateNoDuplicateParticipants(bracket, heatIds, options = {}) {
+        const scope = options.scope || 'global'; // 'global' | 'heats-only'
+        const errors = [];
+        const checkedParticipantIds = new Set();
+        const allParticipantLocations = new Map(); // participantId -> [{heatId, lane, participant}]
+
+        if (!bracket || !bracket.classes || typeof bracket.classes !== 'object') {
+            return { isValid: true, errors: [] };
+        }
+
+        // Global duplicate scan only if scope === 'global'
+        if (scope === 'global') {
+            for (const [className, classBracket] of Object.entries(bracket.classes)) {
+                for (const round of classBracket.rounds) {
+                    for (const heat of round.heats) {
+                        for (const lane of heat.lanes) {
+                            if (lane.participant?.id) {
+                                if (!allParticipantLocations.has(lane.participant.id)) {
+                                    allParticipantLocations.set(lane.participant.id, []);
+                                }
+                                allParticipantLocations.get(lane.participant.id).push({
+                                    heatId: heat.id,
+                                    lane: lane.lane,
+                                    participant: lane.participant,
+                                    className: className
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check for any participant appearing in multiple locations (duplicates)
+            for (const [participantId, locations] of allParticipantLocations) {
+                if (locations.length > 1) {
+                    const participant = locations[0].participant;
+                    const heatList = locations.map(loc => `Heat ${loc.heatId} (Lane ${loc.lane})`).join(', ');
+                    errors.push(`Participant ${participant.name} (${participantId}) appears in multiple locations: ${heatList}`);
+                }
+            }
+        }
+
+        // For the specified heats, also do detailed validation
+        for (const heatId of heatIds) {
+            // Find the heat
+            let targetHeat = null;
+            for (const [className, classBracket] of Object.entries(bracket.classes)) {
+                for (const round of classBracket.rounds) {
+                    for (const heat of round.heats) {
+                        if (heat.id === heatId) {
+                            targetHeat = heat;
+                            break;
+                        }
+                    }
+                    if (targetHeat) break;
+                }
+                if (targetHeat) break;
+            }
+
+            if (!targetHeat) {
+                errors.push(`Heat ${heatId} not found`);
+                continue;
+            }
+
+            // Check for duplicates within this specific heat
+            const heatParticipantIds = new Set();
+            for (const lane of targetHeat.lanes) {
+                if (lane.participant?.id) {
+                    if (heatParticipantIds.has(lane.participant.id)) {
+                        errors.push(`Heat ${heatId} contains duplicate participant ${lane.participant.name} (${lane.participant.id})`);
+                    }
+                    heatParticipantIds.add(lane.participant.id);
+                }
+            }
+        }
+
+        return {
+            isValid: errors.length === 0,
+            errors: errors
+        };
+    }
+
+    /**
+     * Repair bracket duplicates for the current event
+     */
+    async repairBracketDuplicates() {
+        try {
+            window.debugLogger?.debug('RaceUI', ?? Starting bracket repair operation...');
+
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
+            if (!bracket) {
+                this.showToast('No bracket found for current event', 'error');
+                return false;
+            }
+
+            // Run monitoring first to log current state
+            await this.monitorForDuplicates();
+
+            // Validate current state
+            const validationResult = this.validateNoDuplicateParticipants(bracket, []);
+            if (validationResult.isValid) {
+                this.showToast('Bracket is already valid - no repairs needed', 'info');
+                return true;
+            }
+
+            window.debugLogger?.debug('RaceUI', `?? Found ${validationResult.errors.length} duplicate issues in current event. Starting comprehensive repair...`);
+
+            // Attempt comprehensive repair (handles cross-round/cross-class duplicates)
+            const repairsMade = this.raceManager.repairBracketDuplicatesComprehensive(bracket);
+
+            if (repairsMade > 0) {
+                // Save the repaired bracket
+                await this.dataManager.saveRaceBracket(this.selectedEventId, bracket);
+
+                // Update local caches
+                this.raceManager.eventBrackets.set(this.selectedEventId, bracket);
+                this.dataManager.data.raceBrackets[this.selectedEventId] = bracket;
+
+                this.showToast(`Successfully repaired ${repairsMade} duplicate participant assignments`, 'success');
+
+                // Refresh the display
+                this.refreshAllDisplays();
+
+                // Run final monitoring to confirm everything is clean
+                await this.monitorForDuplicates();
+
+                return true;
+            } else {
+                this.showToast('No duplicates found to repair', 'info');
+
+                // Run monitoring to confirm everything is clean
+                await this.monitorForDuplicates();
+
+                return true;
+            }
+
+        } catch (error) {
+            console.error('? Error repairing bracket:', error);
+            this.showToast(`Failed to repair bracket: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Repair heat round assignments by checking if heats are in the correct rounds based on their IDs
+     */
+    repairHeatRoundAssignments(bracket) {
+        window.debugLogger?.debug('RaceUI', ?? Checking heat round assignments...');
+        let fixes = 0;
+
+        for (const [className, classBracket] of Object.entries(bracket.classes)) {
+            window.debugLogger?.debug('RaceUI', `?? Checking class: ${className}`);
+
+            // Create a map of heats by ID for easy lookup
+            const heatsById = new Map();
+
+            for (const round of classBracket.rounds) {
+                for (const heat of round.heats) {
+                    heatsById.set(heat.id, {
+                        heat,
+                        currentRound: round.roundNumber,
+                        roundObj: round
+                    });
+                }
+            }
+
+            // Check each heat's round assignment
+            for (const [heatId, heatInfo] of heatsById) {
+                const expectedRound = this.extractRoundFromHeatId(heatId);
+
+                if (expectedRound !== null && expectedRound !== heatInfo.currentRound) {
+                    window.debugLogger?.debug('RaceUI', `?? Heat ${heatId} is in round ${heatInfo.currentRound} but should be in round ${expectedRound}`);
+
+                    // Find the correct round
+                    let correctRound = null;
+                    for (const round of classBracket.rounds) {
+                        if (round.roundNumber === expectedRound) {
+                            correctRound = round;
+                            break;
+                        }
+                    }
+
+                    // Create the correct round if it doesn't exist
+                    if (!correctRound) {
+                        correctRound = {
+                            roundNumber: expectedRound,
+                            heats: []
+                        };
+                        classBracket.rounds.push(correctRound);
+                        window.debugLogger?.debug('RaceUI', `?? Created missing round ${expectedRound} for class ${className}`);
+                    }
+
+                    // Move the heat to the correct round
+                    heatInfo.roundObj.heats = heatInfo.roundObj.heats.filter(h => h.id !== heatId);
+                    correctRound.heats.push(heatInfo.heat);
+
+                    window.debugLogger?.debug('RaceUI', `?? Moved heat ${heatId} from round ${heatInfo.currentRound} to round ${expectedRound}`);
+                    fixes++;
+                }
+            }
+        }
+
+        window.debugLogger?.debug('RaceUI', `?? Round assignment repair completed - ${fixes} fixes applied`);
+        return fixes;
+    }
+
+    /**
+     * Extract round number from heat ID (e.g., 'heat-r2-h3-...' -> 2)
+     */
+    extractRoundFromHeatId(heatId) {
+        if (!heatId || typeof heatId !== 'string') {
+            return null;
+        }
+
+        // Match pattern: heat-r{round}-h{heat}...
+        const match = heatId.match(/^heat-r(\d+)-h\d+/);
+        if (match) {
+            return parseInt(match[1], 10);
+        }
+
+        return null;
+    }
+
+    /**
+     * Repair corrupted bracket data by removing duplicate participants and fixing round assignments
+     * - Removes duplicate participants (keeps first valid instance)
+     * - Moves heats to correct rounds based on their IDs
+     * - Ensures data integrity across the entire bracket
+     */
+    async repairCorruptedBracket(eventId) {
+        try {
+            window.debugLogger?.debug('RaceUI', ?? Starting bracket repair for event:', eventId);
+
+            const bracket = await this.raceManager.getBracket(eventId);
+            if (!bracket) {
+                throw new Error('No bracket found for event');
+            }
+
+            let totalDuplicates = 0;
+            const repairedParticipants = new Map(); // participantId -> first valid location
+
+            // First pass: identify all participant locations and find duplicates
+            for (const [className, classBracket] of Object.entries(bracket.classes)) {
+                for (const round of classBracket.rounds) {
+                    for (const heat of round.heats) {
+                        for (const lane of heat.lanes) {
+                            if (lane.participant?.id) {
+                                const participantId = lane.participant.id;
+
+                                if (!repairedParticipants.has(participantId)) {
+                                    // First occurrence - keep it
+                                    repairedParticipants.set(participantId, {
+                                        className,
+                                        roundNumber: round.roundNumber,
+                                        heatId: heat.id,
+                                        lane: lane.lane,
+                                        participant: lane.participant
+                                    });
+                                } else {
+                                    // Duplicate found - mark for removal
+                                    window.debugLogger?.debug('RaceUI', `?? Found duplicate: ${lane.participant.name} in ${className} Round ${round.roundNumber} Heat ${heat.id} Lane ${lane.lane}`);
+                                    totalDuplicates++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (totalDuplicates === 0) {
+                this.showToast('No duplicates found - bracket data appears valid', 'info');
+                return;
+            }
+
+            window.debugLogger?.debug('RaceUI', `?? Found ${totalDuplicates} duplicate participants to remove`);
+
+            // Check and fix round structure issues
+            const roundFixes = this.repairHeatRoundAssignments(bracket);
+            if (roundFixes > 0) {
+                window.debugLogger?.debug('RaceUI', `?? Fixed ${roundFixes} heat round assignment issues`);
+                totalDuplicates += roundFixes; // Count round fixes as issues fixed
+            }
+
+            // Second pass: remove duplicates, keeping only first occurrence
+            for (const [className, classBracket] of Object.entries(bracket.classes)) {
+                for (const round of classBracket.rounds) {
+                    for (const heat of round.heats) {
+                        // Filter out duplicate participants
+                        heat.lanes = heat.lanes.filter(lane => {
+                            if (!lane.participant?.id) return true; // Keep empty lanes
+
+                            const participantId = lane.participant.id;
+                            const firstLocation = repairedParticipants.get(participantId);
+
+                            // Keep only if this is the first valid location
+                            if (firstLocation.className === className &&
+                                firstLocation.roundNumber === round.roundNumber &&
+                                firstLocation.heatId === heat.id &&
+                                firstLocation.lane === lane.lane) {
+                                return true;
+                            }
+
+                            // Remove duplicate
+                            return false;
+                        });
+                    }
+                }
+            }
+
+            window.debugLogger?.debug('RaceUI', ?? Bracket repair completed, saving...');
+
+            // Save the repaired bracket
+            await this.dataManager.saveRaceBracket(eventId, bracket);
+
+            // Update caches
+            this.raceManager.eventBrackets.set(eventId, bracket);
+            this.dataManager.data.raceBrackets[eventId] = bracket;
+
+            // Force refresh UI
+            this.forceRefresh();
+
+            this.showToast(`Bracket repaired! Fixed ${totalDuplicates} data integrity issues`, 'success');
+            window.debugLogger?.debug('RaceUI', `? Bracket repair successful - fixed ${totalDuplicates} data integrity issues`);
+
+        } catch (error) {
+            console.error('? Error repairing bracket:', error);
+            this.showToast(`Error repairing bracket: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    /**
+     * Debug function to show round information for all heats
+     */
+    debugRoundInformation() {
+        try {
+            const bracket = this.raceManager.getCachedBracket(this.selectedEventId);
+            if (!bracket) {
+                this.showToast('No bracket found for debugging', 'error');
+                return;
+            }
+
+            window.debugLogger?.debug('RaceUI', ?? ROUND DEBUG INFORMATION:');
+            window.debugLogger?.debug('RaceUI', ==============================');
+
+            let debugInfo = 'Round Debug Information:\n\n';
+
+            for (const [className, classBracket] of Object.entries(bracket.classes)) {
+                debugInfo += `CLASS: ${className}\n`;
+                debugInfo += '='.repeat(50) + '\n';
+
+                for (const round of classBracket.rounds || []) {
+                    debugInfo += `ROUND ${round.roundNumber}:\n`;
+
+                    if (!round.heats || round.heats.length === 0) {
+                        debugInfo += '  (No heats in this round)\n';
+                        continue;
+                    }
+
+                    for (const heat of round.heats) {
+                        const participantCount = heat.lanes?.filter(l => l.participant)?.length || 0;
+                        const totalLanes = heat.lanes?.length || 0;
+                        debugInfo += `  Heat ${heat.heatNumber || 'N/A'} (${heat.id}): ${participantCount}/${totalLanes} participants\n`;
+                    }
+                    debugInfo += '\n';
+                }
+                debugInfo += '\n';
+            }
+
+            window.debugLogger?.debug('RaceUI', debugInfo);
+
+            // Also show a modal with the information
+            if (typeof Helpers !== 'undefined' && Helpers.showModal) {
+                Helpers.showModal('Round Debug Information',
+                    `<pre style="font-size: 12px; line-height: 1.4; white-space: pre-wrap;">${debugInfo}</pre>` +
+                    '<p><strong>How to use this info:</strong></p>' +
+                    '<ul>' +
+                    '<li>Each heat shows: Heat Number (Heat ID): participants/total lanes</li>' +
+                    '<li>You can only swap between heats in the SAME ROUND</li>' +
+                    '<li>If you want to swap Round 2 Heat 3 with Round 2 Heat 5, both must show Round 2</li>' +
+                    '<li>If one shows Round 1 and the other Round 2, the swap is blocked by design</li>' +
+                    '</ul>'
+                );
+            }
+
+            this.showToast('Round debug info logged to console and shown in modal', 'info');
+
+        } catch (error) {
+            console.error('? Error in debug round information:', error);
+            this.showToast(`Debug error: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * Synchronize bracket caches to prevent race conditions during rapid operations
+     */
+    synchronizeBracketCaches(eventId) {
+        try {
+            window.debugLogger?.debug('RaceUI', ?? Synchronizing bracket caches for event:', eventId);
+
+            // Get the most current bracket from dataManager (source of truth)
+            const dataManagerBracket = this.dataManager.data.raceBrackets[eventId];
+            const raceManagerBracket = this.raceManager.eventBrackets.get(eventId);
+
+            if (!dataManagerBracket) {
+                console.warn('?? No bracket found in dataManager cache');
+                return;
+            }
+
+            // Ensure raceManager cache matches dataManager cache
+            if (JSON.stringify(dataManagerBracket) !== JSON.stringify(raceManagerBracket)) {
+                window.debugLogger?.debug('RaceUI', ?? Cache mismatch detected, synchronizing...');
+                this.raceManager.eventBrackets.set(eventId, JSON.parse(JSON.stringify(dataManagerBracket)));
+                window.debugLogger?.debug('RaceUI', ? Bracket caches synchronized');
+            } else {
+                window.debugLogger?.debug('RaceUI', ? Bracket caches already synchronized');
+            }
+        } catch (error) {
+            console.error('? Error synchronizing bracket caches:', error);
         }
     }
 
@@ -3990,41 +4913,166 @@ class RaceUI {
     /**
      * Perform cross-heat participant swap
      */
-    async performCrossHeatSwap(participantId1, heatId1, participantId2, heatId2) {
-        console.log('🔄 Performing cross-heat swap:', participantId1, 'from', heatId1, 'with', participantId2, 'from', heatId2);
-        
+    async performCrossHeatSwap(participantId1, heatId1, participantId2, heatId2, laneHints = null) {
+        window.debugLogger?.debug('RaceUI', ?? Performing cross-heat swap:', participantId1, 'from', heatId1, 'with', participantId2, 'from', heatId2);
+
+        // Initialize variables outside try block to ensure they're always defined
+        let heat1 = null, heat2 = null;
+        let lane1 = null, lane2 = null;
+        let className1 = null, className2 = null;
+
         try {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found for event');
             }
 
-            // Find both heats
-            let heat1 = null, heat2 = null;
-            let lane1 = null, lane2 = null;
-            let className1 = null, className2 = null;
+            // Note: Do not auto-repair here. We will proceed using lane hints and local validation only.
 
-            // Search through all classes and heats
+            // Search through all classes and heats to find both heats and participants
+            let foundHeat1 = false, foundHeat2 = false;
+
             for (const [className, classBracket] of Object.entries(bracket.classes)) {
-                for (const round of classBracket.rounds) {
-                    for (const heat of round.heats) {
-                        if (heat.id === heatId1) {
+                if (foundHeat1 && foundHeat2) break; // Both heats found, no need to search further
+
+                for (const round of classBracket.rounds || []) {
+                    if (foundHeat1 && foundHeat2) break; // Both heats found, no need to search further
+
+                    for (const heat of round.heats || []) {
+                        if (foundHeat1 && foundHeat2) break; // Both heats found, no need to search further
+
+                        if (heat.id === heatId1 && !foundHeat1) {
                             heat1 = heat;
                             className1 = className;
-                            // Find participant1 in this heat
-                            for (const lane of heat.lanes) {
-                                if (lane.participant?.id === participantId1) {
-                                    lane1 = lane;
+                            foundHeat1 = true;
+
+                            // Debug: Log all participants in this heat
+                            window.debugLogger?.debug('RaceUI', `?? Heat ${heatId1} participants:`, heat.lanes?.map(lane => ({
+                                lane: lane.lane,
+                                hasParticipant: !!lane.participant,
+                                participantId: lane.participant?.id,
+                                participantName: lane.participant?.name,
+                                participantStatus: lane.participant?.status
+                            })) || []);
+
+                            // Prefer lane hints if provided
+                            if (laneHints?.laneNumber1 != null) {
+                                const hinted = heat.lanes?.find(l => l.lane === laneHints.laneNumber1);
+                                if (hinted && hinted.participant?.id === participantId1) {
+                                    lane1 = hinted;
+                                    window.debugLogger?.debug('RaceUI', `? Found participant ${participantId1} via lane hint in heat ${heatId1}, lane ${hinted.lane}`);
+                                }
+                            }
+
+                            // Fallback: search by participant id
+                            if (!lane1) {
+                                for (const lane of heat.lanes || []) {
+                                    window.debugLogger?.debug('RaceUI', `?? Checking lane ${lane.lane}: participant ID = ${lane.participant?.id}, looking for ${participantId1}`);
+                                    if (lane.participant?.id === participantId1) {
+                                        lane1 = lane;
+                                        window.debugLogger?.debug('RaceUI', `? Found participant ${participantId1} in heat ${heatId1}, lane ${lane.lane}`);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // If participant not found in lanes, try alternative lookup methods
+                            if (!lane1 && heat.lanes?.length > 0) {
+                                window.debugLogger?.debug('RaceUI', `?? Participant ${participantId1} not found in lanes, trying alternative lookup...`);
+
+                                // Try more robust lookup with string comparison and null checks
+                                for (const lane of heat.lanes || []) {
+                                    if (lane.participant && lane.participant.id) {
+                                        const laneParticipantId = String(lane.participant.id);
+                                        const targetParticipantId = String(participantId1);
+                                        window.debugLogger?.debug('RaceUI', `?? Robust lookup - lane ${lane.lane}: comparing '${laneParticipantId}' with '${targetParticipantId}'`);
+
+                                        if (laneParticipantId === targetParticipantId) {
+                                            lane1 = lane;
+                                            window.debugLogger?.debug('RaceUI', `? Found participant ${participantId1} using robust lookup in heat ${heatId1}, lane ${lane.lane}`);
+                                            break;
+                                        }
+                                    } else {
+                                        window.debugLogger?.debug('RaceUI', `?? Lane ${lane.lane} has no valid participant data:`, lane.participant);
+                                    }
+                                }
+
+                                // If still not found, log all participants for debugging
+                                if (!lane1) {
+                                    window.debugLogger?.debug('RaceUI', `?? All participants in heat ${heatId1}:`, heat.lanes?.map(lane => ({
+                                        lane: lane.lane,
+                                        participant: lane.participant,
+                                        participantId: lane.participant?.id,
+                                        participantName: lane.participant?.name
+                                    })) || []);
                                 }
                             }
                         }
-                        if (heat.id === heatId2) {
+
+                        if (heat.id === heatId2 && !foundHeat2) {
                             heat2 = heat;
                             className2 = className;
-                            // Find participant2 in this heat
-                            for (const lane of heat.lanes) {
-                                if (lane.participant?.id === participantId2) {
-                                    lane2 = lane;
+                            foundHeat2 = true;
+
+                            // Debug: Log all participants in this heat
+                            window.debugLogger?.debug('RaceUI', `?? Heat ${heatId2} participants:`, heat.lanes?.map(lane => ({
+                                lane: lane.lane,
+                                hasParticipant: !!lane.participant,
+                                participantId: lane.participant?.id,
+                                participantName: lane.participant?.name,
+                                participantStatus: lane.participant?.status
+                            })) || []);
+
+                            // Prefer lane hints if provided
+                            if (laneHints?.laneNumber2 != null) {
+                                const hinted = heat.lanes?.find(l => l.lane === laneHints.laneNumber2);
+                                if (hinted && hinted.participant?.id === participantId2) {
+                                    lane2 = hinted;
+                                    window.debugLogger?.debug('RaceUI', `? Found participant ${participantId2} via lane hint in heat ${heatId2}, lane ${hinted.lane}`);
+                                }
+                            }
+
+                            // Fallback: search by participant id
+                            if (!lane2) {
+                                for (const lane of heat.lanes || []) {
+                                    window.debugLogger?.debug('RaceUI', `?? Checking lane ${lane.lane}: participant ID = ${lane.participant?.id}, looking for ${participantId2}`);
+                                    if (lane.participant?.id === participantId2) {
+                                        lane2 = lane;
+                                        window.debugLogger?.debug('RaceUI', `? Found participant ${participantId2} in heat ${heatId2}, lane ${lane.lane}`);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // If participant not found in lanes, try alternative lookup methods
+                            if (!lane2 && heat.lanes?.length > 0) {
+                                window.debugLogger?.debug('RaceUI', `?? Participant ${participantId2} not found in lanes, trying alternative lookup...`);
+
+                                // Try more robust lookup with string comparison and null checks
+                                for (const lane of heat.lanes || []) {
+                                    if (lane.participant && lane.participant.id) {
+                                        const laneParticipantId = String(lane.participant.id);
+                                        const targetParticipantId = String(participantId2);
+                                        window.debugLogger?.debug('RaceUI', `?? Robust lookup - lane ${lane.lane}: comparing '${laneParticipantId}' with '${targetParticipantId}'`);
+
+                                        if (laneParticipantId === targetParticipantId) {
+                                            lane2 = lane;
+                                            window.debugLogger?.debug('RaceUI', `? Found participant ${participantId2} using robust lookup in heat ${heatId2}, lane ${lane.lane}`);
+                                            break;
+                                        }
+                                    } else {
+                                        window.debugLogger?.debug('RaceUI', `?? Lane ${lane.lane} has no valid participant data:`, lane.participant);
+                                    }
+                                }
+
+                                // If still not found, log all participants for debugging
+                                if (!lane2) {
+                                    window.debugLogger?.debug('RaceUI', `?? All participants in heat ${heatId2}:`, heat.lanes?.map(lane => ({
+                                        lane: lane.lane,
+                                        participant: lane.participant,
+                                        participantId: lane.participant?.id,
+                                        participantName: lane.participant?.name
+                                    })) || []);
                                 }
                             }
                         }
@@ -4032,74 +5080,312 @@ class RaceUI {
                 }
             }
 
+            window.debugLogger?.debug('RaceUI', ?? Search completed:', {
+                heat1Found: !!heat1,
+                heat2Found: !!heat2,
+                lane1Found: !!lane1,
+                lane2Found: !!lane2,
+                className1,
+                className2
+            });
+
             if (!heat1 || !lane1) {
-                throw new Error(`Participant ${participantId1} not found in heat ${heatId1}`);
+                // Enhanced error reporting with detailed debugging info
+                const heat1Participants = heat1?.lanes?.map(lane => ({
+                    lane: lane.lane,
+                    participantId: lane.participant?.id,
+                    participantName: lane.participant?.name,
+                    participantStatus: lane.participant?.status
+                })) || [];
+
+                console.error('? Participant lookup failed with detailed diagnostics:', {
+                    participantId1,
+                    heatId1,
+                    heat1Found: !!heat1,
+                    lane1Found: !!lane1,
+                    heat1Participants,
+                    heat1Structure: heat1 ? {
+                        id: heat1.id,
+                        lanesCount: heat1.lanes?.length || 0,
+                        status: heat1.status
+                    } : null,
+                    availableHeats: Object.keys(bracket.classes).map(className => ({
+                        className,
+                        heats: bracket.classes[className].rounds?.flatMap(r => r.heats?.map(h => h.id) || []) || []
+                    }))
+                });
+
+                // Provide more specific error message based on what we found
+                if (!heat1) {
+                    throw new Error(`Heat ${heatId1} not found in bracket`);
+                } else if (!lane1) {
+                    const participantNames = heat1Participants.filter(p => p.participantName).map(p => p.participantName);
+                    throw new Error(`Participant ${participantId1} not found in heat ${heatId1}. Available participants: ${participantNames.join(', ') || 'none'}`);
+                }
             }
             if (!heat2 || !lane2) {
-                throw new Error(`Participant ${participantId2} not found in heat ${heatId2}`);
+                // Enhanced error reporting with detailed debugging info
+                const heat2Participants = heat2?.lanes?.map(lane => ({
+                    lane: lane.lane,
+                    participantId: lane.participant?.id,
+                    participantName: lane.participant?.name,
+                    participantStatus: lane.participant?.status
+                })) || [];
+
+                console.error('? Participant lookup failed with detailed diagnostics:', {
+                    participantId2,
+                    heatId2,
+                    heat2Found: !!heat2,
+                    lane2Found: !!lane2,
+                    heat2Participants,
+                    heat2Structure: heat2 ? {
+                        id: heat2.id,
+                        lanesCount: heat2.lanes?.length || 0,
+                        status: heat2.status
+                    } : null,
+                    availableHeats: Object.keys(bracket.classes).map(className => ({
+                        className,
+                        heats: bracket.classes[className].rounds?.flatMap(r => r.heats?.map(h => h.id) || []) || []
+                    }))
+                });
+
+                // Provide more specific error message based on what we found
+                if (!heat2) {
+                    throw new Error(`Heat ${heatId2} not found in bracket`);
+                } else if (!lane2) {
+                    const participantNames = heat2Participants.filter(p => p.participantName).map(p => p.participantName);
+                    throw new Error(`Participant ${participantId2} not found in heat ${heatId2}. Available participants: ${participantNames.join(', ') || 'none'}`);
+                }
             }
 
-            // Check if heats are completed (cannot swap in completed heats)
-            console.log('🔄 Heat 1 status:', heat1.status, 'Heat 1 ID:', heatId1, 'Heat 1 number:', heat1.heatNumber);
-            console.log('🔄 Heat 2 status:', heat2.status, 'Heat 2 ID:', heatId2, 'Heat 2 number:', heat2.heatNumber);
-            
+            // Check if heats are completed and handle appropriately
+            window.debugLogger?.debug('RaceUI', ?? Heat 1 status:', heat1.status, 'Heat 1 ID:', heatId1, 'Heat 1 number:', heat1.heatNumber);
+            window.debugLogger?.debug('RaceUI', ?? Heat 2 status:', heat2.status, 'Heat 2 ID:', heatId2, 'Heat 2 number:', heat2.heatNumber);
+
             // TEMPORARY: Allow override for debugging (remove this in production)
             const allowCompletedHeatSwap = window.location.search.includes('debug=swap');
-            
-            if (heat1.status === 'completed' && !allowCompletedHeatSwap) {
-                throw new Error(`Cannot swap participants from completed heat ${heat1.heatNumber || heatId1} (status: ${heat1.status})`);
-            }
-            if (heat2.status === 'completed' && !allowCompletedHeatSwap) {
-                throw new Error(`Cannot swap participants from completed heat ${heat2.heatNumber || heatId2} (status: ${heat2.status})`);
-            }
-            
-            if (allowCompletedHeatSwap) {
-                console.log('🔄 DEBUG MODE: Allowing swap despite completed heat status');
+
+            // Check if either heat is completed
+            const heat1Completed = heat1.status === 'completed';
+            const heat2Completed = heat2.status === 'completed';
+
+            if ((heat1Completed || heat2Completed) && !allowCompletedHeatSwap) {
+                // For now, allow swaps if at least one heat is active (not completed)
+                // This handles cases where one heat might be completed but the other is still active
+                if (heat1Completed && heat2Completed) {
+                    throw new Error(`Cannot swap participants: both heats are completed (${heat1.heatNumber || heatId1} and ${heat2.heatNumber || heatId2})`);
+                } else if (heat1Completed) {
+                    console.warn(`?? WARNING: Swapping from completed heat ${heat1.heatNumber || heatId1} to active heat ${heat2.heatNumber || heatId2}`);
+                } else if (heat2Completed) {
+                    console.warn(`?? WARNING: Swapping from active heat ${heat1.heatNumber || heatId1} to completed heat ${heat2.heatNumber || heatId2}`);
+                }
             }
 
-            // Check if both heats are in the same class and round
-            if (className1 !== className2) {
-                throw new Error('Cannot swap participants between different classes');
+            if (allowCompletedHeatSwap) {
+                window.debugLogger?.debug('RaceUI', ?? DEBUG MODE: Allowing swap despite completed heat status');
+            }
+
+            // Check if participants are the same driver (shouldn't happen in normal swaps)
+            if (participantId1 === participantId2) {
+                throw new Error('Cannot swap a participant with themselves');
+            }
+
+            // Check if the swap is within the same class context
+            // Look for both participants in the same class to determine if this is a valid same-class swap
+            let sameClassContext = false;
+            for (const [className, classBracket] of Object.entries(bracket.classes)) {
+                const participant1InClass = classBracket.participants?.some(p => p.id === participantId1);
+                const participant2InClass = classBracket.participants?.some(p => p.id === participantId2);
+
+                if (participant1InClass && participant2InClass) {
+                    sameClassContext = true;
+                    window.debugLogger?.debug('RaceUI', `?? Both participants found in same class: ${className}`);
+                    break;
+                }
+            }
+
+            if (!sameClassContext && className1 !== className2) {
+                console.warn('?? WARNING: Cross-class participant swap detected:', {
+                    participant1: participantId1,
+                    class1: className1,
+                    participant2: participantId2,
+                    class2: className2
+                });
+
+                // Show confirmation dialog for cross-class swaps
+                const confirmed = confirm(
+                    `WARNING: You are about to swap participants between different racing classes:\n\n` +
+                    `� ${await this.getParticipantName(participantId1)} (Heat Class: ${className1})\n` +
+                    `� ${await this.getParticipantName(participantId2)} (Heat Class: ${className2})\n\n` +
+                    `This action may affect race results and class standings. Are you sure you want to proceed?`
+                );
+
+                if (!confirmed) {
+                    throw new Error('Cross-class swap cancelled by user');
+                }
+
+                window.debugLogger?.debug('RaceUI', ?? User confirmed cross-class swap');
             }
 
             const sourceRound = this.getHeatRound(heatId1, bracket);
             const targetRound = this.getHeatRound(heatId2, bracket);
+
+            window.debugLogger?.debug('RaceUI', ?? Round check:', {
+                heatId1,
+                heatId2,
+                sourceRound,
+                targetRound,
+                roundsMatch: sourceRound === targetRound
+            });
+
             if (sourceRound !== targetRound) {
-                throw new Error('Cannot swap participants between different rounds');
+                throw new Error(`Cannot swap participants between different rounds (Round ${sourceRound} vs Round ${targetRound})`);
             }
 
-            // Perform the cross-heat swap
-            const temp = lane1.participant;
-            lane1.participant = lane2.participant;
-            lane2.participant = temp;
+            // Perform the cross-heat swap with validation
+            window.debugLogger?.debug('RaceUI', ?? Before swap:', {
+                lane1: { id: lane1.lane, participant: lane1.participant?.name },
+                lane2: { id: lane2.lane, participant: lane2.participant?.name }
+            });
 
-            // Save the updated bracket
-            await this.dataManager.saveRaceBracket(this.selectedEventId, bracket);
+            // Validate that lanes are different objects
+            if (lane1 === lane2) {
+                throw new Error('Cannot swap participant with itself - lanes are the same object');
+            }
 
-            // Update both local caches with the modified bracket
-            this.raceManager.eventBrackets.set(this.selectedEventId, bracket);
-            this.dataManager.data.raceBrackets[this.selectedEventId] = bracket;
-            
-            // Refresh both heats
-            this.refreshHeatDisplay(heatId1);
-            this.refreshHeatDisplay(heatId2);
+            // Validate that participants are different
+            if (lane1.participant?.id === lane2.participant?.id) {
+                throw new Error('Cannot swap participant with itself - participants are the same');
+            }
 
-            console.log('✅ Cross-heat participant swap completed successfully');
+            // Validate that both lanes have participants
+            if (!lane1.participant) {
+                throw new Error(`Lane ${lane1.lane} in heat ${heatId1} is empty`);
+            }
+            if (!lane2.participant) {
+                throw new Error(`Lane ${lane2.lane} in heat ${heatId2} is empty`);
+            }
+
+            // Create a backup of the original state for rollback if needed
+            const originalLane1Participant = lane1.participant;
+            const originalLane2Participant = lane2.participant;
+
+            try {
+                // Perform the swap
+                lane1.participant = originalLane2Participant;
+                lane2.participant = originalLane1Participant;
+
+                window.debugLogger?.debug('RaceUI', ?? Swap performed, validating...');
+
+            // Validate that the swap was successful
+                if (lane1.participant?.id !== originalLane2Participant?.id) {
+                    throw new Error(`Swap validation failed: lane1 should contain participant ${originalLane2Participant?.id}, but contains ${lane1.participant?.id}`);
+                }
+                if (lane2.participant?.id !== originalLane1Participant?.id) {
+                    throw new Error(`Swap validation failed: lane2 should contain participant ${originalLane1Participant?.id}, but contains ${lane2.participant?.id}`);
+                }
+
+                window.debugLogger?.debug('RaceUI', ? Swap validation passed');
+
+            // Lightweight post-swap validation without destructive repair
+            const validationResult = this.validateNoDuplicateParticipants(bracket, [heatId1, heatId2], { scope: 'heats-only' });
+            if (!validationResult.isValid) {
+                console.warn('?? Duplicate detected post-swap:', validationResult.errors);
+                // Roll back and inform user without mutating bracket globally
+                lane1.participant = originalLane1Participant;
+                lane2.participant = originalLane2Participant;
+                throw new Error(`Swap would create duplicate participants: ${validationResult.errors.join(', ')}`);
+            }
+
+                window.debugLogger?.debug('RaceUI', ? Duplicate participant validation passed');
+
+                // Save the updated bracket (ensure this completes before proceeding)
+                window.debugLogger?.debug('RaceUI', ?? Saving bracket data...');
+                await this.dataManager.saveRaceBracket(this.selectedEventId, bracket);
+
+                // Verify the save was successful by checking if data can be retrieved
+                const savedBracket = await this.dataManager.getRaceBracket(this.selectedEventId);
+                if (!savedBracket) {
+                    throw new Error('Failed to save bracket data - data not found after save');
+                }
+
+                // Additional verification: check if our swapped participants are in the saved data
+                const savedHeat1 = savedBracket.classes?.[className1]?.rounds?.flatMap(r => r.heats)?.find(h => h.id === heatId1);
+                const savedHeat2 = savedBracket.classes?.[className2]?.rounds?.flatMap(r => r.heats)?.find(h => h.id === heatId2);
+
+                if (!savedHeat1 || !savedHeat2) {
+                    throw new Error('Failed to save bracket data - heats not found after save');
+                }
+
+                window.debugLogger?.debug('RaceUI', ? Bracket data saved and verified successfully');
+
+                // Update both local caches with the modified bracket (ensure consistency)
+                window.debugLogger?.debug('RaceUI', ?? Updating local caches...');
+                this.raceManager.eventBrackets.set(this.selectedEventId, bracket);
+                this.dataManager.data.raceBrackets[this.selectedEventId] = bracket;
+
+                // Force synchronization between caches to prevent race conditions
+                this.synchronizeBracketCaches(this.selectedEventId);
+
+                // Refresh both heats (do this after data is saved to avoid race conditions)
+                window.debugLogger?.debug('RaceUI', ?? Refreshing heat displays...');
+                await this.refreshHeatDisplay(heatId1);
+                await this.refreshHeatDisplay(heatId2);
+
+                window.debugLogger?.debug('RaceUI', ? Cross-heat participant swap completed successfully');
+
+            } catch (swapError) {
+                // Rollback the swap if it failed
+                console.error('? Swap operation failed, rolling back:', swapError);
+                lane1.participant = originalLane1Participant;
+                lane2.participant = originalLane2Participant;
+                throw swapError;
+            }
 
         } catch (error) {
-            console.error('❌ Error performing cross-heat swap:', error);
+            console.error('? Error performing cross-heat swap:', error);
+
+            // Log available debugging information safely
+            const debugInfo = {
+                participantId1,
+                heatId1,
+                participantId2,
+                heatId2,
+                heat1Found: !!heat1,
+                heat2Found: !!heat2,
+                lane1Found: !!lane1,
+                lane2Found: !!lane2,
+                className1,
+                className2
+            };
+
+            if (heat1 || heat2 || lane1 || lane2) {
+                debugInfo.partialState = {
+                    heat1: heat1?.id,
+                    heat2: heat2?.id,
+                    lane1: lane1 ? { id: lane1.lane, participant: lane1.participant?.name } : null,
+                    lane2: lane2 ? { id: lane2.lane, participant: lane2.participant?.name } : null
+                };
+            }
+
+            console.error('? Debug info:', debugInfo);
             this.showToast(`Error performing cross-heat swap: ${error.message}`, 'error');
             throw error;
         }
     }
 
-    async moveParticipantToLane(participantId, heatId, targetLane) {
-        console.log('Moving participant:', participantId, 'to lane:', targetLane, 'in heat:', heatId);
-        
+    async moveParticipantToLane(participantId, heatId, targetLane, sourceLaneNumber = null) {
+        window.debugLogger?.debug('RaceUI', Moving participant:', participantId, 'to lane:', targetLane, 'in heat:', heatId);
+
         try {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found for event');
+            }
+
+            // Ensure bracket has classes property
+            if (!bracket.classes || typeof bracket.classes !== 'object') {
+                throw new Error('Bracket does not have valid classes structure');
             }
 
             // Find the heat and participant
@@ -4116,15 +5402,19 @@ class RaceUI {
                             currentHeat = heat;
                             className = classKey;
                             
-                            // Find current lane and target lane
-                            for (const lane of heat.lanes) {
-                                if (lane.participant?.id === participantId) {
-                                    currentLane = lane;
-                                }
-                                if (lane.lane === targetLane) {
-                                    targetLaneObj = lane;
+                            // Prefer source lane hint to avoid lookup ambiguity
+                            if (sourceLaneNumber != null) {
+                                currentLane = heat.lanes.find(l => l.lane === sourceLaneNumber && l.participant?.id === participantId) || null;
+                            }
+                            if (!currentLane) {
+                                for (const lane of heat.lanes) {
+                                    if (lane.participant?.id === participantId) {
+                                        currentLane = lane;
+                                    }
                                 }
                             }
+                            // Find target lane
+                            targetLaneObj = heat.lanes.find(l => l.lane === targetLane) || null;
                             break;
                         }
                     }
@@ -4164,13 +5454,16 @@ class RaceUI {
             this.raceManager.eventBrackets.set(this.selectedEventId, bracket);
             this.dataManager.data.raceBrackets[this.selectedEventId] = bracket;
 
-            // Refresh the heat display
-            this.refreshHeatDisplay(heatId);
+            // Force synchronization between caches to prevent race conditions
+            this.synchronizeBracketCaches(this.selectedEventId);
 
-            console.log('✅ Participant move completed successfully');
+            // Refresh the heat display
+            await this.refreshHeatDisplay(heatId);
+
+            window.debugLogger?.debug('RaceUI', ? Participant move completed successfully');
 
         } catch (error) {
-            console.error('❌ Error moving participant:', error);
+            console.error('? Error moving participant:', error);
             this.showToast(`Error moving participant: ${error.message}`, 'error');
             throw error;
         }
@@ -4179,13 +5472,25 @@ class RaceUI {
     /**
      * Move participant from one heat to another heat
      */
-    async moveParticipantToOtherHeat(participantId, sourceHeatId, targetHeatId, targetLane) {
-        console.log('Moving participant:', participantId, 'from heat:', sourceHeatId, 'to heat:', targetHeatId, 'lane:', targetLane);
-        
+    async moveParticipantToOtherHeat(participantId, sourceHeatId, targetHeatId, targetLane, sourceLaneNumber = null) {
+        window.debugLogger?.debug('RaceUI', Moving participant:', participantId, 'from heat:', sourceHeatId, 'to heat:', targetHeatId, 'lane:', targetLane);
+
         try {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found for event');
+            }
+
+            // Ensure bracket has classes property
+            if (!bracket.classes || typeof bracket.classes !== 'object') {
+                throw new Error('Bracket does not have valid classes structure');
+            }
+
+            // Pre-validation: Check for existing duplicates before performing move
+            const preValidationResult = this.validateNoDuplicateParticipants(bracket, []);
+            if (!preValidationResult.isValid) {
+                console.warn('?? Bracket already contains duplicates before move. This should not happen.');
+                console.warn('Pre-move validation errors:', preValidationResult.errors.slice(0, 3));
             }
 
             // Find source and target heats
@@ -4204,10 +5509,16 @@ class RaceUI {
                             sourceHeat = heat;
                             sourceClassName = classKey;
                             
-                            // Find source lane
-                            for (const lane of heat.lanes) {
-                                if (lane.participant?.id === participantId) {
-                                    sourceLane = lane;
+                            // Prefer source lane hint for exact match
+                            if (sourceLaneNumber != null) {
+                                const hinted = heat.lanes.find(l => l.lane === sourceLaneNumber);
+                                if (hinted?.participant?.id === participantId) sourceLane = hinted;
+                            }
+                            if (!sourceLane) {
+                                for (const lane of heat.lanes) {
+                                    if (lane.participant?.id === participantId) {
+                                        sourceLane = lane;
+                                    }
                                 }
                             }
                         }
@@ -4246,9 +5557,48 @@ class RaceUI {
                 throw new Error(`Target lane ${targetLane} is not empty`);
             }
 
-            // Check if both heats are in the same class and round
-            if (sourceClassName !== targetClassName) {
-                throw new Error('Cannot move participants between different classes');
+            // Check if the move is within the same class context or if participant exists in target class
+            let validClassContext = false;
+
+            // Check if participant exists in source class
+            const sourceClassBracket = bracket.classes[sourceClassName];
+            const participantInSourceClass = sourceClassBracket?.participants?.some(p => p.id === participantId);
+
+            // Check if participant exists in target class
+            const targetClassBracket = bracket.classes[targetClassName];
+            const participantInTargetClass = targetClassBracket?.participants?.some(p => p.id === participantId);
+
+            if (sourceClassName === targetClassName) {
+                // Same class move - always valid if participant exists in the class
+                validClassContext = participantInSourceClass;
+            } else {
+                // Cross-class move - valid if participant exists in target class
+                validClassContext = participantInTargetClass;
+            }
+
+            if (!validClassContext) {
+                console.warn('?? WARNING: Invalid class context for participant move:', {
+                    participant: participantId,
+                    sourceClass: sourceClassName,
+                    targetClass: targetClassName,
+                    participantInSource: participantInSourceClass,
+                    participantInTarget: participantInTargetClass
+                });
+
+                // Show confirmation dialog for cross-class moves
+                const confirmed = confirm(
+                    `WARNING: You are about to move a participant between different racing classes:\n\n` +
+                    `� Participant will move from Class: ${sourceClassName} to Class: ${targetClassName}\n` +
+                    `� Participant exists in source class: ${participantInSourceClass ? 'Yes' : 'No'}\n` +
+                    `� Participant exists in target class: ${participantInTargetClass ? 'Yes' : 'No'}\n\n` +
+                    `This action may affect race results and class standings. Are you sure you want to proceed?`
+                );
+
+                if (!confirmed) {
+                    throw new Error('Cross-class move cancelled by user');
+                }
+
+                window.debugLogger?.debug('RaceUI', ?? User confirmed cross-class move');
             }
 
             const sourceRound = this.getHeatRound(sourceHeatId, bracket);
@@ -4268,17 +5618,62 @@ class RaceUI {
             // Update both local caches with the modified bracket
             this.raceManager.eventBrackets.set(this.selectedEventId, bracket);
             this.dataManager.data.raceBrackets[this.selectedEventId] = bracket;
-            
-            // Refresh both heats
-            this.refreshHeatDisplay(sourceHeatId);
-            this.refreshHeatDisplay(targetHeatId);
 
-            console.log('✅ Participant moved to other heat successfully');
+            // Force synchronization between caches to prevent race conditions
+            this.synchronizeBracketCaches(this.selectedEventId);
+
+            // Refresh both heats
+            await this.refreshHeatDisplay(sourceHeatId);
+            await this.refreshHeatDisplay(targetHeatId);
+
+            window.debugLogger?.debug('RaceUI', ? Participant moved to other heat successfully');
 
         } catch (error) {
-            console.error('❌ Error moving participant to other heat:', error);
+            console.error('? Error moving participant to other heat:', error);
             this.showToast(`Error moving participant: ${error.message}`, 'error');
             throw error;
+        }
+    }
+
+    /**
+     * Monitor for duplicate participants across all brackets
+     * This function can be called periodically to detect data corruption early
+     */
+    async monitorForDuplicates() {
+        try {
+            const brackets = this.dataManager.data.raceBrackets || {};
+            let totalIssues = 0;
+            let eventsWithIssues = 0;
+
+            for (const [eventId, bracket] of Object.entries(brackets)) {
+                if (!bracket || !bracket.classes) continue;
+
+                const validationResult = this.validateNoDuplicateParticipants(bracket, []);
+                if (!validationResult.isValid) {
+                    eventsWithIssues++;
+                    totalIssues += validationResult.errors.length;
+
+                    console.error(`?? DUPLICATE PARTICIPANTS DETECTED in event ${eventId}:`);
+                    console.error(`   Issues found: ${validationResult.errors.length}`);
+                    validationResult.errors.slice(0, 5).forEach(error => console.error(`   ${error}`));
+
+                    // Show user notification for critical issues
+                    if (validationResult.errors.length > 10) {
+                        this.showToast(`Critical: Event ${eventId} has ${validationResult.errors.length} duplicate participant issues. Please run repair.`, 'error');
+                    }
+                }
+            }
+
+            if (totalIssues > 0) {
+                console.warn(`?? Duplicate monitoring found ${totalIssues} issues across ${eventsWithIssues} events`);
+            } else {
+                window.debugLogger?.debug('RaceUI', ? Duplicate monitoring: All brackets are clean');
+            }
+
+            return { totalIssues, eventsWithIssues };
+        } catch (error) {
+            console.error('? Error in duplicate monitoring:', error);
+            return { totalIssues: -1, eventsWithIssues: -1 };
         }
     }
 
@@ -4286,23 +5681,30 @@ class RaceUI {
      * Get the round number for a heat
      */
     getHeatRound(heatId, bracket) {
+        window.debugLogger?.debug('RaceUI', ?? Looking up round for heat:', heatId);
+
         for (const [className, classBracket] of Object.entries(bracket.classes)) {
+            window.debugLogger?.debug('RaceUI', ?? Checking class:', className);
             for (const round of classBracket.rounds) {
+                window.debugLogger?.debug('RaceUI', ?? Checking round:', round.roundNumber, 'with', round.heats?.length || 0, 'heats');
                 for (const heat of round.heats) {
                     if (heat.id === heatId) {
+                        window.debugLogger?.debug('RaceUI', ? Found heat', heatId, 'in round', round.roundNumber, 'class', className);
                         return round.roundNumber;
                     }
                 }
             }
         }
+
+        window.debugLogger?.debug('RaceUI', ? Heat', heatId, 'not found in any round');
         return null;
     }
 
     async addFalseStartPenalty(participantId, heatId) {
-        console.log('Adding false start penalty for participant:', participantId, 'in heat:', heatId);
-        
+        window.debugLogger?.debug('RaceUI', Adding false start penalty for participant:', participantId, 'in heat:', heatId);
+
         try {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found for event');
             }
@@ -4313,7 +5715,7 @@ class RaceUI {
                 throw new Error(`Heat ${heatId} not found in any class`);
             }
 
-            console.log(`Heat ${heatId} belongs to class: ${heatClassName}`);
+            window.debugLogger?.debug('RaceUI', `Heat ${heatId} belongs to class: ${heatClassName}`);
 
             // Find the participant in the specific class only
             const classBracket = bracket.classes[heatClassName];
@@ -4329,7 +5731,7 @@ class RaceUI {
             // Mark false start status
             participant.falseStartCount = (participant.falseStartCount || 0) + 1;
             
-            console.log(`⚠️ Added false start penalty to ${participant.name} in class ${heatClassName} only (${participant.falseStartCount} total FS in this class)`);
+            window.debugLogger?.debug('RaceUI', `?? Added false start penalty to ${participant.name} in class ${heatClassName} only (${participant.falseStartCount} total FS in this class)`);
 
             // Note: participant can still be active in other classes they're participating in
 
@@ -4364,7 +5766,7 @@ class RaceUI {
                                 if (lane.participant?.id === participantId) {
                                     lane.participant.hasFalseStart = true;
                                     // Do not increment falseStartCount here to avoid double-counting
-                                    console.log(`⚠️ Updated lane display for False Start participant`);
+                                    window.debugLogger?.debug('RaceUI', `?? Updated lane display for False Start participant`);
                                     break;
                                 }
                             }
@@ -4384,26 +5786,29 @@ class RaceUI {
             this.raceManager.eventBrackets.set(this.selectedEventId, bracket);
             this.dataManager.data.raceBrackets[this.selectedEventId] = bracket;
 
+            // Force synchronization between caches to prevent race conditions
+            this.synchronizeBracketCaches(this.selectedEventId);
+
             // Refresh the heat display to show FS marking
-            this.refreshHeatDisplay(heatId);
+            await this.refreshHeatDisplay(heatId);
 
             // Check if heat should be automatically completed
-            this.checkAndAutoCompleteHeat(heatId);
+            await this.checkAndAutoCompleteHeat(heatId);
 
-            console.log('✅ False start penalty added successfully with FS marking');
+            window.debugLogger?.debug('RaceUI', ? False start penalty added successfully with FS marking');
 
         } catch (error) {
-            console.error('❌ Error adding false start penalty:', error);
+            console.error('? Error adding false start penalty:', error);
             this.showToast(`Error adding false start penalty: ${error.message}`, 'error');
             throw error;
         }
     }
 
     async disqualifyParticipant(participantId, heatId) {
-        console.log('Disqualifying participant:', participantId, 'in heat:', heatId);
-        
+        window.debugLogger?.debug('RaceUI', Disqualifying participant:', participantId, 'in heat:', heatId);
+
         try {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) {
                 throw new Error('No bracket found for event');
             }
@@ -4414,7 +5819,7 @@ class RaceUI {
                 throw new Error(`Heat ${heatId} not found in any class`);
             }
 
-            console.log(`Heat ${heatId} belongs to class: ${heatClassName}`);
+            window.debugLogger?.debug('RaceUI', `Heat ${heatId} belongs to class: ${heatClassName}`);
 
             // Find the participant in the specific class only
             const classBracket = bracket.classes[heatClassName];
@@ -4433,7 +5838,7 @@ class RaceUI {
             participant.disqualifiedInHeat = heatId;
             participant.currentBracket = null;
             
-            console.log(`🚨 Marked ${participant.name} as disqualified (DSQ) in class ${heatClassName} only`);
+            window.debugLogger?.debug('RaceUI', `?? Marked ${participant.name} as disqualified (DSQ) in class ${heatClassName} only`);
 
             // Note: participant can still be active in other classes they're participating in
 
@@ -4463,7 +5868,7 @@ class RaceUI {
                                 if (lane.participant?.id === participantId) {
                                     lane.participant.status = 'disqualified';
                                     lane.participant.disqualificationReason = 'DSQ';
-                                    console.log(`🚨 Updated lane display for DSQ participant`);
+                                    window.debugLogger?.debug('RaceUI', `?? Updated lane display for DSQ participant`);
                                     break;
                                 }
                             }
@@ -4480,44 +5885,63 @@ class RaceUI {
             this.raceManager.eventBrackets.set(this.selectedEventId, bracket);
             this.dataManager.data.raceBrackets[this.selectedEventId] = bracket;
 
+            // Force synchronization between caches to prevent race conditions
+            this.synchronizeBracketCaches(this.selectedEventId);
+
             // Refresh the heat display to show DSQ marking
-            this.refreshHeatDisplay(heatId);
+            await this.refreshHeatDisplay(heatId);
 
             // Check if heat should be automatically completed
-            this.checkAndAutoCompleteHeat(heatId);
+            await this.checkAndAutoCompleteHeat(heatId);
 
-            console.log('✅ Participant disqualified successfully with DSQ marking');
+            window.debugLogger?.debug('RaceUI', ? Participant disqualified successfully with DSQ marking');
 
         } catch (error) {
-            console.error('❌ Error disqualifying participant:', error);
+            console.error('? Error disqualifying participant:', error);
             this.showToast(`Error disqualifying participant: ${error.message}`, 'error');
             throw error;
         }
     }
 
     /**
-     * Check if a heat should be automatically completed and complete it if so
+     * Check if a heat should be automatically completed (without completing it)
      */
-    checkAndAutoCompleteHeat(heatId) {
-        console.log('Checking if heat should be auto-completed:', heatId);
-        
-        const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
+    async shouldAutoCompleteHeat(heatId) {
+        const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         if (!heat) {
-            console.log('Heat not found for auto-completion check');
-            return;
+            return false;
         }
 
-        // Get all participants in this heat
-        const participants = heat.lanes.filter(lane => lane.participant).map(lane => lane.participant);
-        const participantCount = participants.length;
-        
+        // Get all participants in this heat (handle missing lanes data)
+        let participantCount = 0;
+        if (heat.lanes) {
+            const participants = heat.lanes.filter(lane => lane.participant).map(lane => lane.participant);
+            participantCount = participants.length;
+        } else if (heat.numberOfLanes) {
+            participantCount = heat.numberOfLanes;
+            window.debugLogger?.debug('RaceUI', `Using participant count from numberOfLanes: ${participantCount}`);
+        } else {
+            window.debugLogger?.debug('RaceUI', `shouldAutoCompleteHeat: Heat ${heatId} has no lanes data, determining participant count from other sources`);
+
+            // Try to get count from existing results
+            if (heat.results && Array.isArray(heat.results)) {
+                const uniqueParticipantIds = new Set(heat.results.map(r => r.participantId));
+                participantCount = uniqueParticipantIds.size;
+                window.debugLogger?.debug('RaceUI', `Using participant count from results: ${participantCount}`);
+            } else {
+                // Last resort: assume 4 lanes (common default)
+                participantCount = 4;
+                console.warn(`Using default participant count: ${participantCount}`);
+            }
+        }
+
         // Get all results for this heat (including False Start and DSQ results)
         const heatResults = heat.results || [];
         const pendingResults = this.pendingResults.get(heatId) || [];
-        
+
         // Combine all results (heat results + pending results)
         const allResults = [...heatResults];
-        
+
         // Add pending results that aren't already in heat results
         pendingResults.forEach(pendingResult => {
             const exists = allResults.some(result => result.participantId === pendingResult.participantId);
@@ -4525,75 +5949,131 @@ class RaceUI {
                 allResults.push(pendingResult);
             }
         });
-        
-        console.log(`Heat ${heatId}: ${allResults.length} results for ${participantCount} participants`);
-        
-        // Check if all participants have results
-        if (allResults.length === participantCount) {
-            console.log(`✅ Auto-completing heat ${heatId} - all participants have results`);
-            this.completeHeat(heatId, allResults);
-        } else {
-            console.log(`⏳ Heat ${heatId} not ready for auto-completion: ${allResults.length}/${participantCount} participants have results`);
+
+        // Count participants with valid positions (exclude FS/DSQ that don't have regular positions)
+        const participantsWithValidPositions = allResults.filter(result =>
+            result.position > 0 &&
+            result.position !== 'FS' &&
+            result.position !== 'DSQ' &&
+            !result.disqualified &&
+            !result.falseStart
+        ).length;
+
+        // Count special results (FS/DSQ) that should also count as completion
+        const specialResults = allResults.filter(result =>
+            (result.position === 'FS' || result.position === 'DSQ') ||
+            result.disqualified ||
+            result.falseStart
+        ).length;
+
+        const totalCompletedParticipants = participantsWithValidPositions + specialResults;
+
+        window.debugLogger?.debug('RaceUI', `shouldAutoCompleteHeat: ${totalCompletedParticipants}/${participantCount} participants have results (valid: ${participantsWithValidPositions}, special: ${specialResults})`);
+
+        return totalCompletedParticipants >= participantCount;
+    }
+
+    /**
+     * Check if a heat should be automatically completed and complete it if so
+     */
+    async checkAndAutoCompleteHeat(heatId) {
+        window.debugLogger?.debug('RaceUI', Checking if heat should be auto-completed:', heatId);
+
+        if (await this.shouldAutoCompleteHeat(heatId)) {
+            window.debugLogger?.debug('RaceUI', `? Auto-completing heat ${heatId} - all participants have results`);
+            const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
+            const heatResults = heat.results || [];
+            const pendingResults = this.pendingResults.get(heatId) || [];
+            const allResults = [...heatResults];
+
+            // Add pending results that aren't already in heat results
+            pendingResults.forEach(pendingResult => {
+                const exists = allResults.some(result => result.participantId === pendingResult.participantId);
+                if (!exists) {
+                    allResults.push(pendingResult);
+                }
+            });
+
+            await this.completeHeat(heatId, allResults, heat);
         }
     }
 
     /**
      * Refresh heat display to show updated positions (FIXED - no more duplication)
      */
-    refreshHeatDisplay(heatId) {
-        console.log('Refreshing heat display for:', heatId);
-        const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
+    async refreshHeatDisplay(heatId) {
+        window.debugLogger?.debug('RaceUI', Refreshing heat display for:', heatId);
+        const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         if (!heat) {
-            console.log('Heat not found:', heatId);
+            window.debugLogger?.debug('RaceUI', Heat not found:', heatId);
             return;
         }
-        
-        console.log('Heat found:', heat);
-        
-        // Find the PRIMARY heat element (first one with correct class)
-        const heatElement = document.querySelector(`.heat[data-heat-id="${heatId}"]`);
-        
+
+        window.debugLogger?.debug('RaceUI', Heat found:', heat);
+
+        // Find the heat element (could be .heat or .heat-horizontal)
+        const heatElement = document.querySelector(`[data-heat-id="${heatId}"]`);
+
         if (heatElement) {
-            console.log('Updating primary heat element');
-            
-            // Just update the lanes container to avoid DOM duplication
-            const lanesContainer = heatElement.querySelector('.heat-lanes');
-            if (lanesContainer) {
-                // Check if heat truly has results or just pending results
-                const hasActualResults = heat.results && heat.results.length > 0;
-                const updatedLanesHTML = heat.lanes.map(lane => this.renderLane(lane, heat, hasActualResults)).join('');
-                lanesContainer.innerHTML = updatedLanesHTML;
-                console.log('✅ Updated lanes container successfully');
-                
-                // Re-bind event listeners for just this heat
-                this.rebindEventListenersForHeat(heatId);
+            window.debugLogger?.debug('RaceUI', Updating heat element:', heatElement.className);
+
+            // Check if this is a horizontal heat layout
+            const isHorizontal = heatElement.classList.contains('heat-horizontal');
+
+            if (isHorizontal) {
+                // Update horizontal heat layout
+                const participantsContainer = heatElement.querySelector('.participants-horizontal');
+                if (participantsContainer) {
+                    const isCompleted = heat.status === 'completed';
+                    const updatedParticipantsHTML = heat.lanes.map(lane => this.renderParticipantHorizontal(lane, heat, isCompleted)).join('');
+                    participantsContainer.innerHTML = updatedParticipantsHTML;
+                    window.debugLogger?.debug('RaceUI', ? Updated horizontal participants container successfully');
+
+                    // Re-bind event listeners for just this heat
+                    this.rebindEventListenersForHeat(heatId);
+                } else {
+                    window.debugLogger?.debug('RaceUI', No participants container found in horizontal heat, doing full element refresh');
+                    this.forceRefresh();
+                }
             } else {
-                console.log('No lanes container found, doing full element refresh');
-                // Force full refresh as last resort
-                this.forceRefresh();
+                // Update vertical heat layout (original logic)
+                const lanesContainer = heatElement.querySelector('.heat-lanes');
+                if (lanesContainer) {
+                    // Check if heat truly has results or just pending results
+                    const hasActualResults = heat.results && heat.results.length > 0;
+                    const updatedLanesHTML = heat.lanes.map(lane => this.renderLane(lane, heat, hasActualResults)).join('');
+                    lanesContainer.innerHTML = updatedLanesHTML;
+                    window.debugLogger?.debug('RaceUI', ? Updated lanes container successfully');
+
+                    // Re-bind event listeners for just this heat
+                    this.rebindEventListenersForHeat(heatId);
+                } else {
+                    window.debugLogger?.debug('RaceUI', No lanes container found, doing full element refresh');
+                    this.forceRefresh();
+                }
             }
         } else {
-            console.log('Heat element not found, doing full refresh');
+            window.debugLogger?.debug('RaceUI', Heat element not found, doing full refresh');
             // Force full refresh if heat element not found
-            this.forceRefresh();
+            await this.forceRefresh();
         }
     }
 
     /**
      * Force refresh the entire race interface (for debugging)
      */
-    forceRefresh() {
-        console.log('Force refreshing race interface...');
+    async forceRefresh() {
+        window.debugLogger?.debug('RaceUI', Force refreshing race interface...');
         if (this.selectedEventId) {
             // Get the most current bracket data from local storage first
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = this.raceManager.getCachedBracket(this.selectedEventId);
             if (bracket) {
                 this.renderBrackets(bracket);
                 this.updateGenerateButton(bracket);
-                this.updateEventStats(this.dataManager.getEvent(this.selectedEventId));
-                console.log('Force refresh completed');
+                await this.updateEventStats(this.dataManager.getEvent(this.selectedEventId));
+                window.debugLogger?.debug('RaceUI', Force refresh completed');
             } else {
-                console.log('No bracket found for force refresh');
+                window.debugLogger?.debug('RaceUI', No bracket found for force refresh');
             }
         }
     }
@@ -4602,19 +6082,21 @@ class RaceUI {
      * Rebind event listeners for a specific heat after DOM update (FIXED - no duplicates)
      */
     rebindEventListenersForHeat(heatId) {
-        console.log('Rebinding event listeners for heat:', heatId);
-        
-        // Find only the PRIMARY heat element (with .heat class)
-        const heatElement = document.querySelector(`.heat[data-heat-id="${heatId}"]`);
+        window.debugLogger?.debug('RaceUI', Rebinding event listeners for heat:', heatId);
+
+        // Find the heat element (could be .heat or .heat-horizontal)
+        const heatElement = document.querySelector(`[data-heat-id="${heatId}"]`);
         if (!heatElement) {
-            console.log('No primary heat element found for rebinding');
+            window.debugLogger?.debug('RaceUI', No heat element found for rebinding');
             return;
         }
-        
-        console.log('Rebinding listeners for primary heat element');
-        
-        // Add event listeners for participants
-        const participants = heatElement.querySelectorAll('.clickable-participant');
+
+        window.debugLogger?.debug('RaceUI', Rebinding listeners for heat element:', heatElement.className);
+
+        // Add event listeners for participants - handle both horizontal and vertical layouts
+        const clickableSelectors = ['.clickable-participant', '.participant-info[data-participant-id]', '.lane-participant[data-participant-id]'];
+        const participants = heatElement.querySelectorAll(clickableSelectors.join(', '));
+
         participants.forEach(participant => {
             // Check if this element already has our listener by checking a data attribute
             if (!participant.dataset.listenerBound) {
@@ -4624,17 +6106,11 @@ class RaceUI {
                 participant.dataset.listenerBound = 'true';
             }
         });
-        
-        // Rebind reset button listener
-        const resetBtn = heatElement.querySelector('.reset-heat-btn');
-        if (resetBtn && !resetBtn.dataset.listenerBound) {
-            resetBtn.addEventListener('click', (e) => {
-                this.resetHeat(e.target.dataset.heatId);
-            });
-            resetBtn.dataset.listenerBound = 'true';
-        }
-        
-        console.log(`✅ Rebound listeners for ${participants.length} participants and reset button`);
+
+        // Note: Button event listeners are handled by document-level delegation in bindEventListeners()
+        // No need to bind individual button listeners here to avoid duplicates
+
+        window.debugLogger?.debug('RaceUI', `? Rebound listeners for ${participants.length} participants and buttons`);
     }
 
     /**
@@ -4642,41 +6118,41 @@ class RaceUI {
      */
     debugLowerBracket() {
         if (!this.selectedEventId) {
-            console.log('No event selected');
+            window.debugLogger?.debug('RaceUI', No event selected');
             return;
         }
-        
-        const bracket = this.raceManager.getBracket(this.selectedEventId);
+
+        const bracket = this.raceManager.getCachedBracket(this.selectedEventId);
         if (!bracket) {
-            console.log('No bracket found');
+            window.debugLogger?.debug('RaceUI', No bracket found');
             return;
         }
         
-        console.log('=== LOWER BRACKET DEBUG ===');
+        window.debugLogger?.debug('RaceUI', === LOWER BRACKET DEBUG ===');
         Object.entries(bracket.classes).forEach(([className, classBracket]) => {
-            console.log(`\nClass: ${className}`);
-            console.log('Elimination Type:', classBracket.eliminationType);
-            console.log('Current Round:', classBracket.currentRound);
+            window.debugLogger?.debug('RaceUI', `\nClass: ${className}`);
+            window.debugLogger?.debug('RaceUI', Elimination Type:', classBracket.eliminationType);
+            window.debugLogger?.debug('RaceUI', Current Round:', classBracket.currentRound);
             
-            console.log('\nParticipants:');
+            window.debugLogger?.debug('RaceUI', \nParticipants:');
             classBracket.participants.forEach(p => {
-                console.log(`  ${p.name}: status=${p.status}, bracket=${p.currentBracket}, wins=${p.wins}, losses=${p.losses}`);
+                window.debugLogger?.debug('RaceUI', `  ${p.name}: status=${p.status}, bracket=${p.currentBracket}, wins=${p.wins}, losses=${p.losses}`);
             });
             
-            console.log('\nRounds:');
+            window.debugLogger?.debug('RaceUI', \nRounds:');
             classBracket.rounds.forEach((round, index) => {
-                console.log(`  Round ${round.roundNumber} (${round.type}):`);
+                window.debugLogger?.debug('RaceUI', `  Round ${round.roundNumber} (${round.type}):`);
                 round.heats.forEach(heat => {
-                    console.log(`    Heat ${heat.heatNumber} (${heat.bracketType || 'no bracket type'}): ${heat.status}`);
+                    window.debugLogger?.debug('RaceUI', `    Heat ${heat.heatNumber} (${heat.bracketType || 'no bracket type'}): ${heat.status}`);
                     heat.lanes.forEach(lane => {
                         if (lane.participant) {
-                            console.log(`      Lane ${lane.lane}: ${lane.participant.name}`);
+                            window.debugLogger?.debug('RaceUI', `      Lane ${lane.lane}: ${lane.participant.name}`);
                         }
                     });
                 });
             });
         });
-        console.log('=== END DEBUG ===');
+        window.debugLogger?.debug('RaceUI', === END DEBUG ===');
     }
 
     /**
@@ -4684,17 +6160,17 @@ class RaceUI {
      */
     resetParticipantStats() {
         if (!this.selectedEventId) {
-            console.log('No event selected');
+            window.debugLogger?.debug('RaceUI', No event selected');
             return;
         }
-        
-        const bracket = this.raceManager.getBracket(this.selectedEventId);
+
+        const bracket = this.raceManager.getCachedBracket(this.selectedEventId);
         if (!bracket) {
-            console.log('No bracket found');
+            window.debugLogger?.debug('RaceUI', No bracket found');
             return;
         }
         
-        console.log('Resetting participant stats...');
+        window.debugLogger?.debug('RaceUI', Resetting participant stats...');
         Object.entries(bracket.classes).forEach(([className, classBracket]) => {
             classBracket.participants.forEach(p => {
                 p.wins = 0;
@@ -4711,7 +6187,7 @@ class RaceUI {
             });
         });
         
-        console.log('Participant stats reset. Run raceUI.debugLowerBracket() to verify.');
+        window.debugLogger?.debug('RaceUI', Participant stats reset. Run raceUI.debugLowerBracket() to verify.');
     }
 
     /**
@@ -4746,12 +6222,12 @@ class RaceUI {
     /**
      * Complete a heat with results
      */
-    async completeHeat(heatId, results) {
-        console.log('Completing heat:', heatId, results);
+    async completeHeat(heatId, results, heat = null) {
+        window.debugLogger?.debug('RaceUI', Completing heat:', heatId, results);
         
         try {
-            const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
-            if (!heat) {
+            const currentHeat = heat || await this.raceManager.getHeat(this.selectedEventId, heatId);
+            if (!currentHeat) {
                 throw new Error('Heat not found');
             }
             
@@ -4759,8 +6235,8 @@ class RaceUI {
             let finalResults = [...results];
             
             // Add any existing false start or disqualification results
-            if (heat.results) {
-                const specialResults = heat.results.filter(r => r.falseStart || r.disqualified || r.position === 'FS' || r.position === 'DSQ');
+            if (currentHeat.results) {
+                const specialResults = currentHeat.results.filter(r => r.falseStart || r.disqualified || r.position === 'FS' || r.position === 'DSQ');
                 specialResults.forEach(specialResult => {
                     // Only add if not already in manual results
                     const exists = finalResults.some(r => r.participantId === specialResult.participantId);
@@ -4778,55 +6254,80 @@ class RaceUI {
                 return a.position - b.position;
             });
             
-            console.log('Final results for heat completion:', sortedResults);
+            window.debugLogger?.debug('RaceUI', Final results for heat completion:', sortedResults);
             
-            // Record the result
-            await this.raceManager.recordRaceResult(
-                this.selectedEventId, 
-                heat.className, 
-                heatId, 
-                sortedResults
-            );
-            
-            // Clear pending results
+            // Clear pending results BEFORE starting any async operations to prevent race conditions
+            // This prevents the UI from showing stale pending data during the completion process
             this.pendingResults.delete(heatId);
+
+            // Update UI immediately after clearing pending results to prevent visual glitches
+            // The UI should show no positions until the race completion finishes
+            // REMOVED: This caused a "Click to set position" flash before the completed state was rendered
+            // await this.updateParticipantPositionDisplay(heatId);
+
+            // ? OPTIMISTIC UI UPDATE: Mark as completed immediately
+            // Clone the heat object to avoid mutating the source before save
+            const optimisticHeat = JSON.parse(JSON.stringify(currentHeat));
+            optimisticHeat.results = sortedResults;
+            optimisticHeat.status = 'completed';
             
-            // Update scroll anchor tracking after completing a heat
-            this.updateScrollAnchor();
-            
-            // Update UI - targeted update to preserve other heat states
-            console.log('Heat completed, updating UI...');
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
-            console.log('Updated bracket after completion:', bracket);
-            
-            // Instead of full re-render, just update the completed heat and generate button
-            this.updateCompletedHeat(heatId, heat);
-            this.updateGenerateButton(bracket);
-            this.updateEventStats(this.dataManager.getEvent(this.selectedEventId));
-            
-            // 🏁 SAFEGUARD: Ensure event completion check happens
-            // (This should have been triggered by recordRaceResult, but adding as safeguard)
-            try {
-                await this.raceManager.checkAndUpdateEventStatus(this.selectedEventId);
-            } catch (error) {
-                console.warn('⚠️ Safeguard event completion check failed:', error);
-            }
-            
-            // Only do a full re-render if new rounds were generated (which happens in recordRaceResult)
-            // Check if there are new heats that weren't there before
-            const currentHeatCount = this.getCurrentHeatCount();
-            if (this.lastKnownHeatCount !== currentHeatCount) {
-                console.log('New heats detected, doing full re-render...');
-                this.renderBrackets(bracket);
-                this.lastKnownHeatCount = currentHeatCount;
-            }
-            
-            console.log('UI update completed');
-            
-            // Check if event is completed and calculate achievements
-            await this.checkEventCompletionAndCalculateAchievements();
-            
-            this.showToast('Heat completed successfully!', 'success');
+            // Update the specific heat card visually to "Completed" state immediately
+            this.updateCompletedHeat(heatId, optimisticHeat);
+
+            // Queue background processing to prevent race conditions but don't block UI
+            this.saveQueue = this.saveQueue.then(async () => {
+                try {
+                    // Record the result (OPTIMIZED: Returns immediately, defers heavy work)
+                    window.debugLogger?.debug('RaceUI', completeHeat: Calling recordRaceResult with className:', currentHeat.className, 'heat object:', currentHeat);
+                    await this.raceManager.recordRaceResult(
+                        this.selectedEventId,
+                        currentHeat.className,
+                        heatId,
+                        sortedResults
+                    );
+                    
+                    // Update scroll anchor tracking after completing a heat
+                    await this.updateScrollAnchor();
+                    
+                    // Update UI - targeted update to preserve other heat states
+                    window.debugLogger?.debug('RaceUI', Heat completed, updating UI...');
+                    const bracket = await this.raceManager.getBracket(this.selectedEventId);
+                    
+                    // Update generate button based on new state
+                    this.updateGenerateButton(bracket);
+                    
+                    // Update stats
+                    await this.updateEventStats(this.dataManager.getEvent(this.selectedEventId));
+
+                    // Check if there are new heats that weren't there before (new rounds generated)
+                    const currentHeatCount = this.getCurrentHeatCount();
+                    if (this.lastKnownHeatCount !== currentHeatCount) {
+                        window.debugLogger?.debug('RaceUI', New heats detected, doing full re-render...');
+                        this.renderBrackets(bracket);
+                        this.lastKnownHeatCount = currentHeatCount;
+                    }
+                    
+                    window.debugLogger?.debug('RaceUI', UI update completed (background tasks still processing)');
+                    
+                    // Check if event is completed and calculate achievements
+                    if (this.checkEventCompletionAndCalculateAchievements) {
+                        await this.checkEventCompletionAndCalculateAchievements();
+                    } else {
+                        // Fallback if method doesn't exist or was renamed
+                        const event = this.dataManager.getEvent(this.selectedEventId);
+                        if (event && event.status === 'completed') {
+                            // handle completion
+                        }
+                    }
+                    
+                    this.showToast('Heat saved successfully!', 'success');
+
+                } catch (error) {
+                    console.error('Error in background processing:', error);
+                    this.showToast(`Error saving heat: ${error.message}`, 'error');
+                    // TODO: Revert UI state if save fails?
+                }
+            });
             
         } catch (error) {
             console.error('Error completing heat:', error);
@@ -4838,7 +6339,7 @@ class RaceUI {
      * Update a specific completed heat without full re-render
      */
     updateCompletedHeat(heatId, heat) {
-        console.log('Updating completed heat:', heatId);
+        window.debugLogger?.debug('RaceUI', Updating completed heat:', heatId);
         
         // Find all heat elements with this ID
         const heatElements = document.querySelectorAll(`[data-heat-id="${heatId}"]`);
@@ -4869,7 +6370,7 @@ class RaceUI {
             }
         });
         
-        console.log(`Updated ${heatElements.length} heat elements for completed heat ${heatId}`);
+        window.debugLogger?.debug('RaceUI', `Updated ${heatElements.length} heat elements for completed heat ${heatId}`);
     }
 
     /**
@@ -4877,27 +6378,39 @@ class RaceUI {
      */
     getCurrentHeatCount() {
         if (!this.selectedEventId) return 0;
-        
-        const bracket = this.raceManager.getBracket(this.selectedEventId);
+
+        const bracket = this.raceManager.getCachedBracket(this.selectedEventId);
         if (!bracket) return 0;
-        
+
+        // Ensure bracket has classes property
+        if (!bracket.classes || typeof bracket.classes !== 'object') return 0;
+
         let totalHeats = 0;
         Object.values(bracket.classes).forEach(classBracket => {
-            classBracket.rounds.forEach(round => {
-                totalHeats += round.heats.length;
-            });
+            if (classBracket && classBracket.rounds && Array.isArray(classBracket.rounds)) {
+                classBracket.rounds.forEach(round => {
+                    if (round && round.heats && Array.isArray(round.heats)) {
+                        totalHeats += round.heats.length;
+                    }
+                });
+            }
         });
-        
+
         return totalHeats;
     }
 
     /**
      * Manual heat completion triggered by button
      */
-    manualCompleteHeat(heatId) {
+    async manualCompleteHeat(heatId) {
         const heatResults = this.pendingResults.get(heatId) || [];
-        const currentHeat = this.raceManager.getHeat(this.selectedEventId, heatId);
-        
+        const currentHeat = await this.raceManager.getHeat(this.selectedEventId, heatId);
+
+        if (!currentHeat || !currentHeat.lanes) {
+            this.showToast('Unable to load heat data. Please try again.', 'error');
+            return;
+        }
+
         // Count actual participants (non-empty lanes)
         const actualParticipants = currentHeat.lanes.filter(lane => lane.participant && lane.participant.id).length;
         
@@ -4912,9 +6425,14 @@ class RaceUI {
                 warningText: 'This will complete the heat with no results',
                 confirmText: 'Complete Heat',
                 cancelText: 'Cancel',
-                onConfirm: () => {
-                    console.log(`Completing empty heat ${heatId} for tournament continuity`);
-                    this.completeHeat(heatId, []); // Complete with empty results
+                onConfirm: async () => {
+                    window.debugLogger?.debug('RaceUI', `Completing empty heat ${heatId} for tournament continuity`);
+                    try {
+                        await this.completeHeat(heatId, []); // Complete with empty results
+                    } catch (error) {
+                        console.error('Error completing empty heat:', error);
+                        this.showToast(`Error completing heat: ${error.message}`, 'error');
+                    }
                 }
             });
             return;
@@ -4938,8 +6456,13 @@ class RaceUI {
                     iconType: 'fas fa-info-circle',
                     confirmText: 'Continue',
                     cancelText: 'Cancel',
-                    onConfirm: () => {
-                        this.completeHeat(heatId, autoResult);
+                    onConfirm: async () => {
+                        try {
+                            await this.completeHeat(heatId, autoResult);
+                        } catch (error) {
+                            console.error('Error auto-completing single participant heat:', error);
+                            this.showToast(`Error completing heat: ${error.message}`, 'error');
+                        }
                     }
                 });
                 return;
@@ -5015,8 +6538,13 @@ class RaceUI {
             warningText: 'This will finalize the heat results',
             confirmText: 'Complete Heat',
             cancelText: 'Cancel',
-            onConfirm: () => {
-                this.completeHeat(heatId, heatResults);
+            onConfirm: async () => {
+                try {
+                    await this.completeHeat(heatId, heatResults);
+                } catch (error) {
+                    console.error('Error completing heat:', error);
+                    this.showToast(`Error completing heat: ${error.message}`, 'error');
+                }
             }
         });
     }
@@ -5035,7 +6563,7 @@ class RaceUI {
             this.raceManager.updateHeatStatus(this.selectedEventId, heatId, 'active');
             
             // Update UI
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = this.raceManager.getCachedBracket(this.selectedEventId);
             this.renderBrackets(bracket);
             
             this.showToast('Heat started!', 'success');
@@ -5049,8 +6577,8 @@ class RaceUI {
     /**
      * Reset a heat (works for both pending and completed heats)
      */
-    resetHeat(heatId) {
-        const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
+    async resetHeat(heatId) {
+        const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         if (!heat) {
             this.showToast('Heat not found', 'error');
             return;
@@ -5076,17 +6604,17 @@ class RaceUI {
             warningText: 'This action cannot be undone',
             confirmText: 'Reset Heat',
             cancelText: 'Cancel',
-            onConfirm: () => {
+                onConfirm: async () => {
                 try {
                     this.raceManager.updateHeatStatus(this.selectedEventId, heatId, 'pending');
                     this.pendingResults.delete(heatId);
-                    
+
                     // Update UI
-                    const bracket = this.raceManager.getBracket(this.selectedEventId);
+                    const bracket = await this.raceManager.getBracket(this.selectedEventId);
                     this.renderBrackets(bracket);
-                    
+
                     // Update scroll anchor tracking after resetting a heat
-                    this.updateScrollAnchor();
+                    await this.updateScrollAnchor();
                     
                     this.showToast('Heat reset successfully!', 'success');
                     
@@ -5102,7 +6630,7 @@ class RaceUI {
      * Reset a completed heat - clear results and reverse all changes
      */
     async resetCompletedHeat(heatId) {
-        const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
+        const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         if (!heat) {
             this.showToast('Heat not found', 'error');
             return;
@@ -5112,7 +6640,7 @@ class RaceUI {
         const safetyCheck = this.raceManager.canSafelyResetHeat(this.selectedEventId, heatId);
         if (!safetyCheck.canReset) {
             // Show detailed warning about why reset is not allowed
-            const warningMessage = `⚠️ Cannot Reset Heat\n\n${safetyCheck.reason}\n\n` +
+            const warningMessage = `?? Cannot Reset Heat\n\n${safetyCheck.reason}\n\n` +
                 `To reset this heat, you would need to:\n` +
                 `1. Reset all later rounds first\n` +
                 `2. Then reset this heat\n` +
@@ -5132,10 +6660,10 @@ class RaceUI {
             `Heat: ${heat.heatNumber || heat.raceNumber}\n` +
             `Participants: ${participantNames}\n\n` +
             `This will:\n` +
-            `• Clear all race results\n` +
-            `• Reverse participant statistics\n` +
-            `• Reset heat status to pending\n` +
-            `• Allow re-entry of results\n\n` +
+            `� Clear all race results\n` +
+            `� Reverse participant statistics\n` +
+            `� Reset heat status to pending\n` +
+            `� Allow re-entry of results\n\n` +
             `This action cannot be undone. Continue?`;
 
         window.confirmationModal.show({
@@ -5157,11 +6685,11 @@ class RaceUI {
                     this.pendingResults.delete(heatId);
                     
                     // Update UI
-                    const bracket = this.raceManager.getBracket(this.selectedEventId);
+                    const bracket = await this.raceManager.getBracket(this.selectedEventId);
                     this.renderBrackets(bracket);
-                    
+
                     // Update scroll anchor tracking after resetting a completed heat
-                    this.updateScrollAnchor();
+                    await this.updateScrollAnchor();
                     
                     this.showToast('Completed heat reset successfully! You can now re-enter results.', 'success');
                     
@@ -5316,28 +6844,16 @@ class RaceUI {
         if (!this.selectedEventId) return;
 
         try {
-            const bracket = this.raceManager.getBracket(this.selectedEventId);
+            const bracket = await this.raceManager.getBracket(this.selectedEventId);
             if (!bracket) return;
 
-            // Check if all races are completed
-            let allRacesCompleted = true;
-            const totalStats = this.raceManager.getTournamentStats(this.selectedEventId);
-            
-            if (totalStats.pendingRaces > 0) {
-                allRacesCompleted = false;
-            }
-
-            // If event is completed, update status
-            if (allRacesCompleted && totalStats.completedRaces > 0) {
-                console.log('🏁 Event completed! Updating status and calculating achievements...');
-                
-                // Update event status to completed
-                await this.raceManager.checkAndUpdateEventStatus(this.selectedEventId);
-                // Achievements removed
-            }
+            // Check if all classes are complete (directly check bracket completion status)
+            // This is more reliable than checking pendingRaces stats
+            window.debugLogger?.debug('RaceUI', ?? Checking if event is complete...');
+            await this.raceManager.checkAndUpdateEventStatus(this.selectedEventId);
         } catch (error) {
-            console.error('Error calculating achievements:', error);
-            // Don't show error toast for achievement calculation failures
+            console.error('Error checking event completion:', error);
+            // Don't show error toast for completion check failures
             // as they shouldn't interrupt the main race flow
         }
     }
@@ -5386,8 +6902,8 @@ class RaceUI {
         }
 
         // Determine readiness by inspecting heats (more reliable than status flags)
-        const bracket = this.raceManager.getBracket(this.selectedEventId);
-        if (bracket) {
+        const bracket = await this.raceManager.getBracket(this.selectedEventId);
+        if (bracket && bracket.classes) {
             let incompleteRaces = 0;
             Object.values(bracket.classes).forEach(classData => {
                 if (classData.rounds) {
@@ -5438,7 +6954,7 @@ class RaceUI {
         }
 
         try {
-            console.log('🔄 Manually completing event...');
+            window.debugLogger?.debug('RaceUI', ?? Manually completing event...');
             this.showToast('Completing event...', 'info');
             
             // Update event status to completed
@@ -5448,7 +6964,7 @@ class RaceUI {
             
             // Update UI
             this.updateCompleteEventButton();
-            this.updateEventStats(event);
+            await this.updateEventStats(event);
             
         } catch (error) {
             console.error('Error manually completing event:', error);
@@ -5460,22 +6976,22 @@ class RaceUI {
      * Debug bracket initialization - call this from console
      */
     debugBracketInitialization() {
-        console.log('🔍 DEBUG: Starting bracket initialization debug...');
+        window.debugLogger?.debug('RaceUI', ?? DEBUG: Starting bracket initialization debug...');
         
         if (!this.selectedEventId) {
-            console.log('❌ No event selected');
+            window.debugLogger?.debug('RaceUI', ? No event selected');
             return;
         }
         
         const event = this.dataManager.getEvent(this.selectedEventId);
-        console.log('📅 Event:', event);
-        console.log('📅 Event classes:', event?.classSettings);
+        window.debugLogger?.debug('RaceUI', ?? Event:', event);
+        window.debugLogger?.debug('RaceUI', ?? Event classes:', event?.classSettings);
         
         const participants = this.raceManager.getEventParticipants(this.selectedEventId);
-        console.log('👥 Event participants:', participants);
+        window.debugLogger?.debug('RaceUI', ?? Event participants:', participants);
         
         participants.forEach(p => {
-            console.log(`  👤 ${p.name}:`, {
+            window.debugLogger?.debug('RaceUI', `  ?? ${p.name}:`, {
                 selectedClasses: p.selectedClasses,
                 sledClasses: p.sledClasses,
                 eventId: p.eventId
@@ -5483,31 +6999,31 @@ class RaceUI {
         });
         
         // Try grouping participants by class manually
-        console.log('🔧 Testing participant grouping...');
+        window.debugLogger?.debug('RaceUI', ?? Testing participant grouping...');
         try {
             const grouped = this.raceManager.groupParticipantsByClass(participants, event);
-            console.log('✅ Grouped participants by class:', grouped);
+            window.debugLogger?.debug('RaceUI', ? Grouped participants by class:', grouped);
             
             Object.entries(grouped).forEach(([className, classParticipants]) => {
-                console.log(`  📊 ${className}: ${classParticipants.length} participants`);
+                window.debugLogger?.debug('RaceUI', `  ?? ${className}: ${classParticipants.length} participants`);
                 classParticipants.forEach(p => {
-                    console.log(`    👤 ${p.name} (was: ${p.selectedClasses || p.sledClasses})`);
+                    window.debugLogger?.debug('RaceUI', `    ?? ${p.name} (was: ${p.selectedClasses || p.sledClasses})`);
                 });
             });
         } catch (error) {
-            console.error('❌ Error grouping participants:', error);
+            console.error('? Error grouping participants:', error);
         }
         
         // Check existing bracket
-        const bracket = this.raceManager.getBracket(this.selectedEventId);
+        const bracket = this.raceManager.getCachedBracket(this.selectedEventId);
         if (bracket) {
-            console.log('🏁 Existing bracket:', bracket);
-            console.log('🏁 Bracket classes:', Object.keys(bracket.classes));
+            window.debugLogger?.debug('RaceUI', ?? Existing bracket:', bracket);
+            window.debugLogger?.debug('RaceUI', ?? Bracket classes:', Object.keys(bracket.classes));
             Object.entries(bracket.classes).forEach(([className, classBracket]) => {
-                console.log(`  📊 ${className}: ${classBracket.participants.length} participants`);
+                window.debugLogger?.debug('RaceUI', `  ?? ${className}: ${classBracket.participants.length} participants`);
             });
         } else {
-            console.log('🏁 No existing bracket found');
+            window.debugLogger?.debug('RaceUI', ?? No existing bracket found');
         }
     }
 
@@ -5515,27 +7031,27 @@ class RaceUI {
      * Quick fix - distribute participants evenly across all event classes
      */
     quickFixClassDistribution() {
-        console.log('🔧 Quick fix: Distributing participants across classes...');
+        window.debugLogger?.debug('RaceUI', ?? Quick fix: Distributing participants across classes...');
         
         if (!this.selectedEventId) {
-            console.log('❌ No event selected');
+            window.debugLogger?.debug('RaceUI', ? No event selected');
             return;
         }
         
         const event = this.dataManager.getEvent(this.selectedEventId);
         if (!event || !event.classSettings) {
-            console.log('❌ Event has no class settings');
+            window.debugLogger?.debug('RaceUI', ? Event has no class settings');
             return;
         }
         
         const eventClasses = event.classSettings.filter(cs => cs.enabled !== false);
         const participants = this.raceManager.getEventParticipants(this.selectedEventId);
         
-        console.log(`📊 Event has ${eventClasses.length} classes:`, eventClasses.map(c => c.className));
-        console.log(`👥 Event has ${participants.length} participants`);
+        window.debugLogger?.debug('RaceUI', `?? Event has ${eventClasses.length} classes:`, eventClasses.map(c => c.className));
+        window.debugLogger?.debug('RaceUI', `?? Event has ${participants.length} participants`);
         
         if (eventClasses.length === 0) {
-            console.log('❌ No enabled classes in event');
+            window.debugLogger?.debug('RaceUI', ? No enabled classes in event');
             return;
         }
         
@@ -5544,7 +7060,7 @@ class RaceUI {
             const classIndex = index % eventClasses.length;
             const assignedClass = eventClasses[classIndex];
             
-            console.log(`🔧 Assigning ${participant.name} to ${assignedClass.className}`);
+            window.debugLogger?.debug('RaceUI', `?? Assigning ${participant.name} to ${assignedClass.className}`);
             
             // Update participant's selected classes
             this.dataManager.updateParticipant(participant.id, {
@@ -5552,15 +7068,15 @@ class RaceUI {
             });
         });
         
-        console.log('✅ Quick fix complete! Try initializing brackets again.');
+        window.debugLogger?.debug('RaceUI', ? Quick fix complete! Try initializing brackets again.');
         alert(`Fixed! Distributed ${participants.length} participants across ${eventClasses.length} classes. Try initializing brackets again.`);
     }
 
     /**
      * Show heat results in a modal
      */
-    showHeatResults(heatId) {
-        const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
+    async showHeatResults(heatId) {
+        const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         if (!heat || !heat.results || heat.results.length === 0) {
             this.showToast('No results found for this heat', 'info');
             return;
@@ -5626,8 +7142,8 @@ class RaceUI {
     /**
      * Show advanced reset options for tournament administrators
      */
-    showAdvancedResetOptions(heatId) {
-        const heat = this.raceManager.getHeat(this.selectedEventId, heatId);
+    async showAdvancedResetOptions(heatId) {
+        const heat = await this.raceManager.getHeat(this.selectedEventId, heatId);
         if (!heat) {
             this.showToast('Heat not found', 'error');
             return;
@@ -5641,14 +7157,14 @@ class RaceUI {
         }
 
         // Show advanced options for heats that cannot be reset normally
-        const advancedMessage = `⚠️ Advanced Reset Required\n\n${safetyCheck.reason}\n\n` +
+        const advancedMessage = `?? Advanced Reset Required\n\n${safetyCheck.reason}\n\n` +
             `Advanced Options:\n\n` +
             `1. Reset Round ${heat.roundNumber} and all subsequent rounds\n` +
             `   - This will reset the entire tournament from this point\n` +
             `   - All later rounds will be deleted\n` +
             `   - You can then regenerate the tournament\n\n` +
             `2. Cancel and keep current results\n\n` +
-            `⚠️ WARNING: Option 1 is a destructive operation that will delete tournament progress.\n` +
+            `?? WARNING: Option 1 is a destructive operation that will delete tournament progress.\n` +
             `Only use this if you are certain you want to restart the tournament from this point.`;
 
         window.confirmationModal.show({
@@ -5671,14 +7187,14 @@ class RaceUI {
      */
     async performAdvancedReset(className, roundNumber) {
         window.confirmationModal.show({
-            title: '🚨 FINAL CONFIRMATION',
+            title: '?? FINAL CONFIRMATION',
             message: `You are about to reset Round ${roundNumber} and ALL subsequent rounds for ${className}.\n\n` +
                 `This will:\n` +
-                `• Delete all heats in Round ${roundNumber} and later rounds\n` +
-                `• Reset participant statuses\n` +
-                `• Reverse all statistics from these rounds\n` +
-                `• Allow you to regenerate the tournament from this point\n\n` +
-                `⚠️ This action cannot be undone!\n\n` +
+                `� Delete all heats in Round ${roundNumber} and later rounds\n` +
+                `� Reset participant statuses\n` +
+                `� Reverse all statistics from these rounds\n` +
+                `� Allow you to regenerate the tournament from this point\n\n` +
+                `?? This action cannot be undone!\n\n` +
                 `Are you absolutely sure you want to proceed?`,
             icon: 'danger',
             iconType: 'fas fa-exclamation-triangle',
@@ -5697,7 +7213,7 @@ class RaceUI {
                     );
                     
                     // Refresh the UI
-                    const bracket = this.raceManager.getBracket(this.selectedEventId);
+                    const bracket = await this.raceManager.getBracket(this.selectedEventId);
                     this.renderBrackets(bracket);
                     
                     this.showToast(
@@ -5726,7 +7242,7 @@ if (typeof window !== 'undefined') {
     
     // Initialize search and sort functionality
     if (typeof window.allRacesEventsData !== 'undefined') {
-        console.log('Search and sort functionality initialized for races page');
+        window.debugLogger?.debug('RaceUI', Search and sort functionality initialized for races page');
     }
 }
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Live Display</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Hero Section Styles - Consistent with Series Page */
@@ -1134,12 +1134,20 @@
         </div>
     </div>
 
+    <script src="js/logger.js"></script>
     <script src="utils/performance-monitor.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
     <script src="utils/data-manager.js"></script>
     <script src="utils/event-bus.js"></script>
+    
+    <!-- Event System - Modular Architecture (Refactored) -->
+    <script src="modules/event-data-service.js"></script>
+    <script src="modules/event-logic.js"></script>
+    <script src="modules/event-ui.js"></script>
+    <script src="modules/event-controller.js"></script>
     <script src="modules/event.js"></script>
+    
     <script src="modules/pairing-engine.js"></script>
     <script src="modules/race.js"></script>
     <script src="js/race-ui.js"></script>
@@ -1829,13 +1837,13 @@
                 const plannedTotalRaces = Number.isFinite(this.currentEvent?.plannedTotalRaces) ? this.currentEvent.plannedTotalRaces : null;
                 const expectedTotalRaces = plannedTotalRaces || (totalHeats > 0 ? totalHeats : this.calculateExpectedTotalRacesForEvent());
 
-                // If event is completed, force 100%
+                // Check if event is completed by examining bracket classes directly
                 let isEventComplete = false;
-                try {
-                    if (window.dataManager && eventId) {
-                        isEventComplete = !!window.dataManager.isEventCompleted(eventId);
-                    }
-                } catch {}
+                if (bracket && bracket.classes) {
+                    const classList = Object.values(bracket.classes);
+                    const completedCount = classList.filter(c => c.isComplete).length;
+                    isEventComplete = classList.length > 0 && completedCount === classList.length;
+                }
                 const forcedCompletedRaces = isEventComplete ? expectedTotalRaces : completedRaces;
                 const completionPercentage = expectedTotalRaces > 0 ? Math.round((forcedCompletedRaces / expectedTotalRaces) * 100) : 0;
 

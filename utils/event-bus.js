@@ -8,11 +8,7 @@ class EventBus {
         this.listeners = new Map(); // event -> array of callback functions
         this.history = []; // Keep history of recent events for debugging
         this.maxHistorySize = 100;
-        if (window.debugLogger) {
-            window.debugLogger.init('EventBus', 'EventBus initialized');
-        } else {
-            console.log('📡 EventBus initialized');
-        }
+        window.debugLogger?.init('EventBus', 'EventBus initialized');
     }
 
     /**
@@ -20,7 +16,7 @@ class EventBus {
      */
     on(eventName, callback) {
         if (typeof callback !== 'function') {
-            console.error('EventBus: Callback must be a function');
+            window.debugLogger?.error('EventBus', 'Callback must be a function');
             return;
         }
 
@@ -31,11 +27,7 @@ class EventBus {
         const listeners = this.listeners.get(eventName);
         listeners.push(callback);
 
-        if (window.debugLogger) {
-            window.debugLogger.debug('EventBus', `Subscribed to event: ${eventName} (${listeners.length} listeners)`);
-        } else {
-            console.log(`📡 Subscribed to event: ${eventName} (${listeners.length} listeners)`);
-        }
+        window.debugLogger?.debug('EventBus', `Subscribed to event: ${eventName} (${listeners.length} listeners)`);
 
         // Return unsubscribe function
         return () => this.off(eventName, callback);
@@ -54,11 +46,7 @@ class EventBus {
         
         if (index > -1) {
             listeners.splice(index, 1);
-            if (window.debugLogger) {
-            window.debugLogger.debug('EventBus', `Unsubscribed from event: ${eventName} (${listeners.length} listeners remaining)`);
-        } else {
-            console.log(`📡 Unsubscribed from event: ${eventName} (${listeners.length} listeners remaining)`);
-        }
+            window.debugLogger?.debug('EventBus', `Unsubscribed from event: ${eventName} (${listeners.length} listeners remaining)`);
             return true;
         }
 
@@ -94,19 +82,11 @@ class EventBus {
         const listeners = this.listeners.get(eventName) || [];
         
         if (listeners.length === 0) {
-            if (window.debugLogger) {
-            window.debugLogger.debug('EventBus', `Event emitted with no listeners: ${eventName}`);
-        } else {
-            console.log(`📡 Event emitted with no listeners: ${eventName}`);
-        }
+            window.debugLogger?.debug('EventBus', `Event emitted with no listeners: ${eventName}`);
             return;
         }
 
-        if (window.debugLogger) {
-            window.debugLogger.debug('EventBus', `Emitting event: ${eventName} to ${listeners.length} listeners`, data);
-        } else {
-            console.log(`📡 Emitting event: ${eventName} to ${listeners.length} listeners`, data);
-        }
+        window.debugLogger?.debug('EventBus', `Emitting event: ${eventName} to ${listeners.length} listeners`, data);
 
         // Call all listeners
         let successCount = 0;
@@ -118,12 +98,12 @@ class EventBus {
                 callback(data, eventData);
                 successCount++;
             } catch (error) {
-                console.error(`📡 Error in event listener for ${eventName}:`, error);
+                window.debugLogger?.error('EventBus', `Error in event listener for ${eventName}:`, error);
                 errorCount++;
             }
         }
 
-        console.log(`📡 Event ${eventName} processed: ${successCount} success, ${errorCount} errors`);
+        window.debugLogger?.debug('EventBus', `Event ${eventName} processed: ${successCount} success, ${errorCount} errors`);
     }
 
     /**
@@ -171,7 +151,7 @@ class EventBus {
     clearAllListeners() {
         const totalListeners = Array.from(this.listeners.values()).reduce((sum, arr) => sum + arr.length, 0);
         this.listeners.clear();
-        console.log(`📡 Cleared all listeners (${totalListeners} total)`);
+        window.debugLogger?.debug('EventBus', `Cleared all listeners (${totalListeners} total)`);
     }
 
     /**
@@ -192,7 +172,7 @@ class EventBus {
         if (this.listeners.has(eventName)) {
             const count = this.listeners.get(eventName).length;
             this.listeners.delete(eventName);
-            console.log(`📡 Removed all listeners for event: ${eventName} (${count} listeners)`);
+            window.debugLogger?.debug('EventBus', `Removed all listeners for event: ${eventName} (${count} listeners)`);
             return count;
         }
         return 0;
@@ -211,4 +191,4 @@ if (typeof module !== 'undefined' && module.exports) {
     // Browser environment
     window.EventBus = EventBus;
     window.globalEventBus = globalEventBus;
-} 
+}

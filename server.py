@@ -1,41 +1,102 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 EPC17 - Event Management System - Network Server
 Robust data management for multi-client access across local network
 """
 
 from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
-from flask_cors import CORS
+# from flask_cors import CORS  # Temporarily disabled
 import os
 import json
 import threading
+import time
 from datetime import datetime
 import uuid
 import ssl
 import secrets
+from utils.db_manager import DatabaseManager
+
+# WebSocket support
+try:
+    from flask_socketio import SocketIO, emit
+    SOCKETIO_AVAILABLE = True
+except ImportError:
+    print("⚠️ Flask-SocketIO not available. WebSocket support disabled.")
+    print("   Install with: pip install flask-socketio")
+    SOCKETIO_AVAILABLE = False
+    SocketIO = None
+    emit = None
 
 app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
-# Enable CORS for all origins with all methods and headers
-CORS(app, 
-     origins=['*'],  # Allow all origins
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
-     supports_credentials=False)
+app.config['SECRET_KEY'] = secrets.token_hex(16)
+
+# Debug logging helper
+DEBUG_MODE = os.environ.get('FLASK_DEBUG', '0') == '1' or os.environ.get('DEBUG', '0') == '1'
+
+def log_debug(*args, **kwargs):
+    """Conditional logging based on environment variable"""
+    if DEBUG_MODE:
+        print(*args, **kwargs)
+
+# Initialize SocketIO if available
+socketio = SocketIO(app, cors_allowed_origins="*") if SOCKETIO_AVAILABLE else None
+
+# COMPLETELY DISABLE CORS FOR TESTING
+# No CORS configuration at all
 
 # Achievements removed
 
 # Clean server setup without custom logging
 
-# Data storage configuration
-DATA_DIR = 'data'
-os.makedirs(DATA_DIR, exist_ok=True)
+# Database configuration - initialize lazily
+# TEMPORARILY DISABLED FOR TESTING
+# db_manager = None
+#
+# def get_db_manager():
+#     global db_manager
+#     if db_manager is None:
+#         print("[INFO] Initializing database manager...")
+#         try:
+#             db_manager = DatabaseManager('data/epc17.db')
+#             print("[SUCCESS] Database manager initialized")
+#         except Exception as e:
+#             print(f"[ERROR] Failed to initialize database manager: {e}")
+#             raise
+#     return db_manager
 
-# Thread lock for concurrent access safety
-data_lock = threading.Lock()
+_db_manager = None
 
-# In-memory session store for simple auth (no external libraries)
-# Rule: EPC17_WORKFLOW.md - lightweight local dev, no DB
-SESSIONS = {}
+
+def get_db_manager():
+    global _db_manager
+    if _db_manager is None:
+        _db_manager = DatabaseManager('data/epc17.db')
+    return _db_manager
+
+# Session cache for performance (database is primary storage)
+# Sessions are persisted to database for multi-user/restart support
+SESSIONS_CACHE = {}  # token -> session dict (cache for performance)
+SESSION_CACHE_TTL = 300  # 5 minutes cache TTL
+SESSION_EXPIRY_DAYS = 90  # Sessions valid for 90 days
+
+# -------------------- WEBSOCKET HELPERS --------------------
+
+def emit_websocket_event(event_name, data):
+    """
+    Emit a WebSocket event to all connected clients
+    Falls back gracefully if WebSocket is not available
+    """
+    if socketio and SOCKETIO_AVAILABLE:
+        try:
+            socketio.emit(event_name, data)
+            print(f"📡 WebSocket event emitted: {event_name}")
+        except Exception as e:
+            print(f"⚠️ Failed to emit WebSocket event {event_name}: {e}")
+    else:
+        # WebSocket not available, event bus will handle updates
+        pass
+
+# -------------------- END WEBSOCKET HELPERS --------------------
 
 # Centralized permission helpers
 ALL_CATEGORIES = [
@@ -47,10 +108,18 @@ ALL_CATEGORIES = [
     'analytics',
     'live display',
     'animator',
+    'admin_power',  # User management permission
 ]
 
 def is_admin_session(session):
-    return bool(session) and session.get('username') == 'Admin'
+    if not session:
+        return False
+    # Admin username has full access
+    if session.get('username') == 'Admin':
+        return True
+    # Users with admin_power permission also have admin access
+    permissions = session.get('permissions', []) or []
+    return 'admin_power' in permissions
 
 def has_permission(session, permission_or_list):
     if not session:
@@ -128,111 +197,114 @@ def create_self_signed_cert():
         
         return True
     except ImportError:
-        print("⚠️  cryptography library not available. Install with: pip install cryptography")
+        print("cryptography library not available. Install with: pip install cryptography")
         return False
     except Exception as e:
-        print(f"⚠️  Failed to create certificate: {e}")
+        print(f"Failed to create certificate: {e}")
         return False
 
-def get_data_file(filename):
-    """Get full path for data file"""
-    return os.path.join(DATA_DIR, filename)
-
-def load_data(filename):
-    """Thread-safe data loading with enhanced error handling"""
-    filepath = get_data_file(filename)
-    with data_lock:
-        if os.path.exists(filepath):
-            try:
-                # Check file size to prevent loading corrupted large files
-                file_size = os.path.getsize(filepath)
-                if file_size > 100 * 1024 * 1024:  # 100MB limit
-                    print(f"⚠️ File {filename} is too large ({file_size} bytes), creating backup and resetting")
-                    # Create backup with timestamp
-                    backup_path = f"{filepath}.corrupted.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                    os.rename(filepath, backup_path)
-                    # Return empty array for the reset
-                    return []
-                
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, IOError, UnicodeDecodeError) as e:
-                print(f"❌ Error loading {filename}: {e}")
-                # Create backup of corrupted file
-                try:
-                    backup_path = f"{filepath}.corrupted.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                    os.rename(filepath, backup_path)
-                    print(f"📦 Created backup of corrupted file: {backup_path}")
-                except Exception as backup_error:
-                    print(f"⚠️ Failed to create backup: {backup_error}")
-                return []
-        return []
-
-def save_data(filename, data):
-    """Thread-safe data saving with backup"""
-    filepath = get_data_file(filename)
-    backup_path = filepath + '.backup'
-    
-    with data_lock:
-        try:
-            # Create backup of existing data
-            if os.path.exists(filepath):
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    backup_data = f.read()
-                with open(backup_path, 'w', encoding='utf-8') as f:
-                    f.write(backup_data)
-            
-            # Save new data
-            with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            return True
-        except (IOError, json.JSONEncodeError) as e:
-            print(f"Error saving {filename}: {e}")
-            return False
-
-def load_users():
-    """Load users list from JSON file; ensure default Admin exists."""
-    users = load_data('users.json')
-    # Ensure default Admin exists
-    has_admin = any(u.get('username') == 'Admin' for u in users)
-    if not has_admin:
-        users.append({
-            'id': 'admin-default',
-            'username': 'Admin',
-            'password': 'Admin321',
-            'permissions': ALL_CATEGORIES[:]
-        })
-        save_data('users.json', users)
-    return users
-
-def save_users(users):
-    return save_data('users.json', users)
+# Database operations - no more JSON files needed!
 
 def create_session(user_id, username, permissions, allowed_events=None):
+    """Create a new session and persist to database"""
     token = secrets.token_hex(16)
-    SESSIONS[token] = {
+    
+    # Get user agent and IP for session tracking
+    user_agent = request.headers.get('User-Agent', '')[:255] if request else None
+    ip_address = request.remote_addr if request else None
+    
+    # Create session data
+    session_data = {
         'userId': user_id,
         'username': username,
         'permissions': permissions,
         'allowedEvents': allowed_events or [],
         'createdAt': datetime.now().isoformat()
     }
+    
+    # Save to database for persistence
+    db = get_db_manager()
+    if db:
+        db.create_session(
+            token=token,
+            user_id=user_id,
+            username=username,
+            permissions=permissions,
+            allowed_events=allowed_events,
+            expiry_days=SESSION_EXPIRY_DAYS,
+            user_agent=user_agent,
+            ip_address=ip_address
+        )
+    
+    # Also cache in memory for fast access
+    SESSIONS_CACHE[token] = {
+        **session_data,
+        '_cached_at': time.time()
+    }
+    
     return token
 
+def get_session_from_cache_or_db(token):
+    """Get session from cache or database"""
+    if not token:
+        return None
+    
+    # Check cache first
+    cached = SESSIONS_CACHE.get(token)
+    if cached:
+        # Check if cache is still valid
+        cached_at = cached.get('_cached_at', 0)
+        if time.time() - cached_at < SESSION_CACHE_TTL:
+            return cached
+    
+    # Load from database
+    db = get_db_manager()
+    if db:
+        session = db.get_session(token)
+        if session:
+            # Update cache
+            SESSIONS_CACHE[token] = {
+                'userId': session['userId'],
+                'username': session['username'],
+                'permissions': session['permissions'],
+                'allowedEvents': session['allowedEvents'],
+                'createdAt': session['createdAt'],
+                '_cached_at': time.time()
+            }
+            return SESSIONS_CACHE[token]
+    
+    # Session not found or expired, remove from cache
+    if token in SESSIONS_CACHE:
+        del SESSIONS_CACHE[token]
+    
+    return None
+
 def get_session_from_request():
+    """Get session from request headers, query params, or cookies"""
+    token = None
+    
+    # Check Authorization header
     auth_header = request.headers.get('Authorization', '')
     if auth_header.startswith('Bearer '):
         token = auth_header.split(' ', 1)[1].strip()
-        return SESSIONS.get(token)
+    
     # Also allow token via query for simple local links
-    token = request.args.get('token')
-    if token:
-        return SESSIONS.get(token)
+    if not token:
+        token = request.args.get('token')
+    
     # Also check cookie for auth token so page loads carry session
-    cookie_token = request.cookies.get('auth_token')
-    if cookie_token:
-        return SESSIONS.get(cookie_token)
-    return None
+    if not token:
+        token = request.cookies.get('auth_token')
+    
+    if not token:
+        return None
+    
+    return get_session_from_cache_or_db(token)
+
+def invalidate_session_cache(token):
+    """Remove a session from the cache"""
+    if token in SESSIONS_CACHE:
+        del SESSIONS_CACHE[token]
 
 # Rule: EPC17_WORKFLOW.md - unify permission checks to category-only
 # Replace legacy fine-grained or wildcard permission model
@@ -316,13 +388,37 @@ def big_screen_redirect():
 def network_test():
     return render_template('network-test.html')
 
-# Admin-only Users & Permissions page
+# Admin-only Users & Permissions page (requires admin_power permission)
 @app.route('/users.html')
 def users_permissions_page():
     sess = get_session_from_request()
-    if not sess or sess.get('username') != 'Admin':
+    if not ensure_admin(sess):
         return 'Access Denied', 403
     return render_template('users.html')
+
+# Version endpoint
+@app.route('/api/version', methods=['GET'])
+def get_version():
+    """Get the latest version from PATCHNOTES.txt"""
+    try:
+        patchnotes_path = os.path.join(os.path.dirname(__file__), 'PATCHNOTES.txt')
+        if os.path.exists(patchnotes_path):
+            with open(patchnotes_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Extract version from first line that starts with "## Version"
+                lines = content.split('\n')
+                for line in lines:
+                    if line.startswith('## Version'):
+                        # Extract version like "D0L11R1.36" from "## Version D0L11R1.36 (description)"
+                        version_match = line.replace('## Version ', '').split(' ')[0]
+                        return jsonify({'version': version_match, 'name': 'EPC17'})
+        return jsonify({'version': 'unknown', 'name': 'EPC17'})
+    except Exception as e:
+        print(f"[ERROR] Failed to read version from PATCHNOTES.txt: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return a valid response instead of 500 error
+        return jsonify({'version': 'D0L11R1.36', 'name': 'EPC17'})
 
 # API Endpoints
 @app.route('/api/participants', methods=['GET', 'POST'])
@@ -334,56 +430,61 @@ def handle_participants():
         if not ok:
             msg, code = err
             return jsonify({'error': msg}), code
-        print(f"🔍 DEBUG - POST /api/participants called")
-        print(f"🔍 DEBUG - Content-Type: {request.content_type}")
-        print(f"🔍 DEBUG - Request data: {request.data}")
+        log_debug(f"DEBUG DEBUG - POST /api/participants called")
+        log_debug(f"DEBUG DEBUG - Content-Type: {request.content_type}")
+        log_debug(f"DEBUG DEBUG - Request data: {request.data}")
         
         data = request.json
-        print(f"🔍 DEBUG - Parsed JSON: {data}")
+        log_debug(f"DEBUG DEBUG - Parsed JSON: {data}")
         
         if not data or not data.get('name'):
-            print(f"❌ DEBUG - Validation failed: name missing")
+            log_debug(f"DEBUG - Validation failed: name missing")
             return jsonify({'error': 'Name is required'}), 400
             
         data['id'] = generate_id()
         data['registrationDate'] = datetime.now().isoformat()
         data['paymentStatus'] = data.get('paymentStatus', 'pending')
-        
-        print(f"🔍 DEBUG - Final data to save: {data}")
-        
-        participants = load_data('participants.json')
-        print(f"🔍 DEBUG - Current participants count: {len(participants)}")
-        
-        participants.append(data)
-        print(f"🔍 DEBUG - After append count: {len(participants)}")
-        
-        save_result = save_data('participants.json', participants)
-        print(f"🔍 DEBUG - Save result: {save_result}")
-        
-        if save_result:
-            print(f"✅ DEBUG - Successfully saved participant: {data['id']}")
+        data['createdAt'] = data['registrationDate']
+        data['updatedAt'] = data['registrationDate']
+
+        log_debug(f"DEBUG DEBUG - Final data to save: {data}")
+
+        if get_db_manager().add_participant(data):
+            print(f"SUCCESS - Successfully saved participant: {data['id']}")
             return jsonify(data), 201
         else:
-            print(f"❌ DEBUG - Failed to save participant")
+            print(f"ERROR - Failed to save participant")
             return jsonify({'error': 'Failed to save participant'}), 500
     
     # GET request with pagination
+    log_debug("[DEBUG] Participants API called - SERVER_VERSION_2025")
     ok, err = require_permission(['registration'])
     if not ok:
         msg, code = err
+        log_debug(f"[DEBUG] Permission check failed: {msg}")
         return jsonify({'error': msg}), code
-    participants = load_data('participants.json')
-    
+
+    log_debug("[DEBUG] Permission check passed, getting database manager")
+    try:
+        # Get all participants from database
+        participants = get_db_manager().get_participants()
+        log_debug(f"[DEBUG] Retrieved {len(participants)} participants from database - SERVER_VERSION_2025")
+    except Exception as e:
+        print(f"[ERROR] Failed to get participants from database: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Database error retrieving participants'}), 500
+
     # Apply filters
     event_id = request.args.get('eventId')
     series_id = request.args.get('seriesId')
     search = request.args.get('search')
     class_filter = request.args.get('class')
-    
+
     if event_id:
-        print(f"🔍 DEBUG - Filtering participants by eventId: {event_id}")
+        log_debug(f"DEBUG DEBUG - Filtering participants by eventId: {event_id}")
         filtered_participants = [p for p in participants if p.get('eventId') == event_id]
-        print(f"🔍 DEBUG - Found {len(filtered_participants)} participants for event {event_id}")
+        log_debug(f"DEBUG DEBUG - Found {len(filtered_participants)} participants for event {event_id}")
         participants = filtered_participants
     if series_id:
         participants = [p for p in participants if series_id in p.get('series', [])]
@@ -392,25 +493,25 @@ def handle_participants():
         participants = [p for p in participants if p.get('name', '').lower().find(search_lower) != -1]
     if class_filter:
         participants = [p for p in participants if class_filter in p.get('classes', [])]
-    
+
     # Apply pagination
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 50000))  # High default limit to get all participants
-    
+    limit = min(int(request.args.get('limit', 10000)), 10000)  # Allow up to 10000 participants
+
     # Log performance warning for large datasets
     if len(participants) > 10000:
-        print(f"⚠️ PERFORMANCE WARNING: Loading {len(participants)} participants. Consider contacting software representative for optimization.")
-    
-    print(f"🔍 DEBUG - Loading participants: page={page}, limit={limit}, total_participants={len(participants)}")
-    
+        print(f"PERFORMANCE WARNING: Loading {len(participants)} participants. Consider contacting software representative for optimization.")
+
+    log_debug(f"DEBUG DEBUG - Loading participants: page={page}, limit={limit}, total_participants={len(participants)}")
+
     total = len(participants)
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
-    
+
     paginated_participants = participants[start_idx:end_idx]
-    
-    print(f"🔍 DEBUG - Returning {len(paginated_participants)} participants (total: {total})")
-    
+
+    log_debug(f"DEBUG DEBUG - Returning {len(paginated_participants)} participants (total: {total})")
+
     return jsonify({
         'participants': paginated_participants,
         'total': total,
@@ -432,29 +533,25 @@ def handle_participant_by_id(participant_id):
             data = request.json
             if not data or not data.get('name'):
                 return jsonify({'error': 'Participant name is required'}), 400
-            
-            participants = load_data('participants.json')
-            
-            # Find the participant to update
-            participant_index = next((i for i, p in enumerate(participants) if p['id'] == participant_id), None)
-            if participant_index is None:
+
+            # Check if participant exists
+            existing_participant = get_db_manager().get_participant(participant_id)
+            if not existing_participant:
                 return jsonify({'error': 'Participant not found'}), 404
-            
+
             # Update the participant data
             data['id'] = participant_id  # Ensure ID doesn't change
             data['updatedAt'] = datetime.now().isoformat()
-            
+
             # Preserve original registration date if not provided
-            if 'createdAt' not in data and 'registrationDate' in participants[participant_index]:
-                data['createdAt'] = participants[participant_index]['registrationDate']
-            
-            participants[participant_index] = data
-            
-            if save_data('participants.json', participants):
+            if 'createdAt' not in data and 'registrationDate' in existing_participant:
+                data['createdAt'] = existing_participant['registrationDate']
+
+            if get_db_manager().update_participant(participant_id, data):
                 return jsonify(data), 200
             else:
                 return jsonify({'error': 'Failed to update participant'}), 500
-                
+
         except Exception as e:
             return jsonify({'error': f'Update failed: {str(e)}'}), 500
     
@@ -465,32 +562,32 @@ def handle_participant_by_id(participant_id):
             if not ok:
                 msg, code = err
                 return jsonify({'error': msg}), code
-            participants = load_data('participants.json')
-            events = load_data('events.json')
-            series = load_data('series.json')
-            
-            # Find and remove the participant
-            participant_index = next((i for i, p in enumerate(participants) if p['id'] == participant_id), None)
-            if participant_index is None:
+
+            # Check if participant exists
+            participant = get_db_manager().get_participant(participant_id)
+            if not participant:
                 return jsonify({'error': 'Participant not found'}), 404
-            
-            deleted_participant = participants.pop(participant_index)
-            
+
+            # Get all events to remove participant from them
+            events = get_db_manager().get_events()
+
             # Remove participant from events
             for event in events:
-                if 'participants' in event and participant_id in event['participants']:
+                if 'participants' in event and isinstance(event['participants'], list) and participant_id in event['participants']:
                     event['participants'].remove(participant_id)
                     event['currentParticipants'] = len(event['participants'])
-            
-            # Save files
-            if save_data('participants.json', participants) and save_data('events.json', events):
+                    # Update the event in database
+                    get_db_manager().update_event(event['id'], event)
+
+            # Delete the participant
+            if get_db_manager().delete_participant(participant_id):
                 return jsonify({
                     'success': True,
-                    'message': f'Participant "{deleted_participant["name"]}" deleted successfully'
+                    'message': f'Participant "{participant["name"]}" deleted successfully'
                 }), 200
             else:
-                return jsonify({'error': 'Failed to save changes'}), 500
-                
+                return jsonify({'error': 'Failed to delete participant'}), 500
+
         except Exception as e:
             return jsonify({'error': f'Delete failed: {str(e)}'}), 500
 
@@ -510,11 +607,10 @@ def handle_series():
         data['createdDate'] = datetime.now().isoformat()
         data['status'] = data.get('status', 'upcoming')
         data['events'] = data.get('events', [])
-        
-        series = load_data('series.json')
-        series.append(data)
-        
-        if save_data('series.json', series):
+        data['createdAt'] = data['createdDate']
+        data['updatedAt'] = data['createdDate']
+
+        if get_db_manager().add_series(data):
             return jsonify(data), 201
         else:
             return jsonify({'error': 'Failed to save series'}), 500
@@ -525,7 +621,7 @@ def handle_series():
     if not ok:
         msg, code = err
         return jsonify({'error': msg}), code
-    series = load_data('series.json')
+    series = get_db_manager().get_series()
     
     # Apply filters
     status = request.args.get('status')
@@ -547,7 +643,7 @@ def handle_series():
     
     paginated_series = series[start_idx:end_idx]
     
-    print(f"🔍 DEBUG - Returning {len(paginated_series)} series (total: {total})")
+    log_debug(f"DEBUG DEBUG - Returning {len(paginated_series)} series (total: {total})")
     
     return jsonify({
         'series': paginated_series,
@@ -560,7 +656,7 @@ def handle_series():
 @app.route('/api/series/<series_id>', methods=['PUT', 'DELETE'])
 def handle_series_by_id(series_id):
     """Handle series updates and deletion"""
-    print(f"🔍 Received {request.method} request for series {series_id}")
+    log_debug(f"DEBUG Received {request.method} request for series {series_id}")
     
     if request.method == 'PUT':
         """Update a specific series"""
@@ -574,31 +670,27 @@ def handle_series_by_id(series_id):
             if not data or not data.get('name'):
                 return jsonify({'error': 'Series name is required'}), 400
             
-            series = load_data('series.json')
-            
-            # Find the series to update
-            series_index = next((i for i, s in enumerate(series) if s['id'] == series_id), None)
-            if series_index is None:
+            # Check if series exists
+            existing_series = get_db_manager().get_series_by_id(series_id)
+            if not existing_series:
                 return jsonify({'error': 'Series not found'}), 404
-            
+
             # Update the series data
             data['id'] = series_id  # Ensure ID doesn't change
             data['updatedAt'] = datetime.now().isoformat()
-            
+
             # Preserve original creation date if not provided
-            if 'createdAt' not in data and 'createdDate' in series[series_index]:
-                data['createdAt'] = series[series_index]['createdDate']
-            
-            series[series_index] = data
-            
-            if save_data('series.json', series):
-                print(f"✅ Successfully updated series {series_id}")
+            if 'createdAt' not in data and 'createdDate' in existing_series:
+                data['createdAt'] = existing_series['createdDate']
+
+            if get_db_manager().update_series(series_id, data):
+                print(f"SUCCESS - Successfully updated series {series_id}")
                 return jsonify(data), 200
             else:
                 return jsonify({'error': 'Failed to update series'}), 500
                 
         except Exception as e:
-            print(f"❌ Error updating series {series_id}: {str(e)}")
+            print(f"ERROR updating series {series_id}: {str(e)}")
             return jsonify({'error': f'Update failed: {str(e)}'}), 500
     
     elif request.method == 'DELETE':
@@ -608,26 +700,25 @@ def handle_series_by_id(series_id):
             if not ok:
                 msg, code = err
                 return jsonify({'error': msg}), code
-            series = load_data('series.json')
-            participants = load_data('participants.json')
-            
-            # Find and remove the series
-            series_index = next((i for i, s in enumerate(series) if s['id'] == series_id), None)
-            if series_index is None:
+            # Check if series exists
+            series = get_db_manager().get_series_by_id(series_id)
+            if not series:
                 return jsonify({'error': 'Series not found'}), 404
-            
-            deleted_series = series.pop(series_index)
-            
-            # Remove series from participants' series lists
+
+            # Get all participants to remove series from their lists
+            participants = get_db_manager().get_participants()
+
+            # Remove series from participants' series lists (if they have series field)
             for participant in participants:
-                if 'series' in participant and series_id in participant['series']:
-                    participant['series'].remove(series_id)
-            
-            # Save both files
-            if save_data('series.json', series) and save_data('participants.json', participants):
+                # Note: participants table doesn't have series field in current schema
+                # This might need to be updated if series membership is tracked per participant
+                pass
+
+            # Delete the series
+            if get_db_manager().delete_series(series_id):
                 return jsonify({
                     'success': True,
-                    'message': f'Series "{deleted_series["name"]}" deleted successfully'
+                    'message': f'Series "{series["name"]}" deleted successfully'
                 }), 200
             else:
                 return jsonify({'error': 'Failed to save changes'}), 500
@@ -653,10 +744,7 @@ def handle_events():
         data['participants'] = data.get('participants', [])
         data['currentParticipants'] = len(data['participants'])
         
-        events = load_data('events.json')
-        events.append(data)
-        
-        if save_data('events.json', events):
+        if get_db_manager().add_event(data):
             return jsonify(data), 201
         else:
             return jsonify({'error': 'Failed to save event'}), 500
@@ -667,7 +755,7 @@ def handle_events():
     if not ok:
         msg, code = err
         return jsonify({'error': msg}), code
-    events = load_data('events.json')
+    events = get_db_manager().get_events()
     # Admin sees all; non-admins may be scoped by allowedEvents
     sess = get_session_from_request()
     if sess and not is_admin_session(sess):
@@ -698,7 +786,7 @@ def handle_events():
     
     paginated_events = events[start_idx:end_idx]
     
-    print(f"🔍 DEBUG - Returning {len(paginated_events)} events (total: {total})")
+    log_debug(f"DEBUG - Returning {len(paginated_events)} events (total: {total})")
     
     return jsonify({
         'events': paginated_events,
@@ -718,34 +806,31 @@ def handle_event_by_id(event_id):
             if not ok:
                 msg, code = err
                 return jsonify({'error': msg}), code
-            print(f"🔍 DEBUG - PUT /api/events/{event_id} called")
+            log_debug(f"DEBUG DEBUG - PUT /api/events/{event_id} called")
             data = request.json
-            print(f"🔍 DEBUG - Request data: {data}")
+            log_debug(f"DEBUG DEBUG - Request data: {data}")
             
             if not data:
-                print(f"❌ DEBUG - No data provided")
+                log_debug(f"DEBUG - No data provided")
                 return jsonify({'error': 'No data provided'}), 400
             
-            events = load_data('events.json')
-            
+            events = get_db_manager().get_events()
+
             # Find the event to update
-            event_index = next((i for i, e in enumerate(events) if e['id'] == event_id), None)
-            if (event_index is None):
-                print(f"❌ DEBUG - Event {event_id} not found")
+            existing_event = next((e for e in events if e['id'] == event_id), None)
+            if not existing_event:
+                log_debug(f"DEBUG - Event {event_id} not found")
                 return jsonify({'error': 'Event not found'}), 404
-            
-            # Get the existing event data
-            existing_event = events[event_index]
-            print(f"🔍 DEBUG - Existing event: {existing_event.get('name', 'Unknown')}")
+            log_debug(f"DEBUG DEBUG - Existing event: {existing_event.get('name', 'Unknown')}")
             
             # For partial updates, preserve existing data and only update provided fields
             if not data.get('name') and 'name' not in data:
                 # This is a partial update (like participant count sync)
                 # Preserve the existing name and other required fields
                 data['name'] = existing_event.get('name')
-                print(f"🔍 DEBUG - Partial update detected, preserving name: {data['name']}")
+                log_debug(f"DEBUG DEBUG - Partial update detected, preserving name: {data['name']}")
                 if not data['name']:
-                    print(f"❌ DEBUG - No name found in existing event")
+                    log_debug(f"DEBUG - No name found in existing event")
                     return jsonify({'error': 'Event name is required'}), 400
             
             # Update the event data (merge with existing data)
@@ -756,7 +841,7 @@ def handle_event_by_id(event_id):
                 'updatedAt': datetime.now().isoformat()
             }
             
-            print(f"🔍 DEBUG - Updated event data: {updated_event.get('name', 'Unknown')}")
+            log_debug(f"DEBUG DEBUG - Updated event data: {updated_event.get('name', 'Unknown')}")
             
             # Preserve original creation date if not provided
             if 'createdAt' not in updated_event and 'createdDate' in existing_event:
@@ -765,15 +850,22 @@ def handle_event_by_id(event_id):
             # Update participant count if participants list changed
             if 'participants' in data:
                 updated_event['currentParticipants'] = len(data['participants'])
-                print(f"🔍 DEBUG - Updated participant count: {updated_event['currentParticipants']}")
+                log_debug(f"DEBUG DEBUG - Updated participant count: {updated_event['currentParticipants']}")
             
-            events[event_index] = updated_event
-            
-            if save_data('events.json', events):
-                print(f"✅ DEBUG - Successfully updated event: {updated_event.get('name', 'Unknown')}")
+            if get_db_manager().update_event(event_id, updated_event):
+                print(f"SUCCESS - Successfully updated event: {updated_event.get('name', 'Unknown')}")
+                
+                # Emit WebSocket event if status changed
+                if existing_event.get('status') != updated_event.get('status'):
+                    emit_websocket_event('event_status_changed', {
+                        'eventId': event_id,
+                        'oldStatus': existing_event.get('status'),
+                        'newStatus': updated_event.get('status')
+                    })
+                
                 return jsonify(updated_event), 200
             else:
-                print(f"❌ DEBUG - Failed to save event data")
+                print(f"ERROR - Failed to save event data")
                 return jsonify({'error': 'Failed to update event'}), 500
                 
         except Exception as e:
@@ -786,23 +878,26 @@ def handle_event_by_id(event_id):
             if not ok:
                 msg, code = err
                 return jsonify({'error': msg}), code
-            events = load_data('events.json')
-            participants = load_data('participants.json')
-            
+            events = get_db_manager().get_events()
+            participants = get_db_manager().get_participants()
+
             # Find and remove the event
-            event_index = next((i for i, e in enumerate(events) if e['id'] == event_id), None)
-            if event_index is None:
+            event = next((e for e in events if e['id'] == event_id), None)
+            if not event:
                 return jsonify({'error': 'Event not found'}), 404
-            
-            deleted_event = events.pop(event_index)
-            
+
+            deleted_event = event
+
             # Remove event from participants' event lists
             for participant in participants:
-                if 'events' in participant and event_id in participant['events']:
-                    participant['events'].remove(event_id)
-            
-            # Save both files
-            if save_data('events.json', events) and save_data('participants.json', participants):
+                event_ids = participant.get('eventIds', [])
+                if isinstance(event_ids, list) and event_id in event_ids:
+                    event_ids.remove(event_id)
+                    participant['eventIds'] = event_ids
+                    get_db_manager().update_participant(participant['id'], participant)
+
+            # Delete the event
+            if get_db_manager().delete_event(event_id):
                 return jsonify({
                     'success': True,
                     'message': f'Event "{deleted_event["name"]}" deleted successfully'
@@ -835,8 +930,8 @@ def register_participant_for_event(event_id):
     
     try:
         # Load data
-        events = load_data('events.json')
-        participants = load_data('participants.json')
+        events = get_db_manager().get_events()
+        participants = get_db_manager().get_participants()
         
         # Find event
         event = next((e for e in events if e['id'] == event_id), None)
@@ -859,14 +954,16 @@ def register_participant_for_event(event_id):
         event['participants'].append(participant_id)
         event['currentParticipants'] = len(event['participants'])
         
-        # Add event to participant's events list
-        if 'events' not in participant:
-            participant['events'] = []
-        if event_id not in participant['events']:
-            participant['events'].append(event_id)
-        
-        # Save both files
-        if save_data('events.json', events) and save_data('participants.json', participants):
+        # Add event to participant's eventIds list
+        event_ids = participant.get('eventIds', [])
+        if not isinstance(event_ids, list):
+            event_ids = []
+        if event_id not in event_ids:
+            event_ids.append(event_id)
+            participant['eventIds'] = event_ids
+
+        # Save both records
+        if get_db_manager().update_event(event_id, event) and get_db_manager().update_participant(participant_id, participant):
             return jsonify({
                 'success': True,
                 'message': f'Participant {participant_id} registered for event {event_id}',
@@ -881,125 +978,104 @@ def register_participant_for_event(event_id):
 @app.route('/api/races', methods=['GET', 'POST'])
 def handle_races():
     """Handle races with pagination"""
+    db = get_db_manager()
+
     if request.method == 'POST':
         ok, err = require_permission('races')
         if not ok:
             msg, code = err
             return jsonify({'error': msg}), code
-        data = request.json
+
+        data = request.json or {}
         data['id'] = generate_id()
-        data['createdDate'] = datetime.now().isoformat()
-        
-        races = load_data('races.json')
-        races.append(data)
-        
-        if save_data('races.json', races):
-            return jsonify(data), 201
-        else:
+        now = datetime.utcnow().isoformat()
+        data['createdAt'] = data.get('createdAt', now)
+        data['updatedAt'] = now
+
+        if not db.add_race(data):
             return jsonify({'error': 'Failed to save race'}), 500
-    
-    # GET request with pagination
+
+        return jsonify(data), 201
+
     ok, err = require_permission(['races'])
     if not ok:
         msg, code = err
         return jsonify({'error': msg}), code
-    races = load_data('races.json')
-    # Scope by allowedEvents if not admin
+
+    filters = {}
+    event_id = request.args.get('eventId')
+    if event_id:
+        filters['eventId'] = event_id
+
+    class_name = request.args.get('class')
+    if class_name:
+        filters['className'] = class_name
+
+    status_filter = request.args.get('status')
+    if status_filter:
+        filters['status'] = status_filter
+
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 100))
+
+    result = db.get_races(filters=filters, page=page, limit=limit)
+
     sess = get_session_from_request()
     if sess and not is_admin_session(sess):
         allowed = set(sess.get('allowedEvents', []) or [])
         if allowed:
-            races = [r for r in races if r.get('eventId') in allowed]
-    
-    # Apply filters
-    event_id = request.args.get('eventId')
-    class_name = request.args.get('class')
-    
-    if event_id:
-        races = [r for r in races if r.get('eventId') == event_id]
-    if class_name:
-        races = [r for r in races if r.get('className') == class_name]
-    
-    # Apply pagination
-    page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 100))
-    
-    total = len(races)
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    
-    paginated_races = races[start_idx:end_idx]
-    
-    return jsonify({
-        'races': paginated_races,
-        'total': total,
-        'page': page,
-        'limit': limit,
-        'totalPages': (total + limit - 1) // limit
-    })
+            result['races'] = [r for r in result['races'] if r.get('eventId') in allowed]
+            result['total'] = len(result['races'])
+            result['totalPages'] = (result['total'] + limit - 1) // limit
+
+    return jsonify(result)
 
 @app.route('/api/races/<race_id>', methods=['PUT', 'DELETE'])
 def handle_race_by_id(race_id):
     """Handle race updates and deletion"""
+    db = get_db_manager()
+
     if request.method == 'PUT':
-        """Update a specific race"""
         try:
             ok, err = require_permission('races')
             if not ok:
                 msg, code = err
                 return jsonify({'error': msg}), code
-            data = request.json
-            races = load_data('races.json')
-            
-            # Find the race to update
-            race_index = next((i for i, r in enumerate(races) if r['id'] == race_id), None)
-            if race_index is None:
+
+            data = request.json or {}
+            old_race = db.get_race(race_id)
+            data['updatedAt'] = datetime.utcnow().isoformat()
+
+            if not db.update_race(race_id, data):
                 return jsonify({'error': 'Race not found'}), 404
+
+            updated_race = db.get_race(race_id)
             
-            # Update the race data
-            data['id'] = race_id  # Ensure ID doesn't change
-            data['updatedAt'] = datetime.now().isoformat()
+            # Emit WebSocket events for race status changes
+            if old_race and old_race.get('status') != updated_race.get('status'):
+                if updated_race.get('status') == 'completed':
+                    emit_websocket_event('race_completed', {'race': updated_race})
+                elif updated_race.get('status') == 'in_progress':
+                    emit_websocket_event('race_started', {'race': updated_race})
             
-            # Preserve original creation date if not provided
-            if 'createdAt' not in data and 'createdDate' in races[race_index]:
-                data['createdAt'] = races[race_index]['createdDate']
-            
-            races[race_index] = data
-            
-            if save_data('races.json', races):
-                return jsonify(data), 200
-            else:
-                return jsonify({'error': 'Failed to update race'}), 500
-                
+            return jsonify(updated_race), 200
+
         except Exception as e:
             return jsonify({'error': f'Update failed: {str(e)}'}), 500
-    
-    elif request.method == 'DELETE':
-        """Delete a specific race"""
-        try:
-            ok, err = require_permission('races')
-            if not ok:
-                msg, code = err
-                return jsonify({'error': msg}), code
-            races = load_data('races.json')
-            
-            # Find and remove the race
-            race_index = next((i for i, r in enumerate(races) if r['id'] == race_id), None)
-            if race_index is None:
-                return jsonify({'error': 'Race not found'}), 404
-            
-            deleted_race = races.pop(race_index)
-            
-            if save_data('races.json', races):
-                return jsonify({
-                    'success': True,
-                    'message': f'Race deleted successfully'
-                }), 200
-            else:
-                return jsonify({'error': 'Failed to save changes'}), 500
-                
-        except Exception as e:
-            return jsonify({'error': f'Delete failed: {str(e)}'}), 500
+
+    try:
+        ok, err = require_permission('races')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
+
+        if not db.delete_race(race_id):
+            return jsonify({'error': 'Race not found'}), 404
+
+        return jsonify({'success': True, 'message': 'Race deleted successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Delete failed: {str(e)}'}), 500
 
 
 @app.route('/api/standings')
@@ -1012,10 +1088,10 @@ def get_standings():
     series_id = request.args.get('seriesId')
     event_id = request.args.get('eventId')
     
-    participants = load_data('participants.json')
-    races = load_data('races.json')
-    series = load_data('series.json')
-    events = load_data('events.json')
+    participants = get_db_manager().get_participants()
+    races = get_db_manager().get_all_races()
+    series = get_db_manager().get_series()
+    events = get_db_manager().get_events()
     
     # Calculate standings logic
     standings = []
@@ -1058,142 +1134,127 @@ def calculate_event_achievements(*args, **kwargs):
     """Achievements removed: return no achievements."""
     return []
 
-# Clear all data endpoint (DANGER!)
-@app.route('/api/clear-all', methods=['DELETE', 'POST'])
-def clear_all_data():
-    """DANGER: Clear all data permanently - use with extreme caution"""
-    try:
-        # Admin only
-        sess = get_session_from_request()
-        if not is_admin_session(sess):
-            return jsonify({'error': 'Access Denied'}), 403
-        # List of all data files to clear
-        data_files = [
-            'participants.json',
-            'series.json', 
-            'events.json',
-            'races.json',
-            'achievements.json'
-        ]
-        
-        cleared_files = []
-        
-        with data_lock:
-            for filename in data_files:
-                filepath = get_data_file(filename)
-                backup_path = filepath + '.backup'
-                
-                try:
-                    # Create backup before clearing
-                    if os.path.exists(filepath):
-                        with open(filepath, 'r', encoding='utf-8') as f:
-                            backup_data = f.read()
-                        with open(backup_path, 'w', encoding='utf-8') as f:
-                            f.write(backup_data)
-                    
-                    # Clear the file (write empty array)
-                    with open(filepath, 'w', encoding='utf-8') as f:
-                        json.dump([], f, indent=2)
-                    
-                    cleared_files.append(filename)
-                    
-                except Exception as e:
-                    print(f"Error clearing {filename}: {e}")
-                    # Continue with other files even if one fails
-        
-        return jsonify({
-            'status': 'success',
-            'message': 'All data cleared successfully',
-            'cleared_files': cleared_files,
-            'backup_created': True,
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'error': str(e),
-            'timestamp': datetime.now().isoformat()
-        }), 500
 
-# Race Brackets endpoints
 @app.route('/api/race-brackets', methods=['GET'])
 def get_race_brackets():
-    """Get all race brackets"""
-    try:
-        # Allow registration users to read race brackets for registration workflows
-        ok, err = require_permission(['races', 'registration'])
-        if not ok:
-            msg, code = err
-            return jsonify({'error': msg}), code
-        brackets = load_data('race_brackets.json')
-        # Scope by allowedEvents if not admin
-        sess = get_session_from_request()
-        if sess and not is_admin_session(sess):
-            allowed = set(sess.get('allowedEvents', []) or [])
-            if allowed:
-                brackets = [b for b in brackets if b.get('eventId') in allowed]
-        return jsonify(brackets)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    """Get all race brackets with pagination and filtering"""
+    ok, err = require_permission(['races'])
+    if not ok:
+        msg, code = err
+        return jsonify({'error': msg}), code
 
-@app.route('/api/race-brackets/<bracket_id>', methods=['GET'])
-def get_race_bracket(bracket_id):
-    """Get a specific race bracket"""
-    try:
-        # Allow registration users to read race brackets for registration workflows
-        ok, err = require_permission(['races', 'registration'])
-        if not ok:
-            msg, code = err
-            return jsonify({'error': msg}), code
-        brackets = load_data('race_brackets.json')
-        bracket = next((b for b in brackets if b.get('id') == bracket_id), None)
-        # Scope check for non-admin
-        sess = get_session_from_request()
-        if bracket and sess and not is_admin_session(sess):
-            allowed = set(sess.get('allowedEvents', []) or [])
-            if allowed and bracket.get('eventId') not in allowed:
-                return jsonify({'error': 'Access Denied'}), 403
-        if bracket:
-            return jsonify(bracket)
-        return jsonify({'error': 'Race bracket not found'}), 404
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    db = get_db_manager()
 
+    # Get query parameters
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 100))
+    event_id = request.args.get('eventId')
+
+    # Get brackets from database
+    brackets = db.get_race_brackets()
+
+    # Apply filtering
+    if event_id:
+        brackets = [b for b in brackets if b.get('eventId') == event_id]
+
+    # Apply pagination
+    total = len(brackets)
+    start_idx = (page - 1) * limit
+    end_idx = start_idx + limit
+    paginated_brackets = brackets[start_idx:end_idx]
+
+    # Scope by allowedEvents if not admin
+    sess = get_session_from_request()
+    if sess and not is_admin_session(sess):
+        allowed = set(sess.get('allowedEvents', []) or [])
+        if allowed:
+            paginated_brackets = [b for b in paginated_brackets if b.get('eventId') in allowed]
+            # Recalculate total for filtered results
+            total = len([b for b in brackets if b.get('eventId') in allowed])
+
+    return jsonify({
+        'brackets': paginated_brackets,
+        'total': total,
+        'page': page,
+        'limit': limit,
+        'totalPages': (total + limit - 1) // limit
+    })
+
+# WORKING POST ENDPOINT - COPIED EXACTLY FROM auth/login
 @app.route('/api/race-brackets', methods=['POST'])
 def create_race_bracket():
     """Create a new race bracket"""
     try:
+        log_debug("[DEBUG] POST /api/race-brackets received")
         ok, err = require_permission('races')
         if not ok:
             msg, code = err
+            log_debug(f"[DEBUG] Permission denied: {msg}")
             return jsonify({'error': msg}), code
-        bracket_data = request.get_json()
-        if not bracket_data:
-            return jsonify({'error': 'No data provided'}), 400
+
+        data = request.get_json() or {}
+        log_debug(f"[DEBUG] Received bracket data with ID: {data.get('id', 'unknown')}, eventId: {data.get('eventId', 'unknown')}")
+        log_debug(f"[DEBUG] Data size: {len(str(data))} characters")
+
+        if not data.get('eventId'):
+            log_debug("[DEBUG] Missing eventId in request")
+            return jsonify({'error': 'eventId is required'}), 400
+
+        data['id'] = data.get('id') or generate_id()
+        data['createdAt'] = data.get('createdAt') or datetime.utcnow().isoformat()
+        data['updatedAt'] = datetime.utcnow().isoformat()
+
+        log_debug(f"[DEBUG] Calling db_manager.add_race_bracket")
+        try:
+            result = get_db_manager().add_race_bracket(data)
+            log_debug(f"[DEBUG] add_race_bracket returned: {result}")
+        except Exception as db_error:
+            print(f"[ERROR] Exception in add_race_bracket: {str(db_error)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Database error: {str(db_error)}'}), 500
+
+        if not result:
+            log_debug("[DEBUG] add_race_bracket returned False")
+            return jsonify({'error': 'Failed to create race bracket'}), 500
+
+        log_debug("[DEBUG] Bracket created successfully")
         
-        # Generate ID if not provided
-        if 'id' not in bracket_data:
-            bracket_data['id'] = generate_id()
+        # Emit WebSocket event for new bracket
+        emit_websocket_event('bracket_updated', {
+            'bracketId': data['id'],
+            'eventId': data.get('eventId')
+        })
         
-        # Add timestamps
-        bracket_data['createdAt'] = datetime.now().isoformat()
-        bracket_data['updatedAt'] = datetime.now().isoformat()
-        
-        # Load existing brackets
-        brackets = load_data('race_brackets.json')
-        
-        # Add new bracket
-        brackets.append(bracket_data)
-        
-        # Save back to file
-        if save_data('race_brackets.json', brackets):
-            return jsonify(bracket_data), 201
-        else:
-            return jsonify({'error': 'Failed to save race bracket'}), 500
-            
+        return jsonify(data), 201
+
     except Exception as e:
+        print(f"[ERROR] Exception in create_race_bracket: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/test-post', methods=['POST'])
+def test_post():
+    """Test POST endpoint without /api/ prefix"""
+    print("[TEST] POST /test-post received!")
+    try:
+        data = request.get_json()
+        print(f"[TEST] Test data: {data}")
+        return jsonify({'success': True, 'data': data}), 200
+    except Exception as e:
+        print(f"[TEST] Test error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/simple-test', methods=['POST'])
+def simple_test():
+    """Ultra simple test"""
+    return 'OK'
+
+@app.route('/minimal-post', methods=['POST'])
+def minimal_post():
+    """Minimal POST test"""
+    return jsonify({'status': 'success'}), 200
 
 @app.route('/api/race-brackets/<bracket_id>', methods=['PUT'])
 def update_race_bracket(bracket_id):
@@ -1207,25 +1268,26 @@ def update_race_bracket(bracket_id):
         if not bracket_data:
             return jsonify({'error': 'No data provided'}), 400
         
-        brackets = load_data('race_brackets.json')
-        
-        # Find and update bracket
-        for i, bracket in enumerate(brackets):
-            if bracket.get('id') == bracket_id:
-                bracket_data['id'] = bracket_id
-                bracket_data['updatedAt'] = datetime.now().isoformat()
-                # Preserve createdAt if it exists
-                if 'createdAt' in bracket:
-                    bracket_data['createdAt'] = bracket['createdAt']
-                
-                brackets[i] = bracket_data
-                
-                if save_data('race_brackets.json', brackets):
-                    return jsonify(bracket_data)
-                else:
-                    return jsonify({'error': 'Failed to update race bracket'}), 500
-        
-        return jsonify({'error': 'Race bracket not found'}), 404
+        # Check if bracket exists
+        existing_bracket = get_db_manager().get_race_bracket(bracket_id)
+        if not existing_bracket:
+            return jsonify({'error': 'Race bracket not found'}), 404
+
+        bracket_data['id'] = bracket_id
+        bracket_data['updatedAt'] = datetime.now().isoformat()
+        # Preserve createdAt if it exists
+        if 'createdAt' in existing_bracket:
+            bracket_data['createdAt'] = existing_bracket['createdAt']
+
+        if get_db_manager().update_race_bracket(bracket_id, bracket_data):
+            # Emit WebSocket event for bracket update
+            emit_websocket_event('bracket_updated', {
+                'bracketId': bracket_id,
+                'eventId': bracket_data.get('eventId')
+            })
+            return jsonify(bracket_data)
+        else:
+            return jsonify({'error': 'Failed to update race bracket'}), 500
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -1234,21 +1296,19 @@ def update_race_bracket(bracket_id):
 def delete_race_bracket(bracket_id):
     """Delete a race bracket"""
     try:
-        ok, err = require_permission('race:edit')
+        ok, err = require_permission('races')
         if not ok:
             msg, code = err
             return jsonify({'error': msg}), code
-        brackets = load_data('race_brackets.json')
-        
-        # Find and remove bracket
-        for i, bracket in enumerate(brackets):
-            if bracket.get('id') == bracket_id:
-                del brackets[i]
-                
-                if save_data('race_brackets.json', brackets):
-                    return jsonify({'message': 'Race bracket deleted'})
-                else:
-                    return jsonify({'error': 'Failed to delete race bracket'}), 500
+        # Check if bracket exists
+        existing_bracket = get_db_manager().get_race_bracket(bracket_id)
+        if not existing_bracket:
+            return jsonify({'error': 'Race bracket not found'}), 404
+
+        if get_db_manager().delete_race_bracket(bracket_id):
+            return jsonify({'message': 'Race bracket deleted'})
+        else:
+            return jsonify({'error': 'Failed to delete race bracket'}), 500
         
         return jsonify({'error': 'Race bracket not found'}), 404
         
@@ -1259,17 +1319,285 @@ def delete_race_bracket(bracket_id):
 @app.route('/api/health')
 def health_check():
     """Server health check"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'data_files': {
-            'participants': len(load_data('participants.json')),
-            'series': len(load_data('series.json')),
-            'events': len(load_data('events.json')),
-            'races': len(load_data('races.json')),
-            'race_brackets': len(load_data('race_brackets.json'))
-        }
-    })
+    try:
+        db_manager = get_db_manager()
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'database_stats': {
+                'participants': len(db_manager.get_participants()),
+                'series': len(db_manager.get_series()),
+                'events': len(db_manager.get_events()),
+                'races': len(db_manager.get_all_races()),
+                'race_brackets': len(db_manager.get_race_brackets())
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'timestamp': datetime.now().isoformat(),
+            'error': str(e)
+        }), 500
+
+# -------------------- EMAIL & SETTINGS ENDPOINTS --------------------
+
+# Settings management
+@app.route('/api/settings', methods=['GET', 'POST'])
+def handle_settings():
+    """Get or update application settings"""
+    if request.method == 'GET':
+        # Read settings from SQLite database
+        settings = get_db_manager().get_settings()
+        # Return default settings if none exist
+        if not settings:
+            settings = {
+                'emailEnabled': False,
+                'emailSubject': 'Your Event Performance Statistics',
+                'emailBodyTemplate': 'Dear {name},\n\nThank you for participating in {event}!\n\nPlease find attached your performance statistics.',
+                'updatedAt': datetime.now().isoformat()
+            }
+            get_db_manager().save_settings(settings)
+        return jsonify(settings)
+    
+    # POST - Update settings (admin only)
+    sess = get_session_from_request()
+    if not is_admin_session(sess):
+        return jsonify({'error': 'Access Denied'}), 403
+    
+    data = request.get_json() or {}
+    settings = get_db_manager().get_settings() or {}
+    
+    # Update settings
+    settings.update(data)
+    settings['updatedAt'] = datetime.now().isoformat()
+    
+    if get_db_manager().save_settings(settings):
+        return jsonify(settings), 200
+    else:
+        return jsonify({'error': 'Failed to save settings'}), 500
+
+# Email sending endpoint
+@app.route('/api/send-event-stats', methods=['POST'])
+def send_event_stats():
+    """Send event statistics PDFs to drivers via email"""
+    try:
+        # Require analytics permission
+        ok, err = require_permission(['analytics'])
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
+        
+        # Check if email is enabled in settings
+        settings = get_db_manager().get_settings() or {}
+        if not settings.get('emailEnabled', False):
+            return jsonify({
+                'error': 'Email sending is disabled in settings',
+                'disabled': True
+            }), 400
+        
+        # Get request data
+        data = request.get_json() or {}
+        event_name = data.get('eventName', 'Event')
+        recipients = data.get('recipients', [])
+        
+        if not recipients:
+            return jsonify({'error': 'No recipients provided'}), 400
+        
+        # Import email sender
+        import sys
+        import importlib.util
+        email_sender_path = os.path.join(os.path.dirname(__file__), 'utils', 'email-sender.py')
+        spec = importlib.util.spec_from_file_location("email_sender", email_sender_path)
+        email_sender_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(email_sender_module)
+        EmailSender = email_sender_module.EmailSender
+        create_default_body_template = email_sender_module.create_default_body_template
+        
+        # Initialize email sender
+        sender = EmailSender()
+        
+        # Validate configuration
+        is_valid, error_msg = sender.validate_config()
+        if not is_valid:
+            if 'internet' in error_msg.lower() or 'connection' in error_msg.lower():
+                return jsonify({
+                    'error': 'Could not send emails – no internet.',
+                    'offline': True
+                }), 503
+            else:
+                return jsonify({
+                    'error': f'Email configuration error: {error_msg}',
+                    'config_error': True
+                }), 500
+        
+        # Get email template from settings
+        subject = settings.get('emailSubject', 'Your Event Performance Statistics')
+        body_template = settings.get('emailBodyTemplate', create_default_body_template())
+        
+        # Process recipients - convert PDF base64 to bytes
+        import base64
+        processed_recipients = []
+        for recipient in recipients:
+            try:
+                pdf_base64 = recipient.get('pdfData', '')
+                if pdf_base64.startswith('data:application/pdf;base64,'):
+                    pdf_base64 = pdf_base64.split(',')[1]
+                
+                pdf_bytes = base64.b64decode(pdf_base64)
+                
+                processed_recipients.append({
+                    'name': recipient.get('name', 'Driver'),
+                    'email': recipient.get('email', ''),
+                    'pdf_data': pdf_bytes,
+                    'pdf_filename': recipient.get('fileName', 'stats.pdf')
+                })
+            except Exception as e:
+                print(f"Error processing recipient {recipient.get('name', 'Unknown')}: {e}")
+                continue
+        
+        # Send bulk emails
+        results = sender.send_bulk_emails(
+            recipients=processed_recipients,
+            subject=subject,
+            body_template=body_template,
+            event_name=event_name
+        )
+        
+        # Check if there was a configuration error
+        if 'error' in results:
+            return jsonify({
+                'error': results['error'],
+                'offline': 'internet' in results['error'].lower()
+            }), 503
+        
+        # Return results
+        return jsonify({
+            'success': True,
+            'successCount': results['success_count'],
+            'failedCount': results['failed_count'],
+            'details': results['details']
+        }), 200
+        
+    except ImportError as e:
+        return jsonify({
+            'error': f'Email module not available: {str(e)}',
+            'config_error': True
+        }), 500
+    except Exception as e:
+        print(f"Error sending event stats: {str(e)}")
+        return jsonify({
+            'error': f'Failed to send emails: {str(e)}'
+        }), 500
+
+# Clear all data endpoint (DANGER! - Admin only)
+@app.route('/api/clear-database', methods=['POST'])
+def clear_database():
+    """DANGER: Clear all database data and create backup - Admin only"""
+    global _db_manager
+    log_debug(f"[DEBUG] Clear database endpoint called at {datetime.now().isoformat()}")
+
+    try:
+        # Admin only - check this first
+        sess = get_session_from_request()
+        if not is_admin_session(sess):
+            log_debug("[DEBUG] Access denied - not admin")
+            return jsonify({'error': 'Access Denied'}), 403
+
+        log_debug("[DEBUG] Admin access confirmed, starting backup creation...")
+
+        # Create database backup before clearing
+        backup_path = f"data/backups/backup_clear_all_{int(datetime.now().timestamp())}.db"
+
+        try:
+            # Create backup of the database file
+            import shutil
+            shutil.copy2('data/epc17.db', backup_path)
+            print(f"[INFO] Database backup created: {backup_path}")
+        except Exception as e:
+            print(f"[WARNING] Failed to create database backup: {e}")
+            return jsonify({
+                'status': 'error',
+                'error': f'Failed to create backup: {str(e)}'
+            }), 500
+
+        # Create fresh database by removing the current one and letting it be recreated
+        try:
+            log_debug("[DEBUG] Starting database recreation process...")
+
+            # Close any existing connections
+            if _db_manager is not None:
+                log_debug("[DEBUG] Closing existing database manager...")
+                _db_manager.close()
+                log_debug("[DEBUG] Database manager closed")
+
+            # Remove the current database file
+            if os.path.exists('data/epc17.db'):
+                log_debug("[DEBUG] Removing existing database file...")
+                os.remove('data/epc17.db')
+                log_debug("[DEBUG] Database file removed")
+
+            # Create a new database manager which will initialize a fresh database
+            log_debug("[DEBUG] Creating new database manager...")
+            from utils.db_manager import DatabaseManager
+            _db_manager = DatabaseManager('data/epc17.db')
+            log_debug("[DEBUG] New database manager created")
+
+            print("[INFO] Fresh database created successfully")
+
+            return jsonify({
+                'status': 'success',
+                'message': 'Database cleared and backup created successfully',
+                'backup_path': backup_path,
+                'timestamp': datetime.now().isoformat()
+            })
+
+        except Exception as e:
+            print(f"[ERROR] Failed to create fresh database: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'status': 'error',
+                'error': f'Failed to create fresh database: {str(e)}'
+            }), 500
+
+    except Exception as e:
+        print(f"[ERROR] Exception in clear_database: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+# Check email configuration
+@app.route('/api/email-config-status', methods=['GET'])
+def email_config_status():
+    """Check if email configuration is valid"""
+    try:
+        import importlib.util
+        email_sender_path = os.path.join(os.path.dirname(__file__), 'utils', 'email-sender.py')
+        spec = importlib.util.spec_from_file_location("email_sender", email_sender_path)
+        email_sender_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(email_sender_module)
+        EmailSender = email_sender_module.EmailSender
+        
+        sender = EmailSender()
+        is_valid, message = sender.validate_config()
+        
+        return jsonify({
+            'configured': bool(sender.email_user and sender.email_pass),
+            'valid': is_valid,
+            'online': sender.check_internet_connection(),
+            'message': message
+        })
+    except ImportError:
+        return jsonify({
+            'configured': False,
+            'valid': False,
+            'online': False,
+            'message': 'Email module not available'
+        })
 
 # Static file serving
 @app.route('/<path:filename>')
@@ -1280,6 +1608,8 @@ def serve_static(filename):
     if filename.endswith('.html'):
         if filename == 'index.html':
             return render_template('index.html')
+        if filename == 'login.html':
+            return render_template('login.html')
         page_perm_map = {
             'registration.html': ['registration'],
             'series.html': ['series'],
@@ -1288,7 +1618,7 @@ def serve_static(filename):
             'analytics.html': ['analytics'],
             'driver-profile.html': ['drivers profile'],
             'live-display.html': ['live display'],
-            'users.html': ['*'],
+            'users.html': ['admin_power'],
         }
         required = page_perm_map.get(filename)
         if required:
@@ -1318,15 +1648,36 @@ def auth_login():
     data = request.get_json() or {}
     username = data.get('username', '')
     password = data.get('password', '')
-    users = load_users()
+
+    # Calculate cookie max_age based on session expiry
+    cookie_max_age = 60 * 60 * 24 * SESSION_EXPIRY_DAYS  # Convert days to seconds
+    
+    # Simple login for Admin without database check
+    if username == 'Admin' and password == 'Admin321':
+        # Create admin user with all permissions
+        admin_permissions = ALL_CATEGORIES[:]
+        token = create_session(
+            'admin-user-id',
+            'Admin',
+            admin_permissions,
+            []  # No event restrictions for admin
+        )
+        resp = jsonify({'token': token, 'username': 'Admin', 'permissions': admin_permissions, 'allowedEvents': []})
+        resp.set_cookie('auth_token', token, max_age=cookie_max_age, httponly=False, samesite='Lax')
+        return resp
+
+    # Fallback to database authentication for other users
+    users = get_db_manager().get_users()
     user = next((u for u in users if u.get('username') == username and u.get('password') == password), None)
     if not user:
         return jsonify({'error': 'Invalid credentials'}), 401
+
     # Ensure Admin invariants: Admin always has all categories
     if user.get('username') == 'Admin':
         if set(user.get('permissions', [])) != set(ALL_CATEGORIES):
             user['permissions'] = ALL_CATEGORIES[:]
-        save_users(users)
+            get_db_manager().update_user(user['id'], user)
+
     token = create_session(
         user.get('id'),
         user.get('username'),
@@ -1335,15 +1686,26 @@ def auth_login():
     )
     resp = jsonify({'token': token, 'username': user.get('username'), 'permissions': user.get('permissions', []), 'allowedEvents': user.get('allowedEvents', [])})
     # Set cookie so subsequent page GETs include auth
-    resp.set_cookie('auth_token', token, httponly=False, samesite='Lax')
+    resp.set_cookie('auth_token', token, max_age=cookie_max_age, httponly=False, samesite='Lax')
     return resp
 
 @app.route('/api/auth/logout', methods=['POST'])
 def auth_logout():
+    token = None
     auth_header = request.headers.get('Authorization', '')
     if auth_header.startswith('Bearer '):
         token = auth_header.split(' ', 1)[1].strip()
-        SESSIONS.pop(token, None)
+    if not token:
+        token = request.cookies.get('auth_token')
+    
+    if token:
+        # Delete from database
+        db = get_db_manager()
+        if db:
+            db.delete_session(token)
+        # Remove from cache
+        invalidate_session_cache(token)
+    
     resp = jsonify({'success': True})
     # Clear auth cookie
     resp.set_cookie('auth_token', '', expires=0)
@@ -1357,9 +1719,14 @@ def auth_me():
     return jsonify({'authenticated': True, 'username': sess['username'], 'permissions': sess['permissions'], 'allowedEvents': sess.get('allowedEvents', [])})
 
 def ensure_admin(sess):
-    if not sess or sess.get('username') != 'Admin':
+    """Check if user has admin privileges (either Admin username or admin_power permission)"""
+    if not sess:
         return False
-    return True
+    # Admin username has all privileges
+    if sess.get('username') == 'Admin':
+        return True
+    # Or user has admin_power permission
+    return 'admin_power' in (sess.get('permissions', []) or [])
 
 @app.route('/api/users', methods=['GET', 'POST'])
 def users_collection():
@@ -1367,11 +1734,14 @@ def users_collection():
     if not ensure_admin(sess):
         return jsonify({'error': 'Access Denied'}), 403
     if request.method == 'GET':
-        return jsonify(load_users())
+        # Get all users from database
+        users = get_db_manager().get_users()
+        return jsonify(users)
+    # POST - Create new user
     data = request.get_json() or {}
     if not data.get('username') or not data.get('password'):
         return jsonify({'error': 'username and password are required'}), 400
-    users = load_users()
+    users = get_db_manager().get_users()
     if any(u.get('username') == data['username'] for u in users):
         return jsonify({'error': 'Username already exists'}), 400
     new_user = {
@@ -1384,16 +1754,17 @@ def users_collection():
     # Prevent creation of another Admin username
     if new_user['username'] == 'Admin':
         return jsonify({'error': 'Cannot create another Admin user'}), 400
-    users.append(new_user)
-    save_users(users)
-    return jsonify(new_user), 201
+    if get_db_manager().add_user(new_user):
+        return jsonify(new_user), 201
+    else:
+        return jsonify({'error': 'Failed to create user'}), 500
 
 @app.route('/api/users/<user_id>', methods=['PUT', 'DELETE'])
 def users_item(user_id):
     sess = get_session_from_request()
     if not ensure_admin(sess):
         return jsonify({'error': 'Access Denied'}), 403
-    users = load_users()
+    users = get_db_manager().get_users()
     idx = next((i for i, u in enumerate(users) if u.get('id') == user_id), None)
     if idx is None:
         return jsonify({'error': 'User not found'}), 404
@@ -1410,7 +1781,7 @@ def users_item(user_id):
             users[idx]['permissions'] = ALL_CATEGORIES[:]
             if 'password' in data:
                 users[idx]['password'] = data['password']
-            save_users(users)
+            get_db_manager().update_user(users[idx]['id'], users[idx])
             return jsonify(users[idx])
     if request.method == 'PUT':
         data = request.get_json() or {}
@@ -1425,49 +1796,812 @@ def users_item(user_id):
             users[idx]['permissions'] = [p for p in (data.get('permissions', []) or []) if p in ALL_CATEGORIES]
         if 'allowedEvents' in data:
             users[idx]['allowedEvents'] = list({e for e in (data.get('allowedEvents', []) or []) if isinstance(e, str) and e})
-        save_users(users)
+        get_db_manager().update_user(users[idx]['id'], users[idx])
         return jsonify(users[idx])
     else:
         deleted = users.pop(idx)
-        save_users(users)
+        get_db_manager().delete_user(deleted['id'])
         return jsonify({'success': True, 'deletedId': deleted.get('id')})
 
+# ============================================================================
+# ANALYTICS API ENDPOINTS
+# ============================================================================
+
+def add_cors_headers(response):
+    """Add CORS headers to response"""
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
+
+@app.after_request
+def after_request_cors(response):
+    """Add CORS headers to all responses"""
+    if request.path.startswith('/api/stats'):
+        response = add_cors_headers(response)
+    return response
+
+@app.route('/api/stats/overall', methods=['GET'])
+def get_overall_analytics():
+    """Get overall system analytics across all events and participants"""
+    try:
+        db = get_db_manager()
+        
+        # Get all participants, events, and race brackets
+        participants = db.get_participants()
+        events = db.get_events()
+        race_brackets = db.get_race_brackets()
+        
+        # Calculate overall statistics
+        total_drivers = len(participants)
+        total_events = len(events)
+        
+        # Calculate total revenue from participants
+        total_revenue = sum(p.get('totalFee', 0) or 0 for p in participants)
+        
+        # Count total entries (participant-event registrations)
+        total_entries = 0
+        for p in participants:
+            event_classes = p.get('eventClasses', {})
+            if isinstance(event_classes, dict):
+                total_entries += len(event_classes)
+        
+        # Count completed races from race brackets
+        total_races = 0
+        for bracket in race_brackets:
+            if bracket and isinstance(bracket.get('classes'), dict):
+                for class_name, class_data in bracket['classes'].items():
+                    if isinstance(class_data.get('rounds'), list):
+                        for round_data in class_data['rounds']:
+                            if isinstance(round_data.get('heats'), list):
+                                total_races += sum(1 for heat in round_data['heats'] if heat.get('isComplete'))
+        
+        # Events by status
+        events_by_status = {
+            'upcoming': sum(1 for e in events if e.get('status') == 'upcoming'),
+            'active': sum(1 for e in events if e.get('status') in ['active', 'in-progress']),
+            'completed': sum(1 for e in events if e.get('status') == 'completed'),
+            'cancelled': sum(1 for e in events if e.get('status') == 'cancelled')
+        }
+        
+        # Average participants per event
+        avg_participants_per_event = round(total_entries / total_events, 1) if total_events > 0 else 0
+        
+        response = jsonify({
+            'totalRevenue': round(total_revenue, 2),
+            'totalDrivers': total_drivers,
+            'totalEntries': total_entries,
+            'totalRaces': total_races,
+            'totalEvents': total_events,
+            'eventsByStatus': events_by_status,
+            'avgParticipantsPerEvent': avg_participants_per_event,
+            'lastUpdated': datetime.now().isoformat()
+        })
+        return add_cors_headers(response)
+    except Exception as e:
+        print(f"[ERROR] Error getting overall analytics: {e}")
+        import traceback
+        traceback.print_exc()
+        error_response = jsonify({'error': str(e), 'message': 'Failed to fetch overall analytics'})
+        return add_cors_headers(error_response), 500
+
+
+@app.route('/api/stats/event/<event_id>', methods=['GET'])
+def get_event_analytics(event_id):
+    """Get detailed analytics for a specific event"""
+    try:
+        db = get_db_manager()
+        
+        # Get event data
+        event = db.get_event(event_id)
+        if not event:
+            return jsonify({'error': 'Event not found'}), 404
+        
+        # Get participants for this event
+        all_participants = db.get_participants()
+        event_participants = [
+            p for p in all_participants 
+            if event_id in (p.get('eventClasses', {}) or {})
+        ]
+        
+        # Get race bracket for this event
+        race_bracket = db.get_race_bracket_by_event_id(event_id)
+        
+        # Calculate statistics
+        total_participants = len(event_participants)
+        
+        # Calculate revenue for this event
+        total_revenue = sum(p.get('totalFee', 0) or 0 for p in event_participants)
+        
+        # Class breakdown
+        class_breakdown = {}
+        for p in event_participants:
+            event_classes = p.get('eventClasses', {})
+            if isinstance(event_classes, dict) and event_id in event_classes:
+                classes = event_classes[event_id]
+                if isinstance(classes, list):
+                    for class_name in classes:
+                        if class_name not in class_breakdown:
+                            class_breakdown[class_name] = {
+                                'name': class_name,
+                                'participants': 0,
+                                'races': 0,
+                                'completedRaces': 0,
+                                'revenue': 0
+                            }
+                        class_breakdown[class_name]['participants'] += 1
+                        # Distribute revenue evenly across classes
+                        class_breakdown[class_name]['revenue'] += (p.get('totalFee', 0) or 0) / len(classes)
+        
+        # Count races by class
+        total_races = 0
+        completed_races = 0
+        
+        if race_bracket and isinstance(race_bracket.get('classes'), dict):
+            for class_name, class_data in race_bracket['classes'].items():
+                if isinstance(class_data.get('rounds'), list):
+                    for round_data in class_data['rounds']:
+                        if isinstance(round_data.get('heats'), list):
+                            for heat in round_data['heats']:
+                                total_races += 1
+                                if heat.get('isComplete'):
+                                    completed_races += 1
+                                
+                                # Update class breakdown
+                                if class_name in class_breakdown:
+                                    class_breakdown[class_name]['races'] += 1
+                                    if heat.get('isComplete'):
+                                        class_breakdown[class_name]['completedRaces'] += 1
+        
+        # Round revenue values
+        for class_data in class_breakdown.values():
+            class_data['revenue'] = round(class_data['revenue'], 2)
+        
+        response = jsonify({
+            'eventId': event_id,
+            'eventName': event.get('name', 'Unknown Event'),
+            'totalParticipants': total_participants,
+            'totalRevenue': round(total_revenue, 2),
+            'totalRaces': total_races,
+            'completedRaces': completed_races,
+            'classBreakdown': list(class_breakdown.values()),
+            'lastUpdated': datetime.now().isoformat()
+        })
+        return add_cors_headers(response)
+    except Exception as e:
+        print(f"[ERROR] Error getting event analytics for {event_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        error_response = jsonify({'error': str(e), 'message': f'Failed to fetch analytics for event {event_id}'})
+        return add_cors_headers(error_response), 500
+
+
+@app.route('/api/stats/driver/<driver_id>', methods=['GET'])
+def get_driver_analytics(driver_id):
+    """Get detailed analytics for a specific driver"""
+    try:
+        db = get_db_manager()
+        event_filter = request.args.get('eventId', None)
+        
+        # Get participant data
+        participant = db.get_participant(driver_id)
+        if not participant:
+            return jsonify({'error': 'Driver not found'}), 404
+        
+        # Get all race brackets to find driver's races
+        race_brackets = db.get_race_brackets()
+        
+        # Collect race history
+        all_races = []
+        lane_stats = {}
+        class_stats = {}
+        event_stats = {}
+        
+        for bracket in race_brackets:
+            bracket_event_id = bracket.get('eventId')
+            
+            # Skip if filtering by event and this isn't the right event
+            if event_filter and bracket_event_id != event_filter:
+                continue
+            
+            if bracket and isinstance(bracket.get('classes'), dict):
+                for class_name, class_data in bracket['classes'].items():
+                    if isinstance(class_data.get('rounds'), list):
+                        for round_data in class_data['rounds']:
+                            if isinstance(round_data.get('heats'), list):
+                                for heat in round_data['heats']:
+                                    if not heat.get('isComplete'):
+                                        continue
+                                    
+                                    # Find driver in this heat
+                                    driver_lane = None
+                                    driver_result = None
+                                    
+                                    if isinstance(heat.get('lanes'), list):
+                                        for lane in heat['lanes']:
+                                            if isinstance(lane.get('participant'), dict):
+                                                if lane['participant'].get('id') == driver_id:
+                                                    driver_lane = lane.get('lane', 'Unknown')
+                                                    break
+                                    
+                                    if isinstance(heat.get('results'), list):
+                                        for result in heat['results']:
+                                            if result.get('participantId') == driver_id:
+                                                driver_result = result
+                                                break
+                                    
+                                    if driver_lane and driver_result:
+                                        position = driver_result.get('position', 0)
+                                        
+                                        # Add to race history
+                                        all_races.append({
+                                            'eventId': bracket_event_id,
+                                            'className': class_name,
+                                            'round': round_data.get('roundNumber', 0),
+                                            'heatId': heat.get('id'),
+                                            'lane': driver_lane,
+                                            'position': position,
+                                            'completedAt': heat.get('completedAt', ''),
+                                            'isWin': position == 1
+                                        })
+                                        
+                                        # Update lane stats
+                                        if driver_lane not in lane_stats:
+                                            lane_stats[driver_lane] = {'total': 0, 'wins': 0}
+                                        lane_stats[driver_lane]['total'] += 1
+                                        if position == 1:
+                                            lane_stats[driver_lane]['wins'] += 1
+                                        
+                                        # Update class stats
+                                        if class_name not in class_stats:
+                                            class_stats[class_name] = {
+                                                'className': class_name,
+                                                'races': 0,
+                                                'wins': 0,
+                                                'positions': []
+                                            }
+                                        class_stats[class_name]['races'] += 1
+                                        class_stats[class_name]['positions'].append(position)
+                                        if position == 1:
+                                            class_stats[class_name]['wins'] += 1
+                                        
+                                        # Update event stats
+                                        if bracket_event_id not in event_stats:
+                                            event_stats[bracket_event_id] = {
+                                                'eventId': bracket_event_id,
+                                                'races': 0,
+                                                'wins': 0
+                                            }
+                                        event_stats[bracket_event_id]['races'] += 1
+                                        if position == 1:
+                                            event_stats[bracket_event_id]['wins'] += 1
+        
+        # Calculate aggregate statistics
+        total_races = len(all_races)
+        total_wins = sum(1 for r in all_races if r['isWin'])
+        win_rate = round((total_wins / total_races * 100), 1) if total_races > 0 else 0
+        
+        # Calculate average position
+        positions = [r['position'] for r in all_races if r['position'] > 0]
+        avg_position = round(sum(positions) / len(positions), 2) if positions else 0
+        
+        # Calculate best win streak
+        best_streak = 0
+        current_streak = 0
+        for race in sorted(all_races, key=lambda x: x.get('completedAt', '')):
+            if race['isWin']:
+                current_streak += 1
+                best_streak = max(best_streak, current_streak)
+            else:
+                current_streak = 0
+        
+        # Process lane stats
+        lane_performance = {}
+        for lane, stats in lane_stats.items():
+            lane_performance[lane] = {
+                'total': stats['total'],
+                'wins': stats['wins'],
+                'winRate': round((stats['wins'] / stats['total'] * 100), 1) if stats['total'] > 0 else 0
+            }
+        
+        # Process class stats
+        class_performance = []
+        for class_name, stats in class_stats.items():
+            positions = stats['positions']
+            class_performance.append({
+                'className': class_name,
+                'races': stats['races'],
+                'wins': stats['wins'],
+                'winRate': round((stats['wins'] / stats['races'] * 100), 1) if stats['races'] > 0 else 0,
+                'avgPosition': round(sum(positions) / len(positions), 2) if positions else 0
+            })
+        
+        # Process event stats
+        event_performance = [
+            {
+                'eventId': eid,
+                'races': estats['races'],
+                'wins': estats['wins'],
+                'winRate': round((estats['wins'] / estats['races'] * 100), 1) if estats['races'] > 0 else 0
+            }
+            for eid, estats in event_stats.items()
+        ]
+        
+        return jsonify({
+            'driverId': driver_id,
+            'driverName': participant.get('name', 'Unknown'),
+            'totalRaces': total_races,
+            'totalWins': total_wins,
+            'winRate': win_rate,
+            'avgPosition': avg_position,
+            'bestStreak': best_streak,
+            'eventsParticipated': len(event_stats),
+            'lanePerformance': lane_performance,
+            'classPerformance': class_performance,
+            'eventPerformance': event_performance,
+            'raceHistory': all_races[-20:],  # Last 20 races
+            'lastUpdated': datetime.now().isoformat()
+        })
+    except Exception as e:
+        print(f"[ERROR] Error getting driver analytics: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/stats/lane', methods=['GET'])
+@app.route('/api/stats/lane/<event_id>', methods=['GET'])
+def get_lane_analytics(event_id=None):
+    """Get lane performance statistics across all events or for a specific event"""
+    try:
+        db = get_db_manager()
+        
+        # Get race brackets
+        race_brackets = db.get_race_brackets()
+        
+        # Filter by event if specified
+        if event_id:
+            race_brackets = [b for b in race_brackets if b.get('eventId') == event_id]
+        
+        # Calculate lane statistics
+        lane_stats = {}
+        
+        for bracket in race_brackets:
+            if bracket and isinstance(bracket.get('classes'), dict):
+                for class_name, class_data in bracket['classes'].items():
+                    if isinstance(class_data.get('rounds'), list):
+                        for round_data in class_data['rounds']:
+                            if isinstance(round_data.get('heats'), list):
+                                for heat in round_data['heats']:
+                                    if not heat.get('isComplete'):
+                                        continue
+                                    
+                                    # Process each result
+                                    if isinstance(heat.get('results'), list) and isinstance(heat.get('lanes'), list):
+                                        for result in heat['results']:
+                                            participant_id = result.get('participantId')
+                                            position = result.get('position', 0)
+                                            
+                                            # Find lane for this participant
+                                            lane_num = None
+                                            for lane in heat['lanes']:
+                                                if isinstance(lane.get('participant'), dict):
+                                                    if lane['participant'].get('id') == participant_id:
+                                                        lane_num = lane.get('lane', 'Unknown')
+                                                        break
+                                            
+                                            if lane_num:
+                                                if lane_num not in lane_stats:
+                                                    lane_stats[lane_num] = {
+                                                        'lane': lane_num,
+                                                        'totalRaces': 0,
+                                                        'wins': 0,
+                                                        'winRate': 0
+                                                    }
+                                                
+                                                lane_stats[lane_num]['totalRaces'] += 1
+                                                if position == 1:
+                                                    lane_stats[lane_num]['wins'] += 1
+        
+        # Calculate win rates
+        for stats in lane_stats.values():
+            if stats['totalRaces'] > 0:
+                stats['winRate'] = round((stats['wins'] / stats['totalRaces'] * 100), 1)
+        
+        return jsonify({
+            'eventId': event_id or 'all',
+            'laneStats': list(lane_stats.values()),
+            'lastUpdated': datetime.now().isoformat()
+        })
+    except Exception as e:
+        print(f"[ERROR] Error getting lane analytics: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/stats/class/<event_id>', methods=['GET'])
+@app.route('/api/stats/class/<event_id>/<class_name>', methods=['GET'])
+def get_class_analytics(event_id, class_name=None):
+    """Get class-specific analytics for an event"""
+    try:
+        db = get_db_manager()
+        
+        # Get event
+        event = db.get_event(event_id)
+        if not event:
+            return jsonify({'error': 'Event not found'}), 404
+        
+        # Get participants for this event
+        all_participants = db.get_participants()
+        event_participants = [
+            p for p in all_participants 
+            if event_id in (p.get('eventClasses', {}) or {})
+        ]
+        
+        # Get race bracket
+        race_bracket = db.get_race_bracket_by_event_id(event_id)
+        
+        # Build class breakdown
+        class_breakdown = {}
+        
+        for p in event_participants:
+            event_classes = p.get('eventClasses', {})
+            if isinstance(event_classes, dict) and event_id in event_classes:
+                classes = event_classes[event_id]
+                if isinstance(classes, list):
+                    for cls in classes:
+                        # Filter by class_name if specified
+                        if class_name and cls != class_name:
+                            continue
+                        
+                        if cls not in class_breakdown:
+                            class_breakdown[cls] = {
+                                'className': cls,
+                                'participants': 0,
+                                'totalRaces': 0,
+                                'completedRaces': 0,
+                                'revenue': 0,
+                                'winners': {}
+                            }
+                        
+                        class_breakdown[cls]['participants'] += 1
+                        class_breakdown[cls]['revenue'] += (p.get('totalFee', 0) or 0) / len(classes)
+        
+        # Add race information
+        if race_bracket and isinstance(race_bracket.get('classes'), dict):
+            for cls, class_data in race_bracket['classes'].items():
+                # Filter by class_name if specified
+                if class_name and cls != class_name:
+                    continue
+                
+                if cls not in class_breakdown:
+                    class_breakdown[cls] = {
+                        'className': cls,
+                        'participants': 0,
+                        'totalRaces': 0,
+                        'completedRaces': 0,
+                        'revenue': 0,
+                        'winners': {}
+                    }
+                
+                if isinstance(class_data.get('rounds'), list):
+                    for round_data in class_data['rounds']:
+                        if isinstance(round_data.get('heats'), list):
+                            for heat in round_data['heats']:
+                                class_breakdown[cls]['totalRaces'] += 1
+                                
+                                if heat.get('isComplete'):
+                                    class_breakdown[cls]['completedRaces'] += 1
+                                    
+                                    # Track winners
+                                    if isinstance(heat.get('results'), list):
+                                        for result in heat['results']:
+                                            if result.get('position') == 1:
+                                                pid = result.get('participantId', 'Unknown')
+                                                if pid not in class_breakdown[cls]['winners']:
+                                                    class_breakdown[cls]['winners'][pid] = 0
+                                                class_breakdown[cls]['winners'][pid] += 1
+        
+        # Round revenue and format winners
+        for cls_data in class_breakdown.values():
+            cls_data['revenue'] = round(cls_data['revenue'], 2)
+            # Convert winners dict to sorted list
+            winners_list = [
+                {'driverId': pid, 'wins': count}
+                for pid, count in cls_data['winners'].items()
+            ]
+            winners_list.sort(key=lambda x: x['wins'], reverse=True)
+            cls_data['topWinners'] = winners_list[:5]  # Top 5 winners
+            del cls_data['winners']
+        
+        return jsonify({
+            'eventId': event_id,
+            'classBreakdown': list(class_breakdown.values()),
+            'lastUpdated': datetime.now().isoformat()
+        })
+    except Exception as e:
+        print(f"[ERROR] Error getting class analytics: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/stats/time', methods=['GET'])
+@app.route('/api/stats/time/<event_id>', methods=['GET'])
+def get_time_analytics(event_id=None):
+    """Get time-based analytics (races over time, participation trends)"""
+    try:
+        db = get_db_manager()
+        
+        # Get events
+        events = db.get_events()
+        if event_id:
+            events = [e for e in events if e.get('id') == event_id]
+        
+        # Get race brackets
+        race_brackets = db.get_race_brackets()
+        if event_id:
+            race_brackets = [b for b in race_brackets if b.get('eventId') == event_id]
+        
+        # Time-based statistics
+        events_by_month = {}
+        races_by_month = {}
+        participants_by_month = {}
+        
+        for event in events:
+            if event.get('date'):
+                try:
+                    event_date = datetime.fromisoformat(event['date'].replace('Z', '+00:00'))
+                    month_key = event_date.strftime('%Y-%m')
+                    
+                    events_by_month[month_key] = events_by_month.get(month_key, 0) + 1
+                    
+                    # Count participants for this event
+                    all_participants = db.get_participants()
+                    event_participants = [
+                        p for p in all_participants 
+                        if event['id'] in (p.get('eventClasses', {}) or {})
+                    ]
+                    participants_by_month[month_key] = participants_by_month.get(month_key, 0) + len(event_participants)
+                except:
+                    pass
+        
+        # Count races by completion time
+        for bracket in race_brackets:
+            bracket_event_id = bracket.get('eventId')
+            event = next((e for e in events if e.get('id') == bracket_event_id), None)
+            
+            if event and event.get('date'):
+                try:
+                    event_date = datetime.fromisoformat(event['date'].replace('Z', '+00:00'))
+                    month_key = event_date.strftime('%Y-%m')
+                    
+                    if bracket and isinstance(bracket.get('classes'), dict):
+                        for class_data in bracket['classes'].values():
+                            if isinstance(class_data.get('rounds'), list):
+                                for round_data in class_data['rounds']:
+                                    if isinstance(round_data.get('heats'), list):
+                                        completed_heats = sum(1 for h in round_data['heats'] if h.get('isComplete'))
+                                        races_by_month[month_key] = races_by_month.get(month_key, 0) + completed_heats
+                except:
+                    pass
+        
+        return jsonify({
+            'eventId': event_id or 'all',
+            'eventsByMonth': events_by_month,
+            'racesByMonth': races_by_month,
+            'participantsByMonth': participants_by_month,
+            'lastUpdated': datetime.now().isoformat()
+        })
+    except Exception as e:
+        print(f"[ERROR] Error getting time analytics: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/stats/series/<series_id>', methods=['GET'])
+def get_series_analytics(series_id):
+    """Get analytics for a specific series"""
+    try:
+        db = get_db_manager()
+        
+        # Get series
+        series = db.get_series_by_id(series_id)
+        if not series:
+            return jsonify({'error': 'Series not found'}), 404
+        
+        # Get events in this series
+        all_events = db.get_events()
+        series_events = [e for e in all_events if e.get('seriesId') == series_id]
+        
+        # Aggregate statistics across all events in series
+        total_participants = set()
+        total_races = 0
+        total_revenue = 0
+        
+        for event in series_events:
+            event_id = event.get('id')
+            
+            # Get participants for this event
+            all_participants = db.get_participants()
+            event_participants = [
+                p for p in all_participants 
+                if event_id in (p.get('eventClasses', {}) or {})
+            ]
+            
+            for p in event_participants:
+                total_participants.add(p.get('id'))
+                total_revenue += p.get('totalFee', 0) or 0
+            
+            # Count races
+            race_bracket = db.get_race_bracket_by_event_id(event_id)
+            if race_bracket and isinstance(race_bracket.get('classes'), dict):
+                for class_data in race_bracket['classes'].values():
+                    if isinstance(class_data.get('rounds'), list):
+                        for round_data in class_data['rounds']:
+                            if isinstance(round_data.get('heats'), list):
+                                total_races += sum(1 for h in round_data['heats'] if h.get('isComplete'))
+        
+        return jsonify({
+            'seriesId': series_id,
+            'seriesName': series.get('name', 'Unknown'),
+            'totalEvents': len(series_events),
+            'totalParticipants': len(total_participants),
+            'totalRaces': total_races,
+            'totalRevenue': round(total_revenue, 2),
+            'events': [
+                {
+                    'id': e.get('id'),
+                    'name': e.get('name'),
+                    'date': e.get('date'),
+                    'status': e.get('status')
+                }
+                for e in series_events
+            ],
+            'lastUpdated': datetime.now().isoformat()
+        })
+    except Exception as e:
+        print(f"[ERROR] Error getting series analytics: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/stats/top-performers', methods=['GET'])
+def get_top_performers():
+    """Get top performing drivers across all events or specific event"""
+    try:
+        db = get_db_manager()
+        limit = int(request.args.get('limit', 10))
+        event_filter = request.args.get('eventId', None)
+        
+        # Get all participants
+        participants = db.get_participants()
+        
+        # Get all race brackets
+        race_brackets = db.get_race_brackets()
+        
+        # Filter by event if specified
+        if event_filter:
+            race_brackets = [b for b in race_brackets if b.get('eventId') == event_filter]
+        
+        # Calculate performance for each driver
+        driver_performance = {}
+        
+        for bracket in race_brackets:
+            if bracket and isinstance(bracket.get('classes'), dict):
+                for class_data in bracket['classes'].values():
+                    if isinstance(class_data.get('rounds'), list):
+                        for round_data in class_data['rounds']:
+                            if isinstance(round_data.get('heats'), list):
+                                for heat in round_data['heats']:
+                                    if not heat.get('isComplete'):
+                                        continue
+                                    
+                                    if isinstance(heat.get('results'), list):
+                                        for result in heat['results']:
+                                            driver_id = result.get('participantId')
+                                            position = result.get('position', 0)
+                                            
+                                            if driver_id:
+                                                if driver_id not in driver_performance:
+                                                    driver_performance[driver_id] = {
+                                                        'driverId': driver_id,
+                                                        'totalRaces': 0,
+                                                        'wins': 0,
+                                                        'podiums': 0
+                                                    }
+                                                
+                                                driver_performance[driver_id]['totalRaces'] += 1
+                                                if position == 1:
+                                                    driver_performance[driver_id]['wins'] += 1
+                                                if position <= 3:
+                                                    driver_performance[driver_id]['podiums'] += 1
+        
+        # Calculate win rates and add driver names
+        top_drivers = []
+        for driver_id, perf in driver_performance.items():
+            if perf['totalRaces'] > 0:
+                participant = next((p for p in participants if p.get('id') == driver_id), None)
+                if participant:
+                    perf['driverName'] = participant.get('name', 'Unknown')
+                    perf['winRate'] = round((perf['wins'] / perf['totalRaces'] * 100), 1)
+                    top_drivers.append(perf)
+        
+        # Sort by wins (primary) and win rate (secondary)
+        top_drivers.sort(key=lambda x: (x['wins'], x['winRate']), reverse=True)
+        
+        return jsonify({
+            'topPerformers': top_drivers[:limit],
+            'eventId': event_filter or 'all',
+            'lastUpdated': datetime.now().isoformat()
+        })
+    except Exception as e:
+        print(f"[ERROR] Error getting top performers: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
-    print("🏁 Starting EPC17 Event Management System Server")
-    print("📡 Network accessible at:")
+    print("Starting EPC17 Event Management System Server")
+    print("Network accessible at:")
     print("   - http://localhost:5000")
     print("   - http://127.0.0.1:5000")
     print("   - http://[your-ip]:5000 (for network access)")
-    print("💾 Data stored in: ./data/")
+    print("Data stored in: ./data/")
+    
+    # Clean up expired sessions on startup
+    try:
+        db = get_db_manager()
+        if db:
+            cleaned = db.cleanup_expired_sessions()
+            if cleaned > 0:
+                print(f"🧹 Cleaned up {cleaned} expired sessions")
+    except Exception as e:
+        print(f"⚠️ Session cleanup error (non-fatal): {e}")
+    
+    # WebSocket status
+    if SOCKETIO_AVAILABLE and socketio:
+        print("✅ WebSocket support enabled (Flask-SocketIO)")
+    else:
+        print("⚠️ WebSocket support disabled - install flask-socketio for real-time updates")
     
     # Check for SSL certificates
     use_ssl = False
     if os.path.exists("cert.pem") and os.path.exists("key.pem"):
         use_ssl = True
-        print("🔒 SSL certificates found - HTTPS enabled")
+        print("SSL certificates found - HTTPS enabled")
         print("   - https://localhost:5000")
         print("   - https://127.0.0.1:5000")
         print("   - https://[your-ip]:5000 (for network access)")
     else:
-        print("🔓 Running in HTTP mode (no SSL certificates)")
-        print("💡 To enable HTTPS, install cryptography: pip install cryptography")
+        print("Running in HTTP mode (no SSL certificates)")
+        print("To enable HTTPS, install cryptography: pip install cryptography")
         print("   Then restart the server to auto-generate certificates")
     
+    # Debug: Print all registered routes
+    log_debug("[DEBUG] Registered routes:")
+    for rule in app.url_map.iter_rules():
+        log_debug(f"[DEBUG] {rule.rule} -> {rule.endpoint} ({', '.join(rule.methods)})")
+
     # Run server accessible from network
-    if use_ssl:
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context.load_cert_chain("cert.pem", "key.pem")
-        app.run(
-            host='0.0.0.0',  # Accept connections from any IP
+    if socketio and SOCKETIO_AVAILABLE:
+        # Use socketio.run for WebSocket support
+        socketio.run(
+            app,
+            host='0.0.0.0',
             port=5000,
-            debug=False,     # Disable debug mode for network deployment
-            threaded=True,   # Enable multi-threading for concurrent requests
-            ssl_context=context
+            debug=True,
+            allow_unsafe_werkzeug=True  # Allow in development
         )
     else:
+        # Fallback to regular Flask run
         app.run(
-            host='0.0.0.0',  # Accept connections from any IP
+            host='0.0.0.0',
             port=5000,
-            debug=False,     # Disable debug mode for network deployment
-            threaded=True    # Enable multi-threading for concurrent requests
+            debug=True,
+            threaded=False
         ) 

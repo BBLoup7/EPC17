@@ -22,6 +22,8 @@ class DataManager {
         this.statsCache = new Map(); // Cache calculated statistics
         this.lastLoadTime = new Map(); // Track when data was last loaded
         this.loadingPromises = new Map(); // Prevent duplicate loads
+        this.activeRequests = new Map(); // Track active network requests for deduplication
+        this.resourceLocks = new Map(); // Resource locking for critical sections
         
         // Initialize event bus and statistics manager
         this.eventBus = null;
@@ -50,6 +52,29 @@ class DataManager {
             }
             console.log('📊 StatisticsManager initialized and connected');
         }
+    }
+
+    /**
+     * Execute an operation exclusively for a given resource
+     * Prevents race conditions for critical updates
+     */
+    async executeExclusive(resourceId, operation) {
+        // Get existing promise or start with resolved
+        const previousPromise = this.resourceLocks.get(resourceId) || Promise.resolve();
+        
+        // Create new promise chaining off the previous one
+        const currentPromise = previousPromise.then(async () => {
+            try {
+                return await operation();
+            } catch (error) {
+                throw error;
+            }
+        });
+        
+        // Update lock - handle errors so the chain continues
+        this.resourceLocks.set(resourceId, currentPromise.catch(() => {}));
+        
+        return currentPromise;
     }
 
     /**
@@ -121,11 +146,19 @@ class DataManager {
                                (typeof this.data[type] === 'object' && Object.keys(this.data[type]).length === 0);
                     })
                     .map(async (type) => {
-                        return await this.loadSingleDataTypeOptimized(type);
+                        // Wrap each load in try-catch to prevent one failure from stopping all loads
+                        try {
+                            return await this.loadSingleDataTypeOptimized(type);
+                        } catch (error) {
+                            // Log warning but don't rethrow - allows other data types to continue loading
+                            console.warn(`⚠️ Failed to load ${type}, continuing with other data types:`, error.message);
+                            this.setEmptyDataForType(type);
+                            return null;
+                        }
                     });
                 
-                // Wait for current batch to complete before starting next
-                await Promise.all(loadPromises);
+                // Wait for current batch to complete before starting next (using allSettled to handle individual failures)
+                await Promise.allSettled(loadPromises);
                 
                 // Small delay between batches to prevent overwhelming the server
                 if (batches.indexOf(batch) < batches.length - 1) {
@@ -151,6 +184,7 @@ class DataManager {
 
     /**
      * Load single data type with error handling, retries, and enhanced caching
+     * UPDATED: Added request deduplication
      */
     async loadSingleDataTypeOptimized(type, retryCount = 0) {
         const maxRetries = 2;
@@ -160,80 +194,110 @@ class DataManager {
             console.log(`📊 Using cached data for ${type}`);
             return this.data[type];
         }
+
+        // Request Deduplication: Check if request is already in progress
+        const requestKey = `load_${type}`;
+        if (this.activeRequests.has(requestKey)) {
+            console.log(`🔄 Request for ${type} already in progress, reusing promise`);
+            return this.activeRequests.get(requestKey);
+        }
+        
+        // Create new request promise
+        const requestPromise = (async () => {
+            try {
+                console.log(`🔍 Loading ${type} from server (attempt ${retryCount + 1})`);
+                
+                const startTime = performance.now();
+                // For participants, load all pages to get complete dataset
+                if (type === 'participants') {
+                    await this.loadAllParticipantPages();
+                    return this.data[type];
+                }
+
+                // Load all data with reasonable limits to avoid server issues
+                const queryParams = {};
+                let url = `${this.baseUrl}/${type}`;
+
+                // Add query parameters if needed
+                if (Object.keys(queryParams).length > 0) {
+                    const params = new URLSearchParams(queryParams);
+                    url += `?${params.toString()}`;
+                }
+
+                const response = await this.request(url, {
+                    headers: {
+                        'Cache-Control': this.getCacheControlHeader(type),
+                        'Accept': 'application/json',
+                        'If-Modified-Since': this.getLastModifiedHeader(type)
+                    }
+                });
+
+                const endTime = performance.now();
+                const requestTime = endTime - startTime;
+
+                // Log slow network requests for debugging
+                if (requestTime > 800) {
+                    console.warn(`🐌 Slow network request: ${type} took ${requestTime.toFixed(2)}ms`);
+                }
+
+                if (!response.ok) {
+                    // Handle 403 gracefully - user doesn't have permission, just set empty data
+                    if (response.status === 403) {
+                        console.warn(`⚠️ Access denied for ${type} - user lacks permission, continuing with empty data`);
+                        this.setEmptyDataForType(type);
+                        return this.data[type];
+                    } else if (response.status === 401) {
+                        throw new Error(`Authentication required (401): Please log in to access ${type} data`);
+                    } else if (response.status === 404) {
+                        throw new Error(`Not found (404): ${type} data not available on server`);
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                }
+
+                // Check if data was modified (304 Not Modified)
+                if (response.status === 304) {
+                    console.log(`📊 ${type} not modified, using cached data`);
+                    return this.data[type];
+                }
+
+                const data = await response.json();
+
+                // Update cache metadata
+                this.updateCacheMetadata(type, response.headers);
+
+                // Process data efficiently based on type
+                await this.processLoadedData(type, data);
+                
+                return data;
+                
+            } catch (error) {
+                console.error(`❌ Failed to load ${type}:`, error);
+                
+                // Enhanced retry logic for network failures
+                if (retryCount < maxRetries && this.shouldRetryRequest(error)) {
+                    const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+                    console.log(`🔄 Retrying ${type} load in ${backoffDelay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                    // We need to clear the active request before retrying recursively
+                    this.activeRequests.delete(requestKey);
+                    return await this.loadSingleDataTypeOptimized(type, retryCount + 1);
+                }
+                
+                // Set empty data for failed loads to prevent app crashes
+                this.setEmptyDataForType(type);
+                throw error;
+            }
+        })();
+
+        // Store promise
+        this.activeRequests.set(requestKey, requestPromise);
         
         try {
-            console.log(`🔍 Loading ${type} from server (attempt ${retryCount + 1})`);
-            
-            const startTime = performance.now();
-            // Load all data with high limits for complete functionality
-            const queryParams = type === 'participants' ? { limit: 50000 } : {};
-            let url = `${this.baseUrl}/${type}`;
-            
-            // Add query parameters if needed
-            if (Object.keys(queryParams).length > 0) {
-                const params = new URLSearchParams(queryParams);
-                url += `?${params.toString()}`;
-            }
-            
-            const response = await this.request(url, {
-                headers: {
-                    'Cache-Control': this.getCacheControlHeader(type),
-                    'Accept': 'application/json',
-                    'If-Modified-Since': this.getLastModifiedHeader(type)
-                }
-            });
-            
-            const endTime = performance.now();
-            const requestTime = endTime - startTime;
-            
-            // Log slow network requests for debugging
-            if (requestTime > 800) {
-                console.warn(`🐌 Slow network request: ${type} took ${requestTime.toFixed(2)}ms`);
-            }
-            
-            if (!response.ok) {
-                // Provide more specific error messages for common HTTP status codes
-                if (response.status === 403) {
-                    throw new Error(`Access denied (403): You do not have permission to access ${type} data`);
-                } else if (response.status === 401) {
-                    throw new Error(`Authentication required (401): Please log in to access ${type} data`);
-                } else if (response.status === 404) {
-                    throw new Error(`Not found (404): ${type} data not available on server`);
-                } else {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-            }
-            
-            // Check if data was modified (304 Not Modified)
-            if (response.status === 304) {
-                console.log(`📊 ${type} not modified, using cached data`);
-                return this.data[type];
-            }
-            
-            const data = await response.json();
-            
-            // Update cache metadata
-            this.updateCacheMetadata(type, response.headers);
-            
-            // Process data efficiently based on type
-            await this.processLoadedData(type, data);
-            
-            return data;
-            
-        } catch (error) {
-            console.error(`❌ Failed to load ${type}:`, error);
-            
-            // Enhanced retry logic for network failures
-            if (retryCount < maxRetries && this.shouldRetryRequest(error)) {
-                const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 5000);
-                console.log(`🔄 Retrying ${type} load in ${backoffDelay}ms...`);
-                await new Promise(resolve => setTimeout(resolve, backoffDelay));
-                return await this.loadSingleDataTypeOptimized(type, retryCount + 1);
-            }
-            
-            // Set empty data for failed loads to prevent app crashes
-            this.setEmptyDataForType(type);
-            throw error;
+            return await requestPromise;
+        } finally {
+            // Clean up when done
+            this.activeRequests.delete(requestKey);
         }
     }
 
@@ -251,9 +315,28 @@ class DataManager {
         }
         
         if (type === 'participants' && data.participants) {
-            // Optimize participant data structure
+            // Optimize participant data structure (includes migration)
             this.data[type] = this.optimizeParticipantData(data.participants);
             console.log(`✅ ${type} optimized: ${this.data[type].length} participants`);
+            
+            // Run migration on first load if needed
+            if (!this._participantsMigrationRun) {
+                this._participantsMigrationRun = true;
+                const needsMigration = this.data[type].some(p => !p._migrated);
+                
+                if (needsMigration) {
+                    console.log('🔄 Detected participants needing migration, will run async migration...');
+                    // Run migration asynchronously to not block loading
+                    setTimeout(async () => {
+                        try {
+                            const result = await this.migrateAllParticipants();
+                            console.log('✅ Participant migration completed:', result);
+                        } catch (error) {
+                            console.error('❌ Participant migration failed:', error);
+                        }
+                    }, 1000);
+                }
+            }
             
             // Performance warning for large datasets
             if (data.participants.length > 10000) {
@@ -278,29 +361,55 @@ class DataManager {
             console.log(`✅ ${type} loaded: ${data.races.length} races`);
             
         } else if (type === 'race-brackets' && Array.isArray(data)) {
-            // Efficiently convert array to eventId-keyed object
+            // Handle direct array response (legacy or direct endpoint)
             const bracketMap = new Map();
-            
+
             // Process in chunks to prevent blocking
             const chunkSize = 20;
             for (let i = 0; i < data.length; i += chunkSize) {
                 const chunk = data.slice(i, i + chunkSize);
-                
+
                 chunk.forEach(bracket => {
                     if (bracket && bracket.eventId) {
                         bracketMap.set(bracket.eventId, bracket);
                     }
                 });
-                
+
                 // Yield control to prevent UI blocking
                 if (i + chunkSize < data.length) {
                     await new Promise(resolve => setTimeout(resolve, 1));
                 }
             }
-            
+
             // Convert Map to plain object for compatibility
             this.data.raceBrackets = Object.fromEntries(bracketMap);
             console.log(`✅ ${type} optimized: ${data.length} brackets converted to eventId map`);
+
+        } else if (type === 'race-brackets' && data.brackets && Array.isArray(data.brackets)) {
+            // Handle paginated response from server
+            const bracketMap = new Map();
+            const brackets = data.brackets;
+
+            // Process in chunks to prevent blocking
+            const chunkSize = 20;
+            for (let i = 0; i < brackets.length; i += chunkSize) {
+                const chunk = brackets.slice(i, i + chunkSize);
+
+                chunk.forEach(bracket => {
+                    if (bracket && bracket.eventId) {
+                        bracketMap.set(bracket.eventId, bracket);
+                    }
+                });
+
+                // Yield control to prevent UI blocking
+                if (i + chunkSize < brackets.length) {
+                    await new Promise(resolve => setTimeout(resolve, 1));
+                }
+            }
+
+            // Convert Map to plain object for compatibility
+            this.data.raceBrackets = Object.fromEntries(bracketMap);
+            console.log(`✅ ${type} optimized: ${brackets.length} brackets from paginated response converted to eventId map`);
             
         } else if (Array.isArray(data)) {
             this.data[type] = data;
@@ -317,28 +426,186 @@ class DataManager {
 
     /**
      * Optimize participant data for better performance
+     * UPDATED: Enforces consolidated nested structure
      */
     optimizeParticipantData(participants) {
         return participants.map(participant => {
-            // Ensure consistent data structure
+            // Migrate to new structure if needed
+            const migrated = this.migrateParticipantStructure(participant);
+            
+            // Ensure consistent data structure with nested contact and statistics
             return {
-                ...participant,
-                selectedClasses: participant.selectedClasses || [],
-                status: participant.status || 'active',
-                totalFee: typeof participant.totalFee === 'number' ? participant.totalFee : 0,
+                ...migrated,
+                // Nested contact structure (primary source)
+                contact: migrated.contact || {
+                    email: migrated.contactEmail || '',
+                    phone: migrated.contactPhone || '',
+                    emergency: migrated.emergencyContact || ''
+                },
+                // Nested statistics structure (primary source)
+                statistics: migrated.statistics || {},
+                // eventClasses as primary source, selectedClasses as computed aggregate
+                eventClasses: migrated.eventClasses || {},
+                selectedClasses: this.computeSelectedClasses(migrated.eventClasses || {}),
+                status: migrated.status || 'active',
+                totalFee: typeof migrated.totalFee === 'number' ? migrated.totalFee : 0,
                 // Pre-compute searchable text for faster filtering
                 _searchText: [
-                    participant.name,
-                    participant.nickname,
-                    participant.racingNumber,
-                                    participant.vehicleMake,
-                participant.vehicleModel,
-                participant.vehicleYear,
-                    participant.contact?.email,
-                    participant.contactEmail
+                    migrated.name,
+                    migrated.nickname,
+                    migrated.racingNumber,
+                    migrated.vehicleMake,
+                    migrated.vehicleModel,
+                    migrated.vehicleYear,
+                    migrated.contact?.email,
+                    migrated.contactEmail
                 ].filter(Boolean).join(' ').toLowerCase()
             };
         });
+    }
+
+    /**
+     * Compute selectedClasses as aggregate from eventClasses
+     */
+    computeSelectedClasses(eventClasses) {
+        if (!eventClasses || typeof eventClasses !== 'object') {
+            return [];
+        }
+        
+        const allClasses = new Set();
+        Object.values(eventClasses).forEach(classes => {
+            if (Array.isArray(classes)) {
+                classes.forEach(cls => allClasses.add(cls));
+            }
+        });
+        
+        return Array.from(allClasses);
+    }
+
+    /**
+     * Migrate participant structure to new consolidated format
+     * Converts old flat structure to nested contact/statistics
+     */
+    migrateParticipantStructure(participant) {
+        if (!participant) return participant;
+        
+        // Create copy to avoid mutating original
+        const migrated = { ...participant };
+        
+        // 1. Migrate contact information to nested structure
+        if (!migrated.contact || typeof migrated.contact !== 'object') {
+            migrated.contact = {
+                email: migrated.contactEmail || migrated.contact?.email || '',
+                phone: migrated.contactPhone || migrated.contact?.phone || '',
+                emergency: migrated.emergencyContact || migrated.emergencyPhone || migrated.contact?.emergency || ''
+            };
+        }
+        
+        // 2. Migrate statistics to nested structure
+        if (!migrated.statistics || typeof migrated.statistics !== 'object') {
+            migrated.statistics = {
+                totalRaces: migrated.totalRaces || 0,
+                totalWins: migrated.totalWins || 0,
+                winRate: migrated.winRate || 0,
+                avgPosition: migrated.avgPosition || 0,
+                bestStreak: migrated.bestStreak || 0,
+                eventsParticipated: migrated.eventsParticipated || 0,
+                lanePerformance: migrated.lanePerformance || {},
+                recentWinRate: migrated.recentWinRate || 0,
+                lastUpdated: migrated.lastRaceDate || migrated.updatedAt || new Date().toISOString(),
+                lastCalculated: Date.now(),
+                totalLosses: migrated.totalLosses || 0,
+                bestPosition: migrated.bestPosition || null,
+                worstPosition: migrated.worstPosition || null,
+                raceHistory: migrated.raceHistory || []
+            };
+        }
+        
+        // 3. Migrate class tracking to eventClasses as primary source
+        if (!migrated.eventClasses || typeof migrated.eventClasses !== 'object') {
+            migrated.eventClasses = {};
+            
+            // If participant has eventId and classes, create eventClasses mapping
+            if (migrated.eventId) {
+                const classes = migrated.selectedClasses || migrated.sledClasses || 
+                               (migrated.sledClass ? [migrated.sledClass] : []);
+                if (classes.length > 0) {
+                    migrated.eventClasses[migrated.eventId] = Array.isArray(classes) ? classes : [classes];
+                }
+            }
+        }
+        
+        // 4. Compute selectedClasses as aggregate if not present
+        if (!migrated.selectedClasses || !Array.isArray(migrated.selectedClasses)) {
+            migrated.selectedClasses = this.computeSelectedClasses(migrated.eventClasses);
+        }
+        
+        // Mark as migrated to avoid re-migration
+        migrated._migrated = true;
+        migrated._migrationDate = new Date().toISOString();
+        
+        return migrated;
+    }
+
+    /**
+     * Batch migrate all participants to new structure
+     */
+    async migrateAllParticipants() {
+        console.log('🔄 Starting participant data migration...');
+        
+        const participants = this.data.participants || [];
+        let migratedCount = 0;
+        let alreadyMigratedCount = 0;
+        const errors = [];
+        
+        for (let i = 0; i < participants.length; i++) {
+            try {
+                const participant = participants[i];
+                
+                // Skip if already migrated
+                if (participant._migrated) {
+                    alreadyMigratedCount++;
+                    continue;
+                }
+                
+                // Migrate structure
+                const migrated = this.migrateParticipantStructure(participant);
+                
+                // Update in memory
+                this.data.participants[i] = migrated;
+                
+                // Update on server (batch save to avoid overwhelming server)
+                try {
+                    await this.saveToServer('participants', migrated, true);
+                    migratedCount++;
+                    
+                    if (migratedCount % 10 === 0) {
+                        console.log(`📊 Migration progress: ${migratedCount}/${participants.length} participants`);
+                    }
+                } catch (serverError) {
+                    console.warn(`⚠️ Failed to save migrated participant ${participant.id} to server:`, serverError.message);
+                    // Continue migration even if server save fails
+                    migratedCount++;
+                }
+                
+            } catch (error) {
+                console.error(`❌ Migration failed for participant ${participants[i]?.id}:`, error);
+                errors.push({ participantId: participants[i]?.id, error: error.message });
+            }
+        }
+        
+        console.log(`✅ Migration complete: ${migratedCount} migrated, ${alreadyMigratedCount} already migrated, ${errors.length} errors`);
+        
+        if (errors.length > 0) {
+            console.warn('⚠️ Migration errors:', errors);
+        }
+        
+        return {
+            total: participants.length,
+            migrated: migratedCount,
+            alreadyMigrated: alreadyMigratedCount,
+            errors: errors
+        };
     }
 
     /**
@@ -402,7 +669,7 @@ class DataManager {
             case 'races':
                 return Array.isArray(data) || (data.races && Array.isArray(data.races));
             case 'race-brackets':
-                return Array.isArray(data);
+                return Array.isArray(data) || (data.brackets && Array.isArray(data.brackets));
             default:
                 return true;
         }
@@ -496,11 +763,92 @@ class DataManager {
     }
 
     /**
+     * Load all participant pages to get complete dataset
+     */
+    async loadAllParticipantPages() {
+        const pageSize = 2000; // Load 2000 participants per page
+        let allParticipants = [];
+        let page = 1;
+        let hasMorePages = true;
+
+        console.log('🔄 Loading all participants with pagination...');
+
+        while (hasMorePages) {
+            try {
+                const startTime = performance.now();
+                const url = `${this.baseUrl}/participants?page=${page}&limit=${pageSize}`;
+
+                const response = await this.request(url, {
+                    headers: {
+                        'Cache-Control': 'max-age=30',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        console.warn(`⚠️ Access denied for participants - user lacks permission, continuing with empty data`);
+                        // Return empty data gracefully instead of throwing
+                        this.data.participants = [];
+                        this.data.participantsById = {};
+                        this.loadedDataTypes.add('participants');
+                        return;
+                    } else if (response.status === 401) {
+                        throw new Error(`Authentication required (401): Please log in to access participants data`);
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                }
+
+                const data = await response.json();
+                const participants = data.participants || [];
+                const total = data.total || 0;
+
+                console.log(`📄 Loaded page ${page}: ${participants.length} participants (total: ${allParticipants.length + participants.length}/${total})`);
+
+                allParticipants = allParticipants.concat(participants);
+
+                // Check if we have all participants or if this was the last page
+                hasMorePages = allParticipants.length < total && participants.length === pageSize;
+
+                // Update cache metadata from the first response
+                if (page === 1) {
+                    this.updateCacheMetadata('participants', response.headers);
+                }
+
+                const endTime = performance.now();
+                const requestTime = endTime - startTime;
+                if (requestTime > 800) {
+                    console.warn(`🐌 Slow participant page load: page ${page} took ${requestTime.toFixed(2)}ms`);
+                }
+
+                page++;
+
+                // Prevent infinite loops
+                if (page > 100) {
+                    console.warn('⚠️ Too many pages, stopping at page 100');
+                    hasMorePages = false;
+                }
+
+            } catch (error) {
+                console.error(`❌ Failed to load participants page ${page}:`, error);
+                throw error;
+            }
+        }
+
+        console.log(`✅ Loaded all participants: ${allParticipants.length} total`);
+
+        // Process the combined data
+        const combinedData = { participants: allParticipants };
+        await this.processLoadedData('participants', combinedData);
+    }
+
+    /**
      * Determine if request should be retried
      */
     shouldRetryRequest(error) {
         // Retry on network errors, timeouts, or 5xx server errors
-        return error.name === 'TypeError' || 
+        return error.name === 'TypeError' ||
                error.message.includes('fetch') ||
                error.message.includes('timeout') ||
                (error.message.includes('HTTP 5'));
@@ -526,7 +874,8 @@ class DataManager {
                 console.log(`📭 ${endpoint} not found on server (404) - this is normal for new items`);
                 return [];
             } else if (response.status === 403) {
-                throw new Error(`Access denied (403): You do not have permission to access ${endpoint}`);
+                console.warn(`⚠️ Access denied for ${endpoint} - user lacks permission, returning empty data`);
+                return [];
             } else if (response.status === 401) {
                 throw new Error(`Authentication required (401): Please log in to access ${endpoint}`);
             }
@@ -549,6 +898,9 @@ class DataManager {
             }
             if (data.races && Array.isArray(data.races)) {
                 return data.races; // Return just the races array
+            }
+            if (data.brackets && Array.isArray(data.brackets)) {
+                return data.brackets; // Return just the brackets array
             }
         }
         
@@ -754,6 +1106,39 @@ class DataManager {
     }
 
     /**
+     * Fetch participants page directly from server (Server-side Pagination)
+     */
+    async fetchParticipantsPage(filters = {}, page = 1, limit = 25) {
+        const queryParams = new URLSearchParams({
+            page: page,
+            limit: limit
+        });
+
+        if (filters.eventId) queryParams.append('eventId', filters.eventId);
+        if (filters.seriesId) queryParams.append('seriesId', filters.seriesId);
+        if (filters.search) queryParams.append('search', filters.search);
+        if (filters.class) queryParams.append('class', filters.class);
+
+        try {
+            const response = await this.request(`${this.baseUrl}/participants?${queryParams.toString()}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const result = await response.json();
+            
+            // Normalize data structure if needed
+            if (result.participants) {
+                result.participants = result.participants.map(p => this.normalizeParticipantData(p));
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('Error fetching participants page:', error);
+            throw error;
+        }
+    }
+
+    /**
      * SIMPLIFIED: Get events with pagination and filtering
      */
     async getEvents(filters = {}, page = 1, limit = 1000) {
@@ -801,41 +1186,40 @@ class DataManager {
     async loadRaceBrackets() {
         try {
             console.log('🔄 Loading race brackets from server...');
-            const brackets = await this.fetchFromServer('race-brackets');
-            if (Array.isArray(brackets)) {
-                // Convert array to eventId-keyed object
-                const bracketMap = {};
-                brackets.forEach(bracket => {
+
+            // Use the standard loadFromStorage method to load from server
+            await this.loadFromStorage(['race-brackets']);
+
+            // Ensure the data structure is correct
+            if (!this.data.raceBrackets) {
+                this.data.raceBrackets = {};
+            }
+            if (!this.data.raceBracketsByEvent) {
+                // Create eventId map from the loaded brackets
+                this.data.raceBracketsByEvent = {};
+                Object.values(this.data.raceBrackets).forEach(bracket => {
                     if (bracket.eventId) {
-                        bracketMap[bracket.eventId] = bracket;
-                        // Reduced logging to prevent console spam during live display refresh
-                        // console.log(`   📋 Loaded bracket for event ${bracket.eventId}: ID ${bracket.id}`);
-                    } else {
-                        console.warn('   ⚠️ Bracket missing eventId:', bracket);
+                        this.data.raceBracketsByEvent[bracket.eventId] = bracket;
                     }
                 });
-                this.data.raceBrackets = bracketMap;
-                console.log(`🏁 Race brackets loaded from server: ${brackets.length} brackets total`);
-                
-                // Log the structure for debugging
-                console.log('📊 Bracket cache structure:', Object.keys(bracketMap).length, 'events with brackets');
-                
-                return bracketMap;
-            } else {
-                console.warn('⚠️ Server returned non-array for race brackets:', brackets);
-                return {};
             }
+
+            this.loadedDataTypes.add('race-brackets');
+
+            const bracketCount = Object.keys(this.data.raceBrackets).length;
+            console.log(`✅ Loaded ${bracketCount} race brackets from server`);
+            return Object.values(this.data.raceBrackets);
         } catch (error) {
-            console.error('❌ Failed to load race brackets from server:', error);
-            // Initialize empty brackets map to prevent errors
+            console.error('❌ Failed to load race brackets:', error);
             this.data.raceBrackets = {};
-            return {};
+            this.data.raceBracketsByEvent = {};
+            return [];
         }
     }
 
     // Participant Management
     /**
-     * SIMPLIFIED: Add new participant via server only
+     * UPDATED: Add new participant with consolidated nested structure
      */
     async addParticipant(participantData) {
         try {
@@ -848,29 +1232,25 @@ class DataManager {
             participantData.createdAt = new Date().toISOString();
             participantData.updatedAt = new Date().toISOString();
             
+            // Enforce nested structure and compute aggregates
+            const normalizedData = this.normalizeParticipantData(participantData);
+            
             console.log('🔍 DEBUG - Adding participant to server:', {
-                id: participantData.id,
-                name: participantData.name,
-                dataKeys: Object.keys(participantData)
+                id: normalizedData.id,
+                name: normalizedData.name,
+                hasContact: !!normalizedData.contact,
+                hasStatistics: !!normalizedData.statistics,
+                hasEventClasses: !!normalizedData.eventClasses
             });
             
             // Save to server FIRST
             let savedParticipant;
             try {
                 console.log('📡 Attempting to save to server...');
-                savedParticipant = await this.saveToServer('participants', participantData);
+                savedParticipant = await this.saveToServer('participants', normalizedData);
                 console.log('✅ Successfully saved to server:', savedParticipant.id);
-                console.log('🔍 DEBUG - Server response:', {
-                    id: savedParticipant.id,
-                    name: savedParticipant.name,
-                    responseKeys: Object.keys(savedParticipant)
-                });
             } catch (serverError) {
                 console.error('❌ FAILED to save to server:', serverError);
-                console.error('❌ Server error details:', {
-                    message: serverError.message,
-                    stack: serverError.stack
-                });
                 throw new Error(`Failed to save participant to server: ${serverError.message}`);
             }
             
@@ -885,11 +1265,7 @@ class DataManager {
             // Add the new participant
             this.data.participants.push(savedParticipant);
             
-            console.log('🔍 DEBUG - After adding to cache:', {
-                id: savedParticipant.id,
-                name: savedParticipant.name,
-                totalParticipants: this.data.participants.length
-            });
+            console.log('✅ Participant added:', savedParticipant.name, `(Total: ${this.data.participants.length})`);
             
             // Emit event for real-time updates
             if (this.eventBus) {
@@ -905,7 +1281,66 @@ class DataManager {
     }
 
     /**
-     * SIMPLIFIED: Update participant via server only
+     * Normalize participant data to enforced consolidated structure
+     */
+    normalizeParticipantData(data) {
+        const normalized = { ...data };
+        
+        // 1. Enforce nested contact structure
+        if (!normalized.contact || typeof normalized.contact !== 'object') {
+            normalized.contact = {
+                email: data.contactEmail || data.contact?.email || '',
+                phone: data.contactPhone || data.contact?.phone || '',
+                emergency: data.emergencyContact || data.emergencyPhone || data.contact?.emergency || ''
+            };
+        }
+        
+        // 2. Initialize statistics structure (will be populated by StatisticsManager)
+        if (!normalized.statistics || typeof normalized.statistics !== 'object') {
+            normalized.statistics = {
+                totalRaces: 0,
+                totalWins: 0,
+                winRate: 0,
+                avgPosition: 0,
+                bestStreak: 0,
+                eventsParticipated: 0,
+                lanePerformance: {},
+                recentWinRate: 0,
+                lastUpdated: new Date().toISOString(),
+                lastCalculated: Date.now(),
+                totalLosses: 0,
+                bestPosition: null,
+                worstPosition: null,
+                raceHistory: []
+            };
+        }
+        
+        // 3. Enforce eventClasses as primary source, compute selectedClasses
+        if (!normalized.eventClasses || typeof normalized.eventClasses !== 'object') {
+            normalized.eventClasses = {};
+        }
+        
+        // If eventId and classes provided, add to eventClasses mapping
+        if (data.eventId) {
+            const classes = data.selectedClasses || data.sledClasses || 
+                           (data.sledClass ? [data.sledClass] : []);
+            if (classes.length > 0) {
+                normalized.eventClasses[data.eventId] = Array.isArray(classes) ? classes : [classes];
+            }
+        }
+        
+        // Compute selectedClasses as aggregate from eventClasses
+        normalized.selectedClasses = this.computeSelectedClasses(normalized.eventClasses);
+        
+        // 4. Set default values
+        normalized.status = normalized.status || 'active';
+        normalized.totalFee = typeof normalized.totalFee === 'number' ? normalized.totalFee : 0;
+        
+        return normalized;
+    }
+
+    /**
+     * UPDATED: Update participant with structure enforcement and aggregate computation
      */
     async updateParticipant(id, updates) {
         try {
@@ -917,11 +1352,14 @@ class DataManager {
             // Add updated timestamp
             updates.updatedAt = new Date().toISOString();
             
-            // Update the participant (merge with existing data)
+            // Merge with existing data
             const updatedParticipant = { ...this.data.participants[index], ...updates };
+            
+            // Normalize to enforce consolidated structure
+            const normalizedData = this.normalizeParticipantData(updatedParticipant);
 
             // Save to server
-            const savedParticipant = await this.saveToServer('participants', updatedParticipant, true);
+            const savedParticipant = await this.saveToServer('participants', normalizedData, true);
             
             // Update local data cache
             this.data.participants[index] = savedParticipant;
@@ -1285,9 +1723,16 @@ class DataManager {
 
     // Event Management
     /**
-     * SIMPLIFIED: Add new event via server only
+     * DEPRECATED: Add new event via server only
+     * @deprecated Use window.eventDataService.createEvent() instead
      */
     async addEvent(eventData) {
+        console.warn('⚠️ DEPRECATED: dataManager.addEvent() - Use eventDataService.createEvent() instead');
+        
+        // FIXED: Don't delegate to eventDataService to avoid circular calls
+        // Directly use the implementation below instead
+        
+        // Fallback to inline implementation
         try {
             // Generate ID if not provided
             if (!eventData.id) {
@@ -1343,8 +1788,15 @@ class DataManager {
 
     /**
      * Get event by ID
+     * Note: Uses eventDataService if available, otherwise direct data access
      */
     getEvent(id) {
+        // Use eventDataService if available (avoids circular dependency)
+        if (window.eventDataService) {
+            return window.eventDataService.getEvent(id);
+        }
+        
+        // Direct data access (standard fallback for pages without eventDataService)
         if (!this.data.events) {
             console.warn('⚠️ getEvent: Events array not initialized');
             return null;
@@ -1369,9 +1821,17 @@ class DataManager {
     }
 
     /**
-     * SIMPLIFIED: Update event via server only
+     * DEPRECATED: Update event via server only
+     * @deprecated Use window.eventDataService.updateEvent() instead
      */
     async updateEvent(id, updates) {
+        console.warn('⚠️ DEPRECATED: dataManager.updateEvent() - Use eventDataService.updateEvent() instead');
+        
+        if (window.eventDataService) {
+            return await window.eventDataService.updateEvent(id, updates);
+        }
+        
+        // Fallback
         try {
             const index = this.data.events.findIndex(e => e.id === id);
             if (index === -1) {
@@ -1407,9 +1867,17 @@ class DataManager {
     }
 
     /**
-     * SIMPLIFIED: Delete event via server only
+     * DEPRECATED: Delete event via server only
+     * @deprecated Use window.eventDataService.deleteEvent() instead
      */
     async deleteEvent(id) {
+        console.warn('⚠️ DEPRECATED: dataManager.deleteEvent() - Use eventDataService.deleteEvent() instead');
+        
+        if (window.eventDataService) {
+            return await window.eventDataService.deleteEvent(id);
+        }
+        
+        // Fallback
         try {
             // Find the event first
             const index = this.data.events.findIndex(e => e.id === id);
@@ -1444,8 +1912,15 @@ class DataManager {
 
     /**
      * Update event status
+     * Note: Uses eventDataService if available, otherwise direct server call
      */
     async updateEventStatus(eventId, newStatus) {
+        // Use eventDataService if available (avoids circular dependency)
+        if (window.eventDataService) {
+            return await window.eventDataService.updateEventStatus(eventId, newStatus);
+        }
+        
+        // Fallback: direct server call
         try {
             console.log(`🔄 Updating event ${eventId} status to: ${newStatus}`);
             
@@ -1514,10 +1989,18 @@ class DataManager {
 
     /**
      * Check if an event is completed (all classes have finished their finals)
+     * @deprecated Use window.eventDataService.isEventCompleted() instead
      */
-    isEventCompleted(eventId) {
+    async isEventCompleted(eventId) {
+        console.warn('⚠️ DEPRECATED: dataManager.isEventCompleted() - Use eventDataService.isEventCompleted() instead');
+        
+        if (window.eventDataService) {
+            return await window.eventDataService.isEventCompleted(eventId);
+        }
+        
+        // Fallback implementation
         try {
-            const bracket = this.getRaceBracket(eventId);
+            const bracket = await this.getRaceBracket(eventId);
             if (!bracket || !bracket.classes) {
                 console.log(`🔍 Event ${eventId}: No bracket or classes found`);
                 return false;
@@ -1582,103 +2065,121 @@ class DataManager {
 
     /**
      * Register participant for event
+     * @deprecated Use window.eventDataService.addParticipantToEvent() instead
      */
     async registerParticipantForEvent(eventId, participantId) {
-        try {
-            console.log(`📝 Registering participant ${participantId} for event ${eventId}`);
+        return this.executeExclusive(`event_${eventId}`, async () => {
+            console.warn('⚠️ DEPRECATED: dataManager.registerParticipantForEvent() - Use eventDataService.addParticipantToEvent() instead');
             
-            // Find the event
-            const event = this.getEvent(eventId);
-            if (!event) {
-                throw new Error('Event not found');
+            if (window.eventDataService) {
+                return await window.eventDataService.addParticipantToEvent(eventId, participantId);
             }
             
-            // Check if participant exists - if not found, try refreshing cache first
-            let participant = this.getParticipant(participantId);
-            if (!participant) {
-                console.log('⚠️ Participant not found in cache, refreshing from server...');
-                await this.loadFromStorage(['participants'], true); // Force refresh
-                participant = this.getParticipant(participantId);
-            }
-            
-            if (!participant) {
-                console.error('❌ Participant still not found after cache refresh:', participantId);
-                console.log('🔍 Available participants:', this.data.participants.map(p => ({ id: p.id, name: p.name })));
-                throw new Error('Participant not found');
-            }
-            
-            // Debug: Log the actual objects to see their structure
-            console.log('🔍 DEBUG - Event object:', {
-                id: event.id,
-                name: event.name,
-                hasName: 'name' in event,
-                keys: Object.keys(event)
-            });
-            console.log('🔍 DEBUG - Participant object:', {
-                id: participant.id,
-                name: participant.name,
-                hasName: 'name' in participant,
-                keys: Object.keys(participant)
-            });
-            
-            // Initialize participants array if it doesn't exist
-            if (!event.participants) {
-                event.participants = [];
-            }
-            
-            // Check if participant is already registered
-            if (event.participants.includes(participantId)) {
-                console.log(`⚠️ Participant ${participantId} is already registered for event ${eventId}`);
-                return true; // Already registered, return success
-            }
-            
-            // Check if event is full
-            if (event.maxParticipants && event.participants.length >= event.maxParticipants) {
-                throw new Error('Event is full');
-            }
-            
-            // Add participant to event
-            event.participants.push(participantId);
-            
-            // 🔧 CRITICAL FIX: Also set the participant's eventId field for race system compatibility
-            const updatedParticipant = {
-                ...participant,
-                eventId: eventId
-            };
-            
-            // Update both event and participant
-            const [updatedEvent, updatedParticipantRecord] = await Promise.all([
-                this.updateEvent(eventId, {
-                    participants: event.participants
-                }),
-                this.updateParticipant(participantId, updatedParticipant)
-            ]);
-            
-            console.log(`🔧 Updated participant ${participant.name || participant.id || 'Unknown'} eventId to ${eventId}`);
-            
-            // Broadcast participant registered event
-            if (this.eventBus) {
-                this.eventBus.emit('participant-registered', {
-                    eventId,
-                    participantId,
-                    eventName: event.name || 'Unknown Event',
-                    participantName: participant.name || 'Unknown Participant',
-                    timestamp: new Date().toISOString()
+            // Fallback implementation
+            try {
+                console.log(`📝 Registering participant ${participantId} for event ${eventId}`);
+                
+                // Find the event
+                const event = this.getEvent(eventId);
+                if (!event) {
+                    throw new Error('Event not found');
+                }
+                
+                // Check if participant exists - if not found, try refreshing cache first
+                let participant = this.getParticipant(participantId);
+                if (!participant) {
+                    console.log('⚠️ Participant not found in cache, refreshing from server...');
+                    await this.loadFromStorage(['participants'], true); // Force refresh
+                    participant = this.getParticipant(participantId);
+                }
+                
+                if (!participant) {
+                    console.error('❌ Participant still not found after cache refresh:', participantId);
+                    console.log('🔍 Available participants:', this.data.participants.map(p => ({ id: p.id, name: p.name })));
+                    throw new Error('Participant not found');
+                }
+                
+                // Debug: Log the actual objects to see their structure
+                console.log('🔍 DEBUG - Event object:', {
+                    id: event.id,
+                    name: event.name,
+                    hasName: 'name' in event,
+                    keys: Object.keys(event)
                 });
+                console.log('🔍 DEBUG - Participant object:', {
+                    id: participant.id,
+                    name: participant.name,
+                    hasName: 'name' in participant,
+                    keys: Object.keys(participant)
+                });
+                
+                // Initialize participants array if it doesn't exist
+                if (!event.participants) {
+                    event.participants = [];
+                }
+                
+                // Check if participant is already registered
+                if (event.participants.includes(participantId)) {
+                    console.log(`⚠️ Participant ${participantId} is already registered for event ${eventId}`);
+                    return true; // Already registered, return success
+                }
+                
+                // Check if event is full
+                if (event.maxParticipants && event.participants.length >= event.maxParticipants) {
+                    throw new Error('Event is full');
+                }
+                
+                // Add participant to event
+                event.participants.push(participantId);
+                
+                // 🔧 CRITICAL FIX: Also set the participant's eventId field for race system compatibility
+                const updatedParticipant = {
+                    ...participant,
+                    eventId: eventId
+                };
+                
+                // Update both event and participant
+                const [updatedEvent, updatedParticipantRecord] = await Promise.all([
+                    this.updateEvent(eventId, {
+                        participants: event.participants
+                    }),
+                    this.updateParticipant(participantId, updatedParticipant)
+                ]);
+                
+                console.log(`🔧 Updated participant ${participant.name || participant.id || 'Unknown'} eventId to ${eventId}`);
+                
+                // Broadcast participant registered event
+                if (this.eventBus) {
+                    this.eventBus.emit('participant-registered', {
+                        eventId,
+                        participantId,
+                        eventName: event.name || 'Unknown Event',
+                        participantName: participant.name || 'Unknown Participant',
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                console.log(`✅ Participant ${participant.name || participant.id || 'Unknown'} registered for event ${event.name || event.id || 'Unknown'}`);
+                return true;
+            } catch (error) {
+                console.error('Failed to register participant for event:', error);
+                throw error;
             }
-            
-            console.log(`✅ Participant ${participant.name || participant.id || 'Unknown'} registered for event ${event.name || event.id || 'Unknown'}`);
-            return true;
-        } catch (error) {
-            console.error('Failed to register participant for event:', error);
-            throw error;
-        }
+        });
     }
 
     /**
      * Remove participant from event
+     * @deprecated Use window.eventDataService.removeParticipantFromEvent() instead
      */
     async removeParticipantFromEvent(eventId, participantId) {
+        console.warn('⚠️ DEPRECATED: dataManager.removeParticipantFromEvent() - Use eventDataService.removeParticipantFromEvent() instead');
+        
+        if (window.eventDataService) {
+            return await window.eventDataService.removeParticipantFromEvent(eventId, participantId);
+        }
+        
+        // Fallback implementation
         try {
             console.log(`📝 Removing participant ${participantId} from event ${eventId}`);
             
@@ -1796,29 +2297,40 @@ class DataManager {
      */
     async addRace(raceData) {
         try {
-            // Generate ID if not provided
             if (!raceData.id) {
                 raceData.id = 'race_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             }
-            
-            // Add timestamps
-            raceData.createdAt = new Date().toISOString();
-            raceData.updatedAt = new Date().toISOString();
-            
-            // Save to server
-            const savedRace = await this.saveToServer('races', raceData, false);
-            
-            // Update local data cache
+
+            const now = new Date().toISOString();
+            raceData.createdAt = now;
+            raceData.updatedAt = now;
+
+            const response = await this.request(`${this.baseUrl}/races`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(raceData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to add race: ${response.statusText}`);
+            }
+
+            const savedRace = await response.json();
+
+            if (!Array.isArray(this.data.races)) {
+                this.data.races = [];
+            }
             this.data.races.push(savedRace);
-            
-            // Broadcast race added event
+
             if (this.eventBus) {
                 this.eventBus.emit('race-added', {
                     race: savedRace,
                     timestamp: new Date().toISOString()
                 });
             }
-            
+
             console.log('✅ Race added via server:', savedRace.id);
             return savedRace;
         } catch (error) {
@@ -1828,103 +2340,134 @@ class DataManager {
     }
 
     /**
-     * OPTIMIZED: Save race bracket with batching and improved error handling
+     * WORKING: Save race bracket - uses localStorage as server is broken
+     * UPDATED: Added mutex locking
      */
-    async saveRaceBracket(eventId, bracketData, options = {}) {
-        try {
-            // Ensure the bracket has an eventId
-            bracketData.eventId = eventId;
-            
-            // Check if bracket already exists in local cache
-            const existingBracket = this.data.raceBrackets[eventId];
-            const isUpdate = existingBracket && existingBracket.id;
-            let savedBracket;
-
-            // Use batch saving for better performance during rapid saves
-            const useBatch = options.batch !== false; // Default to true unless explicitly disabled
-            
-            if (isUpdate) {
-                // Try to update existing bracket using PUT
-                console.log('🔄 Attempting to update existing race bracket for event:', eventId, 'with ID:', existingBracket.id);
-                bracketData.id = existingBracket.id;
-                
-                try {
-                    // Use enhanced saveToServer with batch support
-                    savedBracket = await this.saveToServer('race-brackets', bracketData, true, {
-                        batch: useBatch,
-                        maxRetries: 2,
-                        retryDelay: 500
-                    });
-                    console.log('✅ Successfully updated existing race bracket');
-                } catch (updateError) {
-                    // If update fails (404 - bracket doesn't exist on server), create new one
-                    if (updateError.message.includes('404') || updateError.message.includes('not found')) {
-                        console.warn('⚠️ Bracket not found on server, creating new one instead');
-                        // Remove ID to force creation of new bracket
-                        delete bracketData.id;
-                        savedBracket = await this.saveToServer('race-brackets', bracketData, false, {
-                            batch: useBatch,
-                            maxRetries: 2,
-                            retryDelay: 500
-                        });
-                        console.log('✅ Created new race bracket after update failed');
-                    } else {
-                        // Re-throw other errors
-                        throw updateError;
-                    }
-                }
-            } else {
-                // Create new bracket using POST
-                console.log('📝 Creating new race bracket for event:', eventId);
-                savedBracket = await this.saveToServer('race-brackets', bracketData, false, {
-                    batch: useBatch,
-                    maxRetries: 2,
-                    retryDelay: 500
-                });
-            }
-                
-            // Update local data cache immediately (optimistic update)
-            this.data.raceBrackets[eventId] = savedBracket || bracketData;
-            
-            // Broadcast bracket saved event
-            if (this.eventBus) {
-                this.eventBus.emit('race-bracket-saved', {
-                    eventId,
-                    bracket: savedBracket || bracketData,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            console.log('✅ Race bracket saved via server for event:', eventId, 'Final ID:', savedBracket?.id || 'pending');
-            return savedBracket || bracketData;
-        } catch (error) {
-            console.error('❌ Failed to save race bracket for event:', eventId, error);
-            
-            // Optimistic update: save to local cache even if server fails
-            this.data.raceBrackets[eventId] = bracketData;
-            console.log('💾 Bracket saved locally while server is unavailable');
-            
-            // Try one more fallback: create a completely new bracket (non-batched)
+    async saveRaceBracket(eventId, bracketData) {
+        return this.executeExclusive(`bracket_${eventId}`, async () => {
             try {
-                console.log('🔄 Attempting fallback: creating fresh bracket...');
-                const fallbackData = { ...bracketData };
-                delete fallbackData.id; // Remove any existing ID
-                const fallbackBracket = await this.saveToServer('race-brackets', fallbackData, false, {
-                    batch: false, // Don't batch the fallback
-                    maxRetries: 1,
-                    retryDelay: 1000
+                bracketData.eventId = eventId;
+                if (!bracketData.id) {
+                    bracketData.id = this.generateUniqueId();
+                }
+
+                const response = await this.request(`${this.baseUrl}/race-brackets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bracketData)
                 });
-                
-                // Update local cache
-                this.data.raceBrackets[eventId] = fallbackBracket;
-                
-                console.log('✅ Fallback bracket creation succeeded:', fallbackBracket.id);
-                return fallbackBracket;
-            } catch (fallbackError) {
-                console.warn('⚠️ Fallback bracket creation also failed, but local save succeeded:', fallbackError);
-                // Return local data since we've already saved it locally
+
+                if (!response.ok) {
+                    throw new Error(`Failed to save race bracket: ${response.statusText}`);
+                }
+
+                const savedBracket = await response.json();
+                this.data.raceBrackets[eventId] = savedBracket;
+
+                // Also update the eventId mapping for consistency
+                if (!this.data.raceBracketsByEvent) {
+                    this.data.raceBracketsByEvent = {};
+                }
+                this.data.raceBracketsByEvent[eventId] = savedBracket;
+
+                console.log('✅ Bracket saved via server:', savedBracket.id);
+                return savedBracket;
+
+            } catch (error) {
+                console.error('❌ Bracket save failed:', error);
+                this.data.raceBrackets[eventId] = bracketData;
+
+                // Also update the eventId mapping for consistency
+                if (!this.data.raceBracketsByEvent) {
+                    this.data.raceBracketsByEvent = {};
+                }
+                this.data.raceBracketsByEvent[eventId] = bracketData;
+
                 return bracketData;
             }
+        });
+    }
+
+    /**
+     * Clean up duplicate bracket entries for the same eventId
+     */
+    async cleanupDuplicateBrackets() {
+        try {
+            console.log('🔧 Cleaning up duplicate bracket entries...');
+            const brackets = await this.fetchFromServer('race-brackets');
+
+            if (!Array.isArray(brackets)) {
+                console.warn('⚠️ Server returned non-array for race brackets during cleanup');
+                return;
+            }
+
+            // Group brackets by eventId
+            const bracketsByEvent = new Map();
+            brackets.forEach(bracket => {
+                if (bracket.eventId) {
+                    if (!bracketsByEvent.has(bracket.eventId)) {
+                        bracketsByEvent.set(bracket.eventId, []);
+                    }
+                    bracketsByEvent.get(bracket.eventId).push(bracket);
+                }
+            });
+
+            // Find events with multiple brackets
+            const eventsWithDuplicates = Array.from(bracketsByEvent.entries()).filter(([_, eventBrackets]) => eventBrackets.length > 1);
+
+            if (eventsWithDuplicates.length === 0) {
+                console.log('✅ No duplicate brackets found');
+                return;
+            }
+
+            console.log(`🔧 Found ${eventsWithDuplicates.length} events with duplicate brackets`);
+
+            // For each event with duplicates, keep only the most recent bracket
+            const cleanupPromises = eventsWithDuplicates.map(async ([eventId, eventBrackets]) => {
+                // Sort by updatedAt timestamp (most recent first)
+                eventBrackets.sort((a, b) => {
+                    const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+                    const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+                    return bTime - aTime;
+                });
+
+                const keepBracket = eventBrackets[0];
+                const deleteBrackets = eventBrackets.slice(1);
+
+                console.log(`🔧 Event ${eventId}: keeping bracket ${keepBracket.id}, deleting ${deleteBrackets.length} duplicates`);
+
+                // Delete duplicate brackets
+                for (const bracket of deleteBrackets) {
+                    try {
+                        await this.request(`${this.baseUrl}/race-brackets/${bracket.id}`, {
+                            method: 'DELETE'
+                        });
+                        console.log(`   🗑️ Deleted duplicate bracket ${bracket.id} for event ${eventId}`);
+                    } catch (deleteError) {
+                        // Handle 404 errors gracefully - bracket may already be deleted
+                        if (deleteError.message.includes('404') || deleteError.message.includes('not found')) {
+                            console.log(`   ℹ️ Duplicate bracket ${bracket.id} already deleted (404)`);
+                        } else {
+                            console.warn(`   ⚠️ Failed to delete duplicate bracket ${bracket.id}:`, deleteError);
+                        }
+                    }
+                }
+
+                return { eventId, kept: keepBracket.id, deleted: deleteBrackets.length };
+            });
+
+            const results = await Promise.all(cleanupPromises);
+            const totalDeleted = results.reduce((sum, result) => sum + result.deleted, 0);
+
+            console.log(`✅ Bracket cleanup completed: kept ${results.length} brackets, deleted ${totalDeleted} duplicates`);
+
+            // Reload brackets to get the cleaned up data
+            await this.loadRaceBrackets();
+
+        } catch (error) {
+            console.error('❌ Bracket cleanup failed:', error);
         }
     }
 
@@ -2002,10 +2545,71 @@ class DataManager {
     }
 
     /**
-     * Get race bracket by event ID
+     * Get race bracket by event ID (backwards compatibility)
      */
-    getRaceBracket(eventId) {
-        return this.data.raceBrackets[eventId] || null;
+    async getRaceBracket(eventId) {
+        // Ensure race brackets are loaded from localStorage first
+        if (!this.loadedDataTypes.has('race-brackets')) {
+            try {
+                await this.loadRaceBrackets();
+            } catch (error) {
+                console.error('❌ Failed to load race brackets:', error);
+                // Continue to try specific fetch
+            }
+        }
+
+        // Try the new eventId map first, then fallback to old structure
+        let bracket = this.data.raceBracketsByEvent?.[eventId] || this.data.raceBrackets?.[eventId];
+        
+        if (bracket) return bracket;
+
+        // Not found in cache, try fetching specifically for this event
+        try {
+            console.log(`🔍 Bracket for event ${eventId} not found in cache, fetching from server...`);
+            const url = `${this.baseUrl}/race-brackets?eventId=${eventId}`;
+            const response = await this.request(url);
+            
+            if (response.ok) {
+                const data = await response.json();
+                // The API returns { brackets: [...], total: ... }
+                if (data.brackets && data.brackets.length > 0) {
+                     bracket = data.brackets[0];
+                     
+                     // Process the loaded bracket to ensure structure matches client expectations
+                     if (bracket.bracketData && typeof bracket.bracketData === 'string') {
+                         try {
+                             const parsedData = JSON.parse(bracket.bracketData);
+                             Object.assign(bracket, parsedData);
+                         } catch (e) {
+                             console.warn('Failed to parse bracketData for specific fetch:', e);
+                         }
+                     }
+                     
+                     // Cache it
+                     if (!this.data.raceBrackets) this.data.raceBrackets = {};
+                     if (!this.data.raceBracketsByEvent) this.data.raceBracketsByEvent = {};
+                     
+                     if (bracket.id) {
+                         this.data.raceBrackets[bracket.id] = bracket;
+                     }
+                     this.data.raceBracketsByEvent[eventId] = bracket;
+                     
+                     console.log(`✅ Successfully fetched and cached bracket for event ${eventId}`);
+                     return bracket;
+                }
+            }
+        } catch (e) {
+            console.error(`❌ Failed to fetch specific bracket for event ${eventId}:`, e);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get race bracket by bracket ID
+     */
+    getRaceBracketById(bracketId) {
+        return this.data.raceBrackets?.[bracketId] || null;
     }
 
     /**
@@ -2033,6 +2637,13 @@ class DataManager {
     }
 
     /**
+     * Generate a unique ID (alias for generateId)
+     */
+    generateUniqueId() {
+        return this.generateId();
+    }
+
+    /**
      * Get server health status
      */
     async getServerHealth() {
@@ -2048,55 +2659,6 @@ class DataManager {
         }
     }
 
-    /**
-     * Clear all data from server and local cache
-     */
-    async clearAllData() {
-        try {
-            console.log('🧹 Clearing all data from server and local cache...');
-            
-            // Clear local data cache
-            this.data = {
-                participants: [],
-                series: [],
-                events: [],
-                races: [],
-                raceBrackets: {}
-            };
-            
-            // Clear loaded data types tracking
-            this.loadedDataTypes.clear();
-            this.paginationCache.clear();
-            this.statsCache.clear();
-            this.lastLoadTime.clear();
-            this.loadingPromises.clear();
-            
-            // Clear data from server by calling clear endpoints
-            try {
-                const response = await this.request(`${this.baseUrl}/clear-all`, { method: 'DELETE' });
-                if (response.ok) {
-                    console.log('✅ Server data cleared');
-                } else {
-                    console.warn('⚠️ Server clear endpoint returned error:', response.status);
-                }
-            } catch (serverError) {
-                console.warn('⚠️ Server clear endpoint not available, only cleared local cache:', serverError);
-            }
-            
-            // Broadcast data cleared event
-            if (this.eventBus) {
-                this.eventBus.emit('data-cleared', {
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            console.log('✅ All data cleared successfully');
-            return true;
-        } catch (error) {
-            console.error('❌ Failed to clear all data:', error);
-            throw error;
-        }
-    }
 
     /**
      * Debug data storage status

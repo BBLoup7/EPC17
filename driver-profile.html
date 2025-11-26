@@ -5,376 +5,211 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Driver Profile (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <!-- Navigation is now handled by sidebar-nav.js -->
+    <!-- Navigation is handled by sidebar-nav.js -->
 
     <main class="main-content">
-        <!-- Performance Warning Banner -->
-        <div id="performance-warning" class="performance-warning" style="display: none;">
-            <div class="warning-content">
-                <span class="warning-icon">⚠️</span>
-                <span class="warning-text">
-                    <strong>Performance Notice:</strong> Large dataset detected. Loading may take longer than usual. 
-                    For optimal performance with datasets over 10,000 participants, please contact your software representative.
-                </span>
-                <button class="warning-close" onclick="dismissPerformanceWarning()">×</button>
-            </div>
-        </div>
-        
         <!-- Hero Section -->
         <div class="hero-section">
             <div class="hero-content">
                 <div class="hero-text">
                     <h1 class="hero-title">Driver Profiles</h1>
-                    <p class="hero-subtitle">Select a driver to view their racing history and performance statistics with professional insights</p>
+                    <p class="hero-subtitle">Comprehensive driver statistics, performance analysis, and race history</p>
                 </div>
                 <div class="hero-actions">
-                <div id="driverSelectContainer">
-                    <!-- Combo box will be populated by JavaScript -->
-                </div>
-                <button id="driverExportPdf" class="btn btn-secondary btn-sm" onclick="exportDriverProfile('pdf')" title="Export to PDF">
-                    <i class="fas fa-file-pdf"></i> PDF
-                </button>
-                <button id="driverExportPng" class="btn btn-secondary btn-sm" onclick="exportDriverProfile('png')" title="Export to PNG" style="margin-left: 8px;">
-                    <i class="fas fa-image"></i> PNG
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="refreshData()" title="Refresh All Data">
-                    <i class="fas fa-sync"></i>
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="refreshParticipantsData()" title="Refresh Participants">
-                    <i class="fas fa-users"></i>
-                </button>
-                <div class="utility-actions">
-                    <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
-                        <i class="fas fa-trash-alt"></i> Clear All Data
+                    <select id="driverSelector" class="form-control driver-selector" onchange="loadDriverProfile()">
+                        <option value="">-- Select a Driver --</option>
+                    </select>
+                    <button id="driverExportPdf" class="btn btn-secondary btn-sm" onclick="exportDriverProfile('pdf')" title="Export to PDF">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button id="driverExportPng" class="btn btn-secondary btn-sm" onclick="exportDriverProfile('png')" title="Export to PNG">
+                        <i class="fas fa-image"></i> PNG
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshDriverData()" title="Refresh Data">
+                        <i class="fas fa-sync"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Advanced Driver Filters -->
-        <div id="driverFilters" class="driver-filters" style="display: none;">
-            <div class="filters-header">
-                <div class="filters-title">
-                    <i class="fas fa-filter"></i>
-                    <span>Advanced Driver Filters</span>
-                </div>
-                <button class="btn btn-secondary btn-sm" onclick="clearAllFilters()">
-                    <i class="fas fa-times"></i> Clear All
-                </button>
-            </div>
-            
-            <div class="filters-grid">
-                <!-- Statistics Filters -->
-                <div class="filter-section">
-                    <h4>Performance Statistics</h4>
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label for="totalRacesMin">Total Races (Min):</label>
-                            <input type="number" id="totalRacesMin" class="form-control" min="0" placeholder="0">
-                        </div>
-                        <div class="filter-group">
-                            <label for="totalRacesMax">Total Races (Max):</label>
-                            <input type="number" id="totalRacesMax" class="form-control" min="0" placeholder="∞">
-                        </div>
-                    </div>
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label for="totalWinsMin">Total Wins (Min):</label>
-                            <input type="number" id="totalWinsMin" class="form-control" min="0" placeholder="0">
-                        </div>
-                        <div class="filter-group">
-                            <label for="totalWinsMax">Total Wins (Max):</label>
-                            <input type="number" id="totalWinsMax" class="form-control" min="0" placeholder="∞">
-                        </div>
-                    </div>
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label for="winRateMin">Win Rate % (Min):</label>
-                            <input type="number" id="winRateMin" class="form-control" min="0" max="100" placeholder="0">
-                        </div>
-                        <div class="filter-group">
-                            <label for="winRateMax">Win Rate % (Max):</label>
-                            <input type="number" id="winRateMax" class="form-control" min="0" max="100" placeholder="100">
-                        </div>
-                    </div>
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label for="winStreakMin">Win Streak (Min):</label>
-                            <input type="number" id="winStreakMin" class="form-control" min="0" placeholder="0">
-                        </div>
-                        <div class="filter-group">
-                            <label for="totalEventsMin">Total Events (Min):</label>
-                            <input type="number" id="totalEventsMin" class="form-control" min="0" placeholder="0">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Class and Series Filters -->
-                <div class="filter-section">
-                    <h4>Class & Series</h4>
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label for="classFilter">Sled Class:</label>
-                            <select id="classFilter" class="form-control">
-                                <option value="">All Classes</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="seriesFilter">Registered Series:</label>
-                            <select id="seriesFilter" class="form-control">
-                                <option value="">All Series</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Event Attendance Filters -->
-                <div class="filter-section">
-                    <h4>Event Attendance</h4>
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label for="eventAttendanceFilter">Attended Event:</label>
-                            <select id="eventAttendanceFilter" class="form-control">
-                                <option value="">Any Event</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="eventCountMin">Events Attended (Min):</label>
-                            <input type="number" id="eventCountMin" class="form-control" min="0" placeholder="0">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Team and Registration Filters -->
-                <div class="filter-section">
-                    <h4>Team & Registration</h4>
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label for="teamFilter">Team:</label>
-                            <select id="teamFilter" class="form-control">
-                                <option value="">All Teams</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="registrationDateFrom">Registered From:</label>
-                            <input type="date" id="registrationDateFrom" class="form-control">
-                        </div>
-                        <div class="filter-group">
-                            <label for="registrationDateTo">Registered To:</label>
-                            <input type="date" id="registrationDateTo" class="form-control">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="filters-actions">
-                <button class="btn btn-primary" onclick="applyFilters()">
-                    <i class="fas fa-search"></i> Apply Filters
-                </button>
-                <button class="btn btn-secondary" onclick="toggleFilters()">
-                    <i class="fas fa-chevron-up"></i> Hide Filters
-                </button>
-            </div>
-
-            <div id="filterSummary" class="filter-summary" style="display: none;">
-                <span id="filterSummaryText"></span>
-            </div>
+        <!-- Empty State (shown when no driver selected) -->
+        <div id="emptyState" class="empty-state">
+            <i class="fas fa-user-circle"></i>
+            <h2>Select a Driver to View Profile</h2>
+            <p>Choose a driver from the dropdown above to see their detailed statistics and performance analysis</p>
         </div>
 
-        <!-- Filter Toggle Button -->
-        <div class="filter-toggle-container">
-            <button id="filterToggleBtn" class="btn btn-secondary" onclick="toggleFilters()">
-                <i class="fas fa-filter"></i> Show Advanced Filters
-            </button>
-        </div>
-
-        <!-- Driver Selection Grid (shown when no driver selected) -->
-        <div id="driverGrid" class="driver-grid">
-            <!-- Driver cards will be populated here -->
-        </div>
-        
-        <!-- Skeleton loading -->
-        <div id="driverSkeleton" class="skeleton-loading" style="display: none;">
-            <!-- Skeleton cards will be populated by JavaScript -->
-        </div>
-        
-        <!-- Pagination -->
-        <div id="driverPagination"></div>
-
-        <!-- Driver Profile (shown when driver selected) -->
-        <div id="driverProfile" class="driver-profile" style="display: none;">
-            <!-- Driver Header -->
-            <div class="driver-header">
-                <div class="driver-avatar" id="driverAvatar"></div>
-                <div class="driver-info">
-                    <h2 id="driverName"></h2>
+        <!-- Driver Profile Content -->
+        <div id="driverProfileContent" style="display: none;">
+            <!-- Driver Header Card -->
+            <div class="driver-header-card">
+                <div class="driver-avatar-section">
+                    <div class="driver-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="driver-badges">
+                        <span class="badge badge-gold" id="topPerformerBadge" style="display: none;">
+                            <i class="fas fa-crown"></i> Top Performer
+                        </span>
+                    </div>
+                </div>
+                <div class="driver-info-section">
+                    <h2 id="driverName">Driver Name</h2>
                     <div class="driver-meta">
-                        <span id="driverClass"></span>
-                        <span id="driverTeam"></span>
-                        <span id="memberSince"></span>
+                        <span><i class="fas fa-flag-checkered"></i> <span id="driverTotalRaces">0</span> Races</span>
+                        <span><i class="fas fa-trophy"></i> <span id="driverTotalWins">0</span> Wins</span>
+                        <span><i class="fas fa-percent"></i> <span id="driverWinRate">0%</span> Win Rate</span>
                     </div>
-                </div>
-                <div class="driver-actions">
-                    <button class="btn btn-secondary" onclick="clearDriverSelection()">← Back to List</button>
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="event-filter">
-                <div class="filter-label">
-                    <i class="fas fa-filter"></i>
-                    <span>Filters:</span>
-                </div>
-                <div class="filter-row">
-                    <div class="filter-group">
-                        <label for="seriesFilter">Series:</label>
-                        <select class="form-control" id="seriesFilter" onchange="filterBySeries()">
-                            <option value="">All Series</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="seasonFilter">Season:</label>
-                        <select class="form-control" id="seasonFilter" onchange="filterBySeason()">
-                            <option value="">All Seasons</option>
-                        </select>
-                    </div>
-                    <div class="filter-group" style="min-width: 260px;">
-                        <label for="eventFilter">Event:</label>
-                        <select class="form-control" id="eventFilter" onchange="filterByEvent()">
-                            <option value="">All Events (Overall Stats)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="filter-info">
-                    <span id="filterDescription">Showing overall performance across all events</span>
-                </div>
+            <!-- Event Filter -->
+            <div class="filter-section">
+                <label for="eventFilterSelector">Filter by Event:</label>
+                <select id="eventFilterSelector" class="form-control" onchange="loadDriverProfile()">
+                    <option value="">All Events (Overall)</option>
+                </select>
             </div>
 
-            <!-- Driver Stats -->
-            <div class="driver-stats">
+            <!-- Stats Summary Cards -->
+            <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-value" id="totalRaces">0</div>
+                    <div class="stat-icon"><i class="fas fa-racing-flag"></i></div>
+                    <div class="stat-value" id="statTotalRaces">0</div>
                     <div class="stat-label">Total Races</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalWins">0</div>
-                    <div class="stat-label">Wins</div>
+                
+                <div class="stat-card stat-card-win">
+                    <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+                    <div class="stat-value" id="statTotalWins">0</div>
+                    <div class="stat-label">Total Wins</div>
                 </div>
+                
                 <div class="stat-card">
-                    <div class="stat-value" id="winRate">0%</div>
-                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                    <div class="stat-value" id="statWinRate">0%</div>
+                    <div class="stat-label">Win Percentage</div>
                 </div>
+                
                 <div class="stat-card">
-                    <div class="stat-value" id="avgPosition">--</div>
-                    <div class="stat-label">Avg Position</div>
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-value" id="statAvgPosition">--</div>
+                    <div class="stat-label">Avg Finish</div>
                 </div>
+                
                 <div class="stat-card">
-                    <div class="stat-value" id="bestStreak">0</div>
+                    <div class="stat-icon"><i class="fas fa-fire"></i></div>
+                    <div class="stat-value" id="statBestStreak">0</div>
                     <div class="stat-label">Best Win Streak</div>
                 </div>
+                
                 <div class="stat-card">
-                    <div class="stat-value" id="eventsParticipated">0</div>
-                    <div class="stat-label">Events</div>
+                    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-value" id="statEventsCount">0</div>
+                    <div class="stat-label">Events Participated</div>
                 </div>
             </div>
 
-            <!-- Tabs -->
-            <div class="tabs">
-                <button class="tab-button active" onclick="showTab('history')">Race History</button>
-                <button class="tab-button" onclick="showTab('performance')">Lane Performance</button>
-                <button class="tab-button" onclick="showTab('events')">Event Summary</button>
+            <!-- Tabs Navigation -->
+            <div class="profile-tabs">
+                <button class="profile-tab active" data-tab="overview" onclick="switchProfileTab('overview')">
+                    <i class="fas fa-chart-bar"></i> Overview
+                </button>
+                <button class="profile-tab" data-tab="performance" onclick="switchProfileTab('performance')">
+                    <i class="fas fa-trophy"></i> Performance
+                </button>
+                <button class="profile-tab" data-tab="classes" onclick="switchProfileTab('classes')">
+                    <i class="fas fa-layer-group"></i> Classes
+                </button>
+                <button class="profile-tab" data-tab="history" onclick="switchProfileTab('history')">
+                    <i class="fas fa-history"></i> Race History
+                </button>
             </div>
 
             <!-- Tab Contents -->
-            <div id="historyTab" class="tab-content active">
-                <h3>Recent Race History</h3>
-                <div class="table-container">
-                    <table class="data-table" id="raceHistoryTable">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Event</th>
-                                <th>Class</th>
-                                <th>Round</th>
-                                <th>Lane</th>
-                                <th>Opponent</th>
-                                <th>Position</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    
-                    <!-- Pagination Controls -->
-                    <div class="pagination-container" id="raceHistoryPagination" style="display: none;">
-                        <div class="pagination-info">
-                            <span id="paginationInfo">Showing 1-40 of 0 races</span>
+            
+            <!-- Overview Tab -->
+            <div id="overviewTab" class="profile-tab-content active">
+                <div class="tab-section">
+                    <h3><i class="fas fa-chart-line"></i> Performance Overview</h3>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Lane Performance</h4>
+                            <canvas id="lanePerformanceChart" width="400" height="300"></canvas>
                         </div>
-                        <div class="pagination-controls">
-                            <button class="pagination-button" id="prevPageBtn" onclick="changeRaceHistoryPage(-1)" disabled>
-                                <i class="fas fa-chevron-left"></i> Previous
-                            </button>
-                            <div class="page-numbers" id="pageNumbers"></div>
-                            <button class="pagination-button" id="nextPageBtn" onclick="changeRaceHistoryPage(1)" disabled>
-                                Next <i class="fas fa-chevron-right"></i>
-                            </button>
+                        <div class="chart-container">
+                            <h4>Position Distribution</h4>
+                            <canvas id="positionDistChart" width="400" height="300"></canvas>
                         </div>
+                    </div>
+                </div>
+
+                <div class="tab-section">
+                    <h3><i class="fas fa-road"></i> Lane Statistics</h3>
+                    <div id="laneStatsTable"></div>
+                </div>
+            </div>
+
+            <!-- Performance Tab -->
+            <div id="performanceTab" class="profile-tab-content">
+                <div class="tab-section">
+                    <h3><i class="fas fa-calendar-alt"></i> Performance by Event</h3>
+                    <div id="eventPerformanceTable"></div>
+                </div>
+
+                <div class="tab-section">
+                    <h3><i class="fas fa-chart-bar"></i> Win Rate Comparison</h3>
+                    <div class="chart-container">
+                        <canvas id="eventWinRateChart" width="800" height="400"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div id="performanceTab" class="tab-content">
-                <h3>Performance by Lane</h3>
-                <div class="lane-performance" id="lanePerformance"></div>
+            <!-- Classes Tab -->
+            <div id="classesTab" class="profile-tab-content">
+                <div class="tab-section">
+                    <h3><i class="fas fa-layer-group"></i> Class Performance</h3>
+                    <div id="classPerformanceTable"></div>
+                </div>
+
+                <div class="tab-section">
+                    <h3><i class="fas fa-chart-pie"></i> Performance by Class</h3>
+                    <div class="chart-container">
+                        <canvas id="classPerformanceChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
             </div>
 
-            <div id="eventsTab" class="tab-content">
-                <h3>Event Performance Summary</h3>
-                <div class="table-container">
-                    <table class="data-table" id="eventSummaryTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 30px;"></th>
-                                <th>Event</th>
-                                <th>Date</th>
-                                <th>Races</th>
-                                <th>Wins</th>
-                                <th>Win Rate</th>
-                                <th>Event Result</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+            <!-- History Tab -->
+            <div id="historyTab" class="profile-tab-content">
+                <div class="tab-section">
+                    <h3><i class="fas fa-history"></i> Recent Race History (Last 20)</h3>
+                    <div id="raceHistoryTable"></div>
                 </div>
             </div>
         </div>
     </main>
 
     <style>
-        /* Hero Section Styles - Consistent with Series Page */
+        /* Hero Section */
         .hero-section {
             background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
             border-radius: 12px;
             padding: 2rem 1.5rem;
             margin-bottom: 1.5rem;
             border: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
         }
 
         .hero-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-text {
-            flex: 1;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .hero-title {
@@ -385,3235 +220,883 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 0.75rem;
-            line-height: 1.2;
         }
 
         .hero-subtitle {
             font-size: 1.1rem;
             color: var(--text-secondary);
-            font-weight: 400;
-            max-width: 500px;
-            line-height: 1.5;
         }
 
         .hero-actions {
             display: flex;
-            gap: 1rem;
+            gap: 0.5rem;
             align-items: center;
+            flex-wrap: wrap;
         }
 
-        .btn-hero {
-            padding: 0.875rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
-            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
-            transition: all 0.3s ease;
+        .driver-selector {
+            min-width: 250px;
+            max-width: 400px;
         }
 
-        .btn-hero:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
-            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            color: var(--text-secondary);
-            padding: 0.875rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-outline:hover {
-            border-color: var(--accent-orange-warm);
-            color: var(--accent-orange-warm);
-            background: rgba(255, 140, 66, 0.1);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .hero-section {
-                padding: 1.5rem 1rem;
-                margin-bottom: 1rem;
-            }
-            
-            .hero-content {
-                flex-direction: column;
-                gap: 1.5rem;
-                text-align: center;
-            }
-            
-            .hero-title {
-                font-size: 1.75rem;
-            }
-            
-            .hero-subtitle {
-                font-size: 1rem;
-            }
-            
-            .hero-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn-hero,
-            .btn-outline {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Advanced Driver Filters */
-        .driver-filters {
-            background: var(--bg-secondary, #2d2d2d);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-
-        .filters-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .filters-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary, #ffffff);
-        }
-
-        .filters-title i {
-            color: var(--accent-primary, #4a90e2);
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-
-        .filter-section {
-            background: var(--bg-primary, #1a1a1a);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .filter-section h4 {
-            margin: 0 0 16px 0;
-            color: var(--accent-primary, #4a90e2);
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .filter-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .filter-group {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .filter-group label {
-            font-size: 12px;
-            color: var(--text-secondary, #b3b3b3);
-            font-weight: 500;
-        }
-
-        .filter-group input,
-        .filter-group select {
-            padding: 8px 12px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 6px;
-            background: var(--bg-secondary, #2d2d2d);
-            color: var(--text-primary, #ffffff);
-            font-size: 14px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .filter-group input:focus,
-        .filter-group select:focus {
-            outline: none;
-            border-color: var(--accent-primary, #4a90e2);
-            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-        }
-
-        .filter-group input::placeholder {
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        .filters-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .filter-toggle-container {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .filter-summary {
-            background: var(--bg-primary, #1a1a1a);
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-top: 16px;
-            border-left: 4px solid var(--accent-primary, #4a90e2);
-        }
-
-        .filter-summary span {
-            color: var(--text-secondary, #b3b3b3);
-            font-size: 14px;
-        }
-
-        .driver-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
+        /* Empty State */
         .empty-state {
-            grid-column: 1 / -1;
             text-align: center;
-            padding: 60px 20px;
-            background: var(--bg-secondary, #2d2d2d);
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            padding: 80px 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .empty-icon {
-            font-size: 48px;
-            color: var(--text-secondary, #b3b3b3);
+        .empty-state i {
+            font-size: 100px;
+            color: var(--text-secondary);
+            opacity: 0.5;
             margin-bottom: 20px;
         }
 
-        .empty-state h3 {
-            margin: 0 0 10px 0;
-            color: var(--text-primary, #ffffff);
+        .empty-state h2 {
+            color: var(--text-primary);
+            font-size: 24px;
+            margin-bottom: 10px;
         }
 
         .empty-state p {
-            color: var(--text-secondary, #b3b3b3);
-            margin-bottom: 30px;
+            color: var(--text-secondary);
+            font-size: 16px;
         }
 
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-actions .btn-sm {
-            height: 35px;
-            padding: 0 12px;
-            font-size: 14px;
-        }
-
-        .event-filter {
-            background: var(--bg-secondary, #2d2d2d);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        /* Driver Header Card */
+        .driver-header-card {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
             border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .filter-label {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-weight: 500;
-            color: var(--text-primary, #ffffff);
+            gap: 2rem;
         }
 
-        .filter-label i {
-            color: var(--accent-primary, #4a90e2);
-        }
-
-        .event-filter select {
-            width: 300px;
-            margin-bottom: 10px;
-        }
-
-        .event-filter .filter-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            align-items: end;
-            margin-top: 10px;
-        }
-
-        .event-filter .filter-group {
+        .driver-avatar-section {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-        }
-
-        .event-filter .filter-group label {
-            font-size: 12px;
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        .filter-info {
-            font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
-            font-style: italic;
-        }
-
-        .driver-card {
-            background: var(--bg-secondary, #2d2d2d);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .driver-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            border-color: var(--accent-primary, #4a90e2);
-        }
-
-        .driver-card-header {
-            display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .driver-card-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .driver-card-info h3 {
-            margin: 0 0 5px 0;
-            color: var(--text-primary, #ffffff);
-        }
-
-        .driver-card-meta {
-            font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        .driver-card-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            text-align: center;
-        }
-
-        .driver-card-stat {
-            padding: 8px;
-            background: var(--bg-primary, #1a1a1a);
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .driver-card-stat-value {
-            font-weight: bold;
-            color: var(--accent-primary, #4a90e2);
-            display: block;
-        }
-
-        .driver-card-stat-label {
-            font-size: 12px;
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        /* Pagination Styles */
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding: 15px 0;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .pagination-info {
-            color: var(--text-secondary, #b3b3b3);
-            font-size: 14px;
-        }
-
-        .pagination-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .pagination-button {
-            background: var(--bg-secondary, #2d2d2d);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text-primary, #ffffff);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .pagination-button:hover:not(:disabled) {
-            background: var(--accent-primary, #4a90e2);
-            color: white;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
-        }
-
-        .pagination-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: var(--bg-secondary, #2d2d2d);
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        .page-numbers {
-            display: flex;
-            gap: 5px;
-        }
-
-        .page-number {
-            background: var(--bg-secondary, #2d2d2d);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text-primary, #ffffff);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            min-width: 40px;
-            text-align: center;
-        }
-
-        .page-number:hover {
-            background: var(--accent-primary, #4a90e2);
-            color: white;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
-        }
-
-        .page-number.active {
-            background: var(--accent-primary, #4a90e2);
-            color: white;
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
-        }
-
-        .page-number.ellipsis {
-            cursor: default;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary, #b3b3b3);
-        }
-
-        .page-number.ellipsis:hover {
-            background: transparent;
-            color: var(--text-secondary, #b3b3b3);
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Tooltip styles */
-        .race-date-tooltip {
-            position: relative;
-            cursor: help;
-        }
-
-        .race-date-tooltip:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            white-space: nowrap;
-            z-index: 1000;
-            margin-bottom: 4px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .race-date-tooltip:hover::before {
-            content: '';
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 4px solid transparent;
-            border-top-color: rgba(0, 0, 0, 0.9);
-            margin-bottom: -4px;
-        }
-
-        .driver-profile {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .driver-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
+            gap: 1rem;
         }
 
         .driver-avatar {
-            width: 80px;
-            height: 80px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow));
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 60px;
+            color: white;
+            box-shadow: 0 8px 25px rgba(255, 140, 66, 0.4);
+        }
+
+        .driver-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .driver-info-section h2 {
             font-size: 32px;
-            font-weight: bold;
-        }
-
-        .driver-info {
-            flex: 1;
-        }
-
-        .driver-info h2 {
-            margin: 0 0 5px 0;
-            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
         }
 
         .driver-meta {
             display: flex;
-            gap: 20px;
-            font-size: 14px;
-            opacity: 0.9;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 16px;
         }
 
-        .driver-stats {
+        .driver-meta i {
+            color: var(--accent-orange-warm);
+            margin-right: 0.5rem;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .filter-section label {
+            display: block;
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .stat-card {
-            background: var(--bg-secondary, #2d2d2d);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            text-align: center;
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
             border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: var(--accent-primary, #4a90e2);
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
-            margin-top: 5px;
-        }
-
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid rgba(255,255,255,0.1);
-            margin-bottom: 20px;
-        }
-
-        .tab-button {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            color: var(--text-secondary, #b3b3b3);
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .tab-button.active {
-            color: var(--accent-primary, #4a90e2);
-            border-bottom-color: var(--accent-primary, #4a90e2);
-        }
-
-        .tab-button:hover {
-            color: var(--text-primary, #ffffff);
-        }
-
-        .tab-content {
-            display: none;
-            background: var(--bg-secondary, #2d2d2d);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .table-container {
-            overflow-x: auto;
-            margin-top: 15px;
-            max-width: 100%;
-            /* Hide scrollbar but keep scroll functionality */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
-        }
-
-        /* Hide scrollbar for WebKit browsers (Chrome, Safari, etc.) */
-        .table-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 900px;
-            font-size: 13px;
-        }
-
-        .data-table th,
-        .data-table td {
-            padding: 8px 10px;
-            text-align: left;
-            color: var(--text-primary, #ffffff);
-            white-space: nowrap;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .data-table th:last-child,
-        .data-table td:last-child {
-            border-right: none;
-        }
-
-        .data-table th {
-            background: var(--bg-primary, #1a1a1a);
-            color: var(--text-primary, #ffffff);
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .data-table tbody tr {
-            transition: background-color 0.2s ease;
-        }
-
-        .data-table tbody tr:hover {
-            background-color: rgba(74, 144, 226, 0.1);
-        }
-
-        .data-table tbody tr:nth-child(even) {
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-
-        .data-table tbody tr:nth-child(even):hover {
-            background-color: rgba(74, 144, 226, 0.15);
-        }
-
-        /* Column-specific styling for better space usage */
-        .data-table th:nth-child(1), .data-table td:nth-child(1) { /* Date */
-            width: 80px;
-            min-width: 80px;
-        }
-        
-        .data-table th:nth-child(2), .data-table td:nth-child(2) { /* Event */
-            width: 200px;
-            min-width: 200px;
-        }
-        
-        .data-table th:nth-child(3), .data-table td:nth-child(3) { /* Class */
-            width: 80px;
-            min-width: 80px;
-        }
-        
-        .data-table th:nth-child(4), .data-table td:nth-child(4) { /* Round */
-            width: 60px;
-            min-width: 60px;
-        }
-        
-        .data-table th:nth-child(5), .data-table td:nth-child(5) { /* Lane */
-            width: 50px;
-            min-width: 50px;
-        }
-        
-        .data-table th:nth-child(6), .data-table td:nth-child(6) { /* Opponent */
-            width: 150px;
-            min-width: 150px;
-        }
-        
-        .data-table th:nth-child(7), .data-table td:nth-child(7) { /* Position */
-            width: 60px;
-            min-width: 60px;
-        }
-
-        .position-badge {
-            display: inline-block;
-            padding: 3px 6px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
-            min-width: 18px;
-            text-align: center;
-        }
-
-        .position-1 { background: #ffd700; color: #333; }
-        .position-2 { background: #c0c0c0; color: #333; }
-        .position-3 { background: #cd7f32; color: white; }
-        .position-other { background: var(--bg-primary, #1a1a1a); color: var(--text-secondary, #b3b3b3); border: 1px solid rgba(255,255,255,0.2); }
-
-        .race-class {
-            font-weight: 600;
-            color: var(--accent-primary, #4a90e2);
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.3px;
-        }
-
-        /* These styles are now defined in the Lane Performance section above */
-
-        /* Achievements styles removed */
-
-        /* Sync Status Styles */
-        .sync-status-container {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .sync-status-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .sync-status-header h4 {
-            margin: 0;
-            color: var(--text-primary);
-        }
-
-        .sync-refresh-btn {
-            background: none;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-
-        .sync-refresh-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .sync-status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .sync-item {
-            background: var(--bg-primary);
-            border-radius: 6px;
-            padding: 0.75rem;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            transition: transform 0.2s ease;
-        }
-
-        .sync-item:hover {
-            transform: translateY(-2px);
-        }
-
-        .sync-item.synced {
-            border-color: var(--success);
-            background: rgba(56, 161, 105, 0.2);
-        }
-
-        .sync-item.queued {
-            border-color: var(--warning);
-            background: rgba(214, 158, 46, 0.2);
-        }
-
-        .sync-item.error {
-            border-color: var(--error);
-            background: rgba(229, 62, 62, 0.2);
-        }
-
-        .sync-item.unknown {
-            border-color: var(--text-muted);
-            background: rgba(179, 179, 179, 0.2);
-        }
-
-        .sync-count {
-            display: block;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .sync-label {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-secondary);
-        }
-
-        .validation-status {
-            border-top: 1px solid var(--border-color);
-            padding-top: 1rem;
-        }
-
-        .validation-header h5 {
-            margin: 0 0 0.75rem 0;
-            color: var(--text-primary);
-        }
-
-        .validation-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 0.75rem;
-        }
-
-        .validation-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem;
-            background: var(--bg-primary);
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-        }
-
-        .validation-type {
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .validation-result {
-            font-size: 0.9rem;
-            padding: 0.2rem 0.5rem;
             border-radius: 12px;
-        }
-
-        .validation-result.valid {
-            background: rgba(56, 161, 105, 0.2);
-            color: var(--success);
-        }
-
-        .validation-result.invalid {
-            background: rgba(229, 62, 62, 0.2);
-            color: var(--error);
-        }
-
-        /* Lane Performance Styles */
-        .lane-stat {
-            background: var(--bg-primary, #1a1a1a);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 10px;
+            padding: 1.5rem;
             text-align: center;
-        }
-
-        .lane-number {
-            font-weight: bold;
-            color: var(--accent-primary, #4a90e2);
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .lane-win-rate {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--text-primary, #ffffff);
-            margin-bottom: 5px;
-        }
-
-        .lane-performance {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        /* No Data Styles */
-        .no-data {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary, #b3b3b3);
-            font-style: italic;
-        }
-
-        /* Real-time update indicators */
-        .driver-card.updating {
-            border-color: var(--accent-primary, #4a90e2);
-            box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
-            animation: pulse 2s infinite;
-        }
-
-        .profile-section.updating {
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
-        .profile-section.updating::after {
+        .stat-card::before {
             content: '';
             position: absolute;
             top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            animation: loading-bar 2s infinite;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-orange-glow));
         }
 
-        @keyframes loading-bar {
-            0% { left: -100%; }
-            100% { left: 100%; }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .stat-card-win::before {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
         }
 
-        /* Accordion styles for event summary */
-        .accordion-toggle {
-            text-align: center;
-            vertical-align: middle;
+        .stat-icon {
+            font-size: 28px;
+            color: var(--accent-orange-warm);
+            margin-bottom: 1rem;
         }
 
-        .accordion-btn {
-            background: none;
-            border: none;
-            color: var(--accent-primary, #4a90e2);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-            width: 24px;
-            height: 24px;
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Profile Tabs */
+        .profile-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
+        }
+
+        .profile-tab {
             display: flex;
             align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 140px;
             justify-content: center;
         }
 
-        .accordion-btn:hover {
-            background-color: rgba(74, 144, 226, 0.1);
-            transform: scale(1.1);
+        .profile-tab:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
         }
 
-        .accordion-btn i {
-            transition: transform 0.2s ease;
-            font-size: 12px;
+        .profile-tab.active {
+            background: var(--accent-orange-warm);
+            border-color: var(--accent-orange-warm);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
         }
 
-        .event-summary-row {
-            cursor: pointer;
+        /* Tab Content */
+        .profile-tab-content {
+            display: none;
         }
 
-        .event-summary-row:hover {
-            background-color: rgba(74, 144, 226, 0.05);
+        .profile-tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
 
-        .event-summary-row.expanded {
-            background-color: rgba(74, 144, 226, 0.08);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .event-name {
+        .tab-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tab-section h3 {
+            color: var(--text-primary);
+            font-size: 20px;
             font-weight: 600;
-            color: var(--text-primary, #ffffff);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .class-count {
-            font-size: 11px;
-            color: var(--text-secondary, #b3b3b3);
-            font-weight: normal;
-            margin-left: 8px;
+        .tab-section h3 i {
+            color: var(--accent-orange-warm);
         }
 
-        .class-breakdown-row {
-            background-color: rgba(255, 255, 255, 0.02);
-            transition: all 0.2s ease;
+        .tab-section h4 {
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
         }
 
-        .class-breakdown-row:hover {
-            background-color: rgba(74, 144, 226, 0.08);
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
         }
 
-        .class-indent {
-            padding-left: 20px;
-            color: var(--text-secondary, #b3b3b3);
+        .chart-container {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .class-bullet {
-            color: var(--accent-primary, #4a90e2);
-            margin-right: 8px;
-            font-weight: bold;
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
         }
 
-        .class-name {
-            font-weight: 500;
-            text-transform: uppercase;
+        .data-table th {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+            font-weight: 600;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .data-table td {
+            padding: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
             font-size: 12px;
-            letter-spacing: 0.3px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge-gold {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+        }
+
+        .badge-position-1 {
+            background: #FFD700;
+            color: #000;
+        }
+
+        .badge-position-2 {
+            background: #C0C0C0;
+            color: #000;
+        }
+
+        .badge-position-3 {
+            background: #CD7F32;
+            color: #fff;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-content {
+                flex-direction: column;
+            }
+
+            .driver-header-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .driver-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .profile-tabs {
+                flex-direction: column;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
         }
     </style>
 
-    <!-- Removed data-schema.js and unified-storage.js - using server-only storage -->
-    <script src="utils/helpers.js"></script>
+    <!-- Scripts -->
+    <script src="js/logger.js"></script>
     <script src="utils/event-bus.js"></script>
-    <script src="modules/statistics-manager.js"></script>
-    <script src="utils/data-manager.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
+    <script src="utils/data-manager.js"></script>
+    <script src="modules/analytics-engine.js"></script>
+    <script src="utils/chart-helpers.js"></script>
     <!-- Export libs -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script>
-        // Simple inline export utility
-        window.ExportUtils = {
-            defaultFileName(prefix = 'export') {
-                const ts = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
-                return `${prefix}-${ts}`;
-            },
-            async ensureDependencies() {
-                if (!window.html2canvas) throw new Error('html2canvas not loaded');
-                if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF not loaded');
-            },
-            async exportElementAsPNG(element, fileName = 'export.png', scale = 2) {
-                await this.ensureDependencies();
-                const el = typeof element === 'string' ? document.querySelector(element) : element;
-                if (!el) throw new Error('Element not found');
-                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
-                const dataUrl = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            },
-            async exportElementAsPDF(element, fileName = 'export.pdf', options = {}) {
-                await this.ensureDependencies();
-                const el = typeof element === 'string' ? document.querySelector(element) : element;
-                if (!el) throw new Error('Element not found');
-                const { orientation = 'p', unit = 'mm', format = 'a4', scale = 2, marginMm = 5 } = options;
-                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new window.jspdf.jsPDF({ orientation, unit, format });
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                const imageProps = pdf.getImageProperties(imgData);
-                const printableWidth = pageWidth - marginMm * 2;
-                const imgWidth = printableWidth;
-                const imgHeight = (imageProps.height * imgWidth) / imageProps.width;
-                let position = marginMm;
-                let heightLeft = imgHeight;
-                pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
-                heightLeft -= (pageHeight - marginMm * 2);
-                while (heightLeft > 0) {
-                    pdf.addPage();
-                    position = marginMm - (imgHeight - heightLeft);
-                    pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
-                    heightLeft -= (pageHeight - marginMm * 2);
-                }
-                pdf.save(fileName);
-            }
-        };
-    </script>
-    
-    <!-- Mobile Navigation -->
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script src="js/mobile-nav.js"></script>
     <script src="js/sidebar-nav.js"></script>
+
     <script>
-        let allData = { participants: [], events: [], races: [], series: [] };
+        // Global variables
+        let analyticsEngine;
         let currentDriverId = null;
-        let selectedEventId = null; // Track selected event for filtering
-        let selectedSeriesId = null; // Track selected series for filtering
-        let selectedSeasonId = null; // Track selected season for filtering
-        
-        let dataManager = null;
-        
-        // Pagination variables for race history
-        let raceHistoryPagination = {
-            currentPage: 1,
-            itemsPerPage: 40,
-            totalItems: 0,
-            totalPages: 0,
-            currentRaces: []
-        };
+        let currentCharts = {};
+        let allDrivers = [];
+        let allEvents = [];
 
-        // Using server-provided tags via AchievementManager; removed local tag map.
-
-        // Force refresh participants data
-        async function refreshParticipantsData() {
-            if (dataManager) {
-                // Clear the cache for participants
-                dataManager.loadedDataTypes.delete('participants');
-                
-                // Reload participants
-                await dataManager.loadFromStorage(['participants']);
-                
-                // Update local data
-                allData.participants = dataManager.getParticipantsArray();
-                
-                // Refresh UI
-                displayDriverGrid();
-                populateDriverSelect();
-                
-                showToast(`Participants refreshed: ${allData.participants.length} drivers`, 'success');
-                console.log('✅ Participants data refreshed:', allData.participants.length);
+        // Wait for authentication
+        async function waitForAuthentication() {
+            console.log('🔐 Driver Profile: Waiting for authentication...');
+            let attempts = 0;
+            while (!window.Auth && attempts < 100) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
             }
+            if (!window.Auth) {
+                console.warn('🔐 Driver Profile: Auth system not available');
+                return false;
+            }
+            await new Promise(resolve => setTimeout(resolve, 300));
+            if (!window.currentUser) {
+                console.log('🔐 Driver Profile: No current user');
+                return false;
+            }
+            console.log('🔐 Driver Profile: Authentication complete');
+            return true;
         }
 
-        // Load all data using DataManager
-        async function loadAllData() {
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Initialize DataManager if not already done
-                if (!dataManager) {
-                    dataManager = new DataManager();
-                    // Load all required data types including participants
-                    await dataManager.loadFromStorage(['series', 'events', 'race-brackets', 'participants']);
+                await waitForAuthentication();
+                
+                // Initialize Analytics Engine
+                analyticsEngine = new AnalyticsEngine();
+                
+                // Load drivers and events
+                await loadDriversAndEvents();
+                
+                // Initialize mobile navigation
+                if (window.MobileNavigation) {
+                    new window.MobileNavigation();
                 }
                 
-                // Set up real-time event listeners
-                setupEventListeners();
-                
-                // Get data from DataManager (synced with other pages)
-                allData.participants = dataManager.getParticipantsArray();
-                allData.events = dataManager.getEventsArray();
-                allData.series = dataManager.getAllSeries();
-                
-                // Load bracket data to extract race results
-                allData.raceBrackets = dataManager.data.raceBrackets || {};
-                
-                // Extract race history from brackets for all participants
-                allData.races = extractRaceHistoryFromBrackets();
-                console.log(`📊 Extracted ${allData.races.length} race records from bracket data`);
-                
-                // Achievements removed
-
-                populateDriverSelect();
-                displayDriverGrid();
-                
-                console.log('📊 Statistics Manager:', dataManager.statisticsManager ? 'Active' : 'Not Available');
-                console.log('📡 Event Bus:', dataManager.eventBus ? 'Active' : 'Not Available');
-                console.log('📋 Driver Profile Data Summary:', {
-                    participants: allData.participants.length,
-                    events: allData.events.length,
-                    races: allData.races.length
-                });
+                console.log('✅ Driver profile initialized');
             } catch (error) {
-                console.error('Error loading data:', error);
-                showToast('Error loading driver data', 'error');
+                console.error('❌ Error initializing driver profile:', error);
+                showToast('Failed to load driver profiles. Please refresh the page.', 'error');
             }
-        }
+        });
 
-        // Export function for driver profile
-        async function exportDriverProfile(format) {
+        // Load drivers and events
+        async function loadDriversAndEvents() {
             try {
-                console.log('ExportUtils available:', typeof window.ExportUtils);
-                
-                if (!window.ExportUtils) {
-                    console.warn('ExportUtils not loaded, falling back to print');
-                    window.print();
-                    return;
+                // Fetch drivers
+                const driversResponse = await fetch('/api/participants');
+                if (driversResponse.ok) {
+                    const driversData = await driversResponse.json();
+                    allDrivers = driversData.participants || driversData || [];
+                    
+                    // Populate driver selector
+                    const driverSelector = document.getElementById('driverSelector');
+                    driverSelector.innerHTML = '<option value="">-- Select a Driver --</option>';
+                    
+                    // Sort drivers by name
+                    allDrivers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    
+                    allDrivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver.id;
+                        option.textContent = driver.name || `Driver ${driver.id}`;
+                        driverSelector.appendChild(option);
+                    });
                 }
-                
-                const main = document.querySelector('main');
-                const driverNameEl = document.getElementById('driverName');
-                const driverName = driverNameEl && driverNameEl.textContent ? driverNameEl.textContent.trim().toLowerCase().replace(/\s+/g, '-') : 'driver-profile';
-                const prefix = selectedEventId ? `${driverName}-event` : driverName;
-                const name = (window.ExportUtils && ExportUtils.defaultFileName(prefix)) || prefix;
-                if (!main) return;
-                
-                if (window.ExportUtils && typeof ExportUtils.ensureDependencies === 'function') {
-                    await ExportUtils.ensureDependencies();
+
+                // Fetch events for filter
+                const eventsResponse = await fetch('/api/events');
+                if (eventsResponse.ok) {
+                    const eventsData = await eventsResponse.json();
+                    allEvents = eventsData.events || eventsData || [];
+                    
+                    // Populate event filter
+                    const eventFilter = document.getElementById('eventFilterSelector');
+                    eventFilter.innerHTML = '<option value="">All Events (Overall)</option>';
+                    allEvents.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        option.textContent = `${event.name || event.eventName} (${event.date ? new Date(event.date).toLocaleDateString() : 'No Date'})`;
+                        eventFilter.appendChild(option);
+                    });
                 }
-                UIComponents && UIComponents.showLoadingOverlay && UIComponents.showLoadingOverlay('Rendering export...');
-                await new Promise(r => setTimeout(r, 50));
-                if (format === 'pdf') {
-                    await ExportUtils.exportElementAsPDF(main, `${name}.pdf`, { orientation: 'p', format: 'a4', marginMm: 5, scale: 2 });
-                } else if (format === 'png') {
-                    await ExportUtils.exportElementAsPNG(main, `${name}.png`, 2);
-                }
-                showToast('Export completed successfully!', 'success');
-            } catch (e) {
-                console.error('Export failed', e);
-                showToast('Export failed. See console for details.', 'error');
-            } finally {
-                UIComponents && UIComponents.hideLoadingOverlay && UIComponents.hideLoadingOverlay();
+            } catch (error) {
+                console.error('Error loading drivers and events:', error);
             }
         }
 
-        // Extract race history from bracket data structure
-        function extractRaceHistoryFromBrackets() {
-            const races = [];
+        // Load driver profile
+        async function loadDriverProfile() {
+            const driverId = document.getElementById('driverSelector').value;
+            const eventId = document.getElementById('eventFilterSelector').value;
             
-            if (!allData.raceBrackets || Object.keys(allData.raceBrackets).length === 0) {
-                console.warn('📊 No race bracket data found for statistics calculation');
-                return races;
+            if (!driverId) {
+                // Show empty state
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('driverProfileContent').style.display = 'none';
+                return;
+            }
+
+            try {
+                // Hide empty state, show profile
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('driverProfileContent').style.display = 'block';
+                
+                currentDriverId = driverId;
+                
+                // Fetch driver stats
+                const stats = await analyticsEngine.getDriverStats(driverId, eventId);
+                
+                // Update header
+                document.getElementById('driverName').textContent = stats.driverName;
+                document.getElementById('driverTotalRaces').textContent = stats.totalRaces;
+                document.getElementById('driverTotalWins').textContent = stats.totalWins;
+                document.getElementById('driverWinRate').textContent = `${stats.winRate}%`;
+                
+                // Show top performer badge if win rate is high
+                if (stats.totalRaces >= 5 && stats.winRate >= 50) {
+                    document.getElementById('topPerformerBadge').style.display = 'inline-flex';
+                } else {
+                    document.getElementById('topPerformerBadge').style.display = 'none';
+                }
+                
+                // Update stats cards
+                document.getElementById('statTotalRaces').textContent = stats.totalRaces;
+                document.getElementById('statTotalWins').textContent = stats.totalWins;
+                document.getElementById('statWinRate').textContent = `${stats.winRate}%`;
+                document.getElementById('statAvgPosition').textContent = stats.avgPosition > 0 ? stats.avgPosition.toFixed(2) : '--';
+                document.getElementById('statBestStreak').textContent = stats.bestStreak;
+                document.getElementById('statEventsCount').textContent = stats.eventsParticipated;
+                
+                // Load tab data
+                await loadOverviewData(stats);
+                await loadPerformanceData(stats);
+                await loadClassesData(stats);
+                await loadHistoryData(stats);
+                
+                console.log('✅ Driver profile loaded');
+            } catch (error) {
+                console.error('❌ Error loading driver profile:', error);
+                showToast('Error loading driver profile', 'error');
+            }
+        }
+
+        // Switch profile tabs
+        function switchProfileTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.profile-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.profile-tab[data-tab="${tabName}"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.profile-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+        }
+
+        // Load overview data
+        async function loadOverviewData(stats) {
+            // Lane performance chart
+            const laneLabels = Object.keys(stats.lanePerformance || {}).map(lane => `Lane ${lane}`);
+            const laneWinRates = Object.values(stats.lanePerformance || {}).map(perf => perf.winRate || 0);
+            
+            if (currentCharts.lanePerformanceChart) {
+                currentCharts.lanePerformanceChart.destroy();
             }
             
-            console.log('📊 Processing race brackets:', Object.keys(allData.raceBrackets));
-            
-            for (const [eventId, bracket] of Object.entries(allData.raceBrackets)) {
-                if (!bracket || !bracket.classes) continue;
-                
-                let eventRaceCount = 0;
-                
-                for (const [className, classBracket] of Object.entries(bracket.classes)) {
-                    if (!classBracket.rounds) continue;
-                    
-                    for (const round of classBracket.rounds) {
-                        if (!round.heats) continue;
-                        
-                        for (const heat of round.heats) {
-                            if (!heat.results || !heat.lanes) continue;
-                            
-                            // Process each participant's result in this heat
-                            for (const result of heat.results) {
-                                if (!result.participantId) continue;
-                                
-                                // Find the participant's lane info
-                                const participantLane = heat.lanes.find(lane => 
-                                    lane.participant && lane.participant.id === result.participantId
-                                );
-                                
-                                if (participantLane) {
-                                    // Get opponent information
-                                    const opponents = heat.lanes
-                                        .filter(lane => lane.participant && lane.participant.id !== result.participantId)
-                                        .map(lane => lane.participant.name);
-                                    
-                                    races.push({
-                                        participantId: result.participantId,
-                                        eventId: eventId,
-                                        className: className,
-                                        round: round.roundNumber,
-                                        heatId: heat.id,
-                                        lane: participantLane.lane,
-                                        position: result.position,
-                                        result: result.result || 'completed',
-                                        timestamp: heat.completedAt || round.createdAt || new Date().toISOString(),
-                                        opponent: opponents.join(', ') || 'N/A',
-                                        bracketType: round.bracketType || 'single'
-                                    });
-                                    
-                                    eventRaceCount++;
+            if (laneLabels.length > 0) {
+                currentCharts.lanePerformanceChart = ChartHelpers.createBarChart(
+                    'lanePerformanceChart',
+                    laneLabels,
+                    laneWinRates,
+                    {
+                        label: 'Win Rate (%)',
+                        horizontal: true,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
                                 }
                             }
                         }
                     }
-                }
+                );
+            }
+
+            // Position distribution - calculate from race history
+            const positions = {};
+            (stats.raceHistory || []).forEach(race => {
+                const pos = race.position;
+                positions[pos] = (positions[pos] || 0) + 1;
+            });
+
+            if (currentCharts.positionDistChart) {
+                currentCharts.positionDistChart.destroy();
+            }
+
+            if (Object.keys(positions).length > 0) {
+                const posLabels = Object.keys(positions).map(p => `${p}${getOrdinalSuffix(p)} Place`);
+                const posData = Object.values(positions);
                 
-                if (eventRaceCount > 0) {
-                    console.log(`📊 Extracted ${eventRaceCount} races from event ${eventId}`);
-                }
+                currentCharts.positionDistChart = ChartHelpers.createPieChart(
+                    'positionDistChart',
+                    posLabels,
+                    posData,
+                    { cutout: '50%' }
+                );
             }
-            
-            // Sort by timestamp (newest first)
-            const sortedRaces = races.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            if (sortedRaces.length > 0) {
-                console.log(`📊 Total race history extracted: ${sortedRaces.length} races`);
-                console.log('📊 Sample race data:', sortedRaces[0]);
-            }
-            
-            return sortedRaces;
+
+            // Lane stats table
+            let laneTableHtml = '<table class="data-table"><thead><tr>';
+            laneTableHtml += '<th>Lane</th><th>Races</th><th>Wins</th><th>Win Rate</th>';
+            laneTableHtml += '</tr></thead><tbody>';
+
+            Object.entries(stats.lanePerformance || {}).forEach(([lane, perf]) => {
+                laneTableHtml += `<tr>
+                    <td><strong>Lane ${lane}</strong></td>
+                    <td>${perf.total}</td>
+                    <td>${perf.wins}</td>
+                    <td>${perf.winRate}%</td>
+                </tr>`;
+            });
+
+            laneTableHtml += '</tbody></table>';
+            document.getElementById('laneStatsTable').innerHTML = laneTableHtml;
         }
 
-        // Set up real-time event listeners
-        function setupEventListeners() {
-            if (!dataManager || !dataManager.eventBus) {
-                console.warn('Event bus not available, skipping real-time listeners');
+        // Load performance data
+        async function loadPerformanceData(stats) {
+            // Event performance table
+            let eventTableHtml = '<table class="data-table"><thead><tr>';
+            eventTableHtml += '<th>Event</th><th>Races</th><th>Wins</th><th>Win Rate</th>';
+            eventTableHtml += '</tr></thead><tbody>';
+
+            (stats.eventPerformance || []).forEach(perf => {
+                const event = allEvents.find(e => e.id === perf.eventId);
+                const eventName = event ? (event.name || event.eventName || 'Unknown Event') : 'Unknown Event';
+                
+                eventTableHtml += `<tr>
+                    <td><strong>${eventName}</strong></td>
+                    <td>${perf.races}</td>
+                    <td>${perf.wins}</td>
+                    <td>${perf.winRate}%</td>
+                </tr>`;
+            });
+
+            eventTableHtml += '</tbody></table>';
+            document.getElementById('eventPerformanceTable').innerHTML = eventTableHtml;
+
+            // Event win rate chart
+            const eventLabels = (stats.eventPerformance || []).map(perf => {
+                const event = allEvents.find(e => e.id === perf.eventId);
+                return event ? (event.name || event.eventName || 'Event').substring(0, 20) : 'Event';
+            });
+            const eventWinRates = (stats.eventPerformance || []).map(perf => perf.winRate || 0);
+
+            if (currentCharts.eventWinRateChart) {
+                currentCharts.eventWinRateChart.destroy();
+            }
+
+            if (eventLabels.length > 0) {
+                currentCharts.eventWinRateChart = ChartHelpers.createBarChart(
+                    'eventWinRateChart',
+                    eventLabels,
+                    eventWinRates,
+                    {
+                        label: 'Win Rate (%)',
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+            }
+        }
+
+        // Load classes data
+        async function loadClassesData(stats) {
+            // Class performance table
+            let classTableHtml = '<table class="data-table"><thead><tr>';
+            classTableHtml += '<th>Class</th><th>Races</th><th>Wins</th><th>Win Rate</th><th>Avg Position</th>';
+            classTableHtml += '</tr></thead><tbody>';
+
+            (stats.classPerformance || []).forEach(perf => {
+                classTableHtml += `<tr>
+                    <td><strong>${perf.className}</strong></td>
+                    <td>${perf.races}</td>
+                    <td>${perf.wins}</td>
+                    <td>${perf.winRate}%</td>
+                    <td>${perf.avgPosition.toFixed(2)}</td>
+                </tr>`;
+            });
+
+            classTableHtml += '</tbody></table>';
+            document.getElementById('classPerformanceTable').innerHTML = classTableHtml;
+
+            // Class performance chart
+            const classLabels = (stats.classPerformance || []).map(perf => perf.className);
+            const classWins = (stats.classPerformance || []).map(perf => perf.wins);
+            const classRaces = (stats.classPerformance || []).map(perf => perf.races);
+
+            if (currentCharts.classPerformanceChart) {
+                currentCharts.classPerformanceChart.destroy();
+            }
+
+            if (classLabels.length > 0) {
+                currentCharts.classPerformanceChart = ChartHelpers.createBarChart(
+                    'classPerformanceChart',
+                    classLabels,
+                    [
+                        {
+                            label: 'Wins',
+                            data: classWins,
+                            backgroundColor: ChartHelpers.Colors.goldWin,
+                            borderColor: ChartHelpers.Colors.borderGradients[3]
+                        },
+                        {
+                            label: 'Total Races',
+                            data: classRaces,
+                            backgroundColor: ChartHelpers.Colors.bluePrimary,
+                            borderColor: ChartHelpers.Colors.borderGradients[1]
+                        }
+                    ]
+                );
+            }
+        }
+
+        // Load history data
+        async function loadHistoryData(stats) {
+            const raceHistory = stats.raceHistory || [];
+            
+            if (raceHistory.length === 0) {
+                document.getElementById('raceHistoryTable').innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No race history available</p>';
                 return;
             }
 
-            const eventBus = dataManager.eventBus;
+            let historyHtml = '<table class="data-table"><thead><tr>';
+            historyHtml += '<th>Event</th><th>Class</th><th>Round</th><th>Lane</th><th>Position</th><th>Date</th>';
+            historyHtml += '</tr></thead><tbody>';
 
-            // Listen for participant updates (including statistics)
-            eventBus.on('participant-updated', (data) => {
-                console.log('📡 Participant updated event received:', data);
+            raceHistory.forEach(race => {
+                const event = allEvents.find(e => e.id === race.eventId);
+                const eventName = event ? (event.name || event.eventName || 'Unknown').substring(0, 30) : 'Unknown';
+                const date = race.completedAt ? new Date(race.completedAt).toLocaleDateString() : '--';
                 
-                // Show visual update indicator
-                showDriverUpdateIndicator(data.participantId);
-                
-                // Update participant data
-                const participantIndex = allData.participants.findIndex(p => p.id === data.participantId);
-                if (participantIndex !== -1) {
-                    allData.participants[participantIndex] = data.participant;
-                    
-                    // If this is the currently selected driver, refresh their profile
-                    if (currentDriverId === data.participantId) {
-                        showProfileUpdateIndicator();
-                        updateDriverStatistics(data.participant);
-                        showToast(`${data.participant.name}'s profile updated`, 'info');
-                    }
-                    
-                    // Refresh the driver grid to show updated stats
-                    displayDriverGrid();
+                let positionBadge = '';
+                if (race.position === 1) {
+                    positionBadge = '<span class="badge badge-position-1">1st</span>';
+                } else if (race.position === 2) {
+                    positionBadge = '<span class="badge badge-position-2">2nd</span>';
+                } else if (race.position === 3) {
+                    positionBadge = '<span class="badge badge-position-3">3rd</span>';
+                } else {
+                    positionBadge = `<span>${race.position}${getOrdinalSuffix(race.position)}</span>`;
                 }
                 
-                // Refresh sync status
-                // Note: Using server-only storage, no sync status needed
+                historyHtml += `<tr>
+                    <td>${eventName}</td>
+                    <td>${race.className}</td>
+                    <td>Round ${race.round}</td>
+                    <td>Lane ${race.lane}</td>
+                    <td>${positionBadge}</td>
+                    <td>${date}</td>
+                </tr>`;
             });
 
-            // Listen for statistics updates
-            eventBus.on('statistics-updated', (data) => {
-                console.log('📡 Statistics updated event received:', data);
-                
-                // Refresh data for any participants that were updated
-                data.participantIds.forEach(participantId => {
-                    const participant = dataManager.getParticipant(participantId);
-                    if (participant) {
-                        const participantIndex = allData.participants.findIndex(p => p.id === participantId);
-                        if (participantIndex !== -1) {
-                            allData.participants[participantIndex] = participant;
-                        }
-                        
-                        // If this is the currently selected driver, refresh their profile
-                        if (currentDriverId === participantId) {
-                            selectDriver(participantId); // Refresh the entire profile (async)
-                        }
-                    }
-                });
-                
-                // Refresh the driver grid
-                displayDriverGrid();
-            });
-
-            // Listen for new registrations
-            listenForRegistrations();
-
-            console.log('📡 Real-time event listeners set up for driver profiles');
+            historyHtml += '</tbody></table>';
+            document.getElementById('raceHistoryTable').innerHTML = historyHtml;
         }
 
-        // Show sync status information (simplified for server-only storage)
-        function showSyncStatusInfo() {
-            const statusContainer = document.getElementById('syncStatusContainer') || createSyncStatusContainer();
-            
-            // Update sync status display for server-only storage
-            statusContainer.innerHTML = `
-                <div class="sync-status-header">
-                    <h4>📊 Server Storage Status</h4>
-                    <button class="sync-refresh-btn" onclick="refreshSyncStatus()">🔄</button>
-                </div>
-                <div class="sync-status-grid">
-                    <div class="sync-item synced">
-                        <span class="sync-count">✓</span>
-                        <span class="sync-label">Server Connected</span>
-                    </div>
-                    <div class="sync-item synced">
-                        <span class="sync-count">${allData.participants.length}</span>
-                        <span class="sync-label">Participants</span>
-                    </div>
-                    <div class="sync-item synced">
-                        <span class="sync-count">${allData.events.length}</span>
-                        <span class="sync-label">Events</span>
-                    </div>
-                    <div class="sync-item synced">
-                        <span class="sync-count">${allData.series.length}</span>
-                        <span class="sync-label">Series</span>
-                    </div>
-                </div>
-            `;
+        // Helper function for ordinal suffix
+        function getOrdinalSuffix(num) {
+            const j = num % 10;
+            const k = num % 100;
+            if (j === 1 && k !== 11) return 'st';
+            if (j === 2 && k !== 12) return 'nd';
+            if (j === 3 && k !== 13) return 'rd';
+            return 'th';
         }
 
-        // Add validation status to sync container (simplified)
-        function addValidationStatus(container) {
-            const validationDiv = document.createElement('div');
-            validationDiv.className = 'validation-status';
-            
-            validationDiv.innerHTML = `
-                <div class="validation-header">
-                    <h5>🔍 Data Status</h5>
-                </div>
-                <div class="validation-grid">
-                    <div class="validation-item">
-                        <span class="validation-type">Participants</span>
-                        <span class="validation-result valid">
-                            ${allData.participants.length} loaded
-                        </span>
-                    </div>
-                    <div class="validation-item">
-                        <span class="validation-type">Events</span>
-                        <span class="validation-result valid">
-                            ${allData.events.length} loaded
-                        </span>
-                    </div>
-                </div>
-            `;
-            
-            container.appendChild(validationDiv);
-        }
-
-        // Create sync status container
-        function createSyncStatusContainer() {
-            const container = document.createElement('div');
-            container.id = 'syncStatusContainer';
-            container.className = 'sync-status-container';
-            
-            // Insert at the top of the main content
-            const mainContent = document.querySelector('.main-content');
-            if (mainContent) {
-                mainContent.insertBefore(container, mainContent.firstChild);
-            }
-            
-            return container;
-        }
-
-        // Refresh sync status
-        window.refreshSyncStatus = function() {
-            showSyncStatusInfo();
-            showToast('Server status refreshed', 'info');
-        };
-
-        // Show visual update indicators
-        function showDriverUpdateIndicator(participantId) {
-            const driverCard = document.querySelector(`[data-driver-id="${participantId}"]`);
-            if (driverCard) {
-                driverCard.classList.add('updating');
-                setTimeout(() => {
-                    driverCard.classList.remove('updating');
-                }, 3000);
-            }
-        }
-
-        function showProfileUpdateIndicator() {
-            const profileSections = document.querySelectorAll('.profile-section, .stats-grid');
-            profileSections.forEach(section => {
-                section.classList.add('updating');
-                setTimeout(() => {
-                    section.classList.remove('updating');
-                }, 2000);
-            });
-        }
-
-        // Listen for new participant registrations
-        function listenForRegistrations() {
-            if (!dataManager || !dataManager.eventBus) {
-                return;
-            }
-
-            const eventBus = dataManager.eventBus;
-
-            eventBus.on('participant-registered', (data) => {
-                console.log('📡 New participant registered:', data);
-                
-                // Add to participant list
-                allData.participants.push(data.participant);
-                
-                // Refresh driver grid
-                displayDriverGrid();
-                populateDriverSelect();
-                
-                // Refresh sync status
-                setTimeout(() => showSyncStatusInfo(), 500);
-                
-                showToast(`${data.participant.name} registered successfully!`, 'success');
-            });
-        }
-
-        // Refresh data function with sync status updates
-        async function refreshData() {
+        // Refresh driver data
+        async function refreshDriverData() {
             try {
-                showToast('Refreshing data...', 'info');
-                
-                if (dataManager) {
-                    // Clear loaded data cache and reload from server
-                    dataManager.loadedDataTypes.clear();
-                    dataManager.loadingPromises.clear();
-                    await dataManager.loadFromStorage();
-                }
-                
-                await loadAllData();
-                showToast('Data refreshed successfully!', 'success');
-                
-                // If a driver was selected, keep them selected
+                showToast('Refreshing driver data...', 'info');
+                analyticsEngine.clearCache();
+                await loadDriversAndEvents();
                 if (currentDriverId) {
-                    const driver = allData.participants.find(p => p.id === currentDriverId);
-                    if (driver) {
-                        await selectDriver(currentDriverId);
-                    } else {
-                        // Driver was deleted, clear selection
-                        clearDriverSelection();
-                        showToast('Selected driver no longer exists', 'warning');
-                    }
+                    await loadDriverProfile();
                 }
+                showToast('Driver data refreshed successfully!', 'success');
             } catch (error) {
-                console.error('Error refreshing data:', error);
-                showToast('Error refreshing data', 'error');
+                console.error('Error refreshing driver data:', error);
+                showToast('Error refreshing driver data', 'error');
             }
         }
 
-        // Clear all data function
-        async function clearAllData() {
-            window.confirmClearAllData(async () => {
-                try {
-                    if (!dataManager) {
-                        dataManager = new DataManager();
-                    }
-                    
-                    await dataManager.clearAllData();
-                    await loadAllData();
-                    clearDriverSelection();
-                    
-                    showToast('All data has been cleared successfully', 'success');
-                } catch (error) {
-                    console.error('Error clearing data:', error);
-                    showToast('Error clearing data. Please try again.', 'error');
-                    throw error; // Re-throw to show error in modal
+        // Export driver profile
+        async function exportDriverProfile(format) {
+            if (!currentDriverId) {
+                showToast('Please select a driver first', 'error');
+                return;
+            }
+
+            try {
+                const main = document.querySelector('#driverProfileContent');
+                if (!main) return;
+
+                showToast('Preparing export...', 'info');
+                
+                if (format === 'pdf') {
+                    await html2canvas(main, { scale: 2, backgroundColor: '#1a1a1a' }).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                        const pageWidth = pdf.internal.pageSize.getWidth();
+                        const imgWidth = pageWidth - 10;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                        pdf.addImage(imgData, 'PNG', 5, 5, imgWidth, imgHeight);
+                        
+                        const driverName = document.getElementById('driverName').textContent.replace(/[^a-zA-Z0-9]/g, '_');
+                        pdf.save(`driver-profile-${driverName}-${new Date().toISOString().split('T')[0]}.pdf`);
+                    });
+                } else if (format === 'png') {
+                    await html2canvas(main, { scale: 2, backgroundColor: '#1a1a1a' }).then(canvas => {
+                        const link = document.createElement('a');
+                        const driverName = document.getElementById('driverName').textContent.replace(/[^a-zA-Z0-9]/g, '_');
+                        link.download = `driver-profile-${driverName}-${new Date().toISOString().split('T')[0]}.png`;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                    });
                 }
-            });
+                
+                showToast('Export completed successfully!', 'success');
+            } catch (error) {
+                console.error('Export failed:', error);
+                showToast('Export failed. Please try again.', 'error');
+            }
         }
 
-        // Toast notification function
+        // Toast notification
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
             toast.style.cssText = `
                 position: fixed;
                 top: 20px;
                 right: 20px;
                 padding: 1rem 1.5rem;
-                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : '#2196F3'};
+                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
                 color: white;
-                border-radius: 4px;
+                border-radius: 8px;
                 z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
                 animation: slideIn 0.3s ease;
             `;
             toast.textContent = message;
-            
             document.body.appendChild(toast);
             
             setTimeout(() => {
                 toast.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        document.body.removeChild(toast);
-                    }
-                }, 300);
+                setTimeout(() => document.body.removeChild(toast), 300);
             }, 3000);
         }
-
-        // Populate driver select combo box
-        function populateDriverSelect() {
-            const container = document.getElementById('driverSelectContainer');
-            
-            // Sort participants alphabetically by name
-            const sortedParticipants = [...allData.participants].sort((a, b) => 
-                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-            );
-            
-            // Create options array for combo box
-            const options = sortedParticipants.map(driver => ({
-                value: driver.id,
-                label: driver.name
-            }));
-            
-            // Create combo box using UIComponents
-            container.innerHTML = UIComponents.createComboBox(
-                'driverSelect',
-                options,
-                'Select a Driver',
-                'onDriverSelect'
-            );
-            
-            // Initialize combo box functionality
-            UIComponents.initComboBox('driverSelect');
-        }
-
-        // Pagination variables for drivers
-        let currentDriversPage = 1;
-        const driversPerPage = 24; // 24 drivers per page as requested
-        
-        // Display driver grid with pagination
-        async function displayDriverGrid() {
-            const grid = document.getElementById('driverGrid');
-            const skeleton = document.getElementById('driverSkeleton');
-            const pagination = document.getElementById('driverPagination');
-            
-            // Show skeleton loading
-            showDriverSkeletonLoading();
-            
-            // Simulate loading delay for better UX
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            hideDriverSkeletonLoading();
-            
-            if (allData.participants.length === 0) {
-                grid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fas fa-user-slash"></i>
-                        </div>
-                        <h3>No Drivers Found</h3>
-                        <p>No drivers are registered yet.</p>
-                        <a href="registration.html" class="btn btn-primary">
-                            <i class="fas fa-user-plus"></i>
-                            Register Drivers
-                        </a>
-                    </div>
-                `;
-                if (pagination) pagination.style.display = 'none';
-                // Hide filter toggle when no drivers
-                const filterToggle = document.querySelector('.filter-toggle-container');
-                if (filterToggle) filterToggle.style.display = 'none';
-                return;
-            }
-
-            // Show filter toggle when drivers are available
-            const filterToggle = document.querySelector('.filter-toggle-container');
-            if (filterToggle) filterToggle.style.display = 'block';
-
-            // Sort participants alphabetically by name
-            const sortedParticipants = [...allData.participants].sort((a, b) => 
-                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-            );
-            
-            // Calculate pagination
-            const totalPages = Math.ceil(sortedParticipants.length / driversPerPage);
-            const startIndex = (currentDriversPage - 1) * driversPerPage;
-            const endIndex = startIndex + driversPerPage;
-            const currentPageDrivers = sortedParticipants.slice(startIndex, endIndex);
-            
-            console.log(`📄 Drivers Page ${currentDriversPage} of ${totalPages} (showing ${currentPageDrivers.length} of ${allData.participants.length} drivers)`);
-
-            grid.innerHTML = currentPageDrivers.map(driver => {
-                // Calculate stats for grid display using extracted race data
-                const stats = calculateStatsFromRaceData(driver.id); // Always show overall stats in grid
-                const initials = driver.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
-
-                return `
-                    <div class="driver-card" data-driver-id="${driver.id}" onclick="selectDriver('${driver.id}')">
-                        <div class="driver-card-header">
-                            <div class="driver-card-avatar">${initials}</div>
-                            <div class="driver-card-info">
-                                <h3>${driver.name}</h3>
-                                <div class="driver-card-meta">
-                                    ${driver.racingNumber ? `#${driver.racingNumber}` : 'No number'} • ${driver.team || 'No team'}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="driver-card-stats">
-                            <div class="driver-card-stat">
-                                <span class="driver-card-stat-value">${stats.totalRaces}</span>
-                                <span class="driver-card-stat-label">Races</span>
-                            </div>
-                            <div class="driver-card-stat">
-                                <span class="driver-card-stat-value">${stats.totalWins}</span>
-                                <span class="driver-card-stat-label">Wins</span>
-                            </div>
-                            <div class="driver-card-stat">
-                                <span class="driver-card-stat-value">${stats.winRate}%</span>
-                                <span class="driver-card-stat-label">Win Rate</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            // Render pagination
-            if (pagination && totalPages > 1) {
-                pagination.style.display = 'block';
-                pagination.innerHTML = UIComponents.createPagination(
-                    currentDriversPage, 
-                    totalPages, 
-                    allData.participants.length, 
-                    driversPerPage, 
-                    'changeDriversPage'
-                );
-            } else if (pagination) {
-                pagination.style.display = 'none';
-            }
-        }
-
-        // Show driver skeleton loading
-        function showDriverSkeletonLoading() {
-            const grid = document.getElementById('driverGrid');
-            const skeleton = document.getElementById('driverSkeleton');
-            const pagination = document.getElementById('driverPagination');
-            
-            if (grid) grid.style.display = 'none';
-            if (skeleton) {
-                skeleton.innerHTML = UIComponents.createSkeletonCards(8, 'card');
-                skeleton.style.display = 'block';
-            }
-            if (pagination) pagination.style.display = 'none';
-        }
-
-        // Hide driver skeleton loading
-        function hideDriverSkeletonLoading() {
-            const grid = document.getElementById('driverGrid');
-            const skeleton = document.getElementById('driverSkeleton');
-            const pagination = document.getElementById('driverPagination');
-            
-            if (grid) grid.style.display = 'grid';
-            if (skeleton) skeleton.style.display = 'none';
-            if (pagination) pagination.style.display = 'block';
-        }
-
-        // Advanced Filtering System
-        let currentFilters = {
-            totalRaces: { min: null, max: null },
-            totalWins: { min: null, max: null },
-            winRate: { min: null, max: null },
-            winStreak: { min: null },
-            totalEvents: { min: null },
-            class: null,
-            series: null,
-            eventAttendance: null,
-            eventCount: { min: null },
-            team: null,
-            registrationDate: { from: null, to: null }
-        };
-
-        let filteredDrivers = [];
-
-        // Toggle filters visibility
-        function toggleFilters() {
-            const filters = document.getElementById('driverFilters');
-            const toggleBtn = document.getElementById('filterToggleBtn');
-            
-            if (filters.style.display === 'none') {
-                filters.style.display = 'block';
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i> Hide Advanced Filters';
-                populateFilterOptions();
-            } else {
-                filters.style.display = 'none';
-                toggleBtn.innerHTML = '<i class="fas fa-filter"></i> Show Advanced Filters';
-            }
-        }
-
-        // Populate filter dropdown options
-        function populateFilterOptions() {
-            // Populate class filter
-            const classFilter = document.getElementById('classFilter');
-            const classes = [...new Set(allData.participants.map(p => p.sledClass).filter(Boolean))].sort();
-            classFilter.innerHTML = '<option value="">All Classes</option>' + 
-                classes.map(cls => `<option value="${cls}">${cls}</option>`).join('');
-
-            // Populate series filter
-            const seriesFilter = document.getElementById('seriesFilter');
-            const series = dataManager.getAllSeries();
-            seriesFilter.innerHTML = '<option value="">All Series</option>' + 
-                series.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-
-            // Populate event attendance filter
-            const eventFilter = document.getElementById('eventAttendanceFilter');
-            const events = allData.events.sort((a, b) => new Date(b.date) - new Date(a.date));
-            eventFilter.innerHTML = '<option value="">Any Event</option>' + 
-                events.map(e => `<option value="${e.id}">${e.name} (${new Date(e.date).toLocaleDateString()})</option>`).join('');
-
-            // Populate team filter
-            const teamFilter = document.getElementById('teamFilter');
-            const teams = [...new Set(allData.participants.map(p => p.team).filter(Boolean))].sort();
-            teamFilter.innerHTML = '<option value="">All Teams</option>' + 
-                teams.map(team => `<option value="${team}">${team}</option>`).join('');
-        }
-
-        // Apply filters to driver list
-        function applyFilters() {
-            console.log('🔍 Applying advanced filters...');
-            
-            // Collect filter values
-            currentFilters = {
-                totalRaces: {
-                    min: document.getElementById('totalRacesMin').value ? parseInt(document.getElementById('totalRacesMin').value) : null,
-                    max: document.getElementById('totalRacesMax').value ? parseInt(document.getElementById('totalRacesMax').value) : null
-                },
-                totalWins: {
-                    min: document.getElementById('totalWinsMin').value ? parseInt(document.getElementById('totalWinsMin').value) : null,
-                    max: document.getElementById('totalWinsMax').value ? parseInt(document.getElementById('totalWinsMax').value) : null
-                },
-                winRate: {
-                    min: document.getElementById('winRateMin').value ? parseFloat(document.getElementById('winRateMin').value) : null,
-                    max: document.getElementById('winRateMax').value ? parseFloat(document.getElementById('winRateMax').value) : null
-                },
-                winStreak: {
-                    min: document.getElementById('winStreakMin').value ? parseInt(document.getElementById('winStreakMin').value) : null
-                },
-                totalEvents: {
-                    min: document.getElementById('totalEventsMin').value ? parseInt(document.getElementById('totalEventsMin').value) : null
-                },
-                class: document.getElementById('classFilter').value || null,
-                series: document.getElementById('seriesFilter').value || null,
-                eventAttendance: document.getElementById('eventAttendanceFilter').value || null,
-                eventCount: {
-                    min: document.getElementById('eventCountMin').value ? parseInt(document.getElementById('eventCountMin').value) : null
-                },
-                team: document.getElementById('teamFilter').value || null,
-                registrationDate: {
-                    from: document.getElementById('registrationDateFrom').value || null,
-                    to: document.getElementById('registrationDateTo').value || null
-                }
-            };
-
-            // Filter drivers
-            filteredDrivers = allData.participants.filter(driver => {
-                const stats = calculateStatsFromRaceData(driver.id);
-                
-                // Check total races filter
-                if (currentFilters.totalRaces.min !== null && stats.totalRaces < currentFilters.totalRaces.min) return false;
-                if (currentFilters.totalRaces.max !== null && stats.totalRaces > currentFilters.totalRaces.max) return false;
-                
-                // Check total wins filter
-                if (currentFilters.totalWins.min !== null && stats.totalWins < currentFilters.totalWins.min) return false;
-                if (currentFilters.totalWins.max !== null && stats.totalWins > currentFilters.totalWins.max) return false;
-                
-                // Check win rate filter
-                if (currentFilters.winRate.min !== null && stats.winRate < currentFilters.winRate.min) return false;
-                if (currentFilters.winRate.max !== null && stats.winRate > currentFilters.winRate.max) return false;
-                
-                // Check win streak filter
-                if (currentFilters.winStreak.min !== null && stats.bestStreak < currentFilters.winStreak.min) return false;
-                
-                // Check total events filter
-                if (currentFilters.totalEvents.min !== null && stats.eventsParticipated < currentFilters.totalEvents.min) return false;
-                
-                // Check class filter
-                if (currentFilters.class && driver.sledClass !== currentFilters.class) return false;
-                
-                // Check team filter
-                if (currentFilters.team && driver.team !== currentFilters.team) return false;
-                
-                // Check series registration filter
-                if (currentFilters.series) {
-                    const driverRaces = allData.races.filter(race => race.participantId === driver.id);
-                    const driverEventIds = [...new Set(driverRaces.map(race => race.eventId))];
-                    const driverEvents = allData.events.filter(event => driverEventIds.includes(event.id));
-                    const isRegisteredInSeries = driverEvents.some(event => event.seriesId === currentFilters.series);
-                    if (!isRegisteredInSeries) return false;
-                }
-                
-                // Check event attendance filter
-                if (currentFilters.eventAttendance) {
-                    const driverRaces = allData.races.filter(race => race.participantId === driver.id);
-                    const attendedEvent = driverRaces.some(race => race.eventId === currentFilters.eventAttendance);
-                    if (!attendedEvent) return false;
-                }
-                
-                // Check event count filter
-                if (currentFilters.eventCount.min !== null) {
-                    const driverRaces = allData.races.filter(race => race.participantId === driver.id);
-                    const uniqueEvents = [...new Set(driverRaces.map(race => race.eventId))];
-                    if (uniqueEvents.length < currentFilters.eventCount.min) return false;
-                }
-                
-                // Check registration date filter
-                if (currentFilters.registrationDate.from) {
-                    const regDate = new Date(driver.registrationDate || driver.dateOfBirth);
-                    const fromDate = new Date(currentFilters.registrationDate.from);
-                    if (regDate < fromDate) return false;
-                }
-                if (currentFilters.registrationDate.to) {
-                    const regDate = new Date(driver.registrationDate || driver.dateOfBirth);
-                    const toDate = new Date(currentFilters.registrationDate.to);
-                    if (regDate > toDate) return false;
-                }
-                
-                return true;
-            });
-
-            // Update filter summary
-            updateFilterSummary();
-            
-            // Reset pagination and display filtered results
-            currentDriversPage = 1;
-            displayFilteredDriverGrid();
-            
-            console.log(`✅ Filters applied: ${filteredDrivers.length} drivers match criteria`);
-        }
-
-        // Display filtered driver grid
-        async function displayFilteredDriverGrid() {
-            const grid = document.getElementById('driverGrid');
-            const skeleton = document.getElementById('driverSkeleton');
-            const pagination = document.getElementById('driverPagination');
-            
-            // Show skeleton loading
-            showDriverSkeletonLoading();
-            
-            // Simulate loading delay for better UX
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
-            hideDriverSkeletonLoading();
-            
-            if (filteredDrivers.length === 0) {
-                grid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fas fa-search"></i>
-                        </div>
-                        <h3>No Drivers Match Filters</h3>
-                        <p>Try adjusting your filter criteria to find more drivers.</p>
-                        <button class="btn btn-secondary" onclick="clearAllFilters()">
-                            <i class="fas fa-times"></i> Clear All Filters
-                        </button>
-                    </div>
-                `;
-                if (pagination) pagination.style.display = 'none';
-                return;
-            }
-
-            // Sort filtered participants alphabetically by name
-            const sortedParticipants = [...filteredDrivers].sort((a, b) => 
-                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-            );
-            
-            // Calculate pagination
-            const totalPages = Math.ceil(sortedParticipants.length / driversPerPage);
-            const startIndex = (currentDriversPage - 1) * driversPerPage;
-            const endIndex = startIndex + driversPerPage;
-            const currentPageDrivers = sortedParticipants.slice(startIndex, endIndex);
-            
-            console.log(`📄 Filtered Drivers Page ${currentDriversPage} of ${totalPages} (showing ${currentPageDrivers.length} of ${filteredDrivers.length} drivers)`);
-
-            grid.innerHTML = currentPageDrivers.map(driver => {
-                // Calculate stats for grid display using extracted race data
-                const stats = calculateStatsFromRaceData(driver.id);
-                const initials = driver.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
-
-                return `
-                    <div class="driver-card" data-driver-id="${driver.id}" onclick="selectDriver('${driver.id}')">
-                        <div class="driver-card-header">
-                            <div class="driver-card-avatar">${initials}</div>
-                            <div class="driver-card-info">
-                                <h3>${driver.name}</h3>
-                                <div class="driver-card-meta">
-                                    ${driver.racingNumber ? `#${driver.racingNumber}` : 'No number'} • ${driver.team || 'No team'}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="driver-card-stats">
-                            <div class="driver-card-stat">
-                                <span class="driver-card-stat-value">${stats.totalRaces}</span>
-                                <span class="driver-card-stat-label">Races</span>
-                            </div>
-                            <div class="driver-card-stat">
-                                <span class="driver-card-stat-value">${stats.totalWins}</span>
-                                <span class="driver-card-stat-label">Wins</span>
-                            </div>
-                            <div class="driver-card-stat">
-                                <span class="driver-card-stat-value">${stats.winRate}%</span>
-                                <span class="driver-card-stat-label">Win Rate</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            // Render pagination
-            if (pagination && totalPages > 1) {
-                pagination.style.display = 'block';
-                pagination.innerHTML = UIComponents.createPagination(
-                    currentDriversPage, 
-                    totalPages, 
-                    filteredDrivers.length, 
-                    driversPerPage, 
-                    'changeDriversPage'
-                );
-            } else if (pagination) {
-                pagination.style.display = 'none';
-            }
-        }
-
-        // Update filter summary display
-        function updateFilterSummary() {
-            const summary = document.getElementById('filterSummary');
-            const summaryText = document.getElementById('filterSummaryText');
-            
-            const activeFilters = [];
-            
-            if (currentFilters.totalRaces.min !== null || currentFilters.totalRaces.max !== null) {
-                const min = currentFilters.totalRaces.min || 0;
-                const max = currentFilters.totalRaces.max || '∞';
-                activeFilters.push(`Total Races: ${min}-${max}`);
-            }
-            
-            if (currentFilters.totalWins.min !== null || currentFilters.totalWins.max !== null) {
-                const min = currentFilters.totalWins.min || 0;
-                const max = currentFilters.totalWins.max || '∞';
-                activeFilters.push(`Total Wins: ${min}-${max}`);
-            }
-            
-            if (currentFilters.winRate.min !== null || currentFilters.winRate.max !== null) {
-                const min = currentFilters.winRate.min || 0;
-                const max = currentFilters.winRate.max || 100;
-                activeFilters.push(`Win Rate: ${min}%-${max}%`);
-            }
-            
-            if (currentFilters.winStreak.min !== null) {
-                activeFilters.push(`Win Streak: ≥${currentFilters.winStreak.min}`);
-            }
-            
-            if (currentFilters.totalEvents.min !== null) {
-                activeFilters.push(`Events: ≥${currentFilters.totalEvents.min}`);
-            }
-            
-            if (currentFilters.class) {
-                activeFilters.push(`Class: ${currentFilters.class}`);
-            }
-            
-            if (currentFilters.series) {
-                const series = dataManager.getAllSeries().find(s => s.id === currentFilters.series);
-                activeFilters.push(`Series: ${series ? series.name : 'Unknown'}`);
-            }
-            
-            if (currentFilters.eventAttendance) {
-                const event = allData.events.find(e => e.id === currentFilters.eventAttendance);
-                activeFilters.push(`Attended: ${event ? event.name : 'Unknown Event'}`);
-            }
-            
-            if (currentFilters.eventCount.min !== null) {
-                activeFilters.push(`Events Attended: ≥${currentFilters.eventCount.min}`);
-            }
-            
-            if (currentFilters.team) {
-                activeFilters.push(`Team: ${currentFilters.team}`);
-            }
-            
-            if (currentFilters.registrationDate.from || currentFilters.registrationDate.to) {
-                const from = currentFilters.registrationDate.from || 'Any';
-                const to = currentFilters.registrationDate.to || 'Any';
-                activeFilters.push(`Registered: ${from} to ${to}`);
-            }
-            
-            if (activeFilters.length > 0) {
-                summaryText.textContent = `Active Filters: ${activeFilters.join(' • ')}`;
-                summary.style.display = 'block';
-            } else {
-                summary.style.display = 'none';
-            }
-        }
-
-        // Clear all filters
-        function clearAllFilters() {
-            // Reset all filter inputs
-            document.getElementById('totalRacesMin').value = '';
-            document.getElementById('totalRacesMax').value = '';
-            document.getElementById('totalWinsMin').value = '';
-            document.getElementById('totalWinsMax').value = '';
-            document.getElementById('winRateMin').value = '';
-            document.getElementById('winRateMax').value = '';
-            document.getElementById('winStreakMin').value = '';
-            document.getElementById('totalEventsMin').value = '';
-            document.getElementById('classFilter').value = '';
-            document.getElementById('seriesFilter').value = '';
-            document.getElementById('eventAttendanceFilter').value = '';
-            document.getElementById('eventCountMin').value = '';
-            document.getElementById('teamFilter').value = '';
-            document.getElementById('registrationDateFrom').value = '';
-            document.getElementById('registrationDateTo').value = '';
-            
-            // Reset filter state
-            currentFilters = {
-                totalRaces: { min: null, max: null },
-                totalWins: { min: null, max: null },
-                winRate: { min: null, max: null },
-                winStreak: { min: null },
-                totalEvents: { min: null },
-                class: null,
-                series: null,
-                eventAttendance: null,
-                eventCount: { min: null },
-                team: null,
-                registrationDate: { from: null, to: null }
-            };
-            
-            filteredDrivers = [];
-            
-            // Hide filter summary
-            document.getElementById('filterSummary').style.display = 'none';
-            
-            // Reset pagination and show all drivers
-            currentDriversPage = 1;
-            displayDriverGrid();
-            
-            console.log('🧹 All filters cleared');
-        }
-
-        // Change drivers page
-        function changeDriversPage(page) {
-            if (page < 1) return;
-            
-            // Check if we're showing filtered results or all drivers
-            const totalDrivers = filteredDrivers.length > 0 ? filteredDrivers.length : allData.participants.length;
-            const totalPages = Math.ceil(totalDrivers / driversPerPage);
-            if (page > totalPages) return;
-            
-            currentDriversPage = page;
-            
-            // Display appropriate grid based on filter state
-            if (filteredDrivers.length > 0) {
-                displayFilteredDriverGrid();
-            } else {
-                displayDriverGrid();
-            }
-            
-            // Scroll to top of driver grid
-            const driverGrid = document.querySelector('.driver-grid');
-            if (driverGrid) {
-                driverGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
-        // Select driver from combo box
-        async function loadDriverProfile() {
-            const input = document.getElementById('driverSelect-input');
-            const driverId = input ? input.getAttribute('data-selected-value') : '';
-            
-            if (driverId) {
-                await selectDriver(driverId);
-            } else {
-                clearDriverSelection();
-            }
-        }
-
-        // Select driver and show profile
-        async function selectDriver(driverId) {
-            currentDriverId = driverId;
-            selectedEventId = null; // Reset event filter
-            
-            // Reset pagination when switching drivers
-            raceHistoryPagination.currentPage = 1;
-            
-            const driver = allData.participants.find(p => p.id === driverId);
-            
-            if (!driver) {
-                console.warn('Driver not found:', driverId);
-                return;
-            }
-
-            console.log(`📋 Loading profile for ${driver.name} (ID: ${driverId})`);
-
-            // Update combo box
-            const input = document.getElementById('driverSelect-input');
-            if (input) {
-                input.value = driver.name;
-                input.setAttribute('data-selected-value', driverId);
-            }
-            
-            // Show profile, hide grid
-            document.getElementById('driverGrid').style.display = 'none';
-            document.getElementById('driverProfile').style.display = 'block';
-
-            // Update driver info
-            const initials = driver.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
-            document.getElementById('driverAvatar').textContent = initials;
-            document.getElementById('driverName').textContent = driver.name;
-            document.getElementById('driverClass').textContent = driver.racingNumber ? `#${driver.racingNumber}` : 'No number';
-            document.getElementById('driverTeam').textContent = driver.team || 'No team';
-            document.getElementById('memberSince').textContent = `Member since: ${new Date(driver.registrationDate || driver.dateOfBirth).toLocaleDateString()}`;
-
-            // Populate filters
-            populateEventFilter(driver);
-
-            // Update all profile sections with race data
-            try {
-                await updateDriverStatistics(driver);
-                updateRaceHistory(driver);
-                updateLanePerformance(driver);
-                updateEventSummary(driver);
-                
-                console.log(`✅ Profile loaded successfully for ${driver.name}`);
-            } catch (error) {
-                console.error('Error updating profile sections:', error);
-                showToast(`Error loading profile for ${driver.name}`, 'error');
-            }
-        }
-
-        // Clear driver selection
-        function clearDriverSelection() {
-            currentDriverId = null;
-            selectedEventId = null; // Reset event filter
-            const input = document.getElementById('driverSelect-input');
-            if (input) {
-                input.value = '';
-                input.setAttribute('data-selected-value', '');
-            }
-            document.getElementById('driverGrid').style.display = 'grid';
-            document.getElementById('driverProfile').style.display = 'none';
-        }
-
-        // Callback function for driver selection from combo box
-        function onDriverSelect(driverId) {
-            if (driverId) {
-                selectDriver(driverId);
-            } else {
-                clearDriverSelection();
-            }
-        }
-
-        // Populate event filter dropdown
-        function populateEventFilter(driver, preserveSelections = false) {
-            const eventFilter = document.getElementById('eventFilter');
-            const seriesFilter = document.getElementById('seriesFilter');
-            const seasonFilter = document.getElementById('seasonFilter');
-            const filterDescription = document.getElementById('filterDescription');
-
-            // Preserve current selections if requested
-            const prevSeries = preserveSelections ? (seriesFilter?.value || '') : '';
-            const prevSeason = preserveSelections ? (seasonFilter?.value || '') : '';
-            const prevEvent = preserveSelections ? (eventFilter?.value || '') : '';
-            
-            // Get events this driver participated in
-            const driverRaces = allData.races.filter(race => race.participantId === driver.id);
-            const driverEventIds = [...new Set(driverRaces.map(race => race.eventId))];
-            let driverEvents = allData.events.filter(event => driverEventIds.includes(event.id));
-
-            // Populate Series filter based on driver's events
-            const driverSeriesIds = [...new Set(driverEvents.map(ev => ev.seriesId).filter(Boolean))];
-            seriesFilter.innerHTML = '<option value="">All Series</option>';
-            driverSeriesIds.forEach(seriesId => {
-                const series = (allData.series && allData.series.length ? allData.series : dataManager.getAllSeries()).find(s => s.id === seriesId);
-                const name = series ? series.name : 'Unknown Series';
-                const option = document.createElement('option');
-                option.value = seriesId;
-                option.textContent = name;
-                seriesFilter.appendChild(option);
-            });
-            if (preserveSelections && prevSeries) {
-                seriesFilter.value = prevSeries;
-                selectedSeriesId = prevSeries;
-            }
-
-            // Populate Season filter based on selected series or driver's events
-            const seasonsMap = new Map();
-            const seriesList = (allData.series && allData.series.length ? allData.series : dataManager.getAllSeries());
-            driverEvents.forEach(ev => {
-                if (selectedSeriesId && ev.seriesId !== selectedSeriesId) return;
-                if (ev.seasonId) {
-                    const series = seriesList.find(s => s.id === ev.seriesId);
-                    const season = series?.seasons?.find(se => se.id === ev.seasonId);
-                    if (season && !seasonsMap.has(season.id)) {
-                        seasonsMap.set(season.id, { id: season.id, name: season.name });
-                    }
-                }
-            });
-            seasonFilter.innerHTML = '<option value="">All Seasons</option>';
-            for (const season of seasonsMap.values()) {
-                const option = document.createElement('option');
-                option.value = season.id;
-                option.textContent = season.name;
-                seasonFilter.appendChild(option);
-            }
-            if (preserveSelections && prevSeason) {
-                seasonFilter.value = prevSeason;
-                selectedSeasonId = prevSeason;
-            }
-            
-            // Clear and populate dropdown
-            eventFilter.innerHTML = '<option value="">All Events (Overall Stats)</option>';
-            
-            if (driverEvents.length === 0) {
-                eventFilter.innerHTML += '<option value="no-events" disabled>No events participated</option>';
-                filterDescription.textContent = 'This driver has not participated in any events yet';
-                return;
-            }
-            
-            // Sort events by date (most recent first)
-            driverEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            // Apply current series/season selections when building Event options
-            if (selectedSeriesId) {
-                driverEvents = driverEvents.filter(ev => ev.seriesId === selectedSeriesId);
-            }
-            if (selectedSeasonId) {
-                driverEvents = driverEvents.filter(ev => ev.seasonId === selectedSeasonId);
-            }
-
-            driverEvents.forEach(event => {
-                const eventRaceCount = driverRaces.filter(race => race.eventId === event.id).length;
-                
-                // Get series and season information
-                const series = dataManager.getAllSeries().find(s => s.id === event.seriesId);
-                const seriesName = series ? series.name : 'Unknown Series';
-                const season = event.seasonId && series ? series.seasons?.find(s => s.id === event.seasonId) : null;
-                const seasonName = season ? season.name : 'General';
-                
-                const option = document.createElement('option');
-                option.value = event.id;
-                option.textContent = `${event.name} - ${seriesName} (${seasonName}) - ${eventRaceCount} races`;
-                eventFilter.appendChild(option);
-            });
-            
-            // Reset selection
-            // Reset or restore selections
-            if (preserveSelections) {
-                eventFilter.value = prevEvent || '';
-                if (prevEvent) selectedEventId = prevEvent;
-            } else {
-                selectedSeriesId = '';
-                selectedSeasonId = '';
-                seriesFilter.value = '';
-                seasonFilter.value = '';
-                eventFilter.value = '';
-            }
-            filterDescription.textContent = `Showing overall performance across ${driverEvents.length} events`;
-        }
-
-        // Filter by series
-        async function filterBySeries() {
-            const seriesFilter = document.getElementById('seriesFilter');
-            selectedSeriesId = seriesFilter.value || null;
-
-            // Reset dependent filters
-            selectedSeasonId = null;
-            const seasonFilter = document.getElementById('seasonFilter');
-            const eventFilter = document.getElementById('eventFilter');
-            if (seasonFilter) seasonFilter.value = '';
-            if (eventFilter) eventFilter.value = '';
-            selectedEventId = null;
-
-            // Rebuild season and event dropdowns according to current selection
-            if (currentDriverId) {
-                const driver = allData.participants.find(p => p.id === currentDriverId);
-                populateEventFilter(driver, true);
-                await applyAllFiltersAndRefresh(driver);
-            }
-        }
-
-        // Filter by season
-        async function filterBySeason() {
-            const seasonFilter = document.getElementById('seasonFilter');
-            selectedSeasonId = seasonFilter.value || null;
-
-            // Reset event filter
-            const eventFilter = document.getElementById('eventFilter');
-            if (eventFilter) eventFilter.value = '';
-            selectedEventId = null;
-
-            // Rebuild event dropdowns according to current selection
-            if (currentDriverId) {
-                const driver = allData.participants.find(p => p.id === currentDriverId);
-                populateEventFilter(driver);
-                await applyAllFiltersAndRefresh(driver);
-            }
-        }
-
-        // Apply filters and refresh UI sections
-        async function applyAllFiltersAndRefresh(driver) {
-            const filterDescription = document.getElementById('filterDescription');
-
-            // Build description string
-            const parts = [];
-            if (selectedSeriesId) {
-                const series = (allData.series && allData.series.length ? allData.series : dataManager.getAllSeries()).find(s => s.id === selectedSeriesId);
-                parts.push(`Series: ${series ? series.name : 'Unknown'}`);
-            }
-            if (selectedSeasonId) {
-                const series = (allData.series && allData.series.length ? allData.series : dataManager.getAllSeries()).find(s => s.seasons?.some(se => se.id === selectedSeasonId));
-                const season = series?.seasons?.find(se => se.id === selectedSeasonId);
-                parts.push(`Season: ${season ? season.name : 'Unknown'}`);
-            }
-            if (selectedEventId) {
-                const ev = allData.events.find(e => e.id === selectedEventId);
-                const eventName = ev ? ev.name : 'Unknown Event';
-                const eventDate = ev ? new Date(ev.date).toLocaleDateString() : 'Unknown Date';
-                parts.push(`Event: ${eventName} (${eventDate})`);
-            }
-            filterDescription.textContent = parts.length ? `Showing performance filtered by ${parts.join(' • ')}` : 'Showing overall performance across all events';
-
-            // Reset pagination when changing filters
-            raceHistoryPagination.currentPage = 1;
-
-            await updateDriverStatistics(driver);
-            updateRaceHistory(driver);
-            updateLanePerformance(driver);
-            updateEventSummary(driver);
-        }
-
-        // Filter by event
-        async function filterByEvent() {
-            const eventFilter = document.getElementById('eventFilter');
-            const filterDescription = document.getElementById('filterDescription');
-            
-            selectedEventId = eventFilter.value;
-            
-            if (!currentDriverId) {
-                console.warn('No driver selected');
-                return;
-            }
-            
-            const driver = allData.participants.find(p => p.id === currentDriverId);
-            if (!driver) {
-                console.warn('Driver not found:', currentDriverId);
-                return;
-            }
-            
-            // Reset pagination when changing event filter
-            raceHistoryPagination.currentPage = 1;
-            
-            // Update filter description moved to applyAllFiltersAndRefresh
-            
-            // Apply all filters and refresh
-            try {
-                await applyAllFiltersAndRefresh(driver);
-            } catch (error) {
-                console.error('Error updating filtered profile:', error);
-                showToast('Error updating profile with event filter', 'error');
-            }
-        }
-
-        // Update driver statistics
-        async function updateDriverStatistics(driver) {
-            try {
-                let stats = null;
-                
-                // Try to use StatisticsManager for comprehensive stats if available
-                if (dataManager && dataManager.statisticsManager) {
-                    console.log(`📊 Using StatisticsManager for ${driver.name}'s stats`);
-                    // If the statistics manager supports filtering by event/series/season in the future, wire it here.
-                    stats = await dataManager.statisticsManager.calculateParticipantStatsOptimized(driver.id);
-                }
-                
-                // Fallback to manual calculation from extracted race data
-                if (!stats || stats.totalRaces === 0) {
-                    console.log(`📊 Falling back to manual calculation for ${driver.name}`);
-                    stats = calculateStatsFromRaceData(driver.id, selectedEventId);
-                }
-                
-                // Update the UI elements
-                document.getElementById('totalRaces').textContent = stats.totalRaces || 0;
-                document.getElementById('totalWins').textContent = stats.totalWins || 0;
-                document.getElementById('winRate').textContent = `${stats.winRate || 0}%`;
-                document.getElementById('avgPosition').textContent = stats.avgPosition || '--';
-                document.getElementById('bestStreak').textContent = stats.bestStreak || 0;
-                document.getElementById('eventsParticipated').textContent = stats.eventsParticipated || 0;
-                
-                console.log(`📊 Stats updated for ${driver.name}:`, {
-                    races: stats.totalRaces,
-                    wins: stats.totalWins,
-                    winRate: stats.winRate + '%'
-                });
-                
-            } catch (error) {
-                console.error('Error updating driver statistics:', error);
-                // Set default values if calculation fails
-                document.getElementById('totalRaces').textContent = '0';
-                document.getElementById('totalWins').textContent = '0';
-                document.getElementById('winRate').textContent = '0%';
-                document.getElementById('avgPosition').textContent = '--';
-                document.getElementById('bestStreak').textContent = '0';
-                document.getElementById('eventsParticipated').textContent = '0';
-            }
-        }
-
-        // Manual statistics calculation from race data (fallback)
-        function calculateStatsFromRaceData(participantId, eventId = null) {
-            let driverRaces = allData.races.filter(race => race.participantId === participantId);
-            
-            // Apply filters: series, season, event
-            if (selectedSeriesId) {
-                const eventIdsForSeries = new Set(allData.events.filter(e => e.seriesId === selectedSeriesId).map(e => e.id));
-                driverRaces = driverRaces.filter(r => eventIdsForSeries.has(r.eventId));
-            }
-            if (selectedSeasonId) {
-                const eventIdsForSeason = new Set(allData.events.filter(e => e.seasonId === selectedSeasonId).map(e => e.id));
-                driverRaces = driverRaces.filter(r => eventIdsForSeason.has(r.eventId));
-            }
-            // Backward compatibility: explicit event filter argument
-            if (eventId) {
-                driverRaces = driverRaces.filter(race => race.eventId === eventId);
-            }
-            
-            if (driverRaces.length === 0) {
-                return {
-                    totalRaces: 0,
-                    totalWins: 0,
-                    winRate: 0,
-                    avgPosition: 0,
-                    bestStreak: 0,
-                    eventsParticipated: eventId ? 1 : 0
-                };
-            }
-            
-            const wins = driverRaces.filter(race => race.position === 1).length;
-            const winRate = ((wins / driverRaces.length) * 100).toFixed(1);
-            
-            const positions = driverRaces.map(race => race.position).filter(pos => pos && pos > 0);
-            const avgPosition = positions.length > 0 ? (positions.reduce((a, b) => a + b, 0) / positions.length).toFixed(1) : 0;
-            
-            // Calculate best win streak
-            let bestStreak = 0;
-            let currentStreak = 0;
-            // Sort races by timestamp for accurate streak calculation
-            const sortedRaces = driverRaces.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            sortedRaces.forEach(race => {
-                if (race.position === 1) {
-                    currentStreak++;
-                    bestStreak = Math.max(bestStreak, currentStreak);
-                } else {
-                    currentStreak = 0;
-                }
-            });
-
-            const events = eventId ? 1 : new Set(driverRaces.map(race => race.eventId)).size;
-
-            return {
-                totalRaces: driverRaces.length,
-                totalWins: wins,
-                winRate: parseFloat(winRate),
-                avgPosition: parseFloat(avgPosition),
-                bestStreak: bestStreak,
-                eventsParticipated: events
-            };
-        }
-
-        // Update race history with pagination
-        function updateRaceHistory(driver) {
-            let driverRaces = allData.races.filter(race => race.participantId === driver.id);
-            
-            // Apply filters: series, season, event
-            if (selectedSeriesId) {
-                const eventIdsForSeries = new Set(allData.events.filter(e => e.seriesId === selectedSeriesId).map(e => e.id));
-                driverRaces = driverRaces.filter(r => eventIdsForSeries.has(r.eventId));
-            }
-            if (selectedSeasonId) {
-                const eventIdsForSeason = new Set(allData.events.filter(e => e.seasonId === selectedSeasonId).map(e => e.id));
-                driverRaces = driverRaces.filter(r => eventIdsForSeason.has(r.eventId));
-            }
-            if (selectedEventId) {
-                driverRaces = driverRaces.filter(race => race.eventId === selectedEventId);
-            }
-            
-            const tbody = document.querySelector('#raceHistoryTable tbody');
-            const paginationContainer = document.getElementById('raceHistoryPagination');
-
-            if (driverRaces.length === 0) {
-                const noDataMessage = selectedEventId ? 'No race history available for this event' : 'No race history available';
-                tbody.innerHTML = `<tr><td colspan="7" class="no-data">${noDataMessage}</td></tr>`;
-                paginationContainer.style.display = 'none';
-                return;
-            }
-
-            const sortedRaces = driverRaces.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            // Update pagination data
-            raceHistoryPagination.totalItems = sortedRaces.length;
-            raceHistoryPagination.totalPages = Math.ceil(sortedRaces.length / raceHistoryPagination.itemsPerPage);
-            raceHistoryPagination.currentPage = Math.min(raceHistoryPagination.currentPage, raceHistoryPagination.totalPages);
-            raceHistoryPagination.currentPage = Math.max(1, raceHistoryPagination.currentPage);
-            
-            // Get current page data
-            const startIndex = (raceHistoryPagination.currentPage - 1) * raceHistoryPagination.itemsPerPage;
-            const endIndex = startIndex + raceHistoryPagination.itemsPerPage;
-            raceHistoryPagination.currentRaces = sortedRaces.slice(startIndex, endIndex);
-
-            // Update table content
-            tbody.innerHTML = raceHistoryPagination.currentRaces.map(race => {
-                const event = allData.events.find(e => e.id === race.eventId);
-                const eventName = event ? event.name : 'Unknown Event';
-                const raceDate = new Date(race.timestamp);
-                const dateString = raceDate.toLocaleDateString();
-                const timeString = raceDate.toLocaleTimeString();
-                const fullDateTime = `${dateString} at ${timeString}`;
-                const positionBadge = formatPositionBadge(race.position);
-
-                return `
-                    <tr>
-                        <td class="race-date-tooltip" data-tooltip="${fullDateTime}">${dateString}</td>
-                        <td>${eventName}</td>
-                        <td class="race-class">${race.className ? race.className.charAt(0).toUpperCase() + race.className.slice(1) : 'N/A'}</td>
-                        <td>${race.round || 'N/A'}</td>
-                        <td>${race.lane || 'N/A'}</td>
-                        <td>${race.opponent || 'N/A'}</td>
-                        <td>${positionBadge}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            // Update pagination controls
-            updatePaginationControls();
-        }
-
-        // Update pagination controls
-        function updatePaginationControls() {
-            const paginationContainer = document.getElementById('raceHistoryPagination');
-            const paginationInfo = document.getElementById('paginationInfo');
-            const prevBtn = document.getElementById('prevPageBtn');
-            const nextBtn = document.getElementById('nextPageBtn');
-            const pageNumbers = document.getElementById('pageNumbers');
-
-            // Show/hide pagination container
-            if (raceHistoryPagination.totalPages > 1) {
-                paginationContainer.style.display = 'flex';
-            } else {
-                paginationContainer.style.display = 'none';
-                return;
-            }
-
-            // Update pagination info
-            const startItem = (raceHistoryPagination.currentPage - 1) * raceHistoryPagination.itemsPerPage + 1;
-            const endItem = Math.min(raceHistoryPagination.currentPage * raceHistoryPagination.itemsPerPage, raceHistoryPagination.totalItems);
-            paginationInfo.textContent = `Showing ${startItem}-${endItem} of ${raceHistoryPagination.totalItems} races`;
-
-            // Update navigation buttons
-            prevBtn.disabled = raceHistoryPagination.currentPage <= 1;
-            nextBtn.disabled = raceHistoryPagination.currentPage >= raceHistoryPagination.totalPages;
-
-            // Generate page numbers
-            pageNumbers.innerHTML = generatePageNumbers();
-        }
-
-        // Generate page number buttons
-        function generatePageNumbers() {
-            const currentPage = raceHistoryPagination.currentPage;
-            const totalPages = raceHistoryPagination.totalPages;
-            const maxVisiblePages = 7;
-            
-            let pageNumbers = [];
-            
-            if (totalPages <= maxVisiblePages) {
-                // Show all pages if total is small
-                for (let i = 1; i <= totalPages; i++) {
-                    pageNumbers.push(i);
-                }
-            } else {
-                // Show smart pagination with ellipsis
-                if (currentPage <= 4) {
-                    // Near the beginning
-                    for (let i = 1; i <= 5; i++) {
-                        pageNumbers.push(i);
-                    }
-                    pageNumbers.push('ellipsis');
-                    pageNumbers.push(totalPages);
-                } else if (currentPage >= totalPages - 3) {
-                    // Near the end
-                    pageNumbers.push(1);
-                    pageNumbers.push('ellipsis');
-                    for (let i = totalPages - 4; i <= totalPages; i++) {
-                        pageNumbers.push(i);
-                    }
-                } else {
-                    // In the middle
-                    pageNumbers.push(1);
-                    pageNumbers.push('ellipsis');
-                    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-                        pageNumbers.push(i);
-                    }
-                    pageNumbers.push('ellipsis');
-                    pageNumbers.push(totalPages);
-                }
-            }
-            
-            return pageNumbers.map(pageNum => {
-                if (pageNum === 'ellipsis') {
-                    return '<span class="page-number ellipsis">...</span>';
-                }
-                const isActive = pageNum === currentPage;
-                return `<button class="page-number ${isActive ? 'active' : ''}" onclick="goToRaceHistoryPage(${pageNum})">${pageNum}</button>`;
-            }).join('');
-        }
-
-        // Change race history page
-        function changeRaceHistoryPage(direction) {
-            const newPage = raceHistoryPagination.currentPage + direction;
-            if (newPage >= 1 && newPage <= raceHistoryPagination.totalPages) {
-                raceHistoryPagination.currentPage = newPage;
-                if (currentDriverId) {
-                    const driver = allData.participants.find(p => p.id === currentDriverId);
-                    if (driver) {
-                        updateRaceHistory(driver);
-                    }
-                }
-            }
-        }
-
-        // Go to specific race history page
-        function goToRaceHistoryPage(pageNum) {
-            if (pageNum >= 1 && pageNum <= raceHistoryPagination.totalPages) {
-                raceHistoryPagination.currentPage = pageNum;
-                if (currentDriverId) {
-                    const driver = allData.participants.find(p => p.id === currentDriverId);
-                    if (driver) {
-                        updateRaceHistory(driver);
-                    }
-                }
-            }
-        }
-
-        // Update lane performance
-        function updateLanePerformance(driver) {
-            let driverRaces = allData.races.filter(race => race.participantId === driver.id);
-            
-            // Apply filters: series, season, event
-            if (selectedSeriesId) {
-                const eventIdsForSeries = new Set(allData.events.filter(e => e.seriesId === selectedSeriesId).map(e => e.id));
-                driverRaces = driverRaces.filter(r => eventIdsForSeries.has(r.eventId));
-            }
-            if (selectedSeasonId) {
-                const eventIdsForSeason = new Set(allData.events.filter(e => e.seasonId === selectedSeasonId).map(e => e.id));
-                driverRaces = driverRaces.filter(r => eventIdsForSeason.has(r.eventId));
-            }
-            if (selectedEventId) {
-                driverRaces = driverRaces.filter(race => race.eventId === selectedEventId);
-            }
-            
-            const laneData = {};
-
-            driverRaces.forEach(race => {
-                if (race.lane) {
-                    if (!laneData[race.lane]) {
-                        laneData[race.lane] = { total: 0, wins: 0 };
-                    }
-                    laneData[race.lane].total++;
-                    if (race.position === 1) {
-                        laneData[race.lane].wins++;
-                    }
-                }
-            });
-
-            const lanePerformanceDiv = document.getElementById('lanePerformance');
-
-            if (Object.keys(laneData).length === 0) {
-                const noDataMessage = selectedEventId ? 'No lane performance data available for this event' : 'No lane performance data available';
-                lanePerformanceDiv.innerHTML = `<div class="no-data">${noDataMessage}</div>`;
-                return;
-            }
-
-            const laneStats = Object.entries(laneData)
-                .sort(([a], [b]) => parseInt(a) - parseInt(b))
-                .map(([lane, data]) => {
-                    const winRate = ((data.wins / data.total) * 100).toFixed(1);
-                    return `
-                        <div class="lane-stat">
-                            <div class="lane-number">Lane ${lane}</div>
-                            <div class="lane-win-rate">${winRate}%</div>
-                            <div>${data.wins}/${data.total} wins</div>
-                        </div>
-                    `;
-                }).join('');
-
-            lanePerformanceDiv.innerHTML = laneStats;
-        }
-
-        // Calculate event result/standing for a driver
-        function calculateEventResult(driverId, eventId) {
-            // Get all races for this driver in this event
-            const driverRaces = allData.races.filter(race => 
-                race.participantId === driverId && race.eventId === eventId
-            );
-            
-            if (driverRaces.length === 0) return 'N/A';
-            
-            // Calculate points based on race positions (lower position = more points)
-            let totalPoints = 0;
-            let racesWithPositions = 0;
-            
-            driverRaces.forEach(race => {
-                if (race.position && race.position > 0) {
-                    // Award points: 1st = 10, 2nd = 8, 3rd = 6, 4th = 4, 5th+ = 2
-                    const points = race.position === 1 ? 10 : 
-                                  race.position === 2 ? 8 : 
-                                  race.position === 3 ? 6 : 
-                                  race.position === 4 ? 4 : 2;
-                    totalPoints += points;
-                    racesWithPositions++;
-                }
-            });
-            
-            if (racesWithPositions === 0) return 'N/A';
-            
-            // Get all participants who raced in this event
-            const eventRaces = allData.races.filter(race => race.eventId === eventId);
-            const eventParticipants = [...new Set(eventRaces.map(race => race.participantId))];
-            
-            // Calculate standings for all participants
-            const standings = eventParticipants.map(participantId => {
-                const participantRaces = eventRaces.filter(race => race.participantId === participantId);
-                let participantPoints = 0;
-                let participantRacesWithPositions = 0;
-                
-                participantRaces.forEach(race => {
-                    if (race.position && race.position > 0) {
-                        const points = race.position === 1 ? 10 : 
-                                      race.position === 2 ? 8 : 
-                                      race.position === 3 ? 6 : 
-                                      race.position === 4 ? 4 : 2;
-                        participantPoints += points;
-                        participantRacesWithPositions++;
-                    }
-                });
-                
-                return {
-                    participantId,
-                    points: participantPoints,
-                    racesWithPositions
-                };
-            }).filter(standing => standing.racesWithPositions > 0);
-            
-            // Sort by points (descending), then by number of races (descending)
-            standings.sort((a, b) => {
-                if (b.points !== a.points) return b.points - a.points;
-                return b.racesWithPositions - a.racesWithPositions;
-            });
-            
-            // Find this driver's position
-            const driverStanding = standings.findIndex(standing => standing.participantId === driverId);
-            
-            if (driverStanding === -1) return 'N/A';
-            
-            return driverStanding + 1; // Convert 0-based index to 1-based position
-        }
-
-        // Update event summary
-        function updateEventSummary(driver) {
-            let driverRaces = allData.races.filter(race => race.participantId === driver.id);
-            
-            // Apply filters: series, season, event
-            if (selectedSeriesId) {
-                const eventIdsForSeries = new Set(allData.events.filter(e => e.seriesId === selectedSeriesId).map(e => e.id));
-                driverRaces = driverRaces.filter(r => eventIdsForSeries.has(r.eventId));
-            }
-            if (selectedSeasonId) {
-                const eventIdsForSeason = new Set(allData.events.filter(e => e.seasonId === selectedSeasonId).map(e => e.id));
-                driverRaces = driverRaces.filter(r => eventIdsForSeason.has(r.eventId));
-            }
-            if (selectedEventId) {
-                driverRaces = driverRaces.filter(race => race.eventId === selectedEventId);
-            }
-            
-            const eventData = {};
-
-            driverRaces.forEach(race => {
-                if (!eventData[race.eventId]) {
-                    eventData[race.eventId] = {
-                        races: [],
-                        wins: 0,
-                        eventResult: null,
-                        classes: {}
-                    };
-                }
-                eventData[race.eventId].races.push(race);
-                if (race.position === 1) {
-                    eventData[race.eventId].wins++;
-                }
-                
-                // Group by class
-                const className = race.className || 'Unknown';
-                if (!eventData[race.eventId].classes[className]) {
-                    eventData[race.eventId].classes[className] = {
-                        races: [],
-                        wins: 0,
-                        eventResult: null
-                    };
-                }
-                eventData[race.eventId].classes[className].races.push(race);
-                if (race.position === 1) {
-                    eventData[race.eventId].classes[className].wins++;
-                }
-            });
-
-            // Calculate event results for each event and class
-            Object.keys(eventData).forEach(eventId => {
-                eventData[eventId].eventResult = calculateEventResult(driver.id, eventId);
-                
-                Object.keys(eventData[eventId].classes).forEach(className => {
-                    // For class results, we need to calculate based on races in that specific class
-                    const classRaces = eventData[eventId].classes[className].races;
-                    if (classRaces.length > 0) {
-                        // Get all participants who raced in this class for this event
-                        const eventClassRaces = allData.races.filter(race => 
-                            race.eventId === eventId && race.className === className
-                        );
-                        const classParticipants = [...new Set(eventClassRaces.map(race => race.participantId))];
-                        
-                        // Calculate class standings
-                        const classStandings = classParticipants.map(participantId => {
-                            const participantRaces = eventClassRaces.filter(race => race.participantId === participantId);
-                            let participantPoints = 0;
-                            let participantRacesWithPositions = 0;
-                            
-                            participantRaces.forEach(race => {
-                                if (race.position && race.position > 0) {
-                                    const points = race.position === 1 ? 10 : 
-                                                  race.position === 2 ? 8 : 
-                                                  race.position === 3 ? 6 : 
-                                                  race.position === 4 ? 4 : 2;
-                                    participantPoints += points;
-                                    participantRacesWithPositions++;
-                                }
-                            });
-                            
-                            return {
-                                participantId,
-                                points: participantPoints,
-                                racesWithPositions: participantRacesWithPositions
-                            };
-                        }).filter(standing => standing.racesWithPositions > 0);
-                        
-                        // Sort by points
-                        classStandings.sort((a, b) => {
-                            if (b.points !== a.points) return b.points - a.points;
-                            return b.racesWithPositions - a.racesWithPositions;
-                        });
-                        
-                        // Find this driver's class position
-                        const driverClassStanding = classStandings.findIndex(standing => standing.participantId === driver.id);
-                        eventData[eventId].classes[className].eventResult = driverClassStanding === -1 ? 'N/A' : driverClassStanding + 1;
-                    }
-                });
-            });
-
-            const tbody = document.querySelector('#eventSummaryTable tbody');
-
-            if (Object.keys(eventData).length === 0) {
-                const noDataMessage = selectedEventId ? 'No event data available for this event' : 'No event data available';
-                tbody.innerHTML = `<tr><td colspan="7" class="no-data">${noDataMessage}</td></tr>`;
-                return;
-            }
-
-            const eventSummary = Object.entries(eventData).map(([eventId, data]) => {
-                const event = allData.events.find(e => e.id === eventId);
-                const eventName = event ? event.name : 'Unknown Event';
-                const eventDate = event ? new Date(event.date).toLocaleDateString() : 'N/A';
-                const winRate = ((data.wins / data.races.length) * 100).toFixed(1);
-                const eventResult = data.eventResult || 'N/A';
-                const hasClasses = Object.keys(data.classes).length >= 1;
-                const classCount = Object.keys(data.classes).length;
-
-                // Generate class breakdown rows
-                const classBreakdown = Object.entries(data.classes).map(([className, classData]) => {
-                    const classWinRate = ((classData.wins / classData.races.length) * 100).toFixed(1);
-                    const classEventResult = classData.eventResult || 'N/A';
-                    
-                    return `
-                        <tr class="class-breakdown-row" data-event-id="${eventId}" style="display: none;">
-                            <td></td>
-                            <td class="class-indent">
-                                <span class="class-bullet">•</span>
-                                <span class="class-name">${className}</span>
-                            </td>
-                            <td>-</td>
-                            <td>${classData.races.length}</td>
-                            <td>${classData.wins}</td>
-                            <td>${classWinRate}%</td>
-                            <td>${formatPositionBadge(classEventResult)}</td>
-                        </tr>
-                    `;
-                }).join('');
-
-                return `
-                    <tr class="event-summary-row" data-event-id="${eventId}" onclick="handleEventRowClick('${eventId}')">
-                        <td class="accordion-toggle">
-                            ${hasClasses ? `<button class="accordion-btn" onclick="event.stopPropagation(); toggleEventClasses('${eventId}')" title="Show class breakdown">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>` : ''}
-                        </td>
-                        <td class="event-name">
-                            ${eventName}
-                            ${hasClasses ? `<span class="class-count">(${classCount} classes)</span>` : ''}
-                        </td>
-                        <td>${eventDate}</td>
-                        <td>${data.races.length}</td>
-                        <td>${data.wins}</td>
-                        <td>${winRate}%</td>
-                        <td>${formatPositionBadge(eventResult)}</td>
-                    </tr>
-                    ${classBreakdown}
-                `;
-            }).join('');
-
-            tbody.innerHTML = eventSummary;
-        }
-
-        // Achievements removed from Driver Profile
-
-        // Format position badge
-        function formatPositionBadge(position) {
-            if (!position || position === 'N/A') return '<span class="position-badge position-other">--</span>';
-            
-            const posClass = position <= 3 ? `position-${position}` : 'position-other';
-            return `<span class="position-badge ${posClass}">${position}</span>`;
-        }
-
-        // Show tab
-        function showTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Remove active class from all tab buttons
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('active');
-            });
-
-            // Show selected tab
-            document.getElementById(`${tabName}Tab`).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        // Wait for authentication to complete before loading data
-        async function waitForAuthentication() {
-            console.log('🔐 Driver Profile page: Waiting for authentication to complete...');
-            
-            // Wait for Auth to be available and initialized
-            let attempts = 0;
-            while (!window.Auth && attempts < 100) { // Max 5 seconds
-                await new Promise(resolve => setTimeout(resolve, 50));
-                attempts++;
-            }
-            
-            if (!window.Auth) {
-                console.warn('🔐 Driver Profile page: Auth system not available after waiting, proceeding without authentication');
-                return false;
-            }
-            
-            // Wait a bit more for session restoration to complete
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
-            // Check if we have a valid session
-            if (!window.currentUser) {
-                console.log('🔐 Driver Profile page: No current user, authentication failed');
-                return false;
-            }
-            
-            console.log('🔐 Driver Profile page: Authentication complete, proceeding with data load');
-            return true;
-        }
-
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Wait for authentication before initializing
-            await waitForAuthentication();
-            
-            loadAllData();
-            
-            // Refresh data when page becomes visible (user returns from another tab/page)
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) {
-                    refreshData();
-                }
-            });
-        });
-
-        // Toggle event class breakdown
-        function toggleEventClasses(eventId) {
-            const eventRow = document.querySelector(`tr[data-event-id="${eventId}"].event-summary-row`);
-            const classRows = document.querySelectorAll(`tr[data-event-id="${eventId}"].class-breakdown-row`);
-            const accordionBtn = eventRow ? eventRow.querySelector('.accordion-btn i') : null;
-            
-            const isExpanded = classRows[0] && classRows[0].style.display !== 'none';
-            
-            classRows.forEach(row => {
-                row.style.display = isExpanded ? 'none' : 'table-row';
-            });
-            
-            if (accordionBtn) {
-                accordionBtn.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
-            }
-            
-            // Add/remove expanded class for styling
-            if (eventRow) {
-                eventRow.classList.toggle('expanded', !isExpanded);
-            }
-        }
-
-        // Handle event row clicks
-        function handleEventRowClick(eventId) {
-            const eventRow = document.querySelector(`tr[data-event-id="${eventId}"].event-summary-row`);
-            const classRows = document.querySelectorAll(`tr[data-event-id="${eventId}"].class-breakdown-row`);
-            // If at least one class row exists, toggle it, even for single-class events
-            if (classRows && classRows.length > 0) {
-                toggleEventClasses(eventId);
-            }
-        }
-
-        // Make functions globally available
-        window.changeDriversPage = changeDriversPage;
-        window.changeRaceHistoryPage = changeRaceHistoryPage;
-        window.goToRaceHistoryPage = goToRaceHistoryPage;
-        window.toggleEventClasses = toggleEventClasses;
-        window.handleEventRowClick = handleEventRowClick;
-
-        // Fix navigation click issues
-        document.addEventListener('DOMContentLoaded', function() {
-            const navLinks = document.querySelectorAll('.nav-links li');
-            
-            navLinks.forEach(li => {
-                li.addEventListener('click', function(e) {
-                    // Don't navigate if clicking on the active page
-                    if (this.classList.contains('active')) {
-                        return;
-                    }
-                    
-                    // Get the href from the anchor tag inside
-                    const link = this.querySelector('a');
-                    if (link && link.href) {
-                        window.location.href = link.href;
-                    }
-                });
-            });
-        });
     </script>
-    
+
     <style>
-        /* Performance Warning Styles */
-        .performance-warning {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            color: white;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(255, 107, 53, 0.3);
-            animation: slideDown 0.3s ease-out;
-        }
-        
-        .warning-content {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .warning-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-        
-        .warning-text {
-            flex: 1;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-        
-        .warning-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background-color 0.2s;
-        }
-        
-        .warning-close:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
         @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
         }
-        
+
         @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
+            from { transform: translateX(0); }
+            to { transform: translateX(100%); }
         }
     </style>
-    
-    <script>
-        // Performance warning functions
-        function showPerformanceWarning() {
-            const warning = document.getElementById('performance-warning');
-            if (warning) {
-                warning.style.display = 'block';
-            }
-        }
-        
-        function dismissPerformanceWarning() {
-            const warning = document.getElementById('performance-warning');
-            if (warning) {
-                warning.style.display = 'none';
-                // Store dismissal in localStorage to avoid showing again in this session
-                localStorage.setItem('performance-warning-dismissed', 'true');
-            }
-        }
-        
-        // Check if we should show performance warning
-        function checkPerformanceWarning() {
-            if (window.dataManager) {
-                const participants = window.dataManager.getParticipantsArray();
-                const isLargeDataset = participants.length > 10000;
-                const wasDismissed = localStorage.getItem('performance-warning-dismissed') === 'true';
-                
-                if (isLargeDataset && !wasDismissed) {
-                    showPerformanceWarning();
-                }
-            }
-        }
-        
-        // Check performance warning after data loads
-        if (window.dataManager) {
-            // Wait a bit for data to load, then check
-            setTimeout(checkPerformanceWarning, 2000);
-        }
-    </script>
 </body>
-</html> 
+</html>
+

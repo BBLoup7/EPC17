@@ -27,7 +27,7 @@ function showMobileNavOnMobile() {
             mobileToggle.style.visibility = 'visible';
             mobileToggle.style.opacity = '1';
             mobileToggle.style.pointerEvents = 'auto';
-            console.log('Mobile navigation shown on mobile device');
+            window.debugLogger?.debug('MobileNav', 'Mobile navigation shown on mobile device');
         } else {
             console.warn('Mobile navigation toggle not found');
         }
@@ -64,9 +64,9 @@ class MobileNavigation {
             return;
         }
         
-        console.log('Mobile navigation initialized successfully');
-        console.log('Mobile toggle found:', this.mobileNavToggle);
-        console.log('Mobile menu found:', this.mobileNavMenu);
+        window.debugLogger?.debug('MobileNav', 'Mobile navigation initialized successfully');
+        window.debugLogger?.debug('MobileNav', 'Mobile toggle found:', this.mobileNavToggle);
+        window.debugLogger?.debug('MobileNav', 'Mobile menu found:', this.mobileNavMenu);
         
         this.bindEvents();
         this.setActivePage();

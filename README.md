@@ -1,156 +1,241 @@
-
 # EPC17 — Professional Racing Event Management System
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
 
-> EPC Technology — Project 17
-> Professional racing event management focused on reliable results, reproducible pairings, and real-time operations.
+> **EPC Technology — Project 17**
+>
+> Professional drag-racing event management focused on reliable results, reproducible pairings, and real-time operations.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage Guide](#usage-guide)
+- [Architecture](#architecture)
+- [API Documentation](#api-documentation)
+- [Development](#development)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Overview
 
-EPC17 is a lightweight, network-accessible system for running professional drag-racing events. It prioritizes correctness, state persistence, deterministic pairing logic, and testability over visual flashiness. The repo includes a Flask backend, a modular JavaScript frontend, and a versioned prompt library for any LLM-driven features (race recaps, voice lines). See `/llm/prompts` for prompt specs.
+EPC17 is a robust, network-accessible system designed for managing professional snowmobile drag-racing events. It prioritizes data integrity, state persistence, and deterministic pairing logic over visual flashiness, ensuring that race directors can run events smoothly even under pressure.
 
-This README is concise and action-oriented. For development workflow and prompt specs consult `EPC17_WORKFLOW.md` and `EPC17_PROMPTS.md` in the repository root.
+The system includes a **Flask backend** for API and data management, a modular **JavaScript frontend** for the user interface, and a **SQLite database** for reliable local storage. It supports multi-client access, allowing separate devices for registration, race direction, and live displays.
 
-## Quick start
+## Key Features
+
+### 🏁 Race Management
+- **Bracket Generation**: Automated bracket creation based on class and participant counts.
+- **Pairing Engine**: Deterministic logic to avoid rematches, optimize lane usage, and handle byes/free runs.
+- **Real-time Operations**: Live race input, false-start handling, and crash recovery.
+- **Tie-Breakers**: Automated generation of tie-breaker races for ranking resolution.
+
+### 👥 Participant & Driver Management
+- **Registration**: Full CRUD operations for participants, including tech sheet tracking.
+- **Driver Profiles**: Comprehensive stats tracking (wins, losses, reaction times).
+- **Class Management**: Flexible assignment of drivers to multiple classes.
+- **Driver Editing**: Dedicated interface for managing driver details without affecting event data.
+
+### 🏆 Series & Event Management
+- **Series Configuration**: Group events into championship series.
+- **Event Logic**: Manage multiple events with distinct classes and rules.
+- **Data Persistence**: Automatic saving of event state to prevent data loss.
+
+### 📊 Analytics & Live Display
+- **Real-time Dashboard**: Live metrics for race directors and spectators.
+- **Analytics Engine**: Deep dive into event, series, and driver performance.
+- **Visualizations**: Chart.js integration for win rates, lane bias, and more.
+- **Live Display**: dedicated view for spectators with real-time updates.
+
+### 🔒 Security & Permissions
+- **Role-Based Access**: Granular permissions (Registration, Race Director, Admin, etc.).
+- **Session Management**: Persistent sessions via SQLite backend.
+- **Access Control**: Route protection and API security.
+
+## Installation
 
 ### Requirements
-- Python 3.8+
-- Node (optional, for frontend build tooling)
-- Modern browser
-- Local network access for multi-machine setups
+- **Python 3.8+**
+- **Node.js** (optional, for frontend tooling)
+- **Modern Web Browser** (Chrome, Edge, Firefox)
+- **Local Network Access** (for multi-device setup)
 
-### Install and run (dev)
+### 1. Clone the Repository
 ```bash
-# clone
-git clone https://github.com/your-username/EPC17.git
+git clone https://github.com/BBLoup7/EPC17.git
 cd EPC17
+```
 
-# python env (venv or pipenv recommended)
+### 2. Set Up Virtual Environment
+It's recommended to use a virtual environment for Python dependencies.
+
+**Windows:**
+```powershell
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# start server (dev)
-export FLASK_ENV=development
-python server.py
-# or: flask --app server run --port 5000
+.venv\Scripts\activate
 ```
 
-Open: `http://localhost:5000` or `http://<host-ip>:5000` for network access.
-
-## Project layout (short)
-
-```
-/app
-  /client        # frontend code (components, views, styles)
-  /server        # Flask app, API endpoints, services
-  /llm           # Prompt specs, examples, evaluators
-  /data          # JSON storage + automatic backups
-  /testing       # Unit/integration/perf tests
-README.md
-EPC17_WORKFLOW.md
-EPC17_PROMPTS.md
-PATCHNOTES.txt
-```
-Refer to `EPC17_WORKFLOW.md` for detailed branch, CI, and testing guidance. Refer to `EPC17_PROMPTS.md` for LLM prompt standards and examples.
-
-## Core features (concise)
-
-- Registration: participant CRUD, validations, tech sheets
-- Series & Event Management: configure series, events, and classes
-- Pairing Engine: rematch avoidance, lane optimization, free-run handling
-- Race Management: real-time race input, false-start handling, crash recovery
-- Live Display: spectator view with live updates via WebSocket/SSE
-- Analytics: standings, driver stats, exportable reports
-- Persistence: UUID-based IDs, JSON-backed prototype storage with backups
-- LLM Integration: prompt-driven race recap generator and future voice features (controlled via `llm/prompts`)
-
-## API (representative endpoints)
-
-| Path | Method | Description |
-|------|--------|-------------|
-| `/api/participants` | GET/POST/PUT/DELETE | Manage participants |
-| `/api/series` | GET/POST | Series management |
-| `/api/events` | GET/POST/PUT | Event operations |
-| `/api/races` | GET/POST | Bracket generation, results |
-| `/api/standings` | GET | Compute standings |
-| `/api/health` | GET | Health & metrics |
-
-All endpoints validate input server-side and return structured JSON errors when validation fails.
-
-## Development notes & standards
-
-- JavaScript: ES6 modules, JSDoc header required in each module
-- Python: PEP8, Flask with blueprints for modular APIs
-- Accessibility: semantic HTML, ARIA where applicable, keyboard focus flows
-- Testing: aim for high coverage on pairing and analytics logic
-- Performance targets: initial load <2s, UI actions <100ms
-- Error handling: structured logging, scrub PII from logs, persist prompt version per LLM call
-
-## Pairing engine summary (practical)
-
-- Deterministic pairing preferred; use seeded randomness only for tie-breaking in tests
-- Avoid rematches until all pairings exhausted per class
-- Assign lanes by least-used + recency tie-breaker; maintain lane diversity across heats
-- Persist pairing state after each operation for crash recovery and auditability
-
-## Prompt-driven features (short)
-
-LLM-driven features must follow the PromptSpec pattern in `EPC17_PROMPTS.md`. Key rules:
-
-- Strict return formats (prefer JSON)
-- Grounding: never invent missing data; set `needs_data: true` when required fields are absent
-- Low temperature for factual generation (≤0.3)
-- Log prompt version and inputs (PII redacted) for traceability
-
-If you plan to modify prompts, update the PromptSpec and attach a gold example and evaluation score as described in `EPC17_PROMPTS.md`.
-
-## Testing & CI
-
-- Local test command (example):
+**macOS/Linux:**
 ```bash
-# run unit tests
-pytest -q
-
-# run a specific test file
-pytest testing/pairing_test.py::test_even_participants -q
+python3 -m venv .venv
+source .venv/bin/activate
 ```
-- CI pipeline (recommended): lint → unit tests → integration → perf smoke → deploy staging
-- Performance tests should include 1,000+ synthetic participants to validate pairing scalability
 
-## Deployment & backups
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-- For production, replace JSON storage with a transactional DB (Postgres recommended) and add proper backups and migrations
-- Use secrets manager for API keys (LLM or voice TTS)
-- Schedule periodic backups and test restore process in staging before production
+### 4. Initialize Database
+The system uses SQLite. The database will be automatically initialized on the first run, but you can also manually generate seed data for testing.
 
-## Troubleshooting (common)
+```bash
+# Optional: Generate synthetic test data
+python utils/generate_data.py --force-reset
+```
 
-- Server fails to start: check Python version, dependencies, and port conflicts
-- Data not persisting: verify filesystem permissions and backup writes in `/data/backups`
-- Network access issues: ensure host uses `0.0.0.0` and firewall allows port
+### 5. Start the Server
+```bash
+# Development mode
+set FLASK_ENV=development  # export FLASK_ENV=development on Linux/macOS
+python server.py
+```
+
+Access the application at `http://localhost:5000`.
+
+## Configuration
+
+### Environment Variables
+Create a `.env` file (optional) or set variables in your shell:
+
+- `FLASK_APP`: `server.py`
+- `FLASK_ENV`: `development` or `production`
+- `PORT`: Default is `5000`
+- `DEBUG`: `1` to enable debug logging
+
+### Database
+The SQLite database is located at `data/epc17.db`.
+- **Backups**: Automatic backups are stored in `data/backups/`.
+- **Migrations**: Use scripts in `utils/` for schema updates (e.g., `migrate_sessions.py`).
+
+## Usage Guide
+
+### Creating an Event
+1. Log in with appropriate permissions (e.g., `events` role).
+2. Navigate to **Events** page.
+3. Click **"New Event"**, fill in details (Name, Date, Location), and save.
+4. Configure **Classes** for the event.
+
+### Registering Participants
+1. Go to **Registration**.
+2. Select the target **Event**.
+3. Add new participants or select existing drivers.
+4. Assign classes and save.
+
+### Running Races
+1. Go to **Races**.
+2. Select the **Event**.
+3. Click **"Initialize Brackets"** to generate pairings.
+4. Click on a race card to enter results (Winner, RT, ET).
+5. Proceed through heats until finals.
+
+### Viewing Analytics
+1. Navigate to **Analytics**.
+2. Use tabs to switch between **Overall**, **Event**, **Series**, and **Lane** stats.
+3. Filter by specific events or series to generate reports.
+
+## Architecture
+
+### Backend (Flask)
+- **`server.py`**: Entry point, API routes, and socket handlers.
+- **`utils/db_manager.py`**: Direct SQLite interaction layer.
+- **`utils/*.py`**: Specialized helpers (data generation, migrations).
+
+### Frontend (Modular JS)
+- **`js/app.js`**: Main application entry and routing.
+- **`modules/*.js`**: Domain-specific logic (Race, Event, Registration).
+- **`utils/*.js`**: Shared utilities (Auth, DataManager, EventBus).
+- **Components**: HTML templates located in `components/` or root.
+
+### Data Flow
+1. **Client** requests data via `DataManager` (fetch API).
+2. **Server** validates request and queries `epc17.db`.
+3. **Server** returns JSON response.
+4. **Client** updates UI and broadcasts changes via `EventBus` (or WebSockets for live updates).
+
+## API Documentation
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/participants` | List all participants |
+| `POST` | `/api/participants` | Create new participant |
+| `GET` | `/api/events` | List all events |
+| `POST` | `/api/events` | Create new event |
+| `GET` | `/api/races` | Get race brackets/results |
+| `POST` | `/api/races/update` | Update race result |
+| `GET` | `/api/stats/overall` | Get system-wide analytics |
+| `GET` | `/api/health` | System health check |
+
+*Note: All API endpoints require valid session authentication.*
+
+## Development
+
+### Code Standards
+- **JavaScript**: ES6 modules, JSDoc comments for all functions.
+- **Python**: PEP8 compliance, clear docstrings.
+- **Formatting**: Prettier for JS/HTML/CSS.
+
+### Directory Structure
+```
+EPC17/
+├── data/              # Database and backups
+├── docs/              # Documentation
+├── js/                # Core frontend scripts
+├── modules/           # Business logic modules
+├── utils/             # Backend & frontend utilities
+├── styles/            # CSS files
+├── templates/         # HTML templates
+├── tests/             # Python tests
+├── server.py          # Main server file
+└── requirements.txt   # Python dependencies
+```
+
+### Testing
+Run unit tests using `pytest`:
+```bash
+pytest tests/
+```
+
+## Deployment
+
+For production deployment:
+1. Use a production WSGI server like **Gunicorn** or **Waitress**.
+2. Set `FLASK_ENV=production`.
+3. Ensure `data/` directory is writable.
+4. Configure a reverse proxy (Nginx/Apache) for SSL and static files.
+
+## Troubleshooting
+
+- **Server won't start**: Check if port 5000 is in use or if Python dependencies are missing.
+- **Database locked**: Ensure no other process is holding a lock on `epc17.db`.
+- **Analytics blocked**: Some ad-blockers block `/api/analytics`. We use `/api/stats` to avoid this.
+- **Permission denied**: Check user roles in `users.html` (Admin access required to modify).
 
 ## Contributing
 
-1. Fork → create feature branch `feature/<ticket>-desc`
-2. Implement tests and code; update docs (PromptSpec if LLM changes)
-3. Open PR with description, test plan, and screenshots/sample outputs
-4. Ensure CI passes and reviewers approve
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'Add amazing feature'`).
+4. Push to the branch (`git push origin feature/amazing-feature`).
+5. Open a Pull Request.
 
 ## License
 
-MIT. See `LICENSE.txt` for details.
-
-## Next steps & suggestions (practical)
-- Add `pairing-engine` unit tests with canonical scenarios (even/odd/multi-class)
-- Create a `PromptExample` directory with gold input/output pairs for race recaps
-- Replace JSON storage with Postgres when moving to production
-- Add a lightweight monitoring dashboard that surfaces pairing health and queue lengths
-
----
-If you want, I will:
-- commit this README into the repo file `EPC17_README.md`, and
-- generate a starter `PromptExample` and `pairing_engine` test stub now.
+Distributed under the MIT License. See `LICENSE.txt` for more information.

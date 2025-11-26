@@ -1,13 +1,69 @@
 # EPC17 Patch Notes
 
-## Version D0L10R1 (Beta)
-- **Fixed Position Assignment Logic**: Fixed race position assignment in races.html to be purely click-order based: first driver clicked gets 1st place, second gets 2nd place, etc. Clicking an already-assigned driver unassigns them. Removed duplicate event handlers that were causing conflicting position assignments.
-- **Fixed Race Auto-Completion**: Fixed inconsistent auto-completion behavior when false starts are marked before or after position assignments. Now uses consistent logic regardless of operation order.
-- **Fixed Driver Swap Bug**: Fixed critical bug where right-clicking to swap drivers multiple times would cause driver duplication and deletion. Enhanced validation to check for duplicates across entire bracket and added cache synchronization to prevent race conditions during rapid operations.
-- **Enhanced Bracket Data Repair**: Improved automatic detection and repair functionality for corrupted bracket data. The repair function now fixes both duplicate participants AND incorrect heat round assignments, ensuring complete data integrity restoration.
-- **Added Round Debug Tool**: Added "Debug Rounds" button to help troubleshoot round-related swap issues. Shows detailed information about which round each heat belongs to, helping users understand why cross-round swaps are blocked.
+## Version D0L12R1.0 (Major Release - Comprehensive System Update)
 
-## Last Patch Notes D0L9R6 Resume
-Version D0L9R6 delivers comprehensive data integrity fixes and advanced pairing algorithms, resolving critical issues with participant duplication, race bracket corruption, and UI synchronization while introducing intelligent race spacing and incomplete race limitation features to ensure fair competition and system stability.
+**Summary**: This major release represents a significant milestone for EPC17, consolidating months of development into a stable, feature-rich platform for professional race management. It includes a complete overhaul of the user interface, robust backend improvements, enhanced analytics, and a refined pairing engine.
 
-This release repaired 2,775 duplicate participant assignments across 8 events, eliminated race bracket duplication causing 404 errors, and enhanced the pairing engine with class spacing logic and incomplete race tracking to optimize tournament fairness and data reliability.
+### 🌟 Core Features
+- **Deterministic Pairing Engine**: 
+  - Guaranteed rematch avoidance until necessary.
+  - Intelligent lane balancing and bye-run handling.
+  - Tie-breaker race generation for ranking resolution.
+- **Advanced Event Management**:
+  - Support for multi-class events with custom rules.
+  - Series management for championship tracking.
+  - "Late Driver Injection" for adding participants mid-event.
+- **Robust Registration System**:
+  - Full CRUD for participants with tech sheet support.
+  - Unified "Driver Edit Form" for consistent data management.
+  - Optimized data loading for large participant lists.
+
+### 🎨 UI/UX Overhaul
+- **Modern Design System**:
+  - Complete visual refresh with consistent spacing, typography, and color palette.
+  - Glassmorphism effects, animated transitions, and polished component libraries.
+  - Mobile-responsive layout with touch-optimized targets.
+- **Enhanced Interactions**:
+  - Non-blocking race result processing for faster workflows.
+  - Toast notification system for user feedback (z-index fixed).
+  - Improved sidebar navigation with "Access Denied" handling.
+
+### 📊 Analytics & Reporting
+- **Centralized Analytics Engine**:
+  - Unified computation layer for event, series, and driver stats.
+  - Ad-blocker bypass fix (API renamed to `/api/stats`).
+- **Visualizations**:
+  - Interactive charts for win rates, lane bias, and class distribution.
+  - "Driver Profiles" with deep-dive performance metrics.
+- **Data Integrity**:
+  - Correct handling of completed event brackets in analytics.
+  - Fix for stress test data generation structure.
+
+### 🔧 Backend & Architecture
+- **Persistence Layer**:
+  - SQLite-backed session management (persists across restarts).
+  - UUID-based ID system for reliable data tracking.
+  - Automatic backups and migration utilities.
+- **Performance**:
+  - Optimized data fetching (lazy loading, batched requests).
+  - "DebugLogger" system for reduced console noise.
+  - Refactored event data services to prevent circular dependencies.
+
+### 🔒 Security & Permissions
+- **Role-Based Access Control (RBAC)**:
+  - Granular permissions (Events, Races, Admin, etc.).
+  - Secure session handling with expiry cleanup.
+  - Graceful 403 error handling and redirection.
+
+### 🐛 Key Bug Fixes
+- **Race Logic**:
+  - Fixed "Swap Same Heat" validation scope.
+  - Resolved "Brackets already initialized" error blocking generation.
+  - Corrected handling of duplicate participants in bracket generation.
+- **System Stability**:
+  - Fixed stack overflow in event class activation.
+  - Resolved missing bracket data for synthetic events.
+  - Fixed `console.debug` crash in older browsers/contexts.
+
+---
+*For historical patch notes prior to D0L12R1.0, please refer to `docs/HISTORY.md`.*

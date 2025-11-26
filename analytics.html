@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EPC TECHNOLOGY - Analytics (Project 17)</title>
+    <title>EPC TECHNOLOGY - Analytics Dashboard (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -17,156 +17,249 @@
             <div class="hero-content">
                 <div class="hero-text">
                     <h1 class="hero-title">Analytics Dashboard</h1>
-                    <p class="hero-subtitle">Comprehensive racing statistics and insights with professional data visualization</p>
+                    <p class="hero-subtitle">Comprehensive racing statistics and insights powered by advanced data visualization</p>
                 </div>
                 <div class="hero-actions">
-                <button id="analyticsExportPdf" class="btn btn-secondary btn-sm" onclick="exportAnalytics('pdf')" title="Export to PDF">
-                    <i class="fas fa-file-pdf"></i> PDF
-                </button>
-                <button id="analyticsExportPng" class="btn btn-secondary btn-sm" onclick="exportAnalytics('png')" title="Export to PNG" style="margin-left: 8px;">
-                    <i class="fas fa-image"></i> PNG
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="refreshAnalytics()" title="Refresh Data">
-                    <i class="fas fa-sync"></i>
-                </button>
+                    <button id="analyticsExportPdf" class="btn btn-secondary btn-sm" onclick="exportAnalytics('pdf')" title="Export to PDF">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button id="analyticsExportPng" class="btn btn-secondary btn-sm" onclick="exportAnalytics('png')" title="Export to PNG">
+                        <i class="fas fa-image"></i> PNG
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshAllAnalytics()" title="Refresh Data">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Analytics Navigation moved to top navigation -->
+        <!-- Tab Navigation -->
+        <div class="analytics-tabs">
+            <button class="analytics-tab active" data-tab="overall" onclick="switchTab('overall')">
+                <i class="fas fa-chart-line"></i>
+                <span>Overall</span>
+            </button>
+            <button class="analytics-tab" data-tab="events" onclick="switchTab('events')">
+                <i class="fas fa-calendar"></i>
+                <span>Events</span>
+            </button>
+            <button class="analytics-tab" data-tab="series" onclick="switchTab('series')">
+                <i class="fas fa-trophy"></i>
+                <span>Series</span>
+            </button>
+            <button class="analytics-tab" data-tab="lanes" onclick="switchTab('lanes')">
+                <i class="fas fa-road"></i>
+                <span>Lane Performance</span>
+            </button>
+        </div>
 
-        <!-- All-Time Statistics -->
-        <div id="overallSection" class="analytics-section">
-            <div class="section-header">
-                <h2><i class="fas fa-chart-line"></i> All-Time Statistics</h2>
-            </div>
-            
+        <!-- Overall Analytics Tab -->
+        <div id="overallTab" class="analytics-tab-content active">
+            <!-- Overall Statistics Cards -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                    <div class="stat-value" id="totalRevenue">$0</div>
-                    <div class="stat-label">Total Registration Fees</div>
+                    <div class="stat-value" id="overallRevenue">$0</div>
+                    <div class="stat-label">Total Revenue</div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-users"></i></div>
-                    <div class="stat-value" id="totalDrivers">0</div>
-                    <div class="stat-label">Driver Registrations</div>
+                    <div class="stat-value" id="overallDrivers">0</div>
+                    <div class="stat-label">Total Drivers</div>
                 </div>
                 
                 <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-trophy"></i></div>
-                    <div class="stat-value" id="totalEntries">0</div>
+                    <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
+                    <div class="stat-value" id="overallEntries">0</div>
                     <div class="stat-label">Total Entries</div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-flag-checkered"></i></div>
-                    <div class="stat-value" id="totalRaces">0</div>
+                    <div class="stat-value" id="overallRaces">0</div>
                     <div class="stat-label">Completed Races</div>
                 </div>
             </div>
-        </div>
 
-        <!-- Time Analytics Section -->
-        <div id="timeAnalyticsSection" class="analytics-section">
-            <div class="section-header">
-                <h2><i class="fas fa-clock"></i> Time Analytics</h2>
-            </div>
-            
-            <!-- Race Timing Statistics -->
-            <div class="stats-grid">
-                <div class="stat-card timing-card">
-                    <div class="stat-icon"><i class="fas fa-stopwatch"></i></div>
-                    <div class="stat-value" id="avgRaceTime">0s</div>
-                    <div class="stat-label">Average Race Duration</div>
-                    <div class="stat-trend" id="raceTimeTrend">--</div>
+            <!-- Top Performers Section -->
+            <div class="analytics-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-crown"></i> Top Performers</h2>
                 </div>
-                
-                <div class="stat-card timing-card">
-                    <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
-                    <div class="stat-value" id="racesPerHour">0</div>
-                    <div class="stat-label">Races per Hour</div>
-                    <div class="stat-trend" id="racesPerHourTrend">--</div>
-                </div>
-                
-                <div class="stat-card timing-card">
-                    <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
-                    <div class="stat-value" id="avgTimeBetweenRaces">0s</div>
-                    <div class="stat-label">Avg Time Between Races</div>
-                    <div class="stat-trend" id="timeBetweenRacesTrend">--</div>
-                </div>
-                
-                <div class="stat-card timing-card">
-                    <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
-                    <div class="stat-value" id="avgEventDuration">0h</div>
-                    <div class="stat-label">Average Event Duration</div>
-                    <div class="stat-trend" id="eventDurationTrend">--</div>
+                <div id="topPerformersContainer">
+                    <div class="loading-skeleton">Loading top performers...</div>
                 </div>
             </div>
 
-            <!-- Race Timing Chart -->
-            <div class="chart-container">
-                <h3><i class="fas fa-chart-area"></i> Race Timing Distribution</h3>
-                <div class="chart-wrapper">
-                    <canvas id="timingChart" width="800" height="400"></canvas>
+            <!-- Events Status Distribution -->
+            <div class="analytics-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-pie"></i> Events Distribution</h2>
                 </div>
-            </div>
-
-            <!-- Performance Trends -->
-            <div class="trends-container">
-                <h3><i class="fas fa-chart-line"></i> Performance Trends</h3>
-                <div class="trends-grid">
-                    <div class="trend-card">
-                        <h4>Peak Racing Hours</h4>
-                        <div class="trend-chart" id="peakHoursChart"></div>
-                    </div>
-                    <div class="trend-card">
-                        <h4>Event Efficiency</h4>
-                        <div class="efficiency-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Race Completion Rate</span>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="completionRateBar"></div>
-                                </div>
-                                <span class="metric-value" id="completionRate">0%</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Time Efficiency</span>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="timeEfficiencyBar"></div>
-                                </div>
-                                <span class="metric-value" id="timeEfficiency">0%</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="eventsStatusChart" width="400" height="300"></canvas>
                 </div>
             </div>
         </div>
 
+        <!-- Events Analytics Tab -->
+        <div id="eventsTab" class="analytics-tab-content">
+            <!-- Event Selector -->
+            <div class="filter-section">
+                <label for="eventSelector">Select Event:</label>
+                <select id="eventSelector" class="form-control" onchange="loadEventAnalytics()">
+                    <option value="">-- Select an Event --</option>
+                </select>
+            </div>
+
+            <!-- Event Stats Cards -->
+            <div id="eventStatsContainer" style="display: none;">
+                <h3 id="eventTitle" class="section-title"></h3>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-value" id="eventParticipants">0</div>
+                        <div class="stat-label">Participants</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-value" id="eventRevenue">$0</div>
+                        <div class="stat-label">Revenue</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-flag-checkered"></i></div>
+                        <div class="stat-value" id="eventRaces">0</div>
+                        <div class="stat-label">Races</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-value" id="eventCompletedRaces">0</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+
+                <!-- Class Breakdown Section -->
+                <div class="analytics-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-layer-group"></i> Class Breakdown</h2>
+                    </div>
+                    <div id="classBreakdownContainer">
+                        <div class="loading-skeleton">Loading class data...</div>
+                    </div>
+                </div>
+
+                <!-- Lane Performance for Event -->
+                <div class="analytics-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-road"></i> Lane Performance</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="eventLaneChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Series Analytics Tab -->
+        <div id="seriesTab" class="analytics-tab-content">
+            <!-- Series Selector -->
+            <div class="filter-section">
+                <label for="seriesSelector">Select Series:</label>
+                <select id="seriesSelector" class="form-control" onchange="loadSeriesAnalytics()">
+                    <option value="">-- Select a Series --</option>
+                </select>
+            </div>
+
+            <!-- Series Stats -->
+            <div id="seriesStatsContainer" style="display: none;">
+                <h3 id="seriesTitle" class="section-title"></h3>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="stat-value" id="seriesEvents">0</div>
+                        <div class="stat-label">Total Events</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-value" id="seriesParticipants">0</div>
+                        <div class="stat-label">Unique Participants</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-flag-checkered"></i></div>
+                        <div class="stat-value" id="seriesRaces">0</div>
+                        <div class="stat-label">Total Races</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-value" id="seriesRevenue">$0</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                </div>
+
+                <!-- Series Events List -->
+                <div class="analytics-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-list"></i> Events in Series</h2>
+                    </div>
+                    <div id="seriesEventsContainer">
+                        <div class="loading-skeleton">Loading series events...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lane Performance Tab -->
+        <div id="lanesTab" class="analytics-tab-content">
+            <div class="analytics-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-road"></i> Overall Lane Performance</h2>
+                    <p class="section-subtitle">Analysis of win rates and usage across all lanes</p>
+                </div>
+
+                <!-- Lane Stats Cards -->
+                <div id="laneStatsContainer">
+                    <div class="loading-skeleton">Loading lane statistics...</div>
+                </div>
+
+                <!-- Lane Charts -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-bar"></i> Lane Win Percentage</h3>
+                        <canvas id="laneWinRateChart" width="400" height="300"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-pie"></i> Lane Usage Distribution</h3>
+                        <canvas id="laneUsageChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <style>
-        /* Hero Section Styles - Consistent with Series Page */
+        /* Hero Section */
         .hero-section {
             background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
             border-radius: 12px;
             padding: 2rem 1.5rem;
             margin-bottom: 1.5rem;
             border: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
         }
 
         .hero-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-text {
-            flex: 1;
         }
 
         .hero-title {
@@ -177,171 +270,85 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 0.75rem;
-            line-height: 1.2;
         }
 
         .hero-subtitle {
             font-size: 1.1rem;
             color: var(--text-secondary);
-            font-weight: 400;
-            max-width: 500px;
-            line-height: 1.5;
         }
 
         .hero-actions {
             display: flex;
-            gap: 1rem;
-            align-items: center;
+            gap: 0.5rem;
         }
 
-        .btn-hero {
-            padding: 0.875rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
-            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
-            transition: all 0.3s ease;
-        }
-
-        .btn-hero:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
-            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            color: var(--text-secondary);
-            padding: 0.875rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-outline:hover {
-            border-color: var(--accent-orange-warm);
-            color: var(--accent-orange-warm);
-            background: rgba(255, 140, 66, 0.1);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .hero-section {
-                padding: 1.5rem 1rem;
-                margin-bottom: 1rem;
-            }
-            
-            .hero-content {
-                flex-direction: column;
-                gap: 1.5rem;
-                text-align: center;
-            }
-            
-            .hero-title {
-                font-size: 1.75rem;
-            }
-            
-            .hero-subtitle {
-                font-size: 1rem;
-            }
-            
-            .hero-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn-hero,
-            .btn-outline {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Analytics Styles */
-        .analytics-nav {
+        /* Analytics Tabs */
+        .analytics-tabs {
             display: flex;
             gap: 10px;
             margin-bottom: 30px;
-            background: var(--bg-secondary, #2d2d2d);
-            padding: 20px;
+            background: var(--bg-secondary);
+            padding: 15px;
             border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
         }
 
-        .analytics-nav-btn {
+        .analytics-tab {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 15px 25px;
+            padding: 12px 20px;
             background: transparent;
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 8px;
-            color: var(--text-secondary, #b3b3b3);
-            font-size: 16px;
+            color: var(--text-secondary);
+            font-size: 15px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
             flex: 1;
+            min-width: 150px;
             justify-content: center;
         }
 
-        .analytics-nav-btn:hover {
+        .analytics-tab:hover {
             background: rgba(255,255,255,0.05);
-            border-color: var(--accent-primary, #4a90e2);
-            color: var(--text-primary, #ffffff);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
             transform: translateY(-2px);
         }
 
-        .analytics-nav-btn.active {
-            background: var(--accent-primary, #4a90e2);
-            border-color: var(--accent-primary, #4a90e2);
+        .analytics-tab.active {
+            background: var(--accent-orange-warm);
+            border-color: var(--accent-orange-warm);
             color: white;
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
         }
 
-        .analytics-nav-btn i {
-            font-size: 18px;
+        .analytics-tab i {
+            font-size: 16px;
         }
 
-        .analytics-section {
-            background: var(--bg-secondary, #2d2d2d);
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        /* Tab Content */
+        .analytics-tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
         }
 
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        .analytics-tab-content.active {
+            display: block;
         }
 
-        .section-header h2 {
-            margin: 0;
-            color: var(--text-primary, #ffffff);
-            font-size: 24px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .section-header i {
-            color: var(--accent-primary, #4a90e2);
-            font-size: 20px;
-        }
-
-        /* Statistics Cards */
+        /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -352,15 +359,9 @@
             border-radius: 12px;
             padding: 25px;
             text-align: center;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-color: var(--accent-primary, #4a90e2);
         }
 
         .stat-card::before {
@@ -370,73 +371,107 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, var(--accent-primary, #4a90e2), var(--accent-secondary, #9b59b6));
+            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-orange-glow));
             border-radius: 12px 12px 0 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-color: var(--accent-primary);
         }
 
         .stat-icon {
             font-size: 32px;
-            color: var(--accent-primary, #4a90e2);
+            color: var(--accent-orange-warm);
             margin-bottom: 15px;
         }
 
         .stat-value {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 700;
-            color: var(--text-primary, #ffffff);
+            color: var(--text-primary);
             margin-bottom: 8px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .stat-label {
             font-size: 14px;
-            color: var(--text-secondary, #b3b3b3);
+            color: var(--text-secondary);
             font-weight: 500;
         }
 
-
-        /* Time Analytics Styles */
-        .timing-card {
-            background: linear-gradient(135deg, rgba(255, 140, 66, 0.1) 0%, rgba(74, 144, 226, 0.05) 100%);
-            border-left: 4px solid var(--accent-orange-warm);
+        /* Analytics Section */
+        .analytics-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .timing-card .stat-icon {
+        .section-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .section-header h2 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header i {
             color: var(--accent-orange-warm);
         }
 
-        .stat-trend {
-            font-size: 12px;
+        .section-subtitle {
             color: var(--text-secondary);
+            font-size: 14px;
             margin-top: 5px;
+        }
+
+        .section-title {
+            color: var(--text-primary);
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent-orange-warm);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .filter-section label {
+            display: block;
+            color: var(--text-primary);
             font-weight: 500;
+            margin-bottom: 10px;
         }
 
-        .stat-trend.positive {
-            color: #4CAF50;
-        }
-
-        .stat-trend.negative {
-            color: #f44336;
-        }
-
-        .stat-trend.neutral {
-            color: var(--text-secondary);
-        }
-
-        /* Chart Container Styles */
+        /* Chart Container */
         .chart-container {
-            background: var(--bg-primary, #1a1a1a);
+            background: var(--bg-primary);
             border-radius: 12px;
             padding: 25px;
-            margin: 25px 0;
+            margin: 20px 0;
             border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
         .chart-container h3 {
-            color: var(--text-primary, #ffffff);
-            font-size: 20px;
+            color: var(--text-primary);
+            font-size: 18px;
             font-weight: 600;
             margin-bottom: 20px;
             display: flex;
@@ -445,483 +480,583 @@
         }
 
         .chart-container h3 i {
-            color: var(--accent-primary, #4a90e2);
+            color: var(--accent-orange-warm);
         }
 
-        .chart-wrapper {
-            background: rgba(255,255,255,0.02);
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        #timingChart {
-            max-width: 100%;
-            height: auto;
-        }
-
-        /* Trends Container */
-        .trends-container {
-            background: var(--bg-primary, #1a1a1a);
-            border-radius: 12px;
-            padding: 25px;
-            margin: 25px 0;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .trends-container h3 {
-            color: var(--text-primary, #ffffff);
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .trends-container h3 i {
-            color: var(--accent-primary, #4a90e2);
-        }
-
-        .trends-grid {
+        .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 25px;
         }
 
-        .trend-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .trend-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-
-        .trend-card h4 {
-            color: var(--text-primary, #ffffff);
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .trend-chart {
-            height: 150px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Loading Skeleton */
+        .loading-skeleton {
+            padding: 40px;
+            text-align: center;
             color: var(--text-secondary);
             font-style: italic;
         }
 
-        /* Efficiency Metrics */
-        .efficiency-metrics {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
 
-        .metric {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .metric-label {
-            font-size: 14px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-orange-warm), var(--accent-orange-glow));
-            border-radius: 4px;
-            transition: width 0.8s ease;
-            width: 0%;
-        }
-
-        .metric-value {
-            font-size: 16px;
-            font-weight: 600;
+        .data-table th {
+            background: rgba(255,255,255,0.05);
             color: var(--text-primary);
-            text-align: right;
+            font-weight: 600;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
         }
 
-        /* Enhanced Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .data-table td {
+            padding: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-        }
-
-        .stat-card {
-            animation: fadeInUp 0.6s ease forwards;
-        }
-
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-
-        .stat-card:hover {
-            animation: pulse 0.6s ease;
+        .data-table tr:hover {
+            background: rgba(255,255,255,0.03);
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .analytics-nav {
+            .hero-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 1.75rem;
+            }
+
+            .analytics-tabs {
                 flex-direction: column;
             }
-            
+
+            .analytics-tab {
+                min-width: auto;
+            }
+
             .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             }
-            
-            .trends-grid {
+
+            .charts-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .chart-wrapper {
-                padding: 10px;
-            }
-            
-            #timingChart {
-                width: 100%;
-                height: 250px;
             }
         }
     </style>
 
     <!-- Scripts -->
+    <script src="js/logger.js"></script>
     <script src="utils/event-bus.js"></script>
     <script src="utils/ui-components.js"></script>
     <script src="utils/auth.js"></script>
     <script src="utils/data-manager.js"></script>
+    <script src="modules/analytics-engine.js"></script>
+    <script src="utils/chart-helpers.js"></script>
     <!-- Export libs -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <!-- Chart.js for visualizations -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-    <script>
-        // Simple inline export utility
-        window.ExportUtils = {
-            defaultFileName(prefix = 'export') {
-                const ts = new Date().toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
-                return `${prefix}-${ts}`;
-            },
-            async ensureDependencies() {
-                if (!window.html2canvas) throw new Error('html2canvas not loaded');
-                if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF not loaded');
-            },
-            async exportElementAsPNG(element, fileName = 'export.png', scale = 2) {
-                await this.ensureDependencies();
-                const el = typeof element === 'string' ? document.querySelector(element) : element;
-                if (!el) throw new Error('Element not found');
-                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
-                const dataUrl = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            },
-            async exportElementAsPDF(element, fileName = 'export.pdf', options = {}) {
-                await this.ensureDependencies();
-                const el = typeof element === 'string' ? document.querySelector(element) : element;
-                if (!el) throw new Error('Element not found');
-                const { orientation = 'p', unit = 'mm', format = 'a4', scale = 2, marginMm = 5 } = options;
-                const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff' });
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new window.jspdf.jsPDF({ orientation, unit, format });
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                const imageProps = pdf.getImageProperties(imgData);
-                const printableWidth = pageWidth - marginMm * 2;
-                const imgWidth = printableWidth;
-                const imgHeight = (imageProps.height * imgWidth) / imageProps.width;
-                let position = marginMm;
-                let heightLeft = imgHeight;
-                pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
-                heightLeft -= (pageHeight - marginMm * 2);
-                while (heightLeft > 0) {
-                    pdf.addPage();
-                    position = marginMm - (imgHeight - heightLeft);
-                    pdf.addImage(imgData, 'PNG', marginMm, position, imgWidth, imgHeight);
-                    heightLeft -= (pageHeight - marginMm * 2);
-                }
-                pdf.save(fileName);
-            }
-        };
-    </script>
     <script src="js/mobile-nav.js"></script>
     <script src="js/sidebar-nav.js"></script>
 
     <script>
-        let dataManager;
+        // Global variables
+        let analyticsEngine;
+        let currentCharts = {};
         let allEvents = [];
-        let allParticipants = [];
-        let timingChart = null;
+        let allSeries = [];
 
-        // Wait for authentication to complete before loading data
+        // Wait for authentication
         async function waitForAuthentication() {
-            console.log('🔐 Analytics page: Waiting for authentication to complete...');
-            
-            // Wait for Auth to be available and initialized
+            console.log('🔐 Analytics: Waiting for authentication...');
             let attempts = 0;
-            while (!window.Auth && attempts < 100) { // Max 5 seconds
+            while (!window.Auth && attempts < 100) {
                 await new Promise(resolve => setTimeout(resolve, 50));
                 attempts++;
             }
-            
             if (!window.Auth) {
-                console.warn('🔐 Analytics page: Auth system not available after waiting, proceeding without authentication');
+                console.warn('🔐 Analytics: Auth system not available');
                 return false;
             }
-            
-            // Wait a bit more for session restoration to complete
             await new Promise(resolve => setTimeout(resolve, 300));
-            
-            // Check if we have a valid session
             if (!window.currentUser) {
-                console.log('🔐 Analytics page: No current user, authentication failed');
+                console.log('🔐 Analytics: No current user');
                 return false;
             }
-            
-            console.log('🔐 Analytics page: Authentication complete, proceeding with data load');
+            console.log('🔐 Analytics: Authentication complete');
             return true;
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Wait for authentication before initializing
                 await waitForAuthentication();
                 
-                dataManager = new DataManager();
-                await dataManager.loadFromStorage(['events', 'participants']);
+                // Initialize Analytics Engine
+                analyticsEngine = new AnalyticsEngine();
                 
-                // Load data
-                await loadAllData();
+                // Load events and series for dropdowns
+                await loadEventsAndSeries();
                 
-                // Show initial view
-                loadOverallStats();
-                
-                // Load time analytics
-                loadTimeAnalytics();
+                // Load overall analytics by default
+                await loadOverallAnalytics();
                 
                 // Initialize mobile navigation
                 if (window.MobileNavigation) {
                     new window.MobileNavigation();
                 }
+                
+                console.log('✅ Analytics dashboard initialized');
             } catch (error) {
-                console.error('Error initializing analytics:', error);
-                showError('Failed to load analytics data. Please refresh the page.');
+                console.error('❌ Error initializing analytics:', error);
+                showToast('Failed to load analytics. Please refresh the page.', 'error');
             }
         });
 
-        // Load all data
-        async function loadAllData() {
+        // Load events and series for dropdowns
+        async function loadEventsAndSeries() {
             try {
-                // Load ALL events, participants, and race brackets
-                const eventsResult = await dataManager.getEvents({}, 1, 50000); // Get all events
-                const participantsResult = await dataManager.getParticipants({}, 1, 50000); // Get all participants
-                const raceBrackets = await dataManager.loadRaceBrackets(); // Get race brackets
-                
-                // Handle the data structure properly - API returns paginated results
-                if (eventsResult && eventsResult.events) {
-                    allEvents = eventsResult.events;
-                } else if (Array.isArray(eventsResult)) {
-                    allEvents = eventsResult;
-                } else {
-                    allEvents = [];
+                // Fetch events
+                const eventsResponse = await fetch('/api/events');
+                if (eventsResponse.ok) {
+                    const eventsData = await eventsResponse.json();
+                    allEvents = eventsData.events || eventsData || [];
+                    
+                    // Populate event selector
+                    const eventSelector = document.getElementById('eventSelector');
+                    eventSelector.innerHTML = '<option value="">-- Select an Event --</option>';
+                    allEvents.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        option.textContent = `${event.name || event.eventName} (${event.date ? new Date(event.date).toLocaleDateString() : 'No Date'})`;
+                        eventSelector.appendChild(option);
+                    });
                 }
-                
-                if (participantsResult && participantsResult.participants) {
-                    allParticipants = participantsResult.participants;
-                } else if (Array.isArray(participantsResult)) {
-                    allParticipants = participantsResult;
-                } else {
-                    allParticipants = [];
+
+                // Fetch series
+                const seriesResponse = await fetch('/api/series');
+                if (seriesResponse.ok) {
+                    const seriesData = await seriesResponse.json();
+                    allSeries = seriesData.series || seriesData || [];
+                    
+                    // Populate series selector
+                    const seriesSelector = document.getElementById('seriesSelector');
+                    seriesSelector.innerHTML = '<option value="">-- Select a Series --</option>';
+                    allSeries.forEach(series => {
+                        const option = document.createElement('option');
+                        option.value = series.id;
+                        option.textContent = series.name;
+                        seriesSelector.appendChild(option);
+                    });
                 }
-                
-                // Store race brackets globally for race counting
-                window.raceBrackets = raceBrackets || {};
-                
             } catch (error) {
-                console.error('Error loading analytics data:', error);
-                throw error;
+                console.error('Error loading events and series:', error);
             }
         }
 
-        // Export function for analytics
-        async function exportAnalytics(format) {
+        // Switch tabs
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.analytics-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.analytics-tab[data-tab="${tabName}"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.analytics-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+
+            // Load tab data
+            switch(tabName) {
+                case 'overall':
+                    loadOverallAnalytics();
+                    break;
+                case 'events':
+                    // Events tab requires manual selection
+                    break;
+                case 'series':
+                    // Series tab requires manual selection
+                    break;
+                case 'lanes':
+                    loadLaneAnalytics();
+                    break;
+            }
+        }
+
+        // Load overall analytics
+        async function loadOverallAnalytics() {
             try {
-                console.log('ExportUtils available:', typeof window.ExportUtils);
+                // Fetch overall stats
+                const stats = await analyticsEngine.getOverallStats();
                 
-                if (!window.ExportUtils) {
-                    console.warn('ExportUtils not loaded, falling back to print');
-                    window.print();
+                // Update stat cards
+                document.getElementById('overallRevenue').textContent = `$${stats.totalRevenue.toLocaleString()}`;
+                document.getElementById('overallDrivers').textContent = stats.totalDrivers.toLocaleString();
+                document.getElementById('overallEntries').textContent = stats.totalEntries.toLocaleString();
+                document.getElementById('overallRaces').textContent = stats.totalRaces.toLocaleString();
+
+                // Load top performers
+                await loadTopPerformers();
+
+                // Load events status chart
+                await loadEventsStatusChart(stats.eventsByStatus);
+
+                console.log('✅ Overall analytics loaded');
+            } catch (error) {
+                console.error('❌ Error loading overall analytics:', error);
+                showToast('Error loading overall analytics', 'error');
+            }
+        }
+
+        // Load top performers
+        async function loadTopPerformers() {
+            try {
+                const performers = await analyticsEngine.getTopPerformers(10);
+                const container = document.getElementById('topPerformersContainer');
+                
+                if (!performers.topPerformers || performers.topPerformers.length === 0) {
+                    container.innerHTML = '<p class="loading-skeleton">No race data available yet</p>';
                     return;
                 }
-                
-                const main = document.querySelector('main');
-                const name = (window.ExportUtils && ExportUtils.defaultFileName('analytics')) || 'analytics';
-                if (!main) return;
-                if (window.ExportUtils && typeof ExportUtils.ensureDependencies === 'function') {
-                    await ExportUtils.ensureDependencies();
-                }
-                UIComponents && UIComponents.showLoadingOverlay && UIComponents.showLoadingOverlay('Rendering export...');
-                await new Promise(r => setTimeout(r, 50));
-                if (format === 'pdf') {
-                    await ExportUtils.exportElementAsPDF(main, `${name}.pdf`, { orientation: 'p', format: 'a4', marginMm: 5, scale: 2 });
-                } else if (format === 'png') {
-                    await ExportUtils.exportElementAsPNG(main, `${name}.png`, 2);
-                }
-                showToast('Export completed successfully!', 'success');
-            } catch (e) {
-                console.error('Export failed', e);
-                showToast('Export failed. See console for details.', 'error');
-            } finally {
-                UIComponents && UIComponents.hideLoadingOverlay && UIComponents.hideLoadingOverlay();
-            }
-        }
 
+                // Create table
+                let html = '<table class="data-table"><thead><tr>';
+                html += '<th>Rank</th><th>Driver</th><th>Races</th><th>Wins</th><th>Win %</th><th>Podiums</th>';
+                html += '</tr></thead><tbody>';
 
-        // Load overall statistics
-        function loadOverallStats() {
-            // Calculate total registration fees
-            const totalRevenue = allParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
-            
-            // Calculate total driver registrations (unique drivers)
-            const uniqueDrivers = new Set(allParticipants.map(p => p.id)).size;
-            
-            // Calculate total entries (sum of all class registrations)
-            const totalEntries = allParticipants.reduce((sum, p) => {
-                const classCount = p.selectedClasses ? p.selectedClasses.length : 1;
-                return sum + classCount;
-            }, 0);
-            
-            // Calculate completed races (from race brackets or participant statistics)
-            const totalRaces = calculateTotalRaces();
-
-            // Update display
-            document.getElementById('totalRevenue').textContent = `$${totalRevenue.toLocaleString()}`;
-            document.getElementById('totalDrivers').textContent = uniqueDrivers.toLocaleString();
-            document.getElementById('totalEntries').textContent = totalEntries.toLocaleString();
-            document.getElementById('totalRaces').textContent = totalRaces.toLocaleString();
-        }
-
-        // Calculate total races from available data
-        function calculateTotalRaces() {
-            let totalRaces = 0;
-            
-            // Count races from race brackets if available
-            if (window.raceBrackets) {
-                Object.values(window.raceBrackets).forEach(eventBrackets => {
-                    if (eventBrackets && eventBrackets.classes) {
-                        Object.values(eventBrackets.classes).forEach(classData => {
-                            if (classData.rounds && Array.isArray(classData.rounds)) {
-                                classData.rounds.forEach(round => {
-                                    if (round.heats && Array.isArray(round.heats)) {
-                                        round.heats.forEach(heat => {
-                                            // Count as completed race if it has a status of 'completed' or has results
-                                            if (heat.status === 'completed' || 
-                                                (heat.results && Object.keys(heat.results).length > 0) ||
-                                                (heat.finishOrder && Object.keys(heat.finishOrder).length > 0)) {
-                                                totalRaces++;
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
+                performers.topPerformers.forEach((driver, index) => {
+                    html += `<tr>
+                        <td><strong>${index + 1}</strong></td>
+                        <td>${driver.driverName}</td>
+                        <td>${driver.totalRaces}</td>
+                        <td>${driver.wins}</td>
+                        <td>${driver.winRate}%</td>
+                        <td>${driver.podiums}</td>
+                    </tr>`;
                 });
-            }
-            
-            // Fallback: If no race brackets, estimate from events and participants
-            if (totalRaces === 0) {
-                allEvents.forEach(event => {
-                    const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
-                    if (eventParticipants.length > 0) {
-                        // Estimate races based on participants and classes
-                        const totalClasses = eventParticipants.reduce((sum, p) => {
-                            return sum + (p.selectedClasses ? p.selectedClasses.length : 1);
-                        }, 0);
-                        totalRaces += Math.max(1, Math.floor(totalClasses / 2)); // Rough estimate
-                    }
-                });
-            }
-            
-            console.log(`🏁 Total races calculated: ${totalRaces} (from race brackets: ${window.raceBrackets ? 'yes' : 'no'})`);
-            return totalRaces;
-        }
 
-
-
-        // Refresh analytics
-        async function refreshAnalytics() {
-            try {
-                await dataManager.loadFromStorage(['events', 'participants']);
-                await loadAllData();
-                loadOverallStats();
-                loadTimeAnalytics();
-                showToast('Analytics data refreshed successfully!', 'success');
+                html += '</tbody></table>';
+                container.innerHTML = html;
             } catch (error) {
-                console.error('Error refreshing analytics data:', error);
-                showToast('Error refreshing data. Please try again.', 'error');
+                console.error('Error loading top performers:', error);
             }
         }
 
-        // Show error message
-        function showError(message) {
-            document.getElementById('overallSection').innerHTML = `
-                <div class="section-header">
-                    <h2><i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> Error</h2>
-                </div>
-                <p style="color: var(--text-secondary);">${message}</p>
-                <button class="btn btn-primary" onclick="refreshAnalytics()">Try Again</button>
-            `;
+        // Load events status chart
+        async function loadEventsStatusChart(eventsByStatus) {
+            const labels = ['Upcoming', 'Active', 'Completed', 'Cancelled'];
+            const data = [
+                eventsByStatus.upcoming || 0,
+                eventsByStatus.active || 0,
+                eventsByStatus.completed || 0,
+                eventsByStatus.cancelled || 0
+            ];
+
+            if (currentCharts.eventsStatusChart) {
+                currentCharts.eventsStatusChart.destroy();
+            }
+
+            currentCharts.eventsStatusChart = ChartHelpers.createPieChart(
+                'eventsStatusChart',
+                labels,
+                data,
+                { cutout: '60%' }
+            );
+        }
+
+        // Load event analytics
+        async function loadEventAnalytics() {
+            const eventId = document.getElementById('eventSelector').value;
+            if (!eventId) {
+                document.getElementById('eventStatsContainer').style.display = 'none';
+                return;
+            }
+
+            try {
+                document.getElementById('eventStatsContainer').style.display = 'block';
+                
+                // Fetch event stats
+                console.log(`🔄 Fetching stats for event: ${eventId}`);
+                const stats = await analyticsEngine.getEventStats(eventId);
+                console.log('📊 Event stats received:', stats);
+                
+                // Update title
+                document.getElementById('eventTitle').textContent = stats.eventName;
+                
+                // Update stat cards
+                document.getElementById('eventParticipants').textContent = stats.totalParticipants.toLocaleString();
+                document.getElementById('eventRevenue').textContent = `$${stats.totalRevenue.toLocaleString()}`;
+                document.getElementById('eventRaces').textContent = stats.totalRaces.toLocaleString();
+                document.getElementById('eventCompletedRaces').textContent = stats.completedRaces.toLocaleString();
+
+                // Load class breakdown
+                await loadClassBreakdown(stats.classBreakdown);
+
+                // Load event lane chart
+                const laneStats = await analyticsEngine.getLanePerformance(eventId);
+                await loadEventLaneChart(laneStats.laneStats);
+
+                console.log('✅ Event analytics loaded');
+            } catch (error) {
+                console.error('❌ Error loading event analytics:', error);
+                showToast('Error loading event analytics', 'error');
+            }
+        }
+
+        // Load class breakdown
+        async function loadClassBreakdown(classBreakdown) {
+            const container = document.getElementById('classBreakdownContainer');
+            
+            if (!classBreakdown || classBreakdown.length === 0) {
+                container.innerHTML = '<p class="loading-skeleton">No class data available</p>';
+                return;
+            }
+
+            let html = '<table class="data-table"><thead><tr>';
+            html += '<th>Class</th><th>Participants</th><th>Races</th><th>Completed</th><th>Revenue</th>';
+            html += '</tr></thead><tbody>';
+
+            classBreakdown.forEach(cls => {
+                html += `<tr>
+                    <td><strong>${cls.name || cls.className}</strong></td>
+                    <td>${cls.participants}</td>
+                    <td>${cls.races || cls.totalRaces || 0}</td>
+                    <td>${cls.completedRaces || 0}</td>
+                    <td>$${(cls.revenue || 0).toFixed(2)}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Load event lane chart
+        async function loadEventLaneChart(laneStats) {
+            if (!laneStats || laneStats.length === 0) {
+                return;
+            }
+
+            const labels = laneStats.map(stat => `Lane ${stat.lane}`);
+            const data = laneStats.map(stat => stat.winRate || 0);
+
+            if (currentCharts.eventLaneChart) {
+                currentCharts.eventLaneChart.destroy();
+            }
+
+            currentCharts.eventLaneChart = ChartHelpers.createBarChart(
+                'eventLaneChart',
+                labels,
+                data,
+                {
+                    label: 'Win Rate (%)',
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        // Load series analytics
+        async function loadSeriesAnalytics() {
+            const seriesId = document.getElementById('seriesSelector').value;
+            if (!seriesId) {
+                document.getElementById('seriesStatsContainer').style.display = 'none';
+                return;
+            }
+
+            try {
+                document.getElementById('seriesStatsContainer').style.display = 'block';
+                
+                // Fetch series stats
+                const stats = await analyticsEngine.getSeriesStats(seriesId);
+                
+                // Update title
+                document.getElementById('seriesTitle').textContent = stats.seriesName;
+                
+                // Update stat cards
+                document.getElementById('seriesEvents').textContent = stats.totalEvents.toLocaleString();
+                document.getElementById('seriesParticipants').textContent = stats.totalParticipants.toLocaleString();
+                document.getElementById('seriesRaces').textContent = stats.totalRaces.toLocaleString();
+                document.getElementById('seriesRevenue').textContent = `$${stats.totalRevenue.toLocaleString()}`;
+
+                // Load series events list
+                await loadSeriesEvents(stats.events);
+
+                console.log('✅ Series analytics loaded');
+            } catch (error) {
+                console.error('❌ Error loading series analytics:', error);
+                showToast('Error loading series analytics', 'error');
+            }
+        }
+
+        // Load series events list
+        async function loadSeriesEvents(events) {
+            const container = document.getElementById('seriesEventsContainer');
+            
+            if (!events || events.length === 0) {
+                container.innerHTML = '<p class="loading-skeleton">No events in this series</p>';
+                return;
+            }
+
+            let html = '<table class="data-table"><thead><tr>';
+            html += '<th>Event Name</th><th>Date</th><th>Status</th>';
+            html += '</tr></thead><tbody>';
+
+            events.forEach(event => {
+                const date = event.date ? new Date(event.date).toLocaleDateString() : 'No Date';
+                const statusClass = event.status === 'completed' ? 'success' : event.status === 'active' ? 'warning' : 'neutral';
+                html += `<tr>
+                    <td><strong>${event.name}</strong></td>
+                    <td>${date}</td>
+                    <td><span class="badge badge-${statusClass}">${event.status || 'upcoming'}</span></td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Load lane analytics
+        async function loadLaneAnalytics() {
+            try {
+                // Fetch lane stats
+                const laneData = await analyticsEngine.getLanePerformance();
+                const laneStats = laneData.laneStats || [];
+                
+                if (laneStats.length === 0) {
+                    document.getElementById('laneStatsContainer').innerHTML = '<p class="loading-skeleton">No lane data available</p>';
+                    return;
+                }
+
+                // Display lane stats cards
+                let html = '<div class="stats-grid">';
+                laneStats.forEach(stat => {
+                    html += `
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-road"></i></div>
+                            <div class="stat-value">Lane ${stat.lane}</div>
+                            <div class="stat-label">${stat.totalRaces} races | ${stat.wins} wins (${stat.winRate}%)</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                document.getElementById('laneStatsContainer').innerHTML = html;
+
+                // Load lane win rate chart
+                const labels = laneStats.map(stat => `Lane ${stat.lane}`);
+                const winRateData = laneStats.map(stat => stat.winRate || 0);
+                const usageData = laneStats.map(stat => stat.totalRaces || 0);
+
+                if (currentCharts.laneWinRateChart) {
+                    currentCharts.laneWinRateChart.destroy();
+                }
+                currentCharts.laneWinRateChart = ChartHelpers.createBarChart(
+                    'laneWinRateChart',
+                    labels,
+                    winRateData,
+                    {
+                        label: 'Win Rate (%)',
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+
+                if (currentCharts.laneUsageChart) {
+                    currentCharts.laneUsageChart.destroy();
+                }
+                currentCharts.laneUsageChart = ChartHelpers.createPieChart(
+                    'laneUsageChart',
+                    labels,
+                    usageData
+                );
+
+                console.log('✅ Lane analytics loaded');
+            } catch (error) {
+                console.error('❌ Error loading lane analytics:', error);
+                showToast('Error loading lane analytics', 'error');
+            }
+        }
+
+        // Refresh all analytics
+        async function refreshAllAnalytics() {
+            try {
+                showToast('Refreshing analytics...', 'info');
+                analyticsEngine.clearCache();
+                await loadEventsAndSeries();
+                await loadOverallAnalytics();
+                showToast('Analytics refreshed successfully!', 'success');
+            } catch (error) {
+                console.error('Error refreshing analytics:', error);
+                showToast('Error refreshing analytics', 'error');
+            }
+        }
+
+        // Export analytics
+        async function exportAnalytics(format) {
+            try {
+                const main = document.querySelector('main');
+                if (!main) return;
+
+                showToast('Preparing export...', 'info');
+                
+                if (format === 'pdf') {
+                    await html2canvas(main, { scale: 2, backgroundColor: '#1a1a1a' }).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                        const pageWidth = pdf.internal.pageSize.getWidth();
+                        const imgWidth = pageWidth - 10;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                        pdf.addImage(imgData, 'PNG', 5, 5, imgWidth, imgHeight);
+                        pdf.save(`analytics-${new Date().toISOString().split('T')[0]}.pdf`);
+                    });
+                } else if (format === 'png') {
+                    await html2canvas(main, { scale: 2, backgroundColor: '#1a1a1a' }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `analytics-${new Date().toISOString().split('T')[0]}.png`;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                    });
+                }
+                
+                showToast('Export completed successfully!', 'success');
+            } catch (error) {
+                console.error('Export failed:', error);
+                showToast('Export failed. Please try again.', 'error');
+            }
         }
 
         // Toast notification
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
             toast.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -932,468 +1067,52 @@
                 border-radius: 8px;
                 z-index: 10000;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
+                animation: slideIn 0.3s ease;
             `;
             toast.textContent = message;
-            
             document.body.appendChild(toast);
             
-            // Animate in
             setTimeout(() => {
-                toast.style.transform = 'translateX(0)';
-            }, 100);
-            
-            // Animate out and remove
-            setTimeout(() => {
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        document.body.removeChild(toast);
-                    }
-                }, 300);
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => document.body.removeChild(toast), 300);
             }, 3000);
-        }
-
-        // Time Analytics Functions
-        function loadTimeAnalytics() {
-            console.log('⏰ Loading time analytics...');
-            
-            try {
-                // Calculate time-based statistics
-                const timeStats = calculateTimeStatistics();
-                
-                // Update time analytics displays
-                updateTimeAnalyticsDisplay(timeStats);
-                
-                // Create timing chart
-                createTimingChart(timeStats);
-                
-                // Create peak hours visualization
-                createPeakHoursChart(timeStats);
-                
-                // Update efficiency metrics
-                updateEfficiencyMetrics(timeStats);
-                
-                console.log('✅ Time analytics loaded successfully');
-            } catch (error) {
-                console.error('❌ Error loading time analytics:', error);
-            }
-        }
-
-        function calculateTimeStatistics() {
-            const stats = {
-                raceTimes: [],
-                raceIntervals: [],
-                eventDurations: [],
-                racesPerHour: {},
-                completionRates: []
-            };
-
-            // Analyze race brackets for timing data
-            if (window.raceBrackets) {
-                Object.values(window.raceBrackets).forEach(eventBrackets => {
-                    if (eventBrackets && eventBrackets.classes) {
-                        Object.values(eventBrackets.classes).forEach(classData => {
-                            if (classData.rounds && Array.isArray(classData.rounds)) {
-                                let classStartTime = null;
-                                let classEndTime = null;
-                                
-                                classData.rounds.forEach(round => {
-                                    if (round.heats && Array.isArray(round.heats)) {
-                                        round.heats.forEach(heat => {
-                                            if (heat.startTime && heat.endTime) {
-                                                // Calculate race duration
-                                                const startTime = new Date(heat.startTime);
-                                                const endTime = new Date(heat.endTime);
-                                                const duration = endTime - startTime;
-                                                
-                                                if (duration > 0 && duration < 3600000) { // Less than 1 hour (reasonable race time)
-                                                    stats.raceTimes.push(duration);
-                                                }
-                                                
-                                                // Track class timing
-                                                if (!classStartTime || startTime < classStartTime) {
-                                                    classStartTime = startTime;
-                                                }
-                                                if (!classEndTime || endTime > classEndTime) {
-                                                    classEndTime = endTime;
-                                                }
-                                            }
-                                            
-                                            // Track race intervals
-                                            if (heat.startTime) {
-                                                const raceTime = new Date(heat.startTime);
-                                                const hour = raceTime.getHours();
-                                                stats.racesPerHour[hour] = (stats.racesPerHour[hour] || 0) + 1;
-                                            }
-                                        });
-                                    }
-                                });
-                                
-                                // Calculate class duration
-                                if (classStartTime && classEndTime) {
-                                    const classDuration = classEndTime - classStartTime;
-                                    if (classDuration > 0) {
-                                        stats.eventDurations.push(classDuration);
-                                    }
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-
-            // Calculate race intervals (time between consecutive races)
-            const allRaceTimes = [];
-            if (window.raceBrackets) {
-                Object.values(window.raceBrackets).forEach(eventBrackets => {
-                    if (eventBrackets && eventBrackets.classes) {
-                        Object.values(eventBrackets.classes).forEach(classData => {
-                            if (classData.rounds && Array.isArray(classData.rounds)) {
-                                classData.rounds.forEach(round => {
-                                    if (round.heats && Array.isArray(round.heats)) {
-                                        round.heats.forEach(heat => {
-                                            if (heat.startTime) {
-                                                allRaceTimes.push(new Date(heat.startTime));
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-
-            // Sort race times and calculate intervals
-            allRaceTimes.sort((a, b) => a - b);
-            for (let i = 1; i < allRaceTimes.length; i++) {
-                const interval = allRaceTimes[i] - allRaceTimes[i - 1];
-                if (interval > 0 && interval < 1800000) { // Less than 30 minutes (reasonable interval)
-                    stats.raceIntervals.push(interval);
-                }
-            }
-
-            return stats;
-        }
-
-        function updateTimeAnalyticsDisplay(timeStats) {
-            // Average Race Duration
-            const avgRaceTime = timeStats.raceTimes.length > 0 
-                ? timeStats.raceTimes.reduce((sum, time) => sum + time, 0) / timeStats.raceTimes.length 
-                : 0;
-            const avgRaceTimeSeconds = Math.round(avgRaceTime / 1000);
-            document.getElementById('avgRaceTime').textContent = `${avgRaceTimeSeconds}s`;
-
-            // Races per Hour
-            const totalRaces = Object.values(timeStats.racesPerHour).reduce((sum, count) => sum + count, 0);
-            const totalHours = Object.keys(timeStats.racesPerHour).length || 1;
-            const avgRacesPerHour = Math.round(totalRaces / totalHours);
-            document.getElementById('racesPerHour').textContent = avgRacesPerHour.toString();
-
-            // Average Time Between Races
-            const avgTimeBetweenRaces = timeStats.raceIntervals.length > 0 
-                ? timeStats.raceIntervals.reduce((sum, time) => sum + time, 0) / timeStats.raceIntervals.length 
-                : 0;
-            const avgTimeBetweenSeconds = Math.round(avgTimeBetweenRaces / 1000);
-            document.getElementById('avgTimeBetweenRaces').textContent = `${avgTimeBetweenSeconds}s`;
-
-            // Average Event Duration
-            const avgEventDuration = timeStats.eventDurations.length > 0 
-                ? timeStats.eventDurations.reduce((sum, time) => sum + time, 0) / timeStats.eventDurations.length 
-                : 0;
-            const avgEventHours = Math.round(avgEventDuration / (1000 * 60 * 60));
-            document.getElementById('avgEventDuration').textContent = `${avgEventHours}h`;
-
-            // Add trend indicators (simplified - in real app, compare with historical data)
-            const trendElements = ['raceTimeTrend', 'racesPerHourTrend', 'timeBetweenRacesTrend', 'eventDurationTrend'];
-            trendElements.forEach(elementId => {
-                const element = document.getElementById(elementId);
-                if (element) {
-                    element.textContent = '📈 Stable';
-                    element.className = 'stat-trend neutral';
-                }
-            });
-        }
-
-        function createTimingChart(timeStats) {
-            const ctx = document.getElementById('timingChart');
-            if (!ctx || timeStats.raceTimes.length === 0) {
-                ctx.parentElement.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">No timing data available</p>';
-                return;
-            }
-
-            if (timingChart) {
-                timingChart.destroy();
-            }
-
-            // Create histogram data
-            const bins = 10;
-            const minTime = Math.min(...timeStats.raceTimes);
-            const maxTime = Math.max(...timeStats.raceTimes);
-            const binSize = (maxTime - minTime) / bins;
-            
-            const histogram = new Array(bins).fill(0);
-            timeStats.raceTimes.forEach(time => {
-                const binIndex = Math.min(Math.floor((time - minTime) / binSize), bins - 1);
-                histogram[binIndex]++;
-            });
-
-            const labels = Array.from({length: bins}, (_, i) => {
-                const startTime = Math.round((minTime + i * binSize) / 1000);
-                const endTime = Math.round((minTime + (i + 1) * binSize) / 1000);
-                return `${startTime}s-${endTime}s`;
-            });
-
-            timingChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Number of Races',
-                        data: histogram,
-                        backgroundColor: 'rgba(255, 140, 66, 0.6)',
-                        borderColor: 'rgba(255, 140, 66, 1)',
-                        borderWidth: 2,
-                        borderRadius: 4,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#ffffff'
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                color: '#b3b3b3'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#b3b3b3'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function createPeakHoursChart(timeStats) {
-            const container = document.getElementById('peakHoursChart');
-            if (!container) return;
-
-            const hours = Object.keys(timeStats.racesPerHour).sort((a, b) => a - b);
-            if (hours.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No peak hour data available</p>';
-                return;
-            }
-
-            const maxRaces = Math.max(...Object.values(timeStats.racesPerHour));
-            
-            let chartHTML = '<div class="peak-hours-bars">';
-            for (let hour = 0; hour < 24; hour++) {
-                const raceCount = timeStats.racesPerHour[hour] || 0;
-                const percentage = maxRaces > 0 ? (raceCount / maxRaces) * 100 : 0;
-                const hourLabel = hour.toString().padStart(2, '0') + ':00';
-                
-                chartHTML += `
-                    <div class="hour-bar">
-                        <div class="hour-label">${hourLabel}</div>
-                        <div class="bar-container">
-                            <div class="bar" style="height: ${percentage}%;" title="${raceCount} races"></div>
-                        </div>
-                        <div class="race-count">${raceCount}</div>
-                    </div>
-                `;
-            }
-            chartHTML += '</div>';
-
-            container.innerHTML = chartHTML;
-        }
-
-        function updateEfficiencyMetrics(timeStats) {
-            // Calculate completion rate (simplified)
-            const totalExpectedRaces = allEvents.reduce((sum, event) => {
-                const eventParticipants = allParticipants.filter(p => p.eventId === event.id);
-                return sum + calculateExpectedTotalRacesForEvent(event, eventParticipants);
-            }, 0);
-            
-            const completedRaces = calculateTotalRaces();
-            const completionRate = totalExpectedRaces > 0 ? Math.round((completedRaces / totalExpectedRaces) * 100) : 0;
-            
-            // Update completion rate
-            document.getElementById('completionRate').textContent = `${completionRate}%`;
-            document.getElementById('completionRateBar').style.width = `${completionRate}%`;
-            
-            // Calculate time efficiency (simplified - based on race frequency)
-            const avgRacesPerHour = Object.values(timeStats.racesPerHour).length > 0 
-                ? Object.values(timeStats.racesPerHour).reduce((sum, count) => sum + count, 0) / Object.values(timeStats.racesPerHour).length
-                : 0;
-            const timeEfficiency = Math.min(Math.round(avgRacesPerHour * 10), 100); // Scale to 0-100
-            
-            document.getElementById('timeEfficiency').textContent = `${timeEfficiency}%`;
-            document.getElementById('timeEfficiencyBar').style.width = `${timeEfficiency}%`;
-        }
-
-        // Helper function to calculate expected races for an event (reused from existing code)
-        function calculateExpectedTotalRacesForEvent(event, eventParticipants) {
-            if (!event) return 0;
-            const m = parseInt(event.numberOfTracks || 4, 10);
-            const eliminationType = (event.eliminationType || 'double').toLowerCase();
-
-            const classToIds = new Map();
-            const addToClass = (cls, id) => {
-                if (!cls) return;
-                const key = String(cls).trim();
-                if (!key) return;
-                if (!classToIds.has(key)) classToIds.set(key, new Set());
-                classToIds.get(key).add(id);
-            };
-
-            (eventParticipants || []).forEach(p => {
-                if (Array.isArray(p.selectedClasses) && p.selectedClasses.length) {
-                    p.selectedClasses.forEach(c => addToClass(c, p.id));
-                } else if (Array.isArray(p.sledClasses) && p.sledClasses.length) {
-                    p.sledClasses.forEach(c => addToClass(c, p.id));
-                } else if (p.sledClass) {
-                    addToClass(p.sledClass, p.id);
-                }
-            });
-
-            if (classToIds.size === 0) {
-                const ids = new Set((eventParticipants || []).map(p => p.id));
-                classToIds.set('ALL', ids);
-            }
-
-            let total = 0;
-            for (const [, idSet] of classToIds.entries()) {
-                const n = idSet.size;
-                if (n <= 1) continue;
-                if (eliminationType === 'single') {
-                    total += expectedRacesSingleElimination(n, m);
-                } else {
-                    total += expectedRacesDoubleElimination(n, m);
-                }
-            }
-            return total;
-        }
-
-        function expectedRacesSingleElimination(n, m) {
-            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
-            let U = n;
-            let total = 0;
-            while (U > 1) {
-                const Rw = Math.ceil(U / m);
-                total += Rw;
-                U = Rw;
-            }
-            return total;
-        }
-
-        function expectedRacesDoubleElimination(n, m) {
-            if (!Number.isFinite(n) || !Number.isFinite(m) || n <= 1 || m <= 0) return 0;
-            let U = n;
-            let L = 0;
-            let total = 0;
-            const Rw1 = Math.ceil(U / m);
-            total += Rw1;
-            U = Rw1;
-            L = n - Rw1;
-            while (!(U === 1 && L === 1)) {
-                const Rw = Math.ceil(U / m);
-                total += Rw;
-                const drop = U - Rw;
-                const Rl = Math.ceil((L + drop) / m);
-                total += Rl;
-                U = Rw;
-                L = Rl;
-                if (total > 100000) break;
-            }
-            total += 1;
-            return total;
         }
     </script>
 
     <style>
-        /* Peak Hours Chart Styles */
-        .peak-hours-bars {
-            display: flex;
-            align-items: end;
-            height: 120px;
-            gap: 2px;
-            justify-content: space-between;
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
         }
 
-        .hour-bar {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            min-width: 0;
+        @keyframes slideOut {
+            from { transform: translateX(0); }
+            to { transform: translateX(100%); }
         }
 
-        .hour-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
-            transform: rotate(-45deg);
-            white-space: nowrap;
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
         }
 
-        .bar-container {
-            height: 80px;
-            width: 100%;
-            display: flex;
-            align-items: end;
-            justify-content: center;
+        .badge-success {
+            background: #4CAF50;
+            color: white;
         }
 
-        .bar {
-            width: 100%;
-            background: linear-gradient(to top, var(--accent-orange-warm), var(--accent-orange-glow));
-            border-radius: 2px 2px 0 0;
-            transition: all 0.3s ease;
-            min-height: 2px;
+        .badge-warning {
+            background: #FF9800;
+            color: white;
         }
 
-        .bar:hover {
-            background: linear-gradient(to top, var(--accent-orange-glow), var(--accent-orange-warm));
-        }
-
-        .race-count {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-top: 5px;
-        }
-
-        @media (max-width: 768px) {
-            .peak-hours-bars {
-                gap: 1px;
-            }
-            
-            .hour-label {
-                font-size: 8px;
-            }
-            
-            .race-count {
-                font-size: 8px;
-            }
+        .badge-neutral {
+            background: #9E9E9E;
+            color: white;
         }
     </style>
 </body>
 </html>
+
