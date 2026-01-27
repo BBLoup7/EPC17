@@ -10,7 +10,9 @@ class AnimatorController {
         this.RESULT_DISPLAY_DURATION = 6000; // 6 seconds
         this.COMPLETE_OVERLAY_DURATION = 2000; // 2 seconds
         this.RECONNECT_INTERVAL = 5000; // 5 seconds
-        this.FALLBACK_POLL_INTERVAL = 30000; // 30 seconds
+        // Fallback polling should still feel “live” if WebSocket is unavailable
+        this.FALLBACK_POLL_INTERVAL = 3000; // 3 seconds
+        this.REFRESH_DEBOUNCE_MS = 200; // collapse bursty WS events
         
         // State
         this.socket = null;
@@ -23,17 +25,27 @@ class AnimatorController {
         this.currentEvent = null;
         this.races = [];
         this.participants = [];
+        this.participantsById = new Map();
         this.raceBrackets = {};
         this.lastRaceTime = null;
+        this.lastDataRefreshTime = null;
+        this.lastRenderedCenterRaceId = null;
+        this.completedRaceIds = new Set();
         
         // Race queues
         this.currentRace = null;
+        this.liveCurrentRace = null;
         this.nextRaces = [];
         this.previousRaces = [];
+
+        // Manual override state
+        this.pinnedRaceId = null;
         
         // Timers
         this.timerInterval = null;
         this.fallbackPollInterval = null;
+        this.refreshDebounceTimeout = null;
+        this.queuedRefreshOptions = {};
         
         // Flags
         this.isShowingResults = false;
@@ -43,6 +55,7 @@ class AnimatorController {
         this.nextRacesContainer = null;
         this.currentRaceContainer = null;
         this.previousRacesContainer = null;
+        this.floatLayer = null;
         
         window.debugLogger?.init('Animator', 'AnimatorController initialized');
     }
@@ -60,11 +73,20 @@ class AnimatorController {
             this.showAccessDeniedMessage('Please log in to access the animator');
             return;
         }
+
+        // Ensure required globals exist on this standalone page
+        const bootstrapped = await this.ensureDataLayer();
+        if (!bootstrapped) {
+            console.error('❌ Failed to initialize data layer for animator');
+            this.showAccessDeniedMessage('Failed to initialize data layer. Please refresh.');
+            return;
+        }
         
         // Get DOM references
         this.nextRacesContainer = document.getElementById('next-races');
         this.currentRaceContainer = document.getElementById('cardsHost');
         this.previousRacesContainer = document.getElementById('prev-races');
+        this.floatLayer = document.getElementById('animator-float-layer') || null;
         
         // Load initial data
         await this.loadData();
@@ -77,6 +99,9 @@ class AnimatorController {
         
         // Setup keyboard controls
         this.setupKeyboardControls();
+
+        // Setup click/tap interactions (pin + replay)
+        this.setupInteractionControls();
         
         // Start timer
         this.startTimer();
@@ -94,13 +119,45 @@ class AnimatorController {
         
         window.debugLogger?.debug('Animator', 'AnimatorController initialized successfully');
     }
+
+    getFloatLayer() {
+        if (this.floatLayer) return this.floatLayer;
+        const el = document.createElement('div');
+        el.id = 'animator-float-layer';
+        el.className = 'animator-float-layer';
+        el.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(el);
+        this.floatLayer = el;
+        return el;
+    }
+
+    createPlaceholderFor(element) {
+        const ph = document.createElement('div');
+        ph.className = 'animator-placeholder';
+        const rect = element.getBoundingClientRect();
+        ph.style.height = `${rect.height}px`;
+        ph.style.width = '100%';
+        return ph;
+    }
+
+    setFloatingRect(el, rect) {
+        el.classList.add('floating-card');
+        el.style.position = 'fixed';
+        el.style.left = `${rect.left}px`;
+        el.style.top = `${rect.top}px`;
+        el.style.width = `${rect.width}px`;
+        el.style.height = `${rect.height}px`;
+        el.style.zIndex = '2501';
+        el.style.pointerEvents = 'none';
+        el.style.margin = '0';
+    }
     
     /**
      * Wait for authentication
      */
     async waitForAuth() {
         let attempts = 0;
-        while (!window.Auth && attempts < 50) {
+        while (!window.Auth && attempts < 100) {
             await new Promise(resolve => setTimeout(resolve, 50));
             attempts++;
         }
@@ -110,7 +167,12 @@ class AnimatorController {
             return false;
         }
         
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Wait for session restoration (Auth.init() runs on DOMContentLoaded)
+        attempts = 0;
+        while (!window.currentUser && attempts < 120) { // ~6s max
+            await new Promise(resolve => setTimeout(resolve, 50));
+            attempts++;
+        }
         
         if (!window.currentUser) {
             window.debugLogger?.debug('Animator', 'No current user');
@@ -125,6 +187,34 @@ class AnimatorController {
         window.debugLogger?.debug('Animator', 'Authentication successful');
         return true;
     }
+
+    /**
+     * Ensure DataManager + EventBus globals exist on standalone pages (like animator.html).
+     * Other sections boot these via js/app.js, but animator runs standalone.
+     */
+    async ensureDataLayer() {
+        try {
+            // DataManager must be instantiated for this page
+            if (!window.dataManager) {
+                if (!window.DataManager) {
+                    console.error('❌ DataManager class not found on window');
+                    return false;
+                }
+                window.debugLogger?.debug('Animator', 'Instantiating DataManager for animator page');
+                window.dataManager = new window.DataManager();
+            }
+
+            // Provide a consistent global eventBus reference (controller listens on window.eventBus)
+            if (!window.eventBus) {
+                window.eventBus = window.dataManager.eventBus || window.globalEventBus || null;
+            }
+
+            return true;
+        } catch (error) {
+            console.error('❌ ensureDataLayer failed:', error);
+            return false;
+        }
+    }
     
     /**
      * Setup WebSocket connection
@@ -137,6 +227,7 @@ class AnimatorController {
             if (typeof io === 'undefined') {
                 console.warn('⚠️ Socket.IO not available, using fallback');
                 this.useWebSocket = false;
+                this.updateStatusIndicators();
                 this.startFallbackPolling();
                 return;
             }
@@ -148,6 +239,7 @@ class AnimatorController {
                 window.debugLogger?.debug('Animator', 'WebSocket connected');
                 this.socketConnected = true;
                 this.reconnectAttempts = 0;
+                this.updateStatusIndicators();
                 
                 // Stop fallback polling if it's running
                 if (this.fallbackPollInterval) {
@@ -159,6 +251,7 @@ class AnimatorController {
             this.socket.on('disconnect', () => {
                 window.debugLogger?.debug('Animator', 'WebSocket disconnected');
                 this.socketConnected = false;
+                this.updateStatusIndicators();
                 this.attemptReconnect();
             });
             
@@ -186,6 +279,7 @@ class AnimatorController {
         } catch (error) {
             console.error('❌ WebSocket setup failed:', error);
             this.useWebSocket = false;
+            this.updateStatusIndicators();
             this.startFallbackPolling();
         }
     }
@@ -253,6 +347,7 @@ class AnimatorController {
             window.debugLogger?.debug('Animator', 'Fallback poll: refreshing data');
             this.refreshDataAndRender();
         }, this.FALLBACK_POLL_INTERVAL);
+        this.updateStatusIndicators();
     }
     
     /**
@@ -265,6 +360,19 @@ class AnimatorController {
                     e.preventDefault();
                     this.skipToNextRace();
                     break;
+                case 'l':
+                case 'L': // L - return to live/auto
+                    e.preventDefault();
+                    this.clearPinnedRace({ toastMessage: 'Returned to LIVE (AUTO)', toastType: 'info' });
+                    break;
+                case '1':
+                case '2':
+                case '3': { // 1/2/3 - replay recent result by index
+                    e.preventDefault();
+                    const idx = Number(e.key) - 1;
+                    this.replayRecentResultByIndex(idx);
+                    break;
+                }
                 case 'r':
                 case 'R': // R - refresh data
                     e.preventDefault();
@@ -283,14 +391,195 @@ class AnimatorController {
         
         window.debugLogger?.debug('Animator', 'Keyboard controls enabled');
     }
+
+    /**
+     * Setup click/tap + keyboard activation for pinning and replaying results.
+     * Uses event delegation against containers.
+     */
+    setupInteractionControls() {
+        const handleActivate = (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+            const el = target.closest('[data-action][data-race-id]');
+            if (!el) return;
+            const action = el.getAttribute('data-action');
+            const raceId = el.getAttribute('data-race-id');
+            if (!action || !raceId) return;
+            this.handleAnimatorAction(action, raceId);
+        };
+
+        const handleKeyActivate = (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+            const el = target.closest('[data-action][data-race-id]');
+            if (!el) return;
+            event.preventDefault();
+            const action = el.getAttribute('data-action');
+            const raceId = el.getAttribute('data-race-id');
+            if (!action || !raceId) return;
+            this.handleAnimatorAction(action, raceId);
+        };
+
+        this.nextRacesContainer?.addEventListener('click', handleActivate);
+        this.previousRacesContainer?.addEventListener('click', handleActivate);
+        this.nextRacesContainer?.addEventListener('keydown', handleKeyActivate);
+        this.previousRacesContainer?.addEventListener('keydown', handleKeyActivate);
+    }
+
+    handleAnimatorAction(action, raceId) {
+        if (action === 'pin') {
+            this.pinRace(raceId);
+            return;
+        }
+        if (action === 'replay') {
+            this.replayRaceResultsById(raceId);
+            return;
+        }
+    }
+
+    pinRace(raceId) {
+        if (!raceId) return;
+
+        // Toggle off if already pinned
+        if (this.pinnedRaceId === raceId) {
+            this.clearPinnedRace({ toastMessage: 'Unpinned — back to LIVE (AUTO)', toastType: 'info' });
+            return;
+        }
+
+        const race = this.races.find(r => r.id === raceId) || null;
+        if (!race) {
+            this.toast('Race not found to pin', 'warning');
+            return;
+        }
+
+        if (this.isRaceCompleted(race)) {
+            this.toast('Cannot pin a completed race — use Recent Results replay', 'info');
+            return;
+        }
+
+        this.pinnedRaceId = raceId;
+        this.renderAll();
+        this.toast(`Pinned Race #${race.raceNumber || 'TBD'}`, 'success');
+    }
+
+    clearPinnedRace({ toastMessage = null, toastType = 'info', render = true } = {}) {
+        if (!this.pinnedRaceId) return;
+        this.pinnedRaceId = null;
+
+        if (toastMessage) {
+            this.toast(toastMessage, toastType);
+        }
+
+        if (render) {
+            this.renderAll();
+        }
+    }
+
+    replayRecentResultByIndex(index) {
+        const race = this.previousRaces?.[index] || null;
+        if (!race) {
+            this.toast('No recent result in that slot', 'info');
+            return;
+        }
+        this.replayRaceResultsById(race.id);
+    }
+
+    async replayRaceResultsById(raceId) {
+        if (!raceId) return;
+        if (this.isShowingResults) return;
+
+        const race = this.races.find(r => r.id === raceId) ||
+                     this.previousRaces.find(r => r.id === raceId) ||
+                     null;
+        if (!race) {
+            this.toast('Race not found to replay', 'warning');
+            return;
+        }
+        if (!this.isRaceCompleted(race)) {
+            this.toast('Race is not completed yet', 'info');
+            return;
+        }
+
+        this.isShowingResults = true;
+        this.clearOverlays();
+
+        await new Promise(resolve => {
+            window.AnimatorRenderer.showRaceResults(
+                race,
+                this.currentRaceContainer,
+                this.RESULT_DISPLAY_DURATION,
+                resolve
+            );
+        });
+
+        this.isShowingResults = false;
+        this.renderAll();
+    }
+
+    applyPinnedHighlights() {
+        const cards = this.nextRacesContainer?.querySelectorAll('[data-action="pin"][data-race-id]') || [];
+        cards.forEach(el => {
+            const isPinned = !!(this.pinnedRaceId && el.getAttribute('data-race-id') === this.pinnedRaceId);
+            el.classList.toggle('is-pinned', isPinned);
+            el.setAttribute('aria-pressed', isPinned ? 'true' : 'false');
+        });
+    }
+
+    isRaceCompleted(race) {
+        if (!race) return false;
+        if (race.status === 'completed' || race.completedAt || race.endTime || race.isComplete) return true;
+        return this.hasMeaningfulResults(race);
+    }
+
+    hasMeaningfulResults(race) {
+        const results = race?.results || race?.raceResults || race?.finishOrder;
+        if (Array.isArray(results)) return results.length > 0;
+        if (results && typeof results === 'object') {
+            if (Array.isArray(results.finishOrder)) return results.finishOrder.length > 0;
+            return Object.keys(results).length > 0;
+        }
+        return false;
+    }
+
+    toast(message, type = 'info') {
+        if (window.Helpers && typeof window.Helpers.showToast === 'function') {
+            window.Helpers.showToast(message, type);
+            return;
+        }
+        window.debugLogger?.debug('Animator', `Toast (${type}): ${message}`);
+    }
     
     /**
      * Load data from API
      */
-    async loadData(isRefresh = false) {
+    async loadData(isRefresh = false, options = {}) {
         try {
             if (!window.dataManager) {
                 throw new Error('DataManager not available');
+            }
+
+            const forceRaceBrackets = !!options.forceRaceBrackets || isRefresh;
+            const forceEvents = !!options.forceEvents;
+            const forceParticipants = !!options.forceParticipants;
+
+            // Force-refresh specific data types by invalidating DataManager cache metadata.
+            // (DataManager has internal caching TTLs; for the animator we need immediate freshness.)
+            const invalidateTypes = [];
+            if (forceRaceBrackets) invalidateTypes.push('race-brackets');
+            if (forceEvents) invalidateTypes.push('events');
+            if (forceParticipants) invalidateTypes.push('participants');
+            if (invalidateTypes.length > 0) {
+                this.invalidateDataManagerCache(invalidateTypes);
+            }
+            if (forceRaceBrackets) {
+                await window.dataManager.loadFromStorage(['race-brackets'], true);
+            }
+            if (forceEvents) {
+                await window.dataManager.loadFromStorage(['events'], true);
+            }
+            if (forceParticipants) {
+                await window.dataManager.loadFromStorage(['participants'], true);
             }
             
             const [eventsData, participantsData, bracketsData] = await Promise.all([
@@ -301,8 +590,15 @@ class AnimatorController {
             
             const events = Array.isArray(eventsData?.events) ? eventsData.events : 
                           (Array.isArray(eventsData) ? eventsData : []);
-            this.participants = Array.isArray(participantsData?.participants) ? participantsData.participants :
-                               (Array.isArray(participantsData) ? participantsData : []);
+            // Prefer full in-memory participants list (loadAllParticipantPages), fallback to paginated response
+            this.participants = Array.isArray(window.dataManager?.data?.participants) ? window.dataManager.data.participants :
+                               (Array.isArray(participantsData?.participants) ? participantsData.participants :
+                               (Array.isArray(participantsData) ? participantsData : []));
+            this.participantsById = new Map(
+                (this.participants || [])
+                    .filter(p => p && p.id)
+                    .map(p => [p.id, p])
+            );
             this.raceBrackets = bracketsData || {};
             
             // Extract races from brackets
@@ -321,8 +617,18 @@ class AnimatorController {
                                    new Date(b.createdAt) - new Date(a.createdAt))[0] : null);
             
             // Infer last race time
-            this.lastRaceTime = window.AnimatorUtils.inferLastRaceTime(this.races) || 
-                               this.lastRaceTime || Date.now();
+            const inferredLastRaceTime = window.AnimatorUtils.inferLastRaceTime(this.races);
+            if (inferredLastRaceTime) {
+                // Only move forward to avoid timer "resetting" on refresh
+                if (!this.lastRaceTime || inferredLastRaceTime >= this.lastRaceTime) {
+                    this.lastRaceTime = inferredLastRaceTime;
+                }
+            } else if (!this.lastRaceTime) {
+                // Initialize once so the timer is stable even before first completion
+                this.lastRaceTime = Date.now();
+            }
+            this.lastDataRefreshTime = Date.now();
+            this.updateStatusIndicators();
             
             if (!isRefresh) {
                 window.debugLogger?.debug('Animator', 'Data loaded successfully');
@@ -341,30 +647,33 @@ class AnimatorController {
             !race.eventId || race.eventId === this.currentEvent?.id
         );
         
-        // Sort by race number or creation time
+        // Sort by race number or round/heat, then stable fallbacks
         const sorted = [...eventRaces].sort((a, b) => {
             if (a.raceNumber && b.raceNumber) {
                 return a.raceNumber - b.raceNumber;
             }
-            return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+            if (a.round && b.round && a.round !== b.round) return a.round - b.round;
+            if (a.heatNumber && b.heatNumber && a.heatNumber !== b.heatNumber) return a.heatNumber - b.heatNumber;
+            const ta = new Date(a.createdAt || 0).getTime();
+            const tb = new Date(b.createdAt || 0).getTime();
+            if (ta !== tb) return ta - tb;
+            return String(a.id || '').localeCompare(String(b.id || ''));
         });
         
         // Upcoming races
-        const upcoming = sorted.filter(r =>
-            r.status === 'scheduled' ||
-            r.status === 'in_progress' ||
-            r.status === 'pending' ||
-            r.status === 'upcoming' ||
-            (!r.status && !r.results)
-        );
+        const upcoming = sorted.filter(r => {
+            if (this.isRaceCompleted(r)) return false;
+            return (
+                r.status === 'scheduled' ||
+                r.status === 'in_progress' ||
+                r.status === 'pending' ||
+                r.status === 'upcoming' ||
+                !r.status
+            );
+        });
         
         // Completed races
-        const completed = sorted.filter(r =>
-            r.status === 'completed' ||
-            r.results ||
-            r.completedAt ||
-            r.isComplete
-        ).sort((a, b) => {
+        const completed = sorted.filter(r => this.isRaceCompleted(r)).sort((a, b) => {
             if (a.raceNumber && b.raceNumber) {
                 return b.raceNumber - a.raceNumber;
             }
@@ -372,9 +681,27 @@ class AnimatorController {
                    new Date(a.completedAt || a.updatedAt || a.createdAt || 0);
         });
         
-        this.currentRace = upcoming[0] || null;
+        this.liveCurrentRace = upcoming[0] || null;
         this.nextRaces = upcoming.slice(1, 4);
         this.previousRaces = completed.slice(0, 3);
+
+        // Resolve displayed current race (AUTO vs PINNED)
+        let pinnedRace = null;
+        if (this.pinnedRaceId) {
+            pinnedRace = sorted.find(r => r.id === this.pinnedRaceId) || null;
+            const stillUpcoming = pinnedRace ? upcoming.some(r => r.id === pinnedRace.id) : false;
+            if (!pinnedRace || !stillUpcoming || this.isRaceCompleted(pinnedRace)) {
+                // Auto-unpin if it disappeared or is no longer upcoming (or completed)
+                this.clearPinnedRace({
+                    toastMessage: 'Pinned race is no longer upcoming — back to LIVE (AUTO)',
+                    toastType: 'info',
+                    render: false
+                });
+                pinnedRace = null;
+            }
+        }
+
+        this.currentRace = pinnedRace || this.liveCurrentRace;
         
         return {
             current: this.currentRace,
@@ -390,21 +717,48 @@ class AnimatorController {
         this.computeQueues();
         
         // Render panels
-        window.AnimatorRenderer.renderNextRacesList(this.nextRaces, this.nextRacesContainer);
-        window.AnimatorRenderer.renderCurrentRace(
-            this.currentRace,
-            this.races,
-            this.currentEvent?.id,
-            this.currentRaceContainer
-        );
-        window.AnimatorRenderer.renderPreviousRacesList(this.previousRaces, this.previousRacesContainer);
+        window.AnimatorRenderer.renderNextRacesList(this.nextRaces, this.nextRacesContainer, this.participantsById);
+        if (!this.isShowingResults) {
+            window.AnimatorRenderer.renderCurrentRace(
+                this.currentRace,
+                this.races,
+                this.currentEvent?.id,
+                this.currentRaceContainer,
+                this.participantsById
+            );
+        }
+        window.AnimatorRenderer.renderPreviousRacesList(this.previousRaces, this.previousRacesContainer, this.participantsById);
+
+        // Apply visual markers (PINNED highlight, etc.)
+        this.applyPinnedHighlights();
         
         // Update header
         const timeSinceLastRace = Date.now() - (this.lastRaceTime || Date.now());
-        const racesRemaining = this.currentRace ? 
-            window.AnimatorUtils.countRemainingRacesInClass(this.races, this.currentRace.className) : 0;
+        const eventRaces = this.races.filter(race =>
+            !race.eventId || race.eventId === this.currentEvent?.id
+        );
+        const totalRemaining = eventRaces.filter(r =>
+            !this.isRaceCompleted(r) &&
+            (r.status === 'scheduled' || r.status === 'in_progress' || r.status === 'pending' || r.status === 'upcoming' || !r.status)
+        ).length;
+        const currentClass = this.currentRace?.className || this.currentRace?.class || null;
+        const classRemaining = currentClass ? eventRaces.filter(r =>
+            (r.className === currentClass || r.class === currentClass) &&
+            !this.isRaceCompleted(r) &&
+            (r.status === 'scheduled' || r.status === 'in_progress' || r.status === 'pending' || r.status === 'upcoming' || !r.status)
+        ).length : null;
         
-        window.AnimatorRenderer.updateHeader(this.currentEvent, timeSinceLastRace, racesRemaining);
+        window.AnimatorRenderer.updateHeader(this.currentEvent, timeSinceLastRace, {
+            totalRemaining,
+            className: currentClass,
+            classRemaining
+        });
+        this.updateStatusIndicators();
+
+        // Track what race is currently shown in the center (used for completion detection on refresh)
+        if (!this.isShowingResults) {
+            this.lastRenderedCenterRaceId = this.currentRace?.id || null;
+        }
     }
     
     /**
@@ -419,17 +773,9 @@ class AnimatorController {
         } else {
             this.lastRaceTime = Date.now();
         }
-        
-        // Reload data
-        await this.loadData(true);
-        
-        // Check if this is a new completion
-        const completedRace = this.findNewlyCompletedRace();
-        if (completedRace && !this.isShowingResults) {
-            await this.showCompletionSequence(completedRace);
-        } else {
-            this.renderAll();
-        }
+
+        // Let the unified refresh path detect the newly completed heat
+        await this.refreshDataAndRender({ forceRaceBrackets: true });
     }
     
     /**
@@ -437,7 +783,7 @@ class AnimatorController {
      */
     async handleRaceStarted(data) {
         window.debugLogger?.debug('Animator', 'Handling race start');
-        await this.refreshDataAndRender();
+        this.scheduleRefresh({ forceRaceBrackets: true });
     }
     
     /**
@@ -445,7 +791,7 @@ class AnimatorController {
      */
     async handleBracketUpdated(data) {
         window.debugLogger?.debug('Animator', 'Handling bracket update');
-        await this.refreshDataAndRender();
+        this.scheduleRefresh({ forceRaceBrackets: true });
     }
     
     /**
@@ -453,15 +799,86 @@ class AnimatorController {
      */
     async handleEventStatusChanged(data) {
         window.debugLogger?.debug('Animator', 'Handling event status change');
-        await this.refreshDataAndRender();
+        this.scheduleRefresh({ forceRaceBrackets: true, forceEvents: true });
     }
     
     /**
      * Refresh data and render
      */
-    async refreshDataAndRender() {
-        await this.loadData(true);
+    async refreshDataAndRender(options = {}) {
+        // Don’t interrupt cinematic sequences; queue one refresh to run right after.
+        if (this.isShowingResults) {
+            this.queuedRefreshOptions = this.mergeRefreshOptions(this.queuedRefreshOptions, options);
+            return;
+        }
+
+        const beforeRaceId = this.lastRenderedCenterRaceId;
+
+        await this.loadData(true, options);
+
+        const newlyCompleted = this.detectNewlyCompletedRaces();
+        const preferred = beforeRaceId ? newlyCompleted.find(r => r.id === beforeRaceId) : null;
+        const candidate = preferred || newlyCompleted[0] || null;
+
+        if (candidate && !this.isShowingResults) {
+            window.debugLogger?.debug('Animator', 'Detected newly completed race, starting completion sequence', {
+                raceId: candidate.id,
+                raceNumber: candidate.raceNumber,
+                className: candidate.className
+            });
+            await this.showCompletionSequence(candidate);
+            return;
+        }
+
         this.renderAll();
+    }
+
+    /**
+     * Detect newly completed races since the previous refresh.
+     * Returns an array of newly completed races, most-recent first.
+     */
+    detectNewlyCompletedRaces() {
+        const completedNow = this.races
+            .filter(r => this.isRaceCompleted(r) && this.hasMeaningfulResults(r))
+            .map(r => ({
+                race: r,
+                t: new Date(r.completedAt || r.endTime || r.updatedAt || r.createdAt || 0).getTime()
+            }))
+            .filter(x => x.race?.id);
+
+        const newly = completedNow
+            .filter(x => !this.completedRaceIds.has(x.race.id))
+            .sort((a, b) => (b.t || 0) - (a.t || 0))
+            .map(x => x.race);
+
+        // Update completed set for next detection pass
+        this.completedRaceIds = new Set(completedNow.map(x => x.race.id));
+
+        return newly;
+    }
+
+    mergeRefreshOptions(a = {}, b = {}) {
+        return {
+            forceRaceBrackets: !!(a.forceRaceBrackets || b.forceRaceBrackets),
+            forceEvents: !!(a.forceEvents || b.forceEvents),
+            forceParticipants: !!(a.forceParticipants || b.forceParticipants)
+        };
+    }
+
+    /**
+     * Debounced refresh for bursty WS events (prevents jank from repeated full re-renders).
+     */
+    scheduleRefresh(options = {}) {
+        this.queuedRefreshOptions = this.mergeRefreshOptions(this.queuedRefreshOptions, options);
+        if (this.refreshDebounceTimeout) return;
+
+        this.refreshDebounceTimeout = setTimeout(async () => {
+            this.refreshDebounceTimeout = null;
+            const opts = this.queuedRefreshOptions;
+            this.queuedRefreshOptions = {};
+            window.debugLogger?.debug('Animator', 'Refreshing data (debounced)', opts);
+            await this.refreshDataAndRender(opts);
+        }, this.REFRESH_DEBOUNCE_MS);
     }
     
     /**
@@ -488,30 +905,188 @@ class AnimatorController {
         if (this.isShowingResults) return;
         
         this.isShowingResults = true;
-        
-        // Step 1: Show "RACE COMPLETE" overlay (2s)
-        await new Promise(resolve => {
-            window.AnimatorRenderer.showRaceCompleteOverlay(
+
+        // Ensure the center shows the completed race before revealing finish order
+        try {
+            window.AnimatorRenderer.renderCurrentRace(
                 race,
+                this.races,
+                this.currentEvent?.id,
                 this.currentRaceContainer,
-                this.COMPLETE_OVERLAY_DURATION,
-                resolve
+                this.participantsById
             );
-        });
-        
-        // Step 2: Show race results (6s)
-        await new Promise(resolve => {
-            window.AnimatorRenderer.showRaceResults(
-                race,
-                this.currentRaceContainer,
-                this.RESULT_DISPLAY_DURATION,
-                resolve
-            );
-        });
-        
-        // Step 3: Transition to next race
+        } catch (e) {
+            // If rendering fails, just fall back to normal
+            window.debugLogger?.warn('Animator', 'Failed to render completed race before reveal', e);
+        }
+
+        // Cinematic finish-order reveal (all lanes)
+        await window.AnimatorRenderer.animateFinishReveal(
+            race,
+            this.currentRaceContainer,
+            this.participantsById,
+            { focusMs: 900, gapMs: 250, focusScale: 1.08 }
+        );
+
+        // Continuous motion transitions: slide completed into results + promote next race
+        await this.runContinuousMotionTransition(race);
+
         this.isShowingResults = false;
         this.renderAll();
+
+        // If updates arrived while we were animating, process them now.
+        const pending = this.queuedRefreshOptions;
+        this.queuedRefreshOptions = {};
+        if (pending && (pending.forceRaceBrackets || pending.forceEvents || pending.forceParticipants)) {
+            this.scheduleRefresh(pending);
+        }
+    }
+
+    /**
+     * Continuous motion transition:
+     * - Completed race becomes a summary card that slides into Recent Results (right)
+     * - Next race card slides from Up Next (left) into the center as a presentation
+     */
+    async runContinuousMotionTransition(completedRace) {
+        if (!window.gsap) return;
+
+        const floatLayer = this.getFloatLayer();
+
+        // Ensure next/previous queues reflect the post-completion world (without re-rendering the center yet)
+        this.computeQueues();
+
+        // Fade out current driver cards so the stage can transition cleanly
+        try {
+            const cards = Array.from(this.currentRaceContainer?.querySelectorAll('.driver-card') || []);
+            if (cards.length > 0) {
+                await new Promise(resolve => {
+                    gsap.to(cards, {
+                        opacity: 0,
+                        y: 14,
+                        scale: 0.98,
+                        duration: 0.35,
+                        stagger: 0.03,
+                        ease: 'power2.in',
+                        onComplete: resolve
+                    });
+                });
+            }
+        } catch (e) {
+            // Ignore
+        }
+
+        // 1) Slide a summary card into Recent Results
+        try {
+            const summaryEl = window.AnimatorRenderer.createPreviousRaceCardElement(completedRace, this.participantsById);
+            const targetWidth = this.previousRacesContainer?.getBoundingClientRect().width || 320;
+
+            floatLayer.appendChild(summaryEl);
+            summaryEl.style.width = `${targetWidth}px`;
+            summaryEl.style.height = 'auto';
+
+            const centerRect = this.currentRaceContainer?.getBoundingClientRect();
+            const startRect = centerRect
+                ? {
+                      left: centerRect.left + (centerRect.width - targetWidth) / 2,
+                      top: centerRect.top + Math.min(80, centerRect.height * 0.15),
+                      width: targetWidth,
+                      height: Math.max(120, Math.min(220, centerRect.height * 0.35))
+                  }
+                : { left: 200, top: 120, width: targetWidth, height: 160 };
+
+            this.setFloatingRect(summaryEl, startRect);
+
+            // Placeholder at top of results list to get an accurate target rect
+            const ph = document.createElement('div');
+            ph.className = 'prev-card show animator-placeholder';
+            ph.style.height = `${startRect.height}px`;
+
+            if (this.previousRacesContainer) {
+                this.previousRacesContainer.insertBefore(ph, this.previousRacesContainer.firstChild);
+            }
+            const targetRect = ph.getBoundingClientRect();
+
+            await new Promise(resolve => {
+                gsap.to(summaryEl, {
+                    left: targetRect.left,
+                    top: targetRect.top,
+                    width: targetRect.width,
+                    height: targetRect.height,
+                    duration: 0.75,
+                    ease: 'power2.inOut',
+                    onComplete: resolve
+                });
+            });
+
+            // Replace placeholder with real element in the list
+            summaryEl.classList.remove('floating-card');
+            summaryEl.style.position = '';
+            summaryEl.style.left = '';
+            summaryEl.style.top = '';
+            summaryEl.style.width = '';
+            summaryEl.style.height = '';
+            summaryEl.style.zIndex = '';
+            summaryEl.style.pointerEvents = '';
+
+            if (ph.parentNode) ph.parentNode.removeChild(ph);
+            if (this.previousRacesContainer) {
+                this.previousRacesContainer.insertBefore(summaryEl, this.previousRacesContainer.firstChild);
+            }
+
+            // Lock signature so renderAll doesn't immediately rebuild and kill the just-inserted card
+            const sig = (this.previousRaces || []).map(r => r?.id || '').join('|');
+            this.previousRacesContainer?.setAttribute('data-sig', sig);
+        } catch (e) {
+            window.debugLogger?.warn('Animator', 'Failed to slide summary into results', e);
+        }
+
+        // 2) Promote the next race card from Up Next into the center (presentation)
+        try {
+            const nextEl = this.nextRacesContainer?.querySelector('.mini-race[data-action="pin"][data-race-id]');
+            if (!nextEl) return;
+
+            const fromRect = nextEl.getBoundingClientRect();
+            const placeholder = this.createPlaceholderFor(nextEl);
+            nextEl.parentNode?.replaceChild(placeholder, nextEl);
+
+            floatLayer.appendChild(nextEl);
+            this.setFloatingRect(nextEl, fromRect);
+
+            const centerRect = this.currentRaceContainer?.getBoundingClientRect();
+            if (!centerRect) return;
+
+            const toLeft = centerRect.left + (centerRect.width - fromRect.width) / 2;
+            const toTop = centerRect.top + 18;
+
+            await new Promise(resolve => {
+                gsap.to(nextEl, {
+                    left: toLeft,
+                    top: toTop,
+                    duration: 0.75,
+                    ease: 'power2.inOut',
+                    onComplete: resolve
+                });
+            });
+
+            // Hold briefly as a “presentation”, then fade out so the full driver cards can take over
+            await new Promise(resolve => {
+                gsap.to(nextEl, { duration: 0.35, ease: 'none', onComplete: resolve });
+            });
+            await new Promise(resolve => {
+                gsap.to(nextEl, {
+                    opacity: 0,
+                    y: -10,
+                    duration: 0.35,
+                    ease: 'power2.in',
+                    onComplete: resolve
+                });
+            });
+
+            if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+            if (nextEl.parentNode) nextEl.parentNode.removeChild(nextEl);
+        } catch (e) {
+            window.debugLogger?.warn('Animator', 'Failed to promote next race card', e);
+        }
     }
     
     /**
@@ -519,6 +1094,7 @@ class AnimatorController {
      */
     skipToNextRace() {
         window.debugLogger?.debug('Animator', 'Skipping to next race');
+        this.clearPinnedRace({ render: false });
         this.clearOverlays();
         this.isShowingResults = false;
         this.refreshDataAndRender();
@@ -556,6 +1132,7 @@ class AnimatorController {
         }, 1000);
         
         this.updateTimer();
+        this.updateStatusIndicators();
     }
     
     /**
@@ -567,6 +1144,53 @@ class AnimatorController {
         
         if (timerEl) {
             timerEl.textContent = window.AnimatorUtils.formatDuration(timeSinceLastRace);
+        }
+    }
+
+    /**
+     * Update header status indicators (WebSocket + last update age)
+     */
+    updateStatusIndicators() {
+        const wsEl = document.getElementById('animator-ws-pill');
+        const liveEl = document.getElementById('animator-live-pill');
+
+        if (liveEl) {
+            const isPinned = !!this.pinnedRaceId;
+            liveEl.textContent = isPinned ? 'PINNED' : 'AUTO';
+            liveEl.classList.toggle('pinned', isPinned);
+        }
+
+        if (wsEl) {
+            const mode = this.useWebSocket ? (this.socketConnected ? 'CONNECTED' : 'DISCONNECTED') : 'OFF';
+            wsEl.textContent = `WS: ${mode}`;
+            wsEl.classList.toggle('ws-connected', this.socketConnected);
+            wsEl.classList.toggle('ws-disconnected', this.useWebSocket && !this.socketConnected);
+            wsEl.classList.toggle('ws-off', !this.useWebSocket);
+        }
+
+        // NOTE: we intentionally removed the “Updated: … ago” pill for a cleaner broadcast UI
+    }
+
+    /**
+     * Invalidate DataManager cache metadata for the given types.
+     * This is a targeted escape hatch for live dashboards that must reflect changes immediately.
+     */
+    invalidateDataManagerCache(types) {
+        try {
+            if (!window.dataManager) return;
+            if (!window.dataManager.cacheMetadata) {
+                window.dataManager.cacheMetadata = {};
+            }
+            types.forEach(type => {
+                if (!window.dataManager.cacheMetadata[type]) {
+                    window.dataManager.cacheMetadata[type] = {};
+                }
+                window.dataManager.cacheMetadata[type].lastLoaded = 0;
+                window.dataManager.cacheMetadata[type].etag = '';
+                window.dataManager.cacheMetadata[type].lastModified = '';
+            });
+        } catch (error) {
+            window.debugLogger?.warn('Animator', 'Cache invalidation failed', error);
         }
     }
     

@@ -1718,6 +1718,12 @@
                 raceManager = new RaceManager(dataManager, pairingEngine);
                 raceUI = new RaceUI(raceManager, dataManager);
                 window.raceUI = raceUI; // Make it globally available
+
+                // Bind RaceUI delegated listeners (RaceUI only binds them inside init()).
+                // This enables core race-management actions like "Back to Events".
+                if (raceUI && typeof raceUI.bindEventListeners === 'function') {
+                    raceUI.bindEventListeners();
+                }
                 
                 // Set up real-time event listeners
                 setupEventListeners();

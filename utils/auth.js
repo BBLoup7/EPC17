@@ -52,6 +52,16 @@
 		return perms.includes(permission);
 	}
 
+	function userHasAnyPermission(permissionOrList) {
+		if (!session) return false;
+		if (session.username === 'Admin') return true; // Admin has all access
+		const perms = session.permissions || [];
+		if (Array.isArray(permissionOrList)) {
+			return permissionOrList.some(p => perms.includes(p));
+		}
+		return perms.includes(permissionOrList);
+	}
+
 	function applyPermissionGates() {
 		const gated = document.querySelectorAll('[data-permission]');
 		gated.forEach(el => {
@@ -75,11 +85,12 @@
 				'events.html': 'events',
 				'races.html': 'races',
 				'analytics.html': 'analytics',
-				'driver-profile.html': 'drivers profile',
+				// Allow driver profiles for registration workflows (and keep legacy permission)
+				'driver-profile.html': ['drivers profile', 'registration'],
 				'live-display.html': 'live display',
 				'users.html': 'admin_power'
 			}[href];
-			const allowed = userHasPermission(pagePerm);
+			const allowed = userHasAnyPermission(pagePerm);
 			if (pagePerm && !allowed) {
 				a.parentElement.style.display = 'none';
 			}
@@ -319,7 +330,8 @@ async function restoreSession() {
 			'/events.html': ['events'],
 			'/races.html': ['races'],
 			'/analytics.html': ['analytics'],
-			'/driver-profile.html': ['drivers profile'],
+			// Allow driver profiles for registration workflows (and keep legacy permission)
+			'/driver-profile.html': ['drivers profile', 'registration'],
 			'/live-display.html': ['live display'],
 			// Rule: EPC17_WORKFLOW.md - add animator page gating
 			'/animator.html': ['animator'],

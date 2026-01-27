@@ -1,3 +1,14 @@
+// Suppress blocked resource errors (e.g., Cloudflare Insights blocked by ad blockers)
+window.addEventListener('error', (event) => {
+    if (event.message?.includes('cloudflareinsights') || 
+        event.filename?.includes('cloudflareinsights') ||
+        (event.target?.src && event.target.src.includes('cloudflareinsights'))) {
+        event.preventDefault();
+        event.stopPropagation();
+        return true;
+    }
+}, true);
+
 // Initialize core systems first
 if (window.debugLogger) {
     window.debugLogger.init('App', 'Initializing EPC17 Event Management System');

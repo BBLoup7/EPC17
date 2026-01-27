@@ -1,5 +1,139 @@
 # EPC17 Patch Notes
 
+## Version D0L12R1.12 (Patch)
+
+### 📊 Analytics
+- **Contextual Lane Performance (Effective)**: Added context-aware lane metrics that preserve existing **Raw Stats (Unadjusted)** while layering in: solo-race exclusion, expected wins baseline (\(1 / activeLanes\)), performance index (actual/expected), effective usage share, and confidence/exclusion tagging for small samples. Displayed both overall (Lane Performance tab) and per-event (Events tab).
+  - *Files*: `server.py`, `analytics.html`, `tests/test_stats_lane_contextual.py`
+
+---
+
+## Version D0L12R1.8 (Patch)
+
+### 🎬 Animator
+- **Stability + Accuracy Fixes**: Fixed the “Since last race” timer resetting on refresh by correcting completion detection (empty results no longer treated as finished). Recent Results now only shows completed heats, and the header “heats left” now reflects **event remaining** (with current class context).
+  - *Files*: `modules/animator-controller.js`, `modules/animator-utils.js`, `modules/animator-renderer.js`
+- **Better Driver Cards**: Reduced current-race card size and added a **hover/focus details overlay** (overall stats, win rate, avg position, best streak, recent form, sled info when available).
+  - *Files*: `animator.html`, `modules/animator-renderer.js`, `modules/animator-utils.js`
+- **Smoother Feel**: Debounced bursty WebSocket refreshes, optimized participant lookups via an ID map, and avoided re-animating/re-rendering side lists when content hasn’t changed.
+  - *Files*: `modules/animator-controller.js`, `modules/animator-renderer.js`, `modules/animator-utils.js`
+
+---
+
+## Version D0L12R1.9 (Patch)
+
+### 🎬 Animator
+- **Instant Result Updates + Cinematic Flow**: Animator now refreshes immediately on bracket/result updates (Socket.IO-first, with a fast 3s fallback poll only when WS is unavailable). When a heat completes, the center panel performs an **in-place finish-order reveal** (all lanes), then the completed heat **slides into Recent Results** and the next heat **promotes from Up Next into center** using a floating layer so cards don’t “teleport”.
+  - *Files*: `animator.html`, `modules/animator-controller.js`, `modules/animator-renderer.js`
+
+---
+
+## Version D0L12R1.10 (Patch)
+
+### 🎬 Animator
+- **UI Polish + Readability**: Removed the “Updated: … ago” status pill (cleaner broadcast UI), added clear **finish-position badges/colors** during result reveals, and expanded driver info (last race class + richer career context). Also prevented periodic refreshes from resetting hover/expanded states by skipping DOM rebuilds when the displayed content hasn’t changed.
+  - *Files*: `animator.html`, `modules/animator-controller.js`, `modules/animator-renderer.js`, `modules/animator-utils.js`
+
+---
+
+## Version D0L12R1.7 (Patch)
+
+### 🎬 Animator
+- **Live Animator Dashboard Rework**: Made `animator.html` consistently functional and “live” by bootstrapping the missing data layer, forcing fresh bracket loads on real-time events, and improving driver name resolution. Added **AUTO vs PINNED** mode (click Up Next to pin; `L` to return to live) plus **Recent Results replay** (click results or `1/2/3`). Improved GSAP transitions and aligned visuals to the app’s glass UI styling.
+  - *Files*: `animator.html`, `modules/animator-controller.js`, `modules/animator-renderer.js`, `modules/animator-utils.js`
+
+---
+
+## Version D0L12R1.6 (Patch)
+
+### 🖥️ Live Display
+- **Compact Hero + No Controls**: Reduced the Live Display hero header height and removed the Refresh/Fullscreen buttons so the only on-screen control is the small Back arrow.
+  - *File*: `live-display.html`
+
+---
+
+## Version D0L12R1.5 (Patch)
+
+### 🖥️ Live Display
+- **Visual Refresh + Controls**: Improved Live Display visuals to better match EPC17’s glass UI (spacing, card contrast, in-progress highlighting, focus visibility, reduced-motion support) and fixed the Refresh/Fullscreen controls (implemented handlers + fullscreen label updates).
+  - *File*: `live-display.html`
+
+### 🧾 Logging
+- **`debugLogger.loading()` Compatibility Fix**: Added `DebugLogger.loading()` so modules like `RaceUI` can log loading milestones without throwing `TypeError: ...loading is not a function`.
+  - *File*: `js/logger.js`
+
+---
+
+## Version D0L12R1.4 (Patch)
+
+### 🖥️ Live Display
+- **Recent Results Auto-Refresh Fix**: Fixed the Live Display’s 8s refresh clearing “Recent Results” by properly awaiting `getRaceBracket()` and re-extracting races from the bracket during refresh.
+  - *File*: `live-display.html`
+
+### 🏁 Races
+- **Live Display App Init Crash Fix**: Hardened `RaceUI` session persistence calls so pages that don’t include `SessionPersistence` (e.g., Live Display) don’t crash initialization (`Cannot read properties of undefined (reading 'Races')`).
+  - *File*: `js/race-ui.js`
+
+---
+
+## Version D0L12R1.3 (Patch)
+
+### 📅 Events
+- **Event Card Details Fix**: Fixed event card details rendering too wide by scoping analytics dropdown `.event-details` flex styles so they no longer override the event cards layout.
+  - *File*: `styles.css`
+- **Drivers / Registrations Counts Fix**: Corrected event driver + registration counts to reflect actual event registrations (`event.participants` / `participant.eventIds`) and event-specific class entries (`eventClasses[eventId]`).
+  - *File*: `utils/data-manager.js`
+- **View Modal “Edit Event” Button Fix**: Fixed the modal’s Edit button closing the overlay immediately after opening the edit form (corrected click handler order).
+  - *File*: `events.html`
+
+### 📊 Analytics
+- **Chart Resize Fix (Analytics Dashboard)**: Wrapped Chart.js canvases in fixed-height containers to prevent runaway canvas growth during responsive resizing (e.g., `height: 26796px`) in Lane Performance and other charts.
+  - *File*: `analytics.html`
+
+### 🏁 Races
+- **“Back to Events” Button Fix**: Bound RaceUI’s delegated listeners during races page initialization so the “Back to Events” button (and other race-management actions) work reliably. Also prevented event-card selection from firing when clicking action buttons/links.
+  - *Files*: `races.html`, `js/race-ui.js`
+
+---
+
+## Version D0L12R1.2 (Patch)
+
+### 📊 Event Analytics
+- **Event Analytics Overhaul**: Replaced mock charts with real, event-driven analytics and corrected several data wiring issues.
+  - **Pace vs Standard**: Added an Event Pace chart (runs/hour) with a 7-minute standard baseline and improved pace calculations using start-to-start cycle times.
+  - **Driver Demographics**: Added Driver Age Distribution (DOB-based, calculated at event date).
+  - **Event Time Analysis**: Fixed event duration calculation, improved timestamp extraction, added time-saved vs standard metric, and prevented Chart.js canvases from being destroyed when data is missing.
+  - **Event-Specific Panels**: Class breakdown, driver stats, and lane win % now derive from the selected event’s bracket/results (not lifetime participant totals). Email/PDF “Send Event Stats” now uses event-specific stats.
+  - *File*: `event-analytics.html`
+
+### 👤 Driver Profiles
+- **Driver Profile Stats Fix**: Fixed driver stats not populating by aligning analytics heat completion detection with the current bracket schema (`status: 'completed'` + results) and hardening lane/finish-position parsing to avoid FS/DSQ type errors.
+  - **Access Model**: Driver profile page now allows `registration` users (and keeps legacy `drivers profile` permission) so registration workflows can view driver performance.
+  - **UX**: Added a clear “No completed races yet” banner and chart/table placeholders instead of blank widgets when a driver has no completed race data.
+  - **Lane Performance UI**: Made the Lane Statistics table compact, scroll-safe, and resilient to malformed/oversized lane data (sorted lanes + safety cap).
+  - **Chart Resize Fix**: Wrapped Chart.js canvases in fixed-height containers to prevent runaway canvas growth (e.g., `height: 32760px`) during responsive resizing.
+  - *Files*: `server.py`, `utils/auth.js`, `driver-profile.html`, `tests/test_stats_driver_profile.py`
+
+---
+
+## Version D0L12R1.1 (Patch)
+
+### 🔧 Fixes
+- **Button Interaction**: Fixed issue where clicking icons inside buttons (e.g., "Back to Events", "Mark Event Complete") would not trigger the action. Updated event delegation to correctly handle child element clicks.
+  - *File*: `js/race-ui.js`
+- **Console Error Suppression**: Added error handler to suppress Cloudflare Insights blocked resource errors (caused by ad blockers). Prevents console noise from external scripts.
+  - *File*: `js/app.js`
+- **RaceUI Syntax Errors**: Fixed 180+ instances of corrupted/missing opening quotes in debug log statements that caused `SyntaxError` and prevented RaceUI from loading. Issues included `?` and `??` characters replacing quotes, and completely missing opening quotes before message text.
+  - *File*: `js/race-ui.js`
+- **Additional RaceUI Syntax Fixes**: Fixed 5 more instances of missing opening quotes in debug statements (lines 4816, 6131, 6137, 6142, 6155) that caused `Unexpected token '==='` syntax errors and prevented RaceUI from loading.
+  - *File*: `js/race-ui.js`
+- **RaceUI Parse Error (Heat Completion Log)**: Fixed a malformed `debugLogger` call (missing quote) that caused `Uncaught SyntaxError: missing ) after argument list` and prevented `RaceUI` from being defined on the races page.
+  - *Files*: `js/race-ui.js`, `races.html`
+- **Debug Instrumentation Cleanup**: Removed temporary debug-mode instrumentation after verification.
+  - *Files*: `races.html`, `js/race-ui.js`, `.cursorignore`
+
+---
+
 ## Version D0L12R1.0 (Major Release - Comprehensive System Update)
 
 **Summary**: This major release represents a significant milestone for EPC17, consolidating months of development into a stable, feature-rich platform for professional race management. It includes a complete overhaul of the user interface, robust backend improvements, enhanced analytics, and a refined pairing engine.

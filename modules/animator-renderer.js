@@ -8,8 +8,9 @@
  * Render the next races list (left panel)
  * @param {Array} nextRaces - Array of upcoming races (max 3)
  * @param {HTMLElement} container - Container element
+ * @param {Array} allParticipants - Participant list for name resolution
  */
-function renderNextRacesList(nextRaces, container) {
+function renderNextRacesList(nextRaces, container, allParticipants = []) {
     if (!container) return;
     
     if (nextRaces.length === 0) {
@@ -17,18 +18,35 @@ function renderNextRacesList(nextRaces, container) {
         return;
     }
     
-    container.innerHTML = nextRaces.map(race => createMiniRaceCard(race)).join('');
+    const signature = nextRaces.map(r => r?.id || '').join('|');
+    const prevSig = container.getAttribute('data-sig') || '';
+
+    if (signature === prevSig && container.children.length > 0) {
+        return;
+    }
+
+    container.innerHTML = nextRaces.map(race => createMiniRaceCard(race, allParticipants)).join('');
+    container.setAttribute('data-sig', signature);
+
+    // Animate list only when contents change (avoids jank on frequent refreshes)
+    if (window.gsap && signature !== prevSig) {
+        const cards = Array.from(container.children);
+        gsap.fromTo(cards, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.05, ease: 'power2.out' });
+    }
 }
 
 /**
  * Create a mini race card HTML (for next/previous panels)
  * @param {Object} race - Race object
+ * @param {Array} allParticipants - Participant list for name resolution
  * @returns {string} HTML string
  */
-function createMiniRaceCard(race) {
+function createMiniRaceCard(race, allParticipants = []) {
     const className = race.className || race.class || 'Unknown';
     const classColor = window.AnimatorUtils.getClassColor(className);
-    const participants = window.AnimatorUtils.getRaceParticipants(race);
+    const participants = window.AnimatorUtils.getRaceParticipants(race, allParticipants);
+    const raceId = race.id || '';
+    const raceNo = race.raceNumber || 'TBD';
     
     let lanesHtml = '';
     if (participants.length === 0) {
@@ -51,9 +69,9 @@ function createMiniRaceCard(race) {
         ).join('');
     }
     
-    return `<div class="mini-race" style="border-left: 3px solid ${classColor}">
+    return `<div class="mini-race" data-action="pin" data-race-id="${raceId}" role="button" tabindex="0" aria-label="Pin Race ${raceNo}" style="border-left: 3px solid ${classColor}">
         <div class="top">
-            <div class="title">Race #${race.raceNumber || 'TBD'} • ${className}</div>
+            <div class="title">Race #${raceNo} • ${className}</div>
             <div class="meta">${(race.bracketType || 'upper').toUpperCase()}</div>
         </div>
         <div class="lanes ${participants.length <= 2 ? 'horizontal' : 'vertical'}">${lanesHtml}</div>
@@ -64,21 +82,34 @@ function createMiniRaceCard(race) {
  * Render previous races list (right panel)
  * @param {Array} previousRaces - Array of completed races (max 3)
  * @param {HTMLElement} container - Container element
+ * @param {Array} allParticipants - Participant list for name resolution
  */
-function renderPreviousRacesList(previousRaces, container) {
+function renderPreviousRacesList(previousRaces, container, allParticipants = []) {
     if (!container) return;
-    
-    container.innerHTML = '';
-    
+
     if (previousRaces.length === 0) {
         container.innerHTML = '<div class="empty-state">No completed races</div>';
         return;
     }
+
+    const signature = previousRaces.map(r => r?.id || '').join('|');
+    const prevSig = container.getAttribute('data-sig') || '';
+    if (signature === prevSig && container.children.length > 0) {
+        return;
+    }
+
+    container.innerHTML = '';
+    container.setAttribute('data-sig', signature);
     
     previousRaces.forEach((race, index) => {
         const card = document.createElement('div');
         card.className = 'prev-card';
-        card.innerHTML = createPreviousRaceCardHTML(race);
+        card.setAttribute('data-action', 'replay');
+        card.setAttribute('data-race-id', race.id || '');
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', `Replay results for Race ${race.raceNumber || 'TBD'}`);
+        card.innerHTML = createPreviousRaceCardHTML(race, allParticipants);
         container.appendChild(card);
         
         // Stagger animation
@@ -91,11 +122,12 @@ function renderPreviousRacesList(previousRaces, container) {
 /**
  * Create previous race card HTML with results
  * @param {Object} race - Race object
+ * @param {Array} allParticipants - Participant list for name resolution
  * @returns {string} HTML string
  */
-function createPreviousRaceCardHTML(race) {
+function createPreviousRaceCardHTML(race, allParticipants = []) {
     const className = race.className || race.class || 'Unknown';
-    const participants = window.AnimatorUtils.getRaceParticipants(race);
+    const participants = window.AnimatorUtils.getRaceParticipants(race, allParticipants);
     const results = window.AnimatorUtils.extractResults(race);
     const time = window.AnimatorUtils.formatTime(race.completedAt || race.updatedAt || race.createdAt);
     
@@ -127,34 +159,102 @@ function createPreviousRaceCardHTML(race) {
 }
 
 /**
+ * Create a DOM element for a previous race card (used for continuous-motion transitions).
+ * @param {Object} race
+ * @param {Array|Map} allParticipants
+ * @returns {HTMLDivElement}
+ */
+function createPreviousRaceCardElement(race, allParticipants = []) {
+    const el = document.createElement('div');
+    el.className = 'prev-card show';
+    el.setAttribute('data-action', 'replay');
+    el.setAttribute('data-race-id', race?.id || '');
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', `Replay results for Race ${race?.raceNumber || 'TBD'}`);
+    el.innerHTML = createPreviousRaceCardHTML(race, allParticipants);
+    return el;
+}
+
+/**
  * Render current race in center panel
  * @param {Object} race - Current race object
  * @param {Array} allRaces - All races for stats calculation
  * @param {string} currentEventId - Current event ID
  * @param {HTMLElement} container - Container element
+ * @param {Array} allParticipants - Participant list for name resolution
  */
-function renderCurrentRace(race, allRaces, currentEventId, container) {
+function renderCurrentRace(race, allRaces, currentEventId, container, allParticipants = []) {
     if (!container) return;
-    
+
+    const prevRaceId = container.getAttribute('data-current-race-id') || '';
+    const nextRaceId = race?.id || 'none';
+
+    let newHTML = '';
     if (!race) {
-        container.innerHTML = `<div class="driver-card">
+        newHTML = `<div class="driver-card">
             <div class="driver-name">No Upcoming Race</div>
             <div class="driver-sub">All races may be completed</div>
         </div>`;
+    } else {
+        const participants = window.AnimatorUtils.getRaceParticipants(race, allParticipants);
+        const enrichedParticipants = window.AnimatorUtils.enrichParticipantsWithStats(
+            participants,
+            allRaces,
+            race,
+            currentEventId,
+            allParticipants
+        );
+
+        newHTML = enrichedParticipants.map(driver => createDriverCard(driver, race)).join('');
+
+        // Avoid resetting hover/animations on periodic refreshes if the displayed data is unchanged.
+        const sig = enrichedParticipants
+            .map(d => [
+                d.id,
+                d.lane,
+                d.dayWins,
+                d.dayRaces,
+                d.classWins,
+                d.classRaces,
+                d.lastFinish,
+                d.lastRaceNumber,
+                d.lastRaceClassName,
+                d.sponsor,
+                d.hometown,
+                d.age,
+                d.number,
+                d.vehicleYear,
+                d.vehicleMake,
+                d.vehicleModel,
+                d.statistics?.totalWins,
+                d.statistics?.totalRaces,
+                d.statistics?.winRate,
+                d.statistics?.avgPosition,
+                d.statistics?.bestStreak,
+                d.statistics?.bestPosition,
+                d.statistics?.recentWinRate,
+                d.statistics?.eventsParticipated,
+                d.statistics?.totalLosses
+            ].join(':'))
+            .join('|');
+
+        const prevContentSig = container.getAttribute('data-content-sig') || '';
+        if (prevRaceId && prevRaceId === nextRaceId && prevContentSig === sig) {
+            return;
+        }
+        container.setAttribute('data-content-sig', sig);
+    }
+
+    // Only animate when the displayed race changes
+    if (prevRaceId && prevRaceId !== nextRaceId) {
+        container.setAttribute('data-current-race-id', nextRaceId);
+        animateRaceTransition(container, newHTML);
         return;
     }
-    
-    const participants = window.AnimatorUtils.getRaceParticipants(race);
-    const enrichedParticipants = window.AnimatorUtils.enrichParticipantsWithStats(
-        participants, 
-        allRaces, 
-        race, 
-        currentEventId
-    );
-    
-    container.innerHTML = enrichedParticipants.map(driver => 
-        createDriverCard(driver, race)
-    ).join('');
+
+    container.setAttribute('data-current-race-id', nextRaceId);
+    container.innerHTML = newHTML;
 }
 
 /**
@@ -165,34 +265,217 @@ function renderCurrentRace(race, allRaces, currentEventId, container) {
  */
 function createDriverCard(driver, race) {
     const laneClass = `lane-${driver.lane}`;
+    const stats = driver?.statistics && typeof driver.statistics === 'object' ? driver.statistics : {};
+    const overallWins = Number.isFinite(stats.totalWins) ? stats.totalWins : null;
+    const overallRaces = Number.isFinite(stats.totalRaces) ? stats.totalRaces : null;
+    const winRate = Number.isFinite(stats.winRate) ? stats.winRate : null;
+    const avgPosition = Number.isFinite(stats.avgPosition) ? stats.avgPosition : null;
+    const bestStreak = Number.isFinite(stats.bestStreak) ? stats.bestStreak : null;
+    const bestPosition = Number.isFinite(stats.bestPosition) ? stats.bestPosition : null;
+    const recentWinRate = Number.isFinite(stats.recentWinRate) ? stats.recentWinRate : null;
+    const eventsParticipated = Number.isFinite(stats.eventsParticipated) ? stats.eventsParticipated : null;
+    const totalLosses = Number.isFinite(stats.totalLosses) ? stats.totalLosses : null;
+
+    const sled = [driver.vehicleYear, driver.vehicleMake, driver.vehicleModel].filter(Boolean).join(' ');
+    const nickname = driver.nickname ? `"${driver.nickname}"` : '';
+    const lastRaceLabel = driver.lastRaceNumber ? `Race #${driver.lastRaceNumber}` : 'Last race';
+    const lastFinishLabel = driver.lastFinish ? window.AnimatorUtils.ordinal(driver.lastFinish) : '—';
+    const lastClassLabel = driver.lastRaceClassName ? `Class ${driver.lastRaceClassName}` : null;
+    const lastBoxLabel = [lastRaceLabel, lastClassLabel].filter(Boolean).join(' • ') || 'Last race';
     
-    return `<div class="driver-card ${laneClass}">
+    return `<div class="driver-card ${laneClass}" tabindex="0" data-participant-id="${String(driver.id || '')}" data-lane="${String(driver.lane || '')}">
         <div class="lane-accent"></div>
         <div class="driver-header">
             <div class="driver-name">
-                ${driver.name} 
+                ${driver.name} ${nickname ? `<span class="driver-nickname">${nickname}</span>` : ''}
                 <span style="opacity: 0.6; font-weight: 600">#${driver.number || '—'}</span>
             </div>
-            <div class="lane-badge">Lane ${driver.lane}</div>
+            <div class="driver-badges">
+                <div class="finish-badge" aria-hidden="true"></div>
+                <div class="lane-badge">Lane ${driver.lane}</div>
+            </div>
         </div>
         <div class="driver-sub">
-            ${driver.sponsor || '—'} • ${driver.age ? driver.age + ' yrs' : 'Age —'}
+            ${driver.sponsor || '—'} • ${driver.hometown || 'Hometown —'} • ${driver.age ? driver.age + ' yrs' : 'Age —'}
         </div>
         <div class="driver-stats">
             <div class="stat">
-                <div class="v">${driver.dayWins || 0}</div>
-                <div class="k">Wins</div>
-            </div>
-            <div class="stat">
-                <div class="v">${driver.dayRaces || 0}</div>
-                <div class="k">Races</div>
+                <div class="v">${driver.dayWins || 0}/${driver.dayRaces || 0}</div>
+                <div class="k">Today (W/R)</div>
             </div>
             <div class="stat">
                 <div class="v">${driver.classWins || 0}/${driver.classRaces || 0}</div>
-                <div class="k">Class</div>
+                <div class="k">This Class</div>
+            </div>
+            <div class="stat">
+                <div class="v">${lastFinishLabel}</div>
+                <div class="k">${lastBoxLabel}</div>
+            </div>
+            <div class="stat">
+                <div class="v">${overallWins != null && overallRaces != null ? `${overallWins}/${overallRaces}` : '—'}</div>
+                <div class="k">Career (W/R)</div>
+            </div>
+            <div class="stat">
+                <div class="v">${winRate != null ? `${winRate}%` : '—'}</div>
+                <div class="k">Career Win%</div>
+            </div>
+            <div class="stat">
+                <div class="v">${recentWinRate != null ? `${recentWinRate}%` : '—'}</div>
+                <div class="k">Recent Win%</div>
+            </div>
+        </div>
+        <div class="driver-more" aria-hidden="true">
+            <div class="more-grid">
+                <div class="more-item">
+                    <div class="k">Overall</div>
+                    <div class="v">${overallWins != null && overallRaces != null ? `${overallWins}/${overallRaces}` : '—'}</div>
+                </div>
+                <div class="more-item">
+                    <div class="k">Win Rate</div>
+                    <div class="v">${winRate != null ? `${winRate}%` : '—'}</div>
+                </div>
+                <div class="more-item">
+                    <div class="k">Avg Pos</div>
+                    <div class="v">${avgPosition != null ? avgPosition : '—'}</div>
+                </div>
+                <div class="more-item">
+                    <div class="k">Best Streak</div>
+                    <div class="v">${bestStreak != null ? bestStreak : '—'}</div>
+                </div>
+                <div class="more-item">
+                    <div class="k">Career Best</div>
+                    <div class="v">${bestPosition != null ? window.AnimatorUtils.ordinal(bestPosition) : '—'}</div>
+                </div>
+                <div class="more-item">
+                    <div class="k">Recent</div>
+                    <div class="v">${recentWinRate != null ? `${recentWinRate}%` : '—'}</div>
+                </div>
+                <div class="more-item">
+                    <div class="k">Events</div>
+                    <div class="v">${eventsParticipated != null ? eventsParticipated : '—'}</div>
+                </div>
+                <div class="more-item">
+                    <div class="k">Losses</div>
+                    <div class="v">${totalLosses != null ? totalLosses : '—'}</div>
+                </div>
+                ${sled ? `<div class="more-item more-wide"><div class="k">Sled</div><div class="v">${sled}</div></div>` : ''}
             </div>
         </div>
     </div>`;
+}
+
+/**
+ * Cinematic finish-order reveal in the center panel.
+ * Reorders cards by finish position (FLIP) and then highlights each finisher in order.
+ * @param {Object} race
+ * @param {HTMLElement} container
+ * @param {Array|Map} allParticipants
+ * @param {Object} options
+ * @returns {Promise<void>}
+ */
+function animateFinishReveal(race, container, allParticipants = [], options = {}) {
+    return new Promise((resolve) => {
+        if (!container || !race) {
+            resolve();
+            return;
+        }
+
+        const focusMs = typeof options.focusMs === 'number' ? options.focusMs : 900;
+        const gapMs = typeof options.gapMs === 'number' ? options.gapMs : 250;
+        const focusScale = typeof options.focusScale === 'number' ? options.focusScale : 1.08;
+
+        const results = window.AnimatorUtils.extractResults(race);
+        const participants = window.AnimatorUtils.getRaceParticipants(race, allParticipants);
+        const ordered = [...participants].sort((a, b) => {
+            const pa = results[a.id] ?? results[a.name] ?? 999;
+            const pb = results[b.id] ?? results[b.name] ?? 999;
+            if (pa !== pb) return pa - pb;
+            return (a.lane || 999) - (b.lane || 999);
+        });
+
+        const cards = Array.from(container.querySelectorAll('.driver-card'));
+        if (cards.length === 0 || ordered.length === 0 || !window.gsap) {
+            resolve();
+            return;
+        }
+
+        const byPid = new Map(cards.map(el => [el.getAttribute('data-participant-id') || '', el]));
+        const orderedCards = ordered
+            .map(p => byPid.get(String(p.id || '')) || null)
+            .filter(Boolean);
+
+        // Assign finish positions + badges for clear visual sorting
+        container.classList.add('finish-mode');
+        ordered.forEach((p) => {
+            const pos = results[p.id] ?? results[p.name] ?? null;
+            const card = byPid.get(String(p.id || ''));
+            if (!card || !pos) return;
+            card.setAttribute('data-finish-position', String(pos));
+            const badge = card.querySelector('.finish-badge');
+            if (badge) {
+                badge.textContent = window.AnimatorUtils.ordinal(pos);
+                badge.classList.remove('pos-1', 'pos-2', 'pos-3', 'pos-4', 'pos-5');
+                badge.classList.add(`pos-${pos}`);
+            }
+        });
+
+        // FLIP reorder (manual, no GSAP Flip plugin)
+        const firstRects = new Map();
+        cards.forEach(el => firstRects.set(el, el.getBoundingClientRect()));
+
+        orderedCards.forEach(el => container.appendChild(el));
+
+        const lastRects = new Map();
+        orderedCards.forEach(el => lastRects.set(el, el.getBoundingClientRect()));
+
+        orderedCards.forEach(el => {
+            const first = firstRects.get(el);
+            const last = lastRects.get(el);
+            if (!first || !last) return;
+            const dx = first.left - last.left;
+            const dy = first.top - last.top;
+            gsap.set(el, { x: dx, y: dy });
+        });
+
+        gsap.to(orderedCards, {
+            x: 0,
+            y: 0,
+            duration: 0.45,
+            ease: 'power2.out',
+            onComplete: () => {
+                // Sequential highlight (arrival order)
+                const tl = gsap.timeline({
+                    onComplete: () => {
+                        gsap.to(cards, { opacity: 1, scale: 1, duration: 0.25, ease: 'power2.out' });
+                        // Keep finish badges visible during the sequence, but clear mode afterwards
+                        container.classList.remove('finish-mode');
+                        resolve();
+                    }
+                });
+
+                orderedCards.forEach((focusEl) => {
+                    const others = cards.filter(c => c !== focusEl);
+                    tl.to(
+                        others,
+                        { opacity: 0.25, scale: 0.98, duration: 0.15, ease: 'power2.out' },
+                        '>'
+                    );
+                    tl.to(
+                        focusEl,
+                        { opacity: 1, scale: focusScale, duration: 0.18, ease: 'power2.out' },
+                        '<'
+                    );
+                    tl.to(focusEl, { duration: focusMs / 1000 }, '>');
+                    tl.to(
+                        focusEl,
+                        { scale: 1.0, duration: 0.18, ease: 'power2.inOut' },
+                        '>'
+                    );
+                    tl.to({}, { duration: gapMs / 1000 });
+                });
+            }
+        });
+    });
 }
 
 /**
@@ -273,7 +556,7 @@ function showRaceCompleteOverlay(race, container, duration = 2000, callback) {
     if (!container) return;
     
     const results = window.AnimatorUtils.extractResults(race);
-    const participants = window.AnimatorUtils.getRaceParticipants(race);
+    const participants = window.AnimatorUtils.getRaceParticipants(race, window.animatorController?.participantsById || window.animatorController?.participants || []);
     const winner = participants.find(p => results[p.id] === 1 || results[p.name] === 1);
     
     const overlay = document.createElement('div');
@@ -340,7 +623,7 @@ function showRaceResults(race, container, duration = 6000, callback) {
     if (!container) return;
     
     const results = window.AnimatorUtils.extractResults(race);
-    const participants = window.AnimatorUtils.getRaceParticipants(race);
+    const participants = window.AnimatorUtils.getRaceParticipants(race, window.animatorController?.participantsById || window.animatorController?.participants || []);
     
     // Sort by position
     const sortedParticipants = participants.sort((a, b) => {
@@ -423,9 +706,9 @@ function showRaceResults(race, container, duration = 6000, callback) {
  * Update header information
  * @param {Object} event - Current event
  * @param {number} timeSinceLastRace - Milliseconds since last race
- * @param {number} racesRemaining - Races remaining in current class
+ * @param {number|Object} remainingInfo - Remaining heats info (number or { totalRemaining, className, classRemaining })
  */
-function updateHeader(event, timeSinceLastRace, racesRemaining) {
+function updateHeader(event, timeSinceLastRace, remainingInfo) {
     const eventNameEl = document.getElementById('event-name');
     const timerEl = document.querySelector('.race-timer .t');
     const racesLeftEl = document.getElementById('races-left');
@@ -439,7 +722,27 @@ function updateHeader(event, timeSinceLastRace, racesRemaining) {
     }
     
     if (racesLeftEl) {
-        racesLeftEl.textContent = racesRemaining > 0 ? `${racesRemaining} heats left` : 'All races complete';
+        let totalRemaining = 0;
+        let className = null;
+        let classRemaining = null;
+
+        if (typeof remainingInfo === 'number') {
+            totalRemaining = remainingInfo;
+        } else if (remainingInfo && typeof remainingInfo === 'object') {
+            totalRemaining = Number(remainingInfo.totalRemaining || 0);
+            className = remainingInfo.className || null;
+            classRemaining = remainingInfo.classRemaining ?? null;
+        }
+
+        if (totalRemaining > 0) {
+            if (className && typeof classRemaining === 'number') {
+                racesLeftEl.textContent = `${totalRemaining} heats left • Class ${className}: ${classRemaining}`;
+            } else {
+                racesLeftEl.textContent = `${totalRemaining} heats left`;
+            }
+        } else {
+            racesLeftEl.textContent = 'All races complete';
+        }
     }
 }
 
@@ -450,6 +753,8 @@ if (typeof window !== 'undefined') {
         renderPreviousRacesList,
         renderCurrentRace,
         animateRaceTransition,
+        animateFinishReveal,
+        createPreviousRaceCardElement,
         showRaceCompleteOverlay,
         showRaceResults,
         updateHeader

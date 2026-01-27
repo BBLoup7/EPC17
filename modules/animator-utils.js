@@ -45,6 +45,21 @@ function extractRacesFromBrackets(brackets, eventIdOverride = null) {
                     if (round.heats && Array.isArray(round.heats)) {
                         round.heats.forEach((heat, heatIndex) => {
                             const finalBracketType = heat.bracketType || heat.bracket || bracketType;
+
+                            // Normalize results so empty objects/arrays don't masquerade as completed
+                            const rawResults = heat.results ?? heat.finishOrder ?? heat.finish_order ?? heat.raceResults ?? null;
+                            let normalizedResults = rawResults;
+                            if (Array.isArray(rawResults)) {
+                                normalizedResults = rawResults.length > 0 ? rawResults : null;
+                            } else if (rawResults && typeof rawResults === 'object') {
+                                if (Array.isArray(rawResults.finishOrder)) {
+                                    normalizedResults = rawResults.finishOrder.length > 0 ? rawResults : null;
+                                } else {
+                                    normalizedResults = Object.keys(rawResults).length > 0 ? rawResults : null;
+                                }
+                            } else if (!rawResults) {
+                                normalizedResults = null;
+                            }
                             
                             const race = {
                                 id: heat.id || `heat_${className}_${roundIndex}_${heatIndex}`,
@@ -57,10 +72,11 @@ function extractRacesFromBrackets(brackets, eventIdOverride = null) {
                                        heat.status === 'in_progress' ? 'in_progress' : 'scheduled',
                                 participants: heat.participants || [],
                                 lanes: heat.lanes || [],
-                                results: heat.results || heat.finishOrder || {},
+                                results: normalizedResults,
                                 scheduledTime: heat.scheduledTime || heat.startTime,
                                 completedAt: heat.completedAt || heat.endTime,
-                                createdAt: heat.createdAt || new Date().toISOString(),
+                                // Avoid using "now" here; it breaks sorting and timers on refresh.
+                                createdAt: heat.createdAt || heat.scheduledTime || heat.startTime || heat.completedAt || heat.endTime || null,
                                 eliminationType: classData.eliminationType || 'single',
                                 bracketType: finalBracketType,
                                 isComplete: heat.status === 'completed' || heat.isComplete || false,
@@ -85,36 +101,62 @@ function extractRacesFromBrackets(brackets, eventIdOverride = null) {
  * @returns {Array} Array of participant objects with lane info
  */
 function getRaceParticipants(race, allParticipants = []) {
-    let list = [];
-    
-    if (Array.isArray(race.lanes)) {
-        list = race.lanes
-            .filter(l => l && l.participant)
-            .map((l, idx) => ({
-                id: l.participant.id,
-                lane: l.lane || (idx + 1),
-                name: l.participant.name,
-                number: l.participant.number,
-                sponsor: l.participant.sponsor,
-                age: l.participant.age,
-                hometown: l.participant.hometown
-            }));
-    } else if (Array.isArray(race.participants)) {
-        list = race.participants.map((pid, idx) => {
-            const p = allParticipants.find(pp => pp.id === pid) || {};
-            return {
-                id: pid,
-                lane: idx + 1,
-                name: p.name || `Driver ${String(pid).slice(-4)}`,
-                number: p.number,
-                sponsor: p.sponsor,
-                age: p.age,
-                hometown: p.hometown
-            };
-        });
+    const isMap = allParticipants instanceof Map;
+    const safeParticipants = Array.isArray(allParticipants) ? allParticipants : (isMap ? Array.from(allParticipants.values()) : []);
+    const byId = isMap ? allParticipants : new Map(safeParticipants.map(p => [p?.id, p]));
+
+    // Helper to normalize a participant-ish object
+    const normalize = (p, fallbackId, lane) => {
+        const resolved = (p && typeof p === 'object') ? p : (byId.get(fallbackId) || {});
+        const provisionalId = resolved.id || fallbackId || null;
+        const name = resolved.name || resolved.fullName || resolved.driverName || (provisionalId ? `Driver ${String(provisionalId).slice(-4)}` : 'Driver');
+        const id = resolved.id || fallbackId || name || null;
+        return {
+            id,
+            lane,
+            name,
+            number: resolved.number ?? resolved.racingNumber ?? resolved.bibNumber,
+            sponsor: resolved.sponsor || resolved.team || resolved.club,
+            age: resolved.age,
+            hometown: resolved.hometown || resolved.city || resolved.location,
+            nickname: resolved.nickname,
+            vehicleMake: resolved.vehicleMake,
+            vehicleModel: resolved.vehicleModel,
+            vehicleYear: resolved.vehicleYear,
+            statistics: resolved.statistics || null
+        };
+    };
+
+    // Prefer lanes, then participants fallback
+    if (Array.isArray(race.lanes) && race.lanes.length > 0) {
+        return race.lanes
+            .map((l, idx) => {
+                const lane = l?.lane || idx + 1;
+                const participantObj = l?.participant && typeof l.participant === 'object' ? l.participant : null;
+                const participantId = participantObj?.id || l?.participantId || l?.participant_id || l?.participant || null;
+                const participantFromId = participantId ? byId.get(participantId) : null;
+                return normalize(participantObj || participantFromId, participantId, lane);
+            })
+            .filter(p => p && (p.id || p.name));
     }
-    
-    return list;
+
+    if (Array.isArray(race.participants) && race.participants.length > 0) {
+        return race.participants
+            .map((entry, idx) => {
+                const lane = entry?.lane || idx + 1;
+                if (entry && typeof entry === 'object') {
+                    const id = entry.id || entry.participantId || entry.participant || null;
+                    const participantFromId = id ? byId.get(id) : null;
+                    return normalize(entry.name ? entry : participantFromId, id, lane);
+                }
+                const id = entry;
+                const participantFromId = byId.get(id);
+                return normalize(participantFromId, id, lane);
+            })
+            .filter(p => p && (p.id || p.name));
+    }
+
+    return [];
 }
 
 /**
@@ -190,27 +232,36 @@ function calculateDriverStats(driverId, allRaces, currentEventId = null) {
  * @param {string} currentEventId - Current event ID
  * @returns {Array} Enriched participants with stats
  */
-function enrichParticipantsWithStats(participants, allRaces, currentRace, currentEventId) {
+function enrichParticipantsWithStats(participants, allRaces, currentRace, currentEventId, allParticipants = []) {
     const eventRaces = allRaces.filter(r => !r.eventId || r.eventId === currentEventId);
     const currentClass = currentRace.className || currentRace.class;
+    const isMap = allParticipants instanceof Map;
+    const safeAllParticipants = Array.isArray(allParticipants) ? allParticipants : (isMap ? Array.from(allParticipants.values()) : []);
+    const byId = isMap ? allParticipants : new Map(safeAllParticipants.map(p => [p?.id, p]));
     
     return participants.map(participant => {
         const stats = {
             dayWins: 0,
             dayRaces: 0,
             classWins: 0,
-            classRaces: 0
+            classRaces: 0,
+            lastFinish: null,
+            lastRaceNumber: null,
+            lastRaceClassName: null
         };
+
+        let lastCompletedAt = -1;
         
         eventRaces.forEach(race => {
             if (!race.isComplete && race.status !== 'completed') return;
             
             const results = extractResults(race);
-            const raceParticipants = getRaceParticipants(race);
+            const raceParticipants = getRaceParticipants(race, byId);
             const isInRace = raceParticipants.find(p => p.id === participant.id);
             
             if (isInRace) {
                 const position = results[participant.id] || results[participant.name];
+                const completedAt = new Date(race.completedAt || race.endTime || race.updatedAt || race.createdAt || 0).getTime();
                 
                 // Day stats
                 stats.dayRaces += 1;
@@ -221,12 +272,28 @@ function enrichParticipantsWithStats(participants, allRaces, currentRace, curren
                     stats.classRaces += 1;
                     if (position === 1) stats.classWins += 1;
                 }
+
+                // Last finish
+                if (completedAt > lastCompletedAt && position) {
+                    lastCompletedAt = completedAt;
+                    stats.lastFinish = position;
+                    stats.lastRaceNumber = race.raceNumber || race.heatNumber || null;
+                    stats.lastRaceClassName = race.className || race.class || null;
+                }
             }
         });
+
+        const full = byId.get(participant.id) || {};
         
         return {
             ...participant,
-            ...stats
+            ...stats,
+            // Prefer full participant record fields if present
+            sponsor: participant.sponsor || full.sponsor,
+            hometown: participant.hometown || full.hometown,
+            age: participant.age || full.age,
+            number: participant.number || full.number || full.racingNumber,
+            statistics: participant.statistics || full.statistics || null
         };
     });
 }
@@ -276,8 +343,18 @@ function formatDuration(milliseconds) {
  */
 function inferLastRaceTime(races) {
     const completedRaces = (races || [])
-        .filter(r => r.status === 'completed' || r.results || r.endTime || r.completedAt)
+        .filter(r => {
+            if (r?.status === 'completed' || r?.endTime || r?.completedAt || r?.isComplete) return true;
+            const results = r?.results || r?.raceResults || r?.finishOrder;
+            if (Array.isArray(results)) return results.length > 0;
+            if (results && typeof results === 'object') {
+                if (Array.isArray(results.finishOrder)) return results.finishOrder.length > 0;
+                return Object.keys(results).length > 0;
+            }
+            return false;
+        })
         .map(r => new Date(r.endTime || r.completedAt || r.updatedAt || r.createdAt || 0).getTime())
+        .filter(t => Number.isFinite(t) && t > 0)
         .sort((a, b) => b - a);
     
     return completedRaces[0] || null;

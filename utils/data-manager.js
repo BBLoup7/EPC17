@@ -1058,6 +1058,64 @@ class DataManager {
     }
 
     /**
+     * Clear all data from database (Admin only)
+     * Calls server API to clear database and resets local cache
+     */
+    async clearAllData() {
+        try {
+            console.log('🧹 Clearing all data from database...');
+            
+            // Call server API endpoint
+            const url = `${this.baseUrl}/clear-database`;
+            const response = await this.request(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            
+            // Clear all local cache and data
+            this.data = {
+                participants: [],
+                series: [],
+                events: [],
+                races: [],
+                raceBrackets: {}
+            };
+            
+            // Reset loaded data types
+            this.loadedDataTypes.clear();
+            this.loadingPromises.clear();
+            this.paginationCache.clear();
+            this.statsCache.clear();
+            this.lastLoadTime.clear();
+            this.activeRequests.clear();
+            this.resourceLocks.clear();
+            
+            // Broadcast data cleared event
+            if (this.eventBus) {
+                this.eventBus.emit('data-cleared', {
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
+            console.log('✅ All data cleared successfully');
+            return result;
+            
+        } catch (error) {
+            console.error('❌ Failed to clear all data:', error);
+            throw error;
+        }
+    }
+
+    /**
      * SIMPLIFIED: Get participants with pagination and filtering
      */
     async getParticipants(filters = {}, page = 1, limit = 50) {
@@ -1423,20 +1481,94 @@ class DataManager {
      * Returns an object with uniqueDrivers and totalRegistrations
      */
     getEventParticipantStats(eventId) {
+        const eventIdStr = eventId != null ? String(eventId) : '';
+        if (!eventIdStr) {
+            return { uniqueDrivers: 0, totalRegistrations: 0, eventParticipants: [] };
+        }
+
         const allParticipants = this.getParticipantsArray();
-        const eventParticipants = allParticipants.filter(p => p.eventId === eventId);
-        
-        // Calculate unique drivers (by participant ID)
-        const uniqueDrivers = new Set(eventParticipants.map(p => p.id)).size;
-        
-        // Calculate total registrations (sum of all class registrations per participant)
-        const totalRegistrations = eventParticipants.reduce((sum, p) => {
-            const classCount = p.selectedClasses ? p.selectedClasses.length : 1;
+
+        // Build a quick lookup map (includes any event-specific participant cache if present)
+        const participantsById = new Map();
+        allParticipants.forEach(p => {
+            if (p && p.id != null) participantsById.set(String(p.id), p);
+        });
+
+        const eventSpecificParticipants = this.data?.eventParticipants?.[eventIdStr];
+        if (Array.isArray(eventSpecificParticipants)) {
+            eventSpecificParticipants.forEach(p => {
+                if (p && p.id != null) participantsById.set(String(p.id), p);
+            });
+        }
+
+        // Determine which participants belong to this event.
+        // Primary source: event.participants (authoritative for registration).
+        // Fallbacks: legacy participant.eventId, multi-event participant.eventIds/events, and eventClasses mapping.
+        const participantIds = new Set();
+        const event = this.getEvent(eventIdStr);
+        if (event && Array.isArray(event.participants)) {
+            event.participants.forEach(pid => {
+                if (pid != null && pid !== '') participantIds.add(String(pid));
+            });
+        }
+
+        allParticipants.forEach(p => {
+            if (!p || p.id == null) return;
+            const pid = String(p.id);
+
+            // Legacy: single event binding
+            if (p.eventId != null && String(p.eventId) === eventIdStr) {
+                participantIds.add(pid);
+                return;
+            }
+
+            // Multi-event: eventIds (server) or events (older schema)
+            const eventIds = Array.isArray(p.eventIds) ? p.eventIds : Array.isArray(p.events) ? p.events : null;
+            if (Array.isArray(eventIds) && eventIds.some(eid => String(eid) === eventIdStr)) {
+                participantIds.add(pid);
+                return;
+            }
+
+            // Event-specific classes imply registration
+            if (
+                p.eventClasses &&
+                typeof p.eventClasses === 'object' &&
+                Object.prototype.hasOwnProperty.call(p.eventClasses, eventIdStr)
+            ) {
+                participantIds.add(pid);
+            }
+        });
+
+        const eventParticipants = Array.from(participantIds)
+            .map(pid => participantsById.get(pid))
+            .filter(Boolean);
+
+        // Calculate total registrations (sum of class entries per participant for this specific event)
+        const totalRegistrations = eventParticipants.reduce((sum, participant) => {
+            const eventClasses =
+                participant.eventClasses && typeof participant.eventClasses === 'object'
+                    ? participant.eventClasses[eventIdStr]
+                    : null;
+
+            let classCount = 0;
+            if (Array.isArray(eventClasses) && eventClasses.length > 0) {
+                classCount = eventClasses.length;
+            } else if (Array.isArray(participant.sledClasses) && participant.sledClasses.length > 0) {
+                classCount = participant.sledClasses.length;
+            } else if (Array.isArray(participant.selectedClasses) && participant.selectedClasses.length > 0) {
+                classCount = participant.selectedClasses.length;
+            } else if (participant.sledClass) {
+                classCount = 1;
+            } else {
+                // Default to 1 entry if the participant is registered but class data is missing
+                classCount = 1;
+            }
+
             return sum + classCount;
         }, 0);
-        
+
         return {
-            uniqueDrivers,
+            uniqueDrivers: participantIds.size,
             totalRegistrations,
             eventParticipants
         };

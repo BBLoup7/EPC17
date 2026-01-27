@@ -98,7 +98,9 @@
                     <h2><i class="fas fa-chart-pie"></i> Events Distribution</h2>
                 </div>
                 <div class="chart-container">
-                    <canvas id="eventsStatusChart" width="400" height="300"></canvas>
+                    <div class="chart-canvas-wrap">
+                        <canvas id="eventsStatusChart" width="400" height="300"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -159,7 +161,25 @@
                         <h2><i class="fas fa-road"></i> Lane Performance</h2>
                     </div>
                     <div class="chart-container">
-                        <canvas id="eventLaneChart" width="400" height="300"></canvas>
+                        <h3><i class="fas fa-chart-bar"></i> Raw Win Percentage (Unadjusted)</h3>
+                        <div class="chart-canvas-wrap">
+                            <canvas id="eventLaneChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3><i class="fas fa-scale-balanced"></i> Contextual Lane Stats (Effective)</h3>
+                        <p class="section-subtitle">Excludes solo runs and normalizes expected wins by active lanes per heat.</p>
+                        <div id="eventLaneContextualStatsContainer">
+                            <div class="loading-skeleton">Select an event to view contextual lane stats...</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3><i class="fas fa-gauge"></i> Performance Index (Event)</h3>
+                        <div class="chart-canvas-wrap">
+                            <canvas id="eventLanePerformanceIndexChart" width="400" height="300"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -233,13 +253,42 @@
                 <!-- Lane Charts -->
                 <div class="charts-grid">
                     <div class="chart-container">
-                        <h3><i class="fas fa-chart-bar"></i> Lane Win Percentage</h3>
-                        <canvas id="laneWinRateChart" width="400" height="300"></canvas>
+                        <h3><i class="fas fa-chart-bar"></i> Raw Win Percentage (Unadjusted)</h3>
+                        <div class="chart-canvas-wrap">
+                            <canvas id="laneWinRateChart" width="400" height="300"></canvas>
+                        </div>
                     </div>
                     
                     <div class="chart-container">
-                        <h3><i class="fas fa-chart-pie"></i> Lane Usage Distribution</h3>
-                        <canvas id="laneUsageChart" width="400" height="300"></canvas>
+                        <h3><i class="fas fa-chart-pie"></i> Raw Lane Usage (Unadjusted)</h3>
+                        <div class="chart-canvas-wrap">
+                            <canvas id="laneUsageChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contextual Lane Performance (Effective) -->
+                <div class="chart-container">
+                    <h3><i class="fas fa-scale-balanced"></i> Contextual Lane Stats (Effective)</h3>
+                    <p class="section-subtitle">Excludes solo runs and normalizes expected wins by active lanes per heat.</p>
+                    <div id="laneContextualStatsContainer">
+                        <div class="loading-skeleton">Loading contextual lane statistics...</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3><i class="fas fa-gauge"></i> Performance Index (Effective Wins / Expected Wins)</h3>
+                        <div class="chart-canvas-wrap">
+                            <canvas id="lanePerformanceIndexChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-pie"></i> Effective Lane Usage Share</h3>
+                        <div class="chart-canvas-wrap">
+                            <canvas id="laneEffectiveUsageChart" width="400" height="300"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -467,6 +516,20 @@
             padding: 25px;
             margin: 20px 0;
             border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Fixed-height wrapper for Chart.js canvases
+           Prevents runaway resize loops when the canvas parent has auto height + other content. */
+        .chart-canvas-wrap {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-canvas-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
         }
 
         .chart-container h3 {
@@ -805,8 +868,13 @@
                 await loadClassBreakdown(stats.classBreakdown);
 
                 // Load event lane chart
-                const laneStats = await analyticsEngine.getLanePerformance(eventId);
-                await loadEventLaneChart(laneStats.laneStats);
+                const laneData = await analyticsEngine.getLanePerformance(eventId);
+                await loadEventLaneChart(laneData.laneStats);
+
+                // Contextual (Effective) lane stats for this event
+                const mergedRows = buildMergedLaneRows(laneData.laneStats || [], laneData.laneContextualStats || []);
+                renderContextualLaneTable(document.getElementById('eventLaneContextualStatsContainer'), mergedRows, laneData.meta || {});
+                renderPerformanceIndexChart('eventLanePerformanceIndexChart', 'eventLanePerformanceIndexChart', mergedRows);
 
                 console.log('✅ Event analytics loaded');
             } catch (error) {
@@ -936,20 +1004,224 @@
             container.innerHTML = html;
         }
 
+        // ============================================================================
+        // Lane Analytics Helpers
+        // ============================================================================
+
+        function laneSortValue(lane) {
+            const n = Number(lane);
+            return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+        }
+
+        function formatPctFraction(fraction, decimals = 1) {
+            if (!Number.isFinite(fraction)) return '—';
+            return (fraction * 100).toFixed(decimals) + '%';
+        }
+
+        function formatNumber(value, decimals = 2) {
+            if (!Number.isFinite(value)) return '—';
+            return value.toFixed(decimals);
+        }
+
+        function confidenceBadgeClass(confidence) {
+            switch (confidence) {
+                case 'HIGH':
+                    return 'success';
+                case 'MEDIUM':
+                    return 'warning';
+                default:
+                    return 'neutral';
+            }
+        }
+
+        function usageTag(usageShare, idealShare) {
+            if (!Number.isFinite(usageShare) || !Number.isFinite(idealShare) || idealShare <= 0) return '';
+            if (usageShare < idealShare * 0.85) return 'underused';
+            if (usageShare > idealShare * 1.15) return 'overused';
+            return 'balanced';
+        }
+
+        function buildMergedLaneRows(laneStats = [], laneContextualStats = []) {
+            const rawByLane = new Map(laneStats.map(s => [String(s.lane), s]));
+            const ctxByLane = new Map(laneContextualStats.map(s => [String(s.lane), s]));
+
+            const laneKeys = Array.from(new Set([...rawByLane.keys(), ...ctxByLane.keys()]));
+            laneKeys.sort((a, b) => laneSortValue(a) - laneSortValue(b));
+
+            return laneKeys.map(key => ({
+                laneKey: key,
+                laneLabel: `Lane ${key}`,
+                raw: rawByLane.get(key) || null,
+                ctx: ctxByLane.get(key) || null
+            }));
+        }
+
+        function renderContextualLaneTable(containerEl, rows, meta = {}) {
+            if (!containerEl) return;
+
+            if (!rows || rows.length === 0) {
+                containerEl.innerHTML = '<p class="loading-skeleton">No lane data available</p>';
+                return;
+            }
+
+            const numericLaneCount = rows
+                .map(r => laneSortValue(r.laneKey))
+                .filter(v => Number.isFinite(v) && v !== Number.POSITIVE_INFINITY).length;
+            const idealShare = numericLaneCount > 0 ? 1 / numericLaneCount : 0;
+
+            const totalEffectiveHeats = meta.totalEffectiveHeats ?? 0;
+            const totalSoloHeats = meta.totalSoloHeats ?? 0;
+            const minEffectiveRacesForRanking = meta.minEffectiveRacesForRanking ?? 10;
+
+            let html = '';
+            html += `
+                <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
+                    <span class="badge badge-neutral">Effective heats: ${totalEffectiveHeats}</span>
+                    <span class="badge badge-neutral">Solo heats excluded: ${totalSoloHeats}</span>
+                    <span class="badge badge-neutral">Min for ranking: ${minEffectiveRacesForRanking}</span>
+                </div>
+            `;
+
+            html += '<table class="data-table"><thead><tr>';
+            html += '<th>Lane</th>';
+            html += '<th>Raw (Unadjusted)</th>';
+            html += '<th>Effective Races</th>';
+            html += '<th>Solo Races</th>';
+            html += '<th>Expected Wins</th>';
+            html += '<th>Effective Wins</th>';
+            html += '<th>Performance Index</th>';
+            html += '<th>Usage Share</th>';
+            html += '<th>Confidence</th>';
+            html += '</tr></thead><tbody>';
+
+            rows.forEach(r => {
+                const raw = r.raw || {};
+                const ctx = r.ctx || {};
+
+                const rawWins = raw.wins ?? 0;
+                const rawTotal = raw.totalRaces ?? 0;
+                const rawWinRate = raw.winRate ?? 0;
+
+                const effectiveRaces = ctx.effectiveRaces ?? 0;
+                const soloRaces = ctx.soloRaces ?? 0;
+                const expectedWins = ctx.expectedWins ?? 0;
+                const effectiveWins = ctx.effectiveWins ?? 0;
+                const performanceIndex = ctx.performanceIndex;
+                const usageShare = ctx.usageShare ?? 0;
+                const confidence = ctx.confidence || 'LOW';
+                const excluded = !!ctx.excludedFromRanking;
+
+                const usageLabel = usageTag(usageShare, idealShare);
+                const usageText = `${formatPctFraction(usageShare, 1)}${usageLabel ? ` (${usageLabel})` : ''}`;
+
+                const confClass = confidenceBadgeClass(confidence);
+                const confBadge = `<span class="badge badge-${confClass}">${confidence}</span>`;
+
+                const perfText = Number.isFinite(performanceIndex) ? formatNumber(performanceIndex, 2) : '—';
+                const perfSuffix = excluded ? ' <span class="badge badge-neutral">Excluded</span>' : '';
+
+                html += `<tr>
+                    <td><strong>${r.laneLabel}</strong></td>
+                    <td>${rawWins} / ${rawTotal} (${rawWinRate}%)</td>
+                    <td>${effectiveRaces}</td>
+                    <td>${soloRaces}</td>
+                    <td>${formatNumber(Number(expectedWins), 1)}</td>
+                    <td>${effectiveWins}</td>
+                    <td>${perfText}${perfSuffix}</td>
+                    <td>${usageText}</td>
+                    <td>${confBadge}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+
+            html += `
+                <p class="section-subtitle" style="margin-top:12px;">
+                    Performance Index: 1.00 = neutral, &gt; 1.00 = advantage, &lt; 1.00 = disadvantage. Raw stats show what happened; contextual stats explain why.
+                </p>
+            `;
+
+            containerEl.innerHTML = html;
+        }
+
+        function renderPerformanceIndexChart(canvasId, chartKey, rows) {
+            const red = 'rgba(244, 67, 54, 0.8)';
+            const gray = 'rgba(179, 179, 179, 0.55)';
+
+            if (currentCharts[chartKey]) {
+                currentCharts[chartKey].destroy();
+            }
+
+            const labels = rows.map(r => r.laneLabel);
+            const data = rows.map(r => (Number.isFinite(r.ctx?.performanceIndex) ? Number(r.ctx.performanceIndex) : null));
+            const colors = rows.map(r => {
+                const idx = Number(r.ctx?.performanceIndex);
+                if (!Number.isFinite(idx) || r.ctx?.excludedFromRanking) return gray;
+                if (idx > 1.05) return ChartHelpers.Colors.greenSuccess;
+                if (idx < 0.95) return red;
+                return ChartHelpers.Colors.orangeWarm;
+            });
+
+            currentCharts[chartKey] = ChartHelpers.createBarChart(canvasId, labels, data, {
+                label: 'Performance Index',
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return Number(value).toFixed(2);
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ChartHelpers.createBarChart currently styles single datasets with a single color.
+            // Override with per-bar colors for clearer interpretation.
+            const chart = currentCharts[chartKey];
+            if (chart && chart.data && chart.data.datasets && chart.data.datasets[0]) {
+                chart.data.datasets[0].backgroundColor = colors;
+                chart.data.datasets[0].borderColor = colors;
+                chart.update();
+            }
+        }
+
+        function renderEffectiveUsageChart(canvasId, chartKey, rows) {
+            if (currentCharts[chartKey]) {
+                currentCharts[chartKey].destroy();
+            }
+
+            const filtered = rows.filter(r => (r.ctx?.effectiveRaces || 0) > 0);
+            const labels = filtered.map(r => r.laneLabel);
+            const data = filtered.map(r => r.ctx.effectiveRaces || 0);
+
+            currentCharts[chartKey] = ChartHelpers.createPieChart(canvasId, labels, data, { cutout: '60%' });
+        }
+
         // Load lane analytics
         async function loadLaneAnalytics() {
             try {
                 // Fetch lane stats
                 const laneData = await analyticsEngine.getLanePerformance();
                 const laneStats = laneData.laneStats || [];
+                const laneContextualStats = laneData.laneContextualStats || [];
+                const meta = laneData.meta || {};
                 
                 if (laneStats.length === 0) {
                     document.getElementById('laneStatsContainer').innerHTML = '<p class="loading-skeleton">No lane data available</p>';
+                    const ctxContainer = document.getElementById('laneContextualStatsContainer');
+                    if (ctxContainer) ctxContainer.innerHTML = '<p class="loading-skeleton">No lane data available</p>';
                     return;
                 }
 
                 // Display lane stats cards
-                let html = '<div class="stats-grid">';
+                let html = `
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
+                        <span class="badge badge-neutral">Raw Stats (Unadjusted)</span>
+                        <span class="section-subtitle" style="margin:0;">Includes solo runs and varying active lane counts.</span>
+                    </div>
+                    <div class="stats-grid">
+                `;
                 laneStats.forEach(stat => {
                     html += `
                         <div class="stat-card">
@@ -998,6 +1270,12 @@
                     labels,
                     usageData
                 );
+
+                // Contextual (Effective) UI
+                const mergedRows = buildMergedLaneRows(laneStats, laneContextualStats);
+                renderContextualLaneTable(document.getElementById('laneContextualStatsContainer'), mergedRows, meta);
+                renderPerformanceIndexChart('lanePerformanceIndexChart', 'lanePerformanceIndexChart', mergedRows);
+                renderEffectiveUsageChart('laneEffectiveUsageChart', 'laneEffectiveUsageChart', mergedRows);
 
                 console.log('✅ Lane analytics loaded');
             } catch (error) {

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 EPC17 - Event Management System - Network Server
 Robust data management for multi-client access across local network
@@ -73,11 +73,9 @@ def get_db_manager():
         _db_manager = DatabaseManager('data/epc17.db')
     return _db_manager
 
-# Session cache for performance (database is primary storage)
-# Sessions are persisted to database for multi-user/restart support
-SESSIONS_CACHE = {}  # token -> session dict (cache for performance)
-SESSION_CACHE_TTL = 300  # 5 minutes cache TTL
-SESSION_EXPIRY_DAYS = 90  # Sessions valid for 90 days
+# In-memory session store for simple auth (no external libraries)
+# Rule: EPC17_WORKFLOW.md - lightweight local dev, no DB
+SESSIONS = {}
 
 # -------------------- WEBSOCKET HELPERS --------------------
 
@@ -206,105 +204,30 @@ def create_self_signed_cert():
 # Database operations - no more JSON files needed!
 
 def create_session(user_id, username, permissions, allowed_events=None):
-    """Create a new session and persist to database"""
     token = secrets.token_hex(16)
-    
-    # Get user agent and IP for session tracking
-    user_agent = request.headers.get('User-Agent', '')[:255] if request else None
-    ip_address = request.remote_addr if request else None
-    
-    # Create session data
-    session_data = {
+    SESSIONS[token] = {
         'userId': user_id,
         'username': username,
         'permissions': permissions,
         'allowedEvents': allowed_events or [],
         'createdAt': datetime.now().isoformat()
     }
-    
-    # Save to database for persistence
-    db = get_db_manager()
-    if db:
-        db.create_session(
-            token=token,
-            user_id=user_id,
-            username=username,
-            permissions=permissions,
-            allowed_events=allowed_events,
-            expiry_days=SESSION_EXPIRY_DAYS,
-            user_agent=user_agent,
-            ip_address=ip_address
-        )
-    
-    # Also cache in memory for fast access
-    SESSIONS_CACHE[token] = {
-        **session_data,
-        '_cached_at': time.time()
-    }
-    
     return token
 
-def get_session_from_cache_or_db(token):
-    """Get session from cache or database"""
-    if not token:
-        return None
-    
-    # Check cache first
-    cached = SESSIONS_CACHE.get(token)
-    if cached:
-        # Check if cache is still valid
-        cached_at = cached.get('_cached_at', 0)
-        if time.time() - cached_at < SESSION_CACHE_TTL:
-            return cached
-    
-    # Load from database
-    db = get_db_manager()
-    if db:
-        session = db.get_session(token)
-        if session:
-            # Update cache
-            SESSIONS_CACHE[token] = {
-                'userId': session['userId'],
-                'username': session['username'],
-                'permissions': session['permissions'],
-                'allowedEvents': session['allowedEvents'],
-                'createdAt': session['createdAt'],
-                '_cached_at': time.time()
-            }
-            return SESSIONS_CACHE[token]
-    
-    # Session not found or expired, remove from cache
-    if token in SESSIONS_CACHE:
-        del SESSIONS_CACHE[token]
-    
-    return None
-
 def get_session_from_request():
-    """Get session from request headers, query params, or cookies"""
-    token = None
-    
-    # Check Authorization header
     auth_header = request.headers.get('Authorization', '')
     if auth_header.startswith('Bearer '):
         token = auth_header.split(' ', 1)[1].strip()
-    
+        return SESSIONS.get(token)
     # Also allow token via query for simple local links
-    if not token:
-        token = request.args.get('token')
-    
+    token = request.args.get('token')
+    if token:
+        return SESSIONS.get(token)
     # Also check cookie for auth token so page loads carry session
-    if not token:
-        token = request.cookies.get('auth_token')
-    
-    if not token:
-        return None
-    
-    return get_session_from_cache_or_db(token)
-
-def invalidate_session_cache(token):
-    """Remove a session from the cache"""
-    if token in SESSIONS_CACHE:
-        del SESSIONS_CACHE[token]
+    cookie_token = request.cookies.get('auth_token')
+    if cookie_token:
+        return SESSIONS.get(cookie_token)
+    return None
 
 # Rule: EPC17_WORKFLOW.md - unify permission checks to category-only
 # Replace legacy fine-grained or wildcard permission model
@@ -1616,7 +1539,8 @@ def serve_static(filename):
             'events.html': ['events'],
             'races.html': ['races'],
             'analytics.html': ['analytics'],
-            'driver-profile.html': ['drivers profile'],
+            # Allow driver profiles for registration workflows (and keep legacy permission)
+            'driver-profile.html': ['drivers profile', 'registration'],
             'live-display.html': ['live display'],
             'users.html': ['admin_power'],
         }
@@ -1649,9 +1573,6 @@ def auth_login():
     username = data.get('username', '')
     password = data.get('password', '')
 
-    # Calculate cookie max_age based on session expiry
-    cookie_max_age = 60 * 60 * 24 * SESSION_EXPIRY_DAYS  # Convert days to seconds
-    
     # Simple login for Admin without database check
     if username == 'Admin' and password == 'Admin321':
         # Create admin user with all permissions
@@ -1663,7 +1584,7 @@ def auth_login():
             []  # No event restrictions for admin
         )
         resp = jsonify({'token': token, 'username': 'Admin', 'permissions': admin_permissions, 'allowedEvents': []})
-        resp.set_cookie('auth_token', token, max_age=cookie_max_age, httponly=False, samesite='Lax')
+        resp.set_cookie('auth_token', token, max_age=60*60*24*30, httponly=False, samesite='Lax')
         return resp
 
     # Fallback to database authentication for other users
@@ -1686,26 +1607,15 @@ def auth_login():
     )
     resp = jsonify({'token': token, 'username': user.get('username'), 'permissions': user.get('permissions', []), 'allowedEvents': user.get('allowedEvents', [])})
     # Set cookie so subsequent page GETs include auth
-    resp.set_cookie('auth_token', token, max_age=cookie_max_age, httponly=False, samesite='Lax')
+    resp.set_cookie('auth_token', token, max_age=60*60*24*30, httponly=False, samesite='Lax')
     return resp
 
 @app.route('/api/auth/logout', methods=['POST'])
 def auth_logout():
-    token = None
     auth_header = request.headers.get('Authorization', '')
     if auth_header.startswith('Bearer '):
         token = auth_header.split(' ', 1)[1].strip()
-    if not token:
-        token = request.cookies.get('auth_token')
-    
-    if token:
-        # Delete from database
-        db = get_db_manager()
-        if db:
-            db.delete_session(token)
-        # Remove from cache
-        invalidate_session_cache(token)
-    
+        SESSIONS.pop(token, None)
     resp = jsonify({'success': True})
     # Clear auth cookie
     resp.set_cookie('auth_token', '', expires=0)
@@ -1807,6 +1717,80 @@ def users_item(user_id):
 # ANALYTICS API ENDPOINTS
 # ============================================================================
 
+def is_heat_completed(heat):
+    """
+    Determine whether a heat should be treated as completed for analytics.
+
+    Supports both:
+    - Legacy bracket schema: heat.isComplete == True
+    - Current bracket schema: heat.status == 'completed' AND heat.results is a non-empty list
+    """
+    if not isinstance(heat, dict):
+        return False
+
+    # Legacy schema support
+    if heat.get('isComplete') is True:
+        return True
+
+    # Current schema support (RaceUI / RaceManager)
+    if heat.get('status') == 'completed':
+        results = heat.get('results')
+        return isinstance(results, list) and len(results) > 0
+
+    return False
+
+
+def get_heat_lane_for_participant(heat, participant_id):
+    """
+    Return the lane number for a participant in a heat.
+
+    Supports multiple lane shapes:
+    - { lane, participant: { id, ... } }
+    - { lane, participantId }
+    """
+    if not isinstance(heat, dict) or not participant_id:
+        return None
+
+    lanes = heat.get('lanes')
+    if not isinstance(lanes, list):
+        return None
+
+    for lane in lanes:
+        if not isinstance(lane, dict):
+            continue
+
+        pid = None
+        participant = lane.get('participant')
+        if isinstance(participant, dict):
+            pid = participant.get('id')
+        if not pid:
+            pid = lane.get('participantId') or lane.get('participant_id')
+
+        if pid == participant_id:
+            return lane.get('lane', 'Unknown')
+
+    return None
+
+
+def parse_finish_position(value):
+    """Parse a finish position value into an int, or return None when not numeric (FS/DSQ/etc)."""
+    # bool is a subclass of int; treat it as invalid here.
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        if value.is_integer():
+            return int(value)
+        return None
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except Exception:
+            return None
+    return None
+
+
 def add_cors_headers(response):
     """Add CORS headers to response"""
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -1854,7 +1838,7 @@ def get_overall_analytics():
                     if isinstance(class_data.get('rounds'), list):
                         for round_data in class_data['rounds']:
                             if isinstance(round_data.get('heats'), list):
-                                total_races += sum(1 for heat in round_data['heats'] if heat.get('isComplete'))
+                                total_races += sum(1 for heat in round_data['heats'] if is_heat_completed(heat))
         
         # Events by status
         events_by_status = {
@@ -1944,13 +1928,13 @@ def get_event_analytics(event_id):
                         if isinstance(round_data.get('heats'), list):
                             for heat in round_data['heats']:
                                 total_races += 1
-                                if heat.get('isComplete'):
+                                if is_heat_completed(heat):
                                     completed_races += 1
                                 
                                 # Update class breakdown
                                 if class_name in class_breakdown:
                                     class_breakdown[class_name]['races'] += 1
-                                    if heat.get('isComplete'):
+                                    if is_heat_completed(heat):
                                         class_breakdown[class_name]['completedRaces'] += 1
         
         # Round revenue values
@@ -2010,19 +1994,14 @@ def get_driver_analytics(driver_id):
                         for round_data in class_data['rounds']:
                             if isinstance(round_data.get('heats'), list):
                                 for heat in round_data['heats']:
-                                    if not heat.get('isComplete'):
+                                    if not is_heat_completed(heat):
                                         continue
                                     
                                     # Find driver in this heat
                                     driver_lane = None
                                     driver_result = None
                                     
-                                    if isinstance(heat.get('lanes'), list):
-                                        for lane in heat['lanes']:
-                                            if isinstance(lane.get('participant'), dict):
-                                                if lane['participant'].get('id') == driver_id:
-                                                    driver_lane = lane.get('lane', 'Unknown')
-                                                    break
+                                    driver_lane = get_heat_lane_for_participant(heat, driver_id)
                                     
                                     if isinstance(heat.get('results'), list):
                                         for result in heat['results']:
@@ -2031,7 +2010,8 @@ def get_driver_analytics(driver_id):
                                                 break
                                     
                                     if driver_lane and driver_result:
-                                        position = driver_result.get('position', 0)
+                                        position_value = driver_result.get('position', 0)
+                                        position = parse_finish_position(position_value) or 0
                                         
                                         # Add to race history
                                         all_races.append({
@@ -2082,7 +2062,7 @@ def get_driver_analytics(driver_id):
         win_rate = round((total_wins / total_races * 100), 1) if total_races > 0 else 0
         
         # Calculate average position
-        positions = [r['position'] for r in all_races if r['position'] > 0]
+        positions = [r['position'] for r in all_races if isinstance(r.get('position'), int) and r['position'] > 0]
         avg_position = round(sum(positions) / len(positions), 2) if positions else 0
         
         # Calculate best win streak
@@ -2107,7 +2087,7 @@ def get_driver_analytics(driver_id):
         # Process class stats
         class_performance = []
         for class_name, stats in class_stats.items():
-            positions = stats['positions']
+            positions = [p for p in stats.get('positions', []) if isinstance(p, int) and p > 0]
             class_performance.append({
                 'className': class_name,
                 'races': stats['races'],
@@ -2163,8 +2143,18 @@ def get_lane_analytics(event_id=None):
         if event_id:
             race_brackets = [b for b in race_brackets if b.get('eventId') == event_id]
         
-        # Calculate lane statistics
+        # Calculate lane statistics (Raw Stats - Unadjusted)
+        # NOTE: This logic must remain stable; UI depends on these raw numbers.
         lane_stats = {}
+
+        # Contextual lane stats (Effective races only; solo runs excluded from performance calcs)
+        lane_contextual = {}
+        meta = {
+            'totalSoloHeats': 0,
+            'totalEffectiveHeats': 0,
+            'totalEffectiveLaneAppearances': 0,
+            'minEffectiveRacesForRanking': 10
+        }
         
         for bracket in race_brackets:
             if bracket and isinstance(bracket.get('classes'), dict):
@@ -2173,23 +2163,22 @@ def get_lane_analytics(event_id=None):
                         for round_data in class_data['rounds']:
                             if isinstance(round_data.get('heats'), list):
                                 for heat in round_data['heats']:
-                                    if not heat.get('isComplete'):
+                                    if not is_heat_completed(heat):
                                         continue
                                     
-                                    # Process each result
-                                    if isinstance(heat.get('results'), list) and isinstance(heat.get('lanes'), list):
-                                        for result in heat['results']:
+                                    # Process each result (raw) and compute contextual lane metrics
+                                    results = heat.get('results')
+                                    lanes = heat.get('lanes')
+                                    if isinstance(results, list) and isinstance(lanes, list):
+                                        # --- Raw Stats (Unadjusted) ---
+                                        for result in results:
                                             participant_id = result.get('participantId')
-                                            position = result.get('position', 0)
-                                            
+                                            position_value = result.get('position', 0)
+                                            position = parse_finish_position(position_value) or 0
+
                                             # Find lane for this participant
-                                            lane_num = None
-                                            for lane in heat['lanes']:
-                                                if isinstance(lane.get('participant'), dict):
-                                                    if lane['participant'].get('id') == participant_id:
-                                                        lane_num = lane.get('lane', 'Unknown')
-                                                        break
-                                            
+                                            lane_num = get_heat_lane_for_participant(heat, participant_id)
+
                                             if lane_num:
                                                 if lane_num not in lane_stats:
                                                     lane_stats[lane_num] = {
@@ -2198,19 +2187,119 @@ def get_lane_analytics(event_id=None):
                                                         'wins': 0,
                                                         'winRate': 0
                                                     }
-                                                
+
                                                 lane_stats[lane_num]['totalRaces'] += 1
                                                 if position == 1:
                                                     lane_stats[lane_num]['wins'] += 1
+
+                                        # --- Contextual Stats (Effective) ---
+                                        active_lanes = set()
+                                        winner_lanes = set()
+
+                                        for result in results:
+                                            pid = result.get('participantId')
+                                            lane_num = get_heat_lane_for_participant(heat, pid)
+
+                                            # Guardrails: lane_num may be missing/Unknown in malformed heats
+                                            if not lane_num or lane_num == 'Unknown':
+                                                continue
+
+                                            active_lanes.add(lane_num)
+
+                                            pos = parse_finish_position(result.get('position'))
+                                            if pos == 1:
+                                                winner_lanes.add(lane_num)
+
+                                        active_lane_count = len(active_lanes)
+                                        if active_lane_count == 0:
+                                            continue
+
+                                        if active_lane_count == 1:
+                                            meta['totalSoloHeats'] += 1
+                                        else:
+                                            meta['totalEffectiveHeats'] += 1
+
+                                        expected_share = (1.0 / active_lane_count) if active_lane_count >= 2 else 0.0
+
+                                        for lane_num in active_lanes:
+                                            if lane_num not in lane_contextual:
+                                                lane_contextual[lane_num] = {
+                                                    'lane': lane_num,
+                                                    'soloRaces': 0,
+                                                    'effectiveRaces': 0,
+                                                    'effectiveWins': 0,
+                                                    'expectedWins': 0.0,
+                                                    'performanceIndex': None,
+                                                    'usageShare': 0.0,
+                                                    'confidence': 'LOW',
+                                                    'excludedFromRanking': True
+                                                }
+
+                                            ctx = lane_contextual[lane_num]
+
+                                            if active_lane_count == 1:
+                                                ctx['soloRaces'] += 1
+                                            else:
+                                                ctx['effectiveRaces'] += 1
+                                                meta['totalEffectiveLaneAppearances'] += 1
+                                                ctx['expectedWins'] += expected_share
+                                                if lane_num in winner_lanes:
+                                                    ctx['effectiveWins'] += 1
         
         # Calculate win rates
         for stats in lane_stats.values():
             if stats['totalRaces'] > 0:
                 stats['winRate'] = round((stats['wins'] / stats['totalRaces'] * 100), 1)
+
+        # Ensure any lane with raw stats appears in contextual output (even if only solo or malformed)
+        for lane_num in lane_stats.keys():
+            if lane_num not in lane_contextual:
+                lane_contextual[lane_num] = {
+                    'lane': lane_num,
+                    'soloRaces': 0,
+                    'effectiveRaces': 0,
+                    'effectiveWins': 0,
+                    'expectedWins': 0.0,
+                    'performanceIndex': None,
+                    'usageShare': 0.0,
+                    'confidence': 'LOW',
+                    'excludedFromRanking': True
+                }
+
+        # Finalize contextual derived metrics
+        denom = meta.get('totalEffectiveLaneAppearances') or 0
+        min_effective = meta.get('minEffectiveRacesForRanking') or 10
+
+        for ctx in lane_contextual.values():
+            expected = float(ctx.get('expectedWins') or 0.0)
+            effective_races = int(ctx.get('effectiveRaces') or 0)
+            effective_wins = int(ctx.get('effectiveWins') or 0)
+
+            # Expected wins can be fractional; keep a stable precision for UI and tests
+            ctx['expectedWins'] = round(expected, 4)
+
+            if expected > 0:
+                ctx['performanceIndex'] = round((effective_wins / expected), 3)
+            else:
+                ctx['performanceIndex'] = None
+
+            share = (effective_races / denom) if denom > 0 else 0.0
+            ctx['usageShare'] = round(share, 4)
+
+            if effective_races < 10:
+                ctx['confidence'] = 'LOW'
+            elif effective_races <= 30:
+                ctx['confidence'] = 'MEDIUM'
+            else:
+                ctx['confidence'] = 'HIGH'
+
+            ctx['excludedFromRanking'] = effective_races < min_effective
         
         return jsonify({
             'eventId': event_id or 'all',
             'laneStats': list(lane_stats.values()),
+            'laneContextualStats': list(lane_contextual.values()),
+            'meta': meta,
             'lastUpdated': datetime.now().isoformat()
         })
     except Exception as e:
@@ -2291,13 +2380,14 @@ def get_class_analytics(event_id, class_name=None):
                             for heat in round_data['heats']:
                                 class_breakdown[cls]['totalRaces'] += 1
                                 
-                                if heat.get('isComplete'):
+                                if is_heat_completed(heat):
                                     class_breakdown[cls]['completedRaces'] += 1
                                     
                                     # Track winners
                                     if isinstance(heat.get('results'), list):
                                         for result in heat['results']:
-                                            if result.get('position') == 1:
+                                            pos = parse_finish_position(result.get('position')) or 0
+                                            if pos == 1:
                                                 pid = result.get('participantId', 'Unknown')
                                                 if pid not in class_breakdown[cls]['winners']:
                                                     class_breakdown[cls]['winners'][pid] = 0
@@ -2382,7 +2472,7 @@ def get_time_analytics(event_id=None):
                             if isinstance(class_data.get('rounds'), list):
                                 for round_data in class_data['rounds']:
                                     if isinstance(round_data.get('heats'), list):
-                                        completed_heats = sum(1 for h in round_data['heats'] if h.get('isComplete'))
+                                        completed_heats = sum(1 for h in round_data['heats'] if is_heat_completed(h))
                                         races_by_month[month_key] = races_by_month.get(month_key, 0) + completed_heats
                 except:
                     pass
@@ -2442,7 +2532,7 @@ def get_series_analytics(series_id):
                     if isinstance(class_data.get('rounds'), list):
                         for round_data in class_data['rounds']:
                             if isinstance(round_data.get('heats'), list):
-                                total_races += sum(1 for h in round_data['heats'] if h.get('isComplete'))
+                                total_races += sum(1 for h in round_data['heats'] if is_heat_completed(h))
         
         return jsonify({
             'seriesId': series_id,
@@ -2497,13 +2587,14 @@ def get_top_performers():
                         for round_data in class_data['rounds']:
                             if isinstance(round_data.get('heats'), list):
                                 for heat in round_data['heats']:
-                                    if not heat.get('isComplete'):
+                                    if not is_heat_completed(heat):
                                         continue
                                     
                                     if isinstance(heat.get('results'), list):
                                         for result in heat['results']:
                                             driver_id = result.get('participantId')
-                                            position = result.get('position', 0)
+                                            position_value = result.get('position', 0)
+                                            position = parse_finish_position(position_value)
                                             
                                             if driver_id:
                                                 if driver_id not in driver_performance:
@@ -2517,7 +2608,7 @@ def get_top_performers():
                                                 driver_performance[driver_id]['totalRaces'] += 1
                                                 if position == 1:
                                                     driver_performance[driver_id]['wins'] += 1
-                                                if position <= 3:
+                                                if position is not None and position <= 3:
                                                     driver_performance[driver_id]['podiums'] += 1
         
         # Calculate win rates and add driver names
@@ -2552,16 +2643,6 @@ if __name__ == '__main__':
     print("   - http://127.0.0.1:5000")
     print("   - http://[your-ip]:5000 (for network access)")
     print("Data stored in: ./data/")
-    
-    # Clean up expired sessions on startup
-    try:
-        db = get_db_manager()
-        if db:
-            cleaned = db.cleanup_expired_sessions()
-            if cleaned > 0:
-                print(f"🧹 Cleaned up {cleaned} expired sessions")
-    except Exception as e:
-        print(f"⚠️ Session cleanup error (non-fatal): {e}")
     
     # WebSocket status
     if SOCKETIO_AVAILABLE and socketio:

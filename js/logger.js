@@ -6,6 +6,7 @@
  *   window.debugLogger.debug('Category', 'Verbose debug message', data);  // Only in debug mode
  *   window.debugLogger.log('Category', 'General log message', data);      // Only in debug mode
  *   window.debugLogger.info('Category', 'Info message', data);            // Only in debug mode
+ *   window.debugLogger.loading('Category', 'Loading message', data);      // Only in debug mode
  *   window.debugLogger.critical('Category', 'Important info', data);      // Always visible
  *   window.debugLogger.warn('Category', 'Warning message', data);         // Always visible
  *   window.debugLogger.error('Category', 'Error message', data);          // Always visible
@@ -95,6 +96,21 @@ class DebugLogger {
     info(category, message, ...args) {
         if (!this.shouldLog(LOG_LEVELS.INFO)) return;
         console.info(this.formatMessage(category, message), ...args);
+    }
+
+    /**
+     * LOADING level - Progress/loading messages (only in debug mode)
+     * Use for: async operation milestones (fetching, rendering, background loads)
+     *
+     * Note: kept for backward/compat with UI modules that expect `debugLogger.loading()`.
+     */
+    loading(category, message, ...args) {
+        if (!this.shouldLog(LOG_LEVELS.INFO)) return;
+        console.log(
+            `%c⏳ ${this.formatMessage(category, message)}`,
+            'color: #22d3ee; font-weight: 600;',
+            ...args
+        );
     }
 
     /**

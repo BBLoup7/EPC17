@@ -8,7 +8,7 @@ import sqlite3
 import json
 import os
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 class DatabaseManager:
@@ -113,8 +113,6 @@ class DatabaseManager:
                 registrationOpen INTEGER DEFAULT 1, -- Boolean as integer
                 requiresClassSeparation INTEGER DEFAULT 1, -- Boolean as integer
                 freeRunEnabled INTEGER DEFAULT 0, -- Boolean as integer
-                tieBreakerEnabled INTEGER DEFAULT 0, -- Boolean as integer
-                tieBreakerRank INTEGER DEFAULT 3, -- Rank threshold for tie-breaker races
                 createdAt TEXT,
                 updatedAt TEXT
             )
@@ -174,22 +172,6 @@ class DatabaseManager:
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL,
                 updatedAt TEXT
-            )
-        ''')
-
-        # Sessions table for persistent authentication
-        cursor.execute('''
-            CREATE TABLE sessions (
-                token TEXT PRIMARY KEY,
-                userId TEXT NOT NULL,
-                username TEXT NOT NULL,
-                permissions TEXT, -- JSON array
-                allowedEvents TEXT, -- JSON array
-                createdAt TEXT NOT NULL,
-                expiresAt TEXT NOT NULL,
-                lastActivity TEXT,
-                userAgent TEXT,
-                ipAddress TEXT
             )
         ''')
 
@@ -609,8 +591,6 @@ class DatabaseManager:
                 event['registrationOpen'] = bool(event.get('registrationOpen', 1))
                 event['requiresClassSeparation'] = bool(event.get('requiresClassSeparation', 1))
                 event['freeRunEnabled'] = bool(event.get('freeRunEnabled', 0))
-                event['tieBreakerEnabled'] = bool(event.get('tieBreakerEnabled', 0))
-                event['tieBreakerRank'] = event.get('tieBreakerRank', 3)
 
                 events.append(event)
 
@@ -637,8 +617,6 @@ class DatabaseManager:
                 event['registrationOpen'] = bool(event.get('registrationOpen', 1))
                 event['requiresClassSeparation'] = bool(event.get('requiresClassSeparation', 1))
                 event['freeRunEnabled'] = bool(event.get('freeRunEnabled', 0))
-                event['tieBreakerEnabled'] = bool(event.get('tieBreakerEnabled', 0))
-                event['tieBreakerRank'] = event.get('tieBreakerRank', 3)
 
                 return event
             return None
@@ -660,8 +638,6 @@ class DatabaseManager:
                 data['registrationOpen'] = 1 if data.get('registrationOpen', True) else 0
                 data['requiresClassSeparation'] = 1 if data.get('requiresClassSeparation', True) else 0
                 data['freeRunEnabled'] = 1 if data.get('freeRunEnabled', False) else 0
-                data['tieBreakerEnabled'] = 1 if data.get('tieBreakerEnabled', False) else 0
-                data['tieBreakerRank'] = data.get('tieBreakerRank', 3)
 
                 # Set timestamps
                 now = datetime.now().isoformat()
@@ -673,8 +649,8 @@ class DatabaseManager:
                         id, name, eventName, seriesId, seasonId, description, date, location,
                         numberOfTracks, eliminationType, trackSurface, weatherContingency, driverMeetingTime,
                         maxParticipants, currentParticipants, participants, classes, status, registrationOpen,
-                        requiresClassSeparation, freeRunEnabled, tieBreakerEnabled, tieBreakerRank, createdAt, updatedAt
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        requiresClassSeparation, freeRunEnabled, createdAt, updatedAt
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     data['id'], data.get('name'), data.get('eventName'), data.get('seriesId'), data.get('seasonId'),
                     data.get('description'), data.get('date'), data.get('location'),
@@ -684,7 +660,6 @@ class DatabaseManager:
                     data['participants'], json.dumps(data.get('classes', [])),
                     data.get('status', 'upcoming'), data['registrationOpen'],
                     data['requiresClassSeparation'], data['freeRunEnabled'],
-                    data['tieBreakerEnabled'], data['tieBreakerRank'],
                     data['createdAt'], data['updatedAt']
                 ))
                 if commit:
@@ -766,8 +741,6 @@ class DatabaseManager:
                 data['registrationOpen'] = 1 if data.get('registrationOpen', True) else 0
                 data['requiresClassSeparation'] = 1 if data.get('requiresClassSeparation', True) else 0
                 data['freeRunEnabled'] = 1 if data.get('freeRunEnabled', False) else 0
-                data['tieBreakerEnabled'] = 1 if data.get('tieBreakerEnabled', False) else 0
-                data['tieBreakerRank'] = data.get('tieBreakerRank', 3)
 
                 data['updatedAt'] = datetime.now().isoformat()
 
@@ -777,7 +750,7 @@ class DatabaseManager:
                         numberOfTracks = ?, eliminationType = ?, trackSurface = ?, weatherContingency = ?, driverMeetingTime = ?,
                         maxParticipants = ?, currentParticipants = ?, participants = ?, classes = ?,
                         status = ?, registrationOpen = ?, requiresClassSeparation = ?,
-                        freeRunEnabled = ?, tieBreakerEnabled = ?, tieBreakerRank = ?, updatedAt = ?
+                        freeRunEnabled = ?, updatedAt = ?
                     WHERE id = ?
                 ''', (
                     data.get('name'), data.get('eventName'), data.get('seriesId'), data.get('seasonId'),
@@ -788,7 +761,6 @@ class DatabaseManager:
                     data['participants'], json.dumps(data.get('classes', [])),
                     data.get('status', 'upcoming'),
                     data['registrationOpen'], data['requiresClassSeparation'], data['freeRunEnabled'],
-                    data['tieBreakerEnabled'], data['tieBreakerRank'],
                     data['updatedAt'], event_id
                 ))
                 if commit:
@@ -1416,170 +1388,6 @@ class DatabaseManager:
             except Exception as e:
                 print(f"[ERROR] Error deleting user: {e}")
                 return False
-
-    # Session operations for persistent authentication
-    def create_session(self, token: str, user_id: str, username: str, 
-                       permissions: List[str], allowed_events: List[str] = None,
-                       expiry_days: int = 90, user_agent: str = None, ip_address: str = None) -> bool:
-        """Create a new session in the database"""
-        with self.lock:
-            conn = self._get_connection()
-            try:
-                now = datetime.now()
-                expires_at = now + timedelta(days=expiry_days)
-                
-                conn.execute('''
-                    INSERT OR REPLACE INTO sessions 
-                    (token, userId, username, permissions, allowedEvents, createdAt, expiresAt, lastActivity, userAgent, ipAddress)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    token,
-                    user_id,
-                    username,
-                    json.dumps(permissions),
-                    json.dumps(allowed_events or []),
-                    now.isoformat(),
-                    expires_at.isoformat(),
-                    now.isoformat(),
-                    user_agent,
-                    ip_address
-                ))
-                conn.commit()
-                return True
-            except Exception as e:
-                print(f"[ERROR] Error creating session: {e}")
-                return False
-
-    def get_session(self, token: str) -> Optional[Dict[str, Any]]:
-        """Get a session by token, returns None if expired or not found"""
-        with self.lock:
-            conn = self._get_connection()
-            try:
-                cursor = conn.execute(
-                    'SELECT * FROM sessions WHERE token = ?', (token,)
-                )
-                row = cursor.fetchone()
-                
-                if not row:
-                    return None
-                
-                session = dict(row)
-                
-                # Parse JSON fields
-                session['permissions'] = json.loads(session.get('permissions', '[]'))
-                session['allowedEvents'] = json.loads(session.get('allowedEvents', '[]'))
-                
-                # Check if session is expired
-                expires_at = datetime.fromisoformat(session['expiresAt'])
-                if datetime.now() > expires_at:
-                    # Session expired, delete it
-                    self.delete_session(token)
-                    return None
-                
-                # Update last activity
-                self.update_session_activity(token)
-                
-                return session
-            except Exception as e:
-                print(f"[ERROR] Error getting session: {e}")
-                return None
-
-    def update_session_activity(self, token: str) -> bool:
-        """Update the last activity timestamp for a session"""
-        with self.lock:
-            conn = self._get_connection()
-            try:
-                conn.execute(
-                    'UPDATE sessions SET lastActivity = ? WHERE token = ?',
-                    (datetime.now().isoformat(), token)
-                )
-                conn.commit()
-                return True
-            except Exception as e:
-                print(f"[ERROR] Error updating session activity: {e}")
-                return False
-
-    def extend_session(self, token: str, expiry_days: int = 90) -> bool:
-        """Extend the expiry of a session"""
-        with self.lock:
-            conn = self._get_connection()
-            try:
-                new_expiry = datetime.now() + timedelta(days=expiry_days)
-                conn.execute(
-                    'UPDATE sessions SET expiresAt = ? WHERE token = ?',
-                    (new_expiry.isoformat(), token)
-                )
-                conn.commit()
-                return True
-            except Exception as e:
-                print(f"[ERROR] Error extending session: {e}")
-                return False
-
-    def delete_session(self, token: str) -> bool:
-        """Delete a session"""
-        with self.lock:
-            conn = self._get_connection()
-            try:
-                conn.execute('DELETE FROM sessions WHERE token = ?', (token,))
-                conn.commit()
-                return True
-            except Exception as e:
-                print(f"[ERROR] Error deleting session: {e}")
-                return False
-
-    def delete_user_sessions(self, user_id: str) -> int:
-        """Delete all sessions for a user, returns count deleted"""
-        with self.lock:
-            conn = self._get_connection()
-            try:
-                cursor = conn.execute('DELETE FROM sessions WHERE userId = ?', (user_id,))
-                conn.commit()
-                return cursor.rowcount
-            except Exception as e:
-                print(f"[ERROR] Error deleting user sessions: {e}")
-                return 0
-
-    def cleanup_expired_sessions(self) -> int:
-        """Remove all expired sessions, returns count deleted"""
-        with self.lock:
-            conn = self._get_connection()
-            try:
-                now = datetime.now().isoformat()
-                cursor = conn.execute(
-                    'DELETE FROM sessions WHERE expiresAt < ?', (now,)
-                )
-                conn.commit()
-                count = cursor.rowcount
-                if count > 0:
-                    print(f"[INFO] Cleaned up {count} expired sessions")
-                return count
-            except Exception as e:
-                print(f"[ERROR] Error cleaning up sessions: {e}")
-                return 0
-
-    def get_user_sessions(self, user_id: str) -> List[Dict[str, Any]]:
-        """Get all active sessions for a user"""
-        with self.lock:
-            conn = self._get_connection()
-            try:
-                now = datetime.now().isoformat()
-                cursor = conn.execute(
-                    'SELECT * FROM sessions WHERE userId = ? AND expiresAt > ?',
-                    (user_id, now)
-                )
-                rows = cursor.fetchall()
-                
-                sessions = []
-                for row in rows:
-                    session = dict(row)
-                    session['permissions'] = json.loads(session.get('permissions', '[]'))
-                    session['allowedEvents'] = json.loads(session.get('allowedEvents', '[]'))
-                    sessions.append(session)
-                
-                return sessions
-            except Exception as e:
-                print(f"[ERROR] Error getting user sessions: {e}")
-                return []
 
     # Settings operations
     def get_settings(self) -> Optional[Dict[str, Any]]:

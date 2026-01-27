@@ -10,13 +10,26 @@
     <style>
         /* Hero Section Styles - Consistent with Series Page */
         .hero-section {
-            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-            border-radius: 12px;
-            padding: 2rem 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid var(--border-color);
+            background: linear-gradient(180deg, rgba(17, 17, 17, 0.82), rgba(17, 17, 17, 0.68));
+            backdrop-filter: var(--glass-blur-strong);
+            -webkit-backdrop-filter: var(--glass-blur-strong);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-4) var(--space-5);
+            margin: 0;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-xl), 0 0 40px rgba(255, 96, 56, 0.08);
             position: relative;
             overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(900px 260px at 18% 0%, rgba(255, 96, 56, 0.14), transparent 60%),
+                radial-gradient(760px 260px at 88% -10%, rgba(34, 211, 238, 0.10), transparent 55%);
+            pointer-events: none;
         }
 
         .hero-content {
@@ -32,67 +45,36 @@
         }
 
         .hero-title {
-            font-size: 2.25rem;
+            font-size: clamp(1.75rem, 2.3vw, 2.6rem);
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-orange-warm) 0%, var(--accent-orange-glow) 50%, var(--accent-primary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.35rem;
             line-height: 1.2;
         }
 
         .hero-subtitle {
-            font-size: 1.1rem;
+            font-size: clamp(0.95rem, 1.1vw, 1.15rem);
             color: var(--text-secondary);
             font-weight: 400;
             max-width: 500px;
             line-height: 1.5;
         }
 
-        .hero-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
         .btn-hero {
-            padding: 0.875rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
-            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
-            transition: all 0.3s ease;
+            box-shadow: var(--shadow-lg), var(--shadow-glow-sm);
         }
 
         .btn-hero:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
-            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            color: var(--text-secondary);
-            padding: 0.875rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-outline:hover {
-            border-color: var(--accent-orange-warm);
-            color: var(--accent-orange-warm);
-            background: rgba(255, 140, 66, 0.1);
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero-section {
-                padding: 1.5rem 1rem;
-                margin-bottom: 1rem;
+                padding: var(--space-4);
             }
             
             .hero-content {
@@ -109,16 +91,6 @@
                 font-size: 1rem;
             }
             
-            .hero-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn-hero,
-            .btn-outline {
-                width: 100%;
-                justify-content: center;
-            }
         }
 
         /* Live Display Specific Styles */
@@ -126,11 +98,14 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: linear-gradient(135deg, #030217 0%, #0a0a2e 50%, #1a1a3a 100%);
             font-family: 'Inter', sans-serif;
             height: 100vh;
             width: 100vw;
             color: var(--text-primary);
+            background:
+                radial-gradient(1000px 600px at 15% 0%, rgba(255, 96, 56, 0.18), transparent 60%),
+                radial-gradient(900px 520px at 85% -10%, rgba(34, 211, 238, 0.12), transparent 55%),
+                linear-gradient(180deg, #05050b 0%, var(--bg-primary) 55%, #05050b 100%);
         }
 
         html {
@@ -145,9 +120,9 @@
             grid-template-rows: auto 1fr;
             height: 100vh;
             width: 100vw;
-            gap: 0;
+            gap: var(--space-4);
             margin: 0;
-            padding: 0;
+            padding: var(--space-4);
         }
 
         /* Compact Header */
@@ -257,9 +232,9 @@
             display: grid;
             grid-template-columns: 1.3fr 1.3fr 0.8fr;
             height: 100%;
-            width: 100vw;
-            gap: 1px;
-            background: var(--border-color);
+            width: 100%;
+            gap: var(--space-4);
+            background: transparent;
             margin: 0 auto;
             padding: 0;
             max-width: 1800px;
@@ -267,8 +242,13 @@
         }
 
         .content-section {
-            background: rgba(3, 2, 23, 0.95);
-            padding: 1rem;
+            background: linear-gradient(180deg, var(--surface-glass-strong), var(--surface-glass));
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-5);
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -329,6 +309,9 @@
             flex: 1;
             overflow-y: auto;
             padding-right: 0.25rem;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 96, 56, 0.7) rgba(255, 255, 255, 0.08);
         }
 
         .races-grid {
@@ -339,15 +322,21 @@
         }
 
         .race-card {
-            background: rgba(26, 26, 58, 0.8);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
             padding: 0.4rem 0.4rem 0.6rem 0.4rem;
-            transition: all 0.3s ease;
+            box-shadow: var(--shadow-xs);
+            transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
             position: relative;
             overflow: hidden;
             min-height: 70px;
             max-height: 80px;
+        }
+
+        .race-card:hover {
+            border-color: rgba(255, 96, 56, 0.35);
+            box-shadow: var(--shadow-sm), 0 0 24px rgba(255, 96, 56, 0.10);
         }
 
         .race-card::before {
@@ -364,8 +353,17 @@
             background: linear-gradient(90deg, var(--success), #059669);
         }
 
+        .race-card.in_progress::before {
+            background: linear-gradient(90deg, var(--info), #2563eb);
+        }
+
         .race-card.upcoming::before {
             background: linear-gradient(90deg, var(--warning), #d97706);
+        }
+
+        .race-card.in_progress {
+            border-color: rgba(59, 130, 246, 0.35);
+            box-shadow: var(--shadow-sm), 0 0 26px rgba(59, 130, 246, 0.18);
         }
 
         .race-header {
@@ -788,6 +786,13 @@
             border-radius: 2px;
         }
 
+        /* Better focus visibility for TV remotes / keyboards */
+        .btn:focus-visible,
+        .back-button:focus-visible {
+            outline: 3px solid rgba(255, 96, 56, 0.45);
+            outline-offset: 3px;
+        }
+
         /* Responsive adjustments */
         @media (min-width: 1920px) {
             .event-title {
@@ -814,6 +819,8 @@
                 grid-template-rows: auto 1fr;
                 height: 100vh;
                 margin-top: 0;
+                padding: var(--space-3);
+                gap: var(--space-3);
             }
             
             /* Single column layout on mobile */
@@ -821,7 +828,7 @@
                 grid-template-columns: 1fr;
                 grid-template-rows: auto auto auto;
                 gap: 0.5rem;
-                padding: 0.5rem;
+                padding: 0;
             }
             
             .content-section {
@@ -945,6 +952,8 @@
             .live-display-container {
                 margin-top: 0;
                 height: 100vh;
+                padding: var(--space-2);
+                gap: var(--space-2);
             }
             
             .header-section {
@@ -994,6 +1003,15 @@
 
         .stat-box {
             animation: fadeInUp 0.3s ease-out;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .stat-box,
+            .live-indicator,
+            .driver-profile-inner.slide-in {
+                animation: none !important;
+                transition: none !important;
+            }
         }
 
         /* Add subtle color separation for group headers */
@@ -1065,21 +1083,13 @@
     <div class="live-display-container">
         <!-- Hero Section -->
         <div class="hero-section">
+            <button class="back-button" onclick="window.history.back()" title="Go Back" aria-label="Go Back" type="button">
+                <i class="fas fa-arrow-left"></i>
+            </button>
             <div class="hero-content">
                 <div class="hero-text">
                     <h1 class="hero-title" id="event-title">Loading Event...</h1>
                     <p class="hero-subtitle" id="event-subtitle">Live Display - Real-time race tracking and results</p>
-                </div>
-                <div class="hero-actions">
-                    <button class="back-button" onclick="window.history.back()" title="Go Back">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <button class="btn btn-primary btn-hero" onclick="refreshDisplay()">
-                        <i class="fas fa-sync"></i> Refresh
-                    </button>
-                    <button class="btn btn-outline" onclick="toggleFullscreen()">
-                        <i class="fas fa-expand"></i> Fullscreen
-                    </button>
                 </div>
             </div>
         </div>
@@ -1304,13 +1314,13 @@
                     this.events = Array.isArray(eventsData?.events) ? eventsData.events : (Array.isArray(eventsData) ? eventsData : []);
                     this.races = Array.isArray(racesData?.races) ? racesData.races : (Array.isArray(racesData) ? racesData : []);
                     this.participants = Array.isArray(participantsData?.participants) ? participantsData.participants : (Array.isArray(participantsData) ? participantsData : []);
-                    this.raceBrackets = bracketsData || [];
+                    this.raceBrackets = bracketsData || {};
                     
                     // If no races from server, extract them from race brackets (same logic as initial load)
                     if ((!this.races || this.races.length === 0) && this.currentEvent) {
-                        const raceBrackets = window.dataManager.getRaceBracket(this.currentEvent.id);
-                        if (raceBrackets) {
-                            this.races = this.extractRacesFromBrackets(raceBrackets);
+                        const raceBracket = await dataManager.getRaceBracket(this.currentEvent.id);
+                        if (raceBracket) {
+                            this.races = this.extractRacesFromBrackets(raceBracket, this.currentEvent.id);
                             console.log('🔄 Extracted races from brackets during refresh:', this.races?.length || 0, 'races');
                         }
                     }
@@ -2293,7 +2303,7 @@
         function initializeLiveDisplay() {
             try {
                 console.log('🏁 Initializing Live Display...');
-                new LiveDisplay();
+                window.liveDisplay = new LiveDisplay();
             } catch (error) {
                 console.error('❌ Failed to initialize Live Display:', error);
                 const titleElement = document.getElementById('event-title');

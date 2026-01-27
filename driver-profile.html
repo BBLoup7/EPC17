@@ -75,6 +75,12 @@
                 </select>
             </div>
 
+            <!-- No Stats Notice (shown when driver has no completed races) -->
+            <div id="noStatsBanner" class="info-message" style="display: none; margin: -0.5rem 0 2rem 0; padding: 1rem 1.25rem; background: rgba(255, 96, 56, 0.08); border-left: 3px solid var(--accent-orange-warm); border-radius: 8px; color: var(--text-secondary);">
+                <i class="fas fa-info-circle" style="color: var(--accent-orange-warm); margin-right: 0.5rem;"></i>
+                <span>No completed races found for this driver yet. Stats will appear once races are completed.</span>
+            </div>
+
             <!-- Stats Summary Cards -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -139,11 +145,15 @@
                     <div class="charts-grid">
                         <div class="chart-container">
                             <h4>Lane Performance</h4>
-                            <canvas id="lanePerformanceChart" width="400" height="300"></canvas>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="lanePerformanceChart" width="400" height="300"></canvas>
+                            </div>
                         </div>
                         <div class="chart-container">
                             <h4>Position Distribution</h4>
-                            <canvas id="positionDistChart" width="400" height="300"></canvas>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="positionDistChart" width="400" height="300"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -164,7 +174,9 @@
                 <div class="tab-section">
                     <h3><i class="fas fa-chart-bar"></i> Win Rate Comparison</h3>
                     <div class="chart-container">
-                        <canvas id="eventWinRateChart" width="800" height="400"></canvas>
+                        <div class="chart-canvas-wrap chart-canvas-wrap-tall">
+                            <canvas id="eventWinRateChart" width="800" height="400"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -179,7 +191,9 @@
                 <div class="tab-section">
                     <h3><i class="fas fa-chart-pie"></i> Performance by Class</h3>
                     <div class="chart-container">
-                        <canvas id="classPerformanceChart" width="800" height="400"></canvas>
+                        <div class="chart-canvas-wrap chart-canvas-wrap-tall">
+                            <canvas id="classPerformanceChart" width="800" height="400"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -498,6 +512,24 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
+        /* Fixed-height wrapper for Chart.js canvases
+           Prevents runaway resize loops when the canvas parent has auto height + other content. */
+        .chart-canvas-wrap {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+
+        .chart-canvas-wrap-tall {
+            height: 360px;
+        }
+
+        .chart-canvas-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
         /* Tables */
         .data-table {
             width: 100%;
@@ -522,6 +554,28 @@
 
         .data-table tr:hover {
             background: rgba(255,255,255,0.03);
+        }
+
+        /* Lane stats table (keep it compact and prevent global sticky header from making it weird/huge) */
+        #laneStatsTable {
+            overflow-x: auto;
+        }
+
+        #laneStatsTable .data-table {
+            margin-top: 0.75rem;
+        }
+
+        #laneStatsTable .data-table th,
+        #laneStatsTable .data-table td {
+            padding: 8px 10px;
+            font-size: 0.875rem;
+        }
+
+        #laneStatsTable .data-table th {
+            position: static;
+            text-transform: none;
+            letter-spacing: normal;
+            white-space: nowrap;
         }
 
         /* Badges */
@@ -608,6 +662,63 @@
         let currentCharts = {};
         let allDrivers = [];
         let allEvents = [];
+
+        // UI helpers
+        function setNoStatsState(isNoStats) {
+            const banner = document.getElementById('noStatsBanner');
+            if (banner) {
+                banner.style.display = isNoStats ? 'block' : 'none';
+            }
+        }
+
+        function laneSortKey(laneKey) {
+            const str = String(laneKey || '').trim();
+            // Extract numeric lane if present (handles "1", 1, "Lane 1", etc.)
+            const match = str.match(/(\d+)/);
+            if (match) return parseInt(match[1], 10);
+            return Number.POSITIVE_INFINITY;
+        }
+
+        function sortLaneEntries(lanePerformance) {
+            const entries = Object.entries(lanePerformance || {});
+            entries.sort((a, b) => {
+                const aKey = laneSortKey(a[0]);
+                const bKey = laneSortKey(b[0]);
+                if (aKey !== bKey) return aKey - bKey;
+                return String(a[0]).localeCompare(String(b[0]));
+            });
+            return entries;
+        }
+
+        function showChartPlaceholder(canvasId, message) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            if (!container) return;
+
+            let placeholder = container.querySelector('.chart-placeholder');
+            if (!placeholder) {
+                placeholder = document.createElement('p');
+                placeholder.className = 'chart-placeholder';
+                placeholder.style.cssText = 'color: var(--text-secondary); text-align: center; padding: 1.5rem 0; margin: 0;';
+                container.appendChild(placeholder);
+            }
+            placeholder.textContent = message;
+            placeholder.style.display = 'block';
+            canvas.style.display = 'none';
+        }
+
+        function hideChartPlaceholder(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            if (!container) return;
+            const placeholder = container.querySelector('.chart-placeholder');
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            canvas.style.display = 'block';
+        }
 
         // Wait for authentication
         async function waitForAuthentication() {
@@ -719,6 +830,9 @@
                 
                 // Fetch driver stats
                 const stats = await analyticsEngine.getDriverStats(driverId, eventId);
+
+                // Show a clear message when there are no completed races yet
+                setNoStatsState(!stats || !stats.totalRaces || stats.totalRaces === 0);
                 
                 // Update header
                 document.getElementById('driverName').textContent = stats.driverName;
@@ -771,15 +885,21 @@
 
         // Load overview data
         async function loadOverviewData(stats) {
+            const hasAnyRaces = stats && stats.totalRaces > 0;
             // Lane performance chart
-            const laneLabels = Object.keys(stats.lanePerformance || {}).map(lane => `Lane ${lane}`);
-            const laneWinRates = Object.values(stats.lanePerformance || {}).map(perf => perf.winRate || 0);
+            const laneEntries = sortLaneEntries(stats.lanePerformance || {});
+            const laneLabels = laneEntries.map(([lane]) => {
+                const laneStr = String(lane);
+                return laneStr.toLowerCase().includes('lane') ? laneStr : `Lane ${laneStr}`;
+            });
+            const laneWinRates = laneEntries.map(([, perf]) => Number(perf?.winRate) || 0);
             
             if (currentCharts.lanePerformanceChart) {
                 currentCharts.lanePerformanceChart.destroy();
             }
             
             if (laneLabels.length > 0) {
+                hideChartPlaceholder('lanePerformanceChart');
                 currentCharts.lanePerformanceChart = ChartHelpers.createBarChart(
                     'lanePerformanceChart',
                     laneLabels,
@@ -800,13 +920,21 @@
                         }
                     }
                 );
+            } else {
+                showChartPlaceholder(
+                    'lanePerformanceChart',
+                    hasAnyRaces ? 'No lane breakdown available for this selection.' : 'No completed races yet.'
+                );
             }
 
             // Position distribution - calculate from race history
             const positions = {};
             (stats.raceHistory || []).forEach(race => {
                 const pos = race.position;
-                positions[pos] = (positions[pos] || 0) + 1;
+                // Only include valid numeric positions (avoid 0 / unknown values)
+                if (typeof pos === 'number' && pos > 0) {
+                    positions[pos] = (positions[pos] || 0) + 1;
+                }
             });
 
             if (currentCharts.positionDistChart) {
@@ -814,6 +942,7 @@
             }
 
             if (Object.keys(positions).length > 0) {
+                hideChartPlaceholder('positionDistChart');
                 const posLabels = Object.keys(positions).map(p => `${p}${getOrdinalSuffix(p)} Place`);
                 const posData = Object.values(positions);
                 
@@ -823,60 +952,86 @@
                     posData,
                     { cutout: '50%' }
                 );
+            } else {
+                showChartPlaceholder(
+                    'positionDistChart',
+                    hasAnyRaces ? 'No finish positions available for this selection.' : 'No completed races yet.'
+                );
             }
 
             // Lane stats table
-            let laneTableHtml = '<table class="data-table"><thead><tr>';
-            laneTableHtml += '<th>Lane</th><th>Races</th><th>Wins</th><th>Win Rate</th>';
-            laneTableHtml += '</tr></thead><tbody>';
+            if (laneEntries.length === 0) {
+                document.getElementById('laneStatsTable').innerHTML = `<p style="color: var(--text-secondary); text-align: center; padding: 1rem 0;">${hasAnyRaces ? 'No lane stats available.' : 'No completed races yet.'}</p>`;
+            } else {
+                // Safety: if lane data is unexpectedly huge, cap it so the UI doesn't explode.
+                const maxRows = 12;
+                const showEntries = laneEntries.length > maxRows ? laneEntries.slice(0, maxRows) : laneEntries;
 
-            Object.entries(stats.lanePerformance || {}).forEach(([lane, perf]) => {
-                laneTableHtml += `<tr>
-                    <td><strong>Lane ${lane}</strong></td>
-                    <td>${perf.total}</td>
-                    <td>${perf.wins}</td>
-                    <td>${perf.winRate}%</td>
-                </tr>`;
-            });
+                let laneTableHtml = '<table class="data-table"><thead><tr>';
+                laneTableHtml += '<th>Lane</th><th>Races</th><th>Wins</th><th>Win Rate</th>';
+                laneTableHtml += '</tr></thead><tbody>';
 
-            laneTableHtml += '</tbody></table>';
-            document.getElementById('laneStatsTable').innerHTML = laneTableHtml;
+                showEntries.forEach(([lane, perf]) => {
+                    const total = Number(perf?.total) || 0;
+                    const wins = Number(perf?.wins) || 0;
+                    const winRate = Number(perf?.winRate) || 0;
+                    laneTableHtml += `<tr>
+                        <td><strong>Lane ${lane}</strong></td>
+                        <td>${total}</td>
+                        <td>${wins}</td>
+                        <td>${winRate}%</td>
+                    </tr>`;
+                });
+
+                laneTableHtml += '</tbody></table>';
+                if (laneEntries.length > maxRows) {
+                    laneTableHtml += `<p style="color: var(--text-secondary); margin-top: 0.75rem;">Showing first ${maxRows} lanes (data looks unusually large).</p>`;
+                }
+                document.getElementById('laneStatsTable').innerHTML = laneTableHtml;
+            }
         }
 
         // Load performance data
         async function loadPerformanceData(stats) {
+            const hasAnyRaces = stats && stats.totalRaces > 0;
             // Event performance table
-            let eventTableHtml = '<table class="data-table"><thead><tr>';
-            eventTableHtml += '<th>Event</th><th>Races</th><th>Wins</th><th>Win Rate</th>';
-            eventTableHtml += '</tr></thead><tbody>';
+            const eventPerf = stats.eventPerformance || [];
+            if (eventPerf.length === 0) {
+                document.getElementById('eventPerformanceTable').innerHTML = `<p style="color: var(--text-secondary); text-align: center; padding: 1rem 0;">${hasAnyRaces ? 'No event performance available.' : 'No completed races yet.'}</p>`;
+            } else {
+                let eventTableHtml = '<table class="data-table"><thead><tr>';
+                eventTableHtml += '<th>Event</th><th>Races</th><th>Wins</th><th>Win Rate</th>';
+                eventTableHtml += '</tr></thead><tbody>';
 
-            (stats.eventPerformance || []).forEach(perf => {
-                const event = allEvents.find(e => e.id === perf.eventId);
-                const eventName = event ? (event.name || event.eventName || 'Unknown Event') : 'Unknown Event';
-                
-                eventTableHtml += `<tr>
-                    <td><strong>${eventName}</strong></td>
-                    <td>${perf.races}</td>
-                    <td>${perf.wins}</td>
-                    <td>${perf.winRate}%</td>
-                </tr>`;
-            });
+                eventPerf.forEach(perf => {
+                    const event = allEvents.find(e => e.id === perf.eventId);
+                    const eventName = event ? (event.name || event.eventName || 'Unknown Event') : 'Unknown Event';
+                    
+                    eventTableHtml += `<tr>
+                        <td><strong>${eventName}</strong></td>
+                        <td>${perf.races}</td>
+                        <td>${perf.wins}</td>
+                        <td>${perf.winRate}%</td>
+                    </tr>`;
+                });
 
-            eventTableHtml += '</tbody></table>';
-            document.getElementById('eventPerformanceTable').innerHTML = eventTableHtml;
+                eventTableHtml += '</tbody></table>';
+                document.getElementById('eventPerformanceTable').innerHTML = eventTableHtml;
+            }
 
             // Event win rate chart
-            const eventLabels = (stats.eventPerformance || []).map(perf => {
+            const eventLabels = eventPerf.map(perf => {
                 const event = allEvents.find(e => e.id === perf.eventId);
                 return event ? (event.name || event.eventName || 'Event').substring(0, 20) : 'Event';
             });
-            const eventWinRates = (stats.eventPerformance || []).map(perf => perf.winRate || 0);
+            const eventWinRates = eventPerf.map(perf => perf.winRate || 0);
 
             if (currentCharts.eventWinRateChart) {
                 currentCharts.eventWinRateChart.destroy();
             }
 
             if (eventLabels.length > 0) {
+                hideChartPlaceholder('eventWinRateChart');
                 currentCharts.eventWinRateChart = ChartHelpers.createBarChart(
                     'eventWinRateChart',
                     eventLabels,
@@ -896,39 +1051,51 @@
                         }
                     }
                 );
+            } else {
+                showChartPlaceholder(
+                    'eventWinRateChart',
+                    hasAnyRaces ? 'No event win-rate data available.' : 'No completed races yet.'
+                );
             }
         }
 
         // Load classes data
         async function loadClassesData(stats) {
+            const hasAnyRaces = stats && stats.totalRaces > 0;
             // Class performance table
-            let classTableHtml = '<table class="data-table"><thead><tr>';
-            classTableHtml += '<th>Class</th><th>Races</th><th>Wins</th><th>Win Rate</th><th>Avg Position</th>';
-            classTableHtml += '</tr></thead><tbody>';
+            const classPerf = stats.classPerformance || [];
+            if (classPerf.length === 0) {
+                document.getElementById('classPerformanceTable').innerHTML = `<p style="color: var(--text-secondary); text-align: center; padding: 1rem 0;">${hasAnyRaces ? 'No class performance available.' : 'No completed races yet.'}</p>`;
+            } else {
+                let classTableHtml = '<table class="data-table"><thead><tr>';
+                classTableHtml += '<th>Class</th><th>Races</th><th>Wins</th><th>Win Rate</th><th>Avg Position</th>';
+                classTableHtml += '</tr></thead><tbody>';
 
-            (stats.classPerformance || []).forEach(perf => {
-                classTableHtml += `<tr>
-                    <td><strong>${perf.className}</strong></td>
-                    <td>${perf.races}</td>
-                    <td>${perf.wins}</td>
-                    <td>${perf.winRate}%</td>
-                    <td>${perf.avgPosition.toFixed(2)}</td>
-                </tr>`;
-            });
+                classPerf.forEach(perf => {
+                    classTableHtml += `<tr>
+                        <td><strong>${perf.className}</strong></td>
+                        <td>${perf.races}</td>
+                        <td>${perf.wins}</td>
+                        <td>${perf.winRate}%</td>
+                        <td>${perf.avgPosition.toFixed(2)}</td>
+                    </tr>`;
+                });
 
-            classTableHtml += '</tbody></table>';
-            document.getElementById('classPerformanceTable').innerHTML = classTableHtml;
+                classTableHtml += '</tbody></table>';
+                document.getElementById('classPerformanceTable').innerHTML = classTableHtml;
+            }
 
             // Class performance chart
-            const classLabels = (stats.classPerformance || []).map(perf => perf.className);
-            const classWins = (stats.classPerformance || []).map(perf => perf.wins);
-            const classRaces = (stats.classPerformance || []).map(perf => perf.races);
+            const classLabels = classPerf.map(perf => perf.className);
+            const classWins = classPerf.map(perf => perf.wins);
+            const classRaces = classPerf.map(perf => perf.races);
 
             if (currentCharts.classPerformanceChart) {
                 currentCharts.classPerformanceChart.destroy();
             }
 
             if (classLabels.length > 0) {
+                hideChartPlaceholder('classPerformanceChart');
                 currentCharts.classPerformanceChart = ChartHelpers.createBarChart(
                     'classPerformanceChart',
                     classLabels,
@@ -946,6 +1113,11 @@
                             borderColor: ChartHelpers.Colors.borderGradients[1]
                         }
                     ]
+                );
+            } else {
+                showChartPlaceholder(
+                    'classPerformanceChart',
+                    hasAnyRaces ? 'No class win/loss data available.' : 'No completed races yet.'
                 );
             }
         }

@@ -152,7 +152,7 @@
             <div class="analytics-row">
                 <div class="chart-card large">
                     <div class="card-header">
-                        <h3><i class="fas fa-chart-area"></i> Revenue Trends</h3>
+                        <h3><i class="fas fa-stopwatch"></i> Event Pace Over Time</h3>
                         <div class="card-actions">
                             <button class="btn-icon" title="Fullscreen">
                                 <i class="fas fa-expand"></i>
@@ -167,27 +167,27 @@
                     </div>
                     <div class="chart-summary">
                         <div class="summary-item">
-                            <span class="label">This Month:</span>
-                            <span class="value" id="monthlyRevenue">$0</span>
+                            <span class="label">Average Pace:</span>
+                            <span class="value" id="avgPace">—</span>
                         </div>
                         <div class="summary-item">
-                            <span class="label">Growth:</span>
-                            <span class="value positive" id="revenueGrowth">+0%</span>
+                            <span class="label">Vs 7-min Standard:</span>
+                            <span class="value neutral" id="paceVsStandard">—</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="chart-card">
                     <div class="card-header">
-                        <h3><i class="fas fa-users"></i> Participation</h3>
+                        <h3><i class="fas fa-user-friends"></i> Driver Age Distribution</h3>
                     </div>
                     <div class="chart-container">
                         <canvas id="participationChart" width="200" height="200"></canvas>
                     </div>
                     <div class="chart-insights">
                         <div class="insight-item">
-                            <i class="fas fa-arrow-up text-success"></i>
-                            <span>Active drivers increased</span>
+                            <i class="fas fa-info-circle text-success"></i>
+                            <span id="ageInsight">—</span>
                         </div>
                     </div>
                 </div>
@@ -419,6 +419,13 @@
                             <div class="stat-value" id="eventAvgTimeBetweenRaces">0s</div>
                             <div class="stat-label">Avg Time Between Races</div>
                             <div class="stat-trend" id="eventTimeBetweenRacesTrend">--</div>
+                        </div>
+
+                        <div class="stat-card timing-card">
+                            <div class="stat-icon"><i class="fas fa-bolt"></i></div>
+                            <div class="stat-value" id="eventTimeSaved">0m</div>
+                            <div class="stat-label">Time Saved (vs 7 min)</div>
+                            <div class="stat-trend" id="eventTimeSavedTrend">--</div>
                         </div>
                         
                         <div class="stat-card timing-card">
@@ -2046,6 +2053,148 @@
         let currentEvent = null;
         let sortDirection = {};
         let eventTimingChart = null;
+        let eventPaceChart = null;
+        let ageDistributionChart = null;
+
+        function normalizeKey(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function getEventParticipantsForEvent(eventId, eventObj = null) {
+            if (!eventId) return [];
+
+            const event = eventObj || allEvents.find(e => e.id === eventId) || null;
+
+            const participantsById = new Map();
+            (allParticipants || []).forEach(p => {
+                if (p && p.id) participantsById.set(p.id, p);
+            });
+
+            const results = [];
+            const seen = new Set();
+
+            const eventParticipantIds = Array.isArray(event?.participants) ? event.participants : [];
+            eventParticipantIds.forEach(pid => {
+                const participant = participantsById.get(pid);
+                if (participant && !seen.has(pid)) {
+                    results.push(participant);
+                    seen.add(pid);
+                }
+            });
+
+            // Fallback: scan participant.eventClasses mapping
+            (allParticipants || []).forEach(p => {
+                if (!p || !p.id || seen.has(p.id)) return;
+                const eventClasses = p.eventClasses;
+                if (
+                    eventClasses &&
+                    typeof eventClasses === 'object' &&
+                    Array.isArray(eventClasses[eventId]) &&
+                    eventClasses[eventId].length > 0
+                ) {
+                    results.push(p);
+                    seen.add(p.id);
+                }
+            });
+
+            return results;
+        }
+
+        function getParticipantClassesForEvent(participant, eventId) {
+            if (!participant || !eventId) return [];
+
+            const eventClasses = participant.eventClasses;
+            const classes = eventClasses && typeof eventClasses === 'object' ? eventClasses[eventId] : null;
+            if (Array.isArray(classes)) {
+                return classes.filter(Boolean);
+            }
+
+            // Legacy fallbacks
+            if (Array.isArray(participant.selectedClasses) && participant.selectedClasses.length > 0) {
+                return participant.selectedClasses;
+            }
+            if (Array.isArray(participant.sledClasses) && participant.sledClasses.length > 0) {
+                return participant.sledClasses;
+            }
+            if (participant.sledClass) {
+                return [participant.sledClass];
+            }
+
+            return [];
+        }
+
+        function resolveEventClassSetting(event, classKey) {
+            const key = normalizeKey(classKey);
+            if (!event || !Array.isArray(event.classSettings) || !key) return null;
+
+            return (
+                event.classSettings.find(cs => {
+                    const classId = normalizeKey(cs.classId);
+                    const className = normalizeKey(cs.className);
+                    const name = normalizeKey(cs.name);
+                    return classId === key || className === key || name === key;
+                }) || null
+            );
+        }
+
+        function getEventClassPrice(event, classKey) {
+            const directSetting = resolveEventClassSetting(event, classKey);
+            if (directSetting) {
+                const directPrice =
+                    typeof directSetting.price === 'number' ? directSetting.price : parseFloat(directSetting.price);
+                return Number.isFinite(directPrice) ? directPrice : null;
+            }
+
+            // Fallback: resolve classKey via event.classes (id/name) then try again
+            if (event && Array.isArray(event.classes)) {
+                const normalized = normalizeKey(classKey);
+                const match = event.classes.find(cls => {
+                    if (!cls || typeof cls === 'string') return false;
+                    return normalizeKey(cls.id) === normalized || normalizeKey(cls.name) === normalized;
+                });
+
+                if (match && match.id) {
+                    const settingById = resolveEventClassSetting(event, match.id);
+                    if (settingById) {
+                        const priceById =
+                            typeof settingById.price === 'number' ? settingById.price : parseFloat(settingById.price);
+                        return Number.isFinite(priceById) ? priceById : null;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function calculateEventRevenueEstimate(eventId, eventParticipants, event) {
+            const participants = Array.isArray(eventParticipants) ? eventParticipants : [];
+            if (participants.length === 0) return 0;
+
+            const hasClassPricing =
+                Array.isArray(event?.classSettings) &&
+                event.classSettings.some(cs => {
+                    const price = typeof cs.price === 'number' ? cs.price : parseFloat(cs.price);
+                    return Number.isFinite(price) && price > 0;
+                });
+
+            if (hasClassPricing) {
+                let total = 0;
+                participants.forEach(p => {
+                    const classes = getParticipantClassesForEvent(p, eventId);
+                    classes.forEach(cls => {
+                        const price = getEventClassPrice(event, cls);
+                        if (typeof price === 'number') total += price;
+                    });
+                });
+                if (total > 0) return Math.round(total * 100) / 100;
+            }
+
+            const totalRegistrationFee = participants.reduce((sum, p) => sum + (Number(p.totalRegistrationFee) || 0), 0);
+            if (totalRegistrationFee > 0) return Math.round(totalRegistrationFee * 100) / 100;
+
+            const totalFee = participants.reduce((sum, p) => sum + (Number(p.totalFee) || 0), 0);
+            return Math.round(totalFee * 100) / 100;
+        }
 
         // Wait for authentication to complete before loading data
         async function waitForAuthentication() {
@@ -2107,7 +2256,7 @@
                 // Load ALL events, participants, and race brackets
                 const eventsResult = await dataManager.getEvents({}, 1, 50000); // Get all events
                 const participantsResult = await dataManager.getParticipants({}, 1, 50000); // Get all participants
-                const raceBrackets = await dataManager.loadRaceBrackets(); // Get race brackets
+                const raceBracketsMap = await dataManager.getRaceBrackets(); // eventId -> bracket map
                 
                 // Handle the data structure properly - API returns paginated results
                 if (eventsResult && eventsResult.events) {
@@ -2127,7 +2276,7 @@
                 }
                 
                 // Store race brackets globally for race counting
-                window.raceBrackets = raceBrackets || {};
+                window.raceBrackets = raceBracketsMap || {};
                 
             } catch (error) {
                 console.error('Error loading event analytics data:', error);
@@ -2288,106 +2437,158 @@
 
         // Create modern charts
         function createModernCharts(eventData) {
-            createRevenueChart(eventData);
-            createParticipationChart(eventData);
+            createEventPaceChart(eventData);
+            createDriverAgeDistributionChart(eventData);
         }
 
-        // Revenue trend chart
-        function createRevenueChart(eventData) {
-            const ctx = document.getElementById('revenueChart');
+        function renderCanvasMessage(canvas, message) {
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            // Mock data for demonstration - replace with actual data
-            const revenueData = {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Revenue ($)',
-                    data: [12000, 19000, 15000, 25000, 22000, 30000],
-                    borderColor: 'rgb(255, 140, 66)', // Orange accent
-                    backgroundColor: 'rgba(255, 140, 66, 0.2)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: 'rgb(255, 140, 66)',
-                    pointBorderColor: '#030217', // Dark background
-                    pointBorderWidth: 2,
-                    pointRadius: 6
-                }]
-            };
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.fillStyle = '#a0a0a0';
+            ctx.font = '14px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+            ctx.restore();
+        }
 
-            new Chart(ctx, {
-                type: 'line',
-                data: revenueData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#a0a0a0', // Light gray for dark theme
-                                font: {
-                                    weight: '500'
-                                }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(160, 160, 160, 0.2)' // Light gray grid
-                            },
-                            ticks: {
-                                color: '#a0a0a0', // Light gray for dark theme
-                                font: {
-                                    weight: '500'
-                                },
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString();
-                                }
-                            }
-                        }
-                    },
-                    elements: {
-                        point: {
-                            hoverRadius: 8
-                        }
-                    }
+        // Event pace chart (runs/hour vs 7-minute standard)
+        function createEventPaceChart(eventData) {
+            const canvas = document.getElementById('revenueChart');
+            if (!canvas) return;
+
+            if (!window.Chart) {
+                console.warn('⚠️ Chart.js not loaded - cannot render pace chart');
+                return;
+            }
+
+            if (eventPaceChart) {
+                eventPaceChart.destroy();
+                eventPaceChart = null;
+            }
+
+            const eventId = currentEvent?.id;
+            const bracket = eventId ? window.raceBrackets?.[eventId] : null;
+
+            const startTimes = [];
+
+            if (bracket && bracket.classes && typeof bracket.classes === 'object') {
+                Object.values(bracket.classes).forEach(classData => {
+                    const rounds = Array.isArray(classData.rounds) ? classData.rounds : [];
+                    rounds.forEach(round => {
+                        const heats = Array.isArray(round.heats) ? round.heats : [];
+                        heats.forEach(heat => {
+                            const startIso = heat.startTime || heat.scheduledTime || heat.createdAt;
+                            if (!startIso) return;
+
+                            const status = String(heat.status || '').toLowerCase();
+                            const hasResults = Array.isArray(heat.results) ? heat.results.length > 0 : !!heat.results;
+                            const isStartedOrCompleted = !!heat.startTime || status === 'active' || status === 'completed' || hasResults;
+                            if (!isStartedOrCompleted) return;
+
+                            const dt = new Date(startIso);
+                            if (!Number.isFinite(dt.getTime())) return;
+                            startTimes.push(dt);
+                        });
+                    });
+                });
+            }
+
+            const avgPaceEl = document.getElementById('avgPace');
+            const paceVsStandardEl = document.getElementById('paceVsStandard');
+
+            if (startTimes.length === 0) {
+                renderCanvasMessage(canvas, 'No pace data available for this event');
+                if (avgPaceEl) avgPaceEl.textContent = '—';
+                if (paceVsStandardEl) {
+                    paceVsStandardEl.textContent = '—';
+                    paceVsStandardEl.className = 'value neutral';
                 }
+                return;
+            }
+
+            const startMsSorted = startTimes
+                .map(d => d.getTime())
+                .filter(Number.isFinite)
+                .sort((a, b) => a - b);
+
+            // Bucket by hour
+            const bucketCounts = new Map();
+            startMsSorted.forEach(ms => {
+                const hourStart = new Date(ms);
+                hourStart.setMinutes(0, 0, 0);
+                const key = hourStart.getTime();
+                bucketCounts.set(key, (bucketCounts.get(key) || 0) + 1);
             });
-        }
 
-        // Participation chart
-        function createParticipationChart(eventData) {
-            const ctx = document.getElementById('participationChart');
-            if (!ctx) return;
+            const bucketKeys = Array.from(bucketCounts.keys()).sort((a, b) => a - b);
+            const labels = bucketKeys.map(ms =>
+                new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            );
+            const runsPerHour = bucketKeys.map(ms => bucketCounts.get(ms) || 0);
 
-            const participationData = {
-                labels: ['Drivers', 'Spectators', 'Staff'],
-                datasets: [{
-                    data: [65, 25, 10],
-                    backgroundColor: [
-                        'rgba(255, 140, 66, 0.8)', // Orange
-                        'rgba(74, 144, 226, 0.8)', // Blue
-                        'rgba(76, 175, 80, 0.8)'  // Green
+            const standardRunsPerHour = 60 / 7;
+
+            // Average pace from start-to-start cycle times (filters gaps > 30 min)
+            const intervals = [];
+            for (let i = 1; i < startMsSorted.length; i++) {
+                const diff = startMsSorted[i] - startMsSorted[i - 1];
+                if (diff > 0 && diff < 30 * 60 * 1000) {
+                    intervals.push(diff);
+                }
+            }
+            const avgIntervalMs =
+                intervals.length > 0 ? intervals.reduce((sum, v) => sum + v, 0) / intervals.length : 0;
+            const avgRunsPerHour = avgIntervalMs > 0 ? 3600000 / avgIntervalMs : 0;
+            const vsPct = avgRunsPerHour > 0 ? (avgRunsPerHour / standardRunsPerHour - 1) * 100 : 0;
+
+            if (avgPaceEl) {
+                avgPaceEl.textContent = avgRunsPerHour > 0 ? `${avgRunsPerHour.toFixed(1)} runs/hr` : '—';
+            }
+
+            if (paceVsStandardEl) {
+                if (avgRunsPerHour > 0) {
+                    const sign = vsPct > 0 ? '+' : '';
+                    paceVsStandardEl.textContent = `${sign}${vsPct.toFixed(0)}%`;
+                    const cls = vsPct > 5 ? 'positive' : vsPct < -5 ? 'negative' : 'neutral';
+                    paceVsStandardEl.className = `value ${cls}`;
+                } else {
+                    paceVsStandardEl.textContent = '—';
+                    paceVsStandardEl.className = 'value neutral';
+                }
+            }
+
+            eventPaceChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Runs / hour',
+                            data: runsPerHour,
+                            backgroundColor: 'rgba(255, 140, 66, 0.6)',
+                            borderColor: 'rgba(255, 140, 66, 1)',
+                            borderWidth: 2,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                        },
+                        {
+                            type: 'line',
+                            label: '7-min standard',
+                            data: new Array(labels.length).fill(standardRunsPerHour),
+                            borderColor: 'rgba(74, 144, 226, 1)',
+                            backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.2,
+                        },
                     ],
-                    borderColor: [
-                        'rgb(255, 140, 66)', // Orange
-                        'rgb(74, 144, 226)', // Blue
-                        'rgb(76, 175, 80)'   // Green
-                    ],
-                    borderWidth: 2
-                }]
-            };
-
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: participationData,
+                },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -2395,17 +2596,185 @@
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: '#a0a0a0', // Light gray for dark theme
-                                font: {
-                                    weight: '500'
-                                },
+                                color: '#a0a0a0',
+                                font: { weight: '500' },
                                 padding: 20,
-                                usePointStyle: true
-                            }
-                        }
+                                usePointStyle: true,
+                            },
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: context => {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    if (label.toLowerCase().includes('standard')) {
+                                        return `${label}: ${standardRunsPerHour.toFixed(2)} runs/hr`;
+                                    }
+                                    return `${label}: ${value}`;
+                                },
+                            },
+                        },
                     },
-                    cutout: '60%'
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,
+                            },
+                            ticks: {
+                                color: '#a0a0a0',
+                                font: { weight: '500' },
+                            },
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(160, 160, 160, 0.2)',
+                            },
+                            ticks: {
+                                color: '#a0a0a0',
+                                font: { weight: '500' },
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        function computeAgeOnDate(dobIso, referenceDate) {
+            if (!dobIso || !referenceDate) return null;
+            const dob = new Date(dobIso);
+            if (!Number.isFinite(dob.getTime())) return null;
+
+            const ref = new Date(referenceDate);
+            if (!Number.isFinite(ref.getTime())) return null;
+
+            let age = ref.getFullYear() - dob.getFullYear();
+            const monthDiff = ref.getMonth() - dob.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && ref.getDate() < dob.getDate())) {
+                age -= 1;
+            }
+            if (!Number.isFinite(age) || age < 0 || age > 120) return null;
+            return age;
+        }
+
+        // Driver age distribution chart (from DOB at event date)
+        function createDriverAgeDistributionChart(eventData) {
+            const canvas = document.getElementById('participationChart');
+            if (!canvas) return;
+
+            if (!window.Chart) {
+                console.warn('⚠️ Chart.js not loaded - cannot render age distribution chart');
+                return;
+            }
+
+            if (ageDistributionChart) {
+                ageDistributionChart.destroy();
+                ageDistributionChart = null;
+            }
+
+            const participants = Array.isArray(eventData?.eventParticipants) ? eventData.eventParticipants : [];
+            const referenceDate = currentEvent?.date ? new Date(currentEvent.date) : new Date();
+
+            const ages = [];
+            let unknownDobCount = 0;
+
+            participants.forEach(p => {
+                const age = computeAgeOnDate(p?.dob, referenceDate);
+                if (typeof age === 'number') {
+                    ages.push(age);
+                } else {
+                    unknownDobCount += 1;
                 }
+            });
+
+            const insightEl = document.getElementById('ageInsight');
+
+            if (ages.length === 0 && unknownDobCount === 0) {
+                renderCanvasMessage(canvas, 'No driver demographic data for this event');
+                if (insightEl) insightEl.textContent = 'No DOB data available';
+                return;
+            }
+
+            // Build 10-year buckets based on actual data range
+            const binSize = 10;
+            const minAge = ages.length > 0 ? Math.min(...ages) : 0;
+            const maxAge = ages.length > 0 ? Math.max(...ages) : 0;
+            const minBin = Math.floor(minAge / binSize) * binSize;
+            const maxBin = Math.floor(maxAge / binSize) * binSize;
+
+            const bucketStarts = [];
+            for (let start = minBin; start <= maxBin; start += binSize) {
+                bucketStarts.push(start);
+            }
+
+            const bucketCounts = new Map(bucketStarts.map(s => [s, 0]));
+            ages.forEach(age => {
+                const start = Math.floor(age / binSize) * binSize;
+                if (!bucketCounts.has(start)) {
+                    bucketCounts.set(start, 0);
+                }
+                bucketCounts.set(start, bucketCounts.get(start) + 1);
+            });
+
+            const labels = bucketStarts.map(start => `${start}-${start + (binSize - 1)}`);
+            const data = bucketStarts.map(start => bucketCounts.get(start) || 0);
+
+            if (unknownDobCount > 0) {
+                labels.push('Unknown');
+                data.push(unknownDobCount);
+            }
+
+            const palette = [
+                'rgba(255, 140, 66, 0.8)', // Orange
+                'rgba(74, 144, 226, 0.8)', // Blue
+                'rgba(76, 175, 80, 0.8)', // Green
+                'rgba(156, 39, 176, 0.8)', // Purple
+                'rgba(255, 193, 7, 0.8)', // Amber
+                'rgba(244, 67, 54, 0.8)', // Red
+                'rgba(0, 188, 212, 0.8)', // Cyan
+                'rgba(121, 85, 72, 0.8)', // Brown
+            ];
+            const backgroundColor = labels.map((_, i) => palette[i % palette.length]);
+            const borderColor = backgroundColor.map(c => c.replace('0.8', '1'));
+
+            // Insight text (marketing-friendly but factual)
+            if (insightEl) {
+                const avgAge = ages.length > 0 ? ages.reduce((sum, a) => sum + a, 0) / ages.length : 0;
+                const avgAgeText = ages.length > 0 ? `Avg age: ${avgAge.toFixed(1)}` : 'Avg age: —';
+                const knownText = `${ages.length} with DOB`;
+                const unknownText = unknownDobCount > 0 ? `, ${unknownDobCount} unknown` : '';
+                insightEl.textContent = `${avgAgeText} (${knownText}${unknownText})`;
+            }
+
+            ageDistributionChart = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            data,
+                            backgroundColor,
+                            borderColor,
+                            borderWidth: 2,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#a0a0a0',
+                                font: { weight: '500' },
+                                padding: 20,
+                                usePointStyle: true,
+                            },
+                        },
+                    },
+                    cutout: '60%',
+                },
             });
         }
 
@@ -2544,23 +2913,21 @@
             if (!currentEvent) return;
             
             // Get event participants
-            const eventParticipants = allParticipants.filter(p => p.eventId === eventId);
+            const eventParticipants = getEventParticipantsForEvent(eventId, currentEvent);
             
             // Calculate event statistics
-            const eventRevenue = eventParticipants.reduce((sum, p) => sum + (p.totalFee || 0), 0);
+            const eventRevenue = calculateEventRevenueEstimate(eventId, eventParticipants, currentEvent);
             const uniqueDrivers = new Set(eventParticipants.map(p => p.id)).size;
             const totalEntries = eventParticipants.reduce((sum, p) => {
-                const classCount = p.selectedClasses ? p.selectedClasses.length : 1;
-                return sum + classCount;
+                const classCount = getParticipantClassesForEvent(p, eventId).length;
+                return sum + (classCount > 0 ? classCount : 1);
             }, 0);
             const avgFeePerDriver = uniqueDrivers > 0 ? Math.round(eventRevenue / uniqueDrivers) : 0;
             
             // Get unique classes
             const eventClasses = new Set();
             eventParticipants.forEach(p => {
-                if (p.selectedClasses) {
-                    p.selectedClasses.forEach(c => eventClasses.add(c));
-                }
+                getParticipantClassesForEvent(p, eventId).forEach(c => eventClasses.add(c));
             });
             
             // Calculate completed races
@@ -2688,6 +3055,7 @@
             if (!event) return 0;
             const m = parseInt(event.numberOfTracks || 4, 10);
             const eliminationType = (event.eliminationType || 'double').toLowerCase();
+            const eventId = event.id || currentEvent?.id || null;
 
             const classToIds = new Map();
             const addToClass = (cls, id) => {
@@ -2699,12 +3067,9 @@
             };
 
             (eventParticipants || []).forEach(p => {
-                if (Array.isArray(p.selectedClasses) && p.selectedClasses.length) {
-                    p.selectedClasses.forEach(c => addToClass(c, p.id));
-                } else if (Array.isArray(p.sledClasses) && p.sledClasses.length) {
-                    p.sledClasses.forEach(c => addToClass(c, p.id));
-                } else if (p.sledClass) {
-                    addToClass(p.sledClass, p.id);
+                const classes = eventId ? getParticipantClassesForEvent(p, eventId) : [];
+                if (classes.length > 0) {
+                    classes.forEach(c => addToClass(c, p.id));
                 }
             });
 
@@ -2778,39 +3143,196 @@
             return total;
         }
 
+        function resolveEventClassLabel(event, classKey) {
+            const fallback = String(classKey || '').trim() || 'Unknown';
+            if (!event) return fallback;
+
+            // event.classes can be strings or objects {id, name}
+            if (Array.isArray(event.classes)) {
+                const normalized = normalizeKey(classKey);
+                const match = event.classes.find(cls => {
+                    if (!cls) return false;
+                    if (typeof cls === 'string') return normalizeKey(cls) === normalized;
+                    return normalizeKey(cls.id) === normalized || normalizeKey(cls.name) === normalized;
+                });
+                if (match) {
+                    if (typeof match === 'string') return match;
+                    return match.name || match.id || fallback;
+                }
+            }
+
+            const setting = resolveEventClassSetting(event, classKey);
+            if (setting) {
+                return setting.name || setting.className || setting.classId || fallback;
+            }
+
+            return fallback;
+        }
+
+        function isHeatCompleted(heat) {
+            const status = String(heat?.status || '').toLowerCase();
+            if (status === 'completed') return true;
+            if (heat?.isComplete === true) return true;
+            if (heat?.endTime || heat?.completedAt) return true;
+
+            const results = heat?.results;
+            if (Array.isArray(results)) return results.length > 0;
+            if (results && typeof results === 'object') return Object.keys(results).length > 0;
+
+            const finishOrder = heat?.finishOrder;
+            if (finishOrder && typeof finishOrder === 'object') return Object.keys(finishOrder).length > 0;
+
+            return false;
+        }
+
+        function normalizeHeatResults(heat) {
+            const results = heat?.results;
+            if (Array.isArray(results)) return results;
+
+            // Fallback: object mapping participantId -> position
+            if (results && typeof results === 'object') {
+                return Object.entries(results).map(([participantId, position]) => ({ participantId, position }));
+            }
+
+            return [];
+        }
+
+        function getHeatLaneMap(heat) {
+            const map = new Map();
+            const lanes = heat?.lanes;
+            if (!Array.isArray(lanes)) return map;
+
+            lanes.forEach(l => {
+                const participantId = l?.participant?.id || l?.participantId || l?.participant_id;
+                const laneNum = l?.lane ?? l?.laneNumber ?? l?.lane_index;
+                if (!participantId || laneNum === undefined || laneNum === null) return;
+                map.set(String(participantId), String(laneNum));
+            });
+
+            return map;
+        }
+
+        function computeEventPerformanceFromBracket(eventId) {
+            const bracket = window.raceBrackets?.[eventId] || null;
+            const participantStats = new Map();
+            const laneStats = new Map();
+
+            if (!bracket || !bracket.classes || typeof bracket.classes !== 'object') {
+                return { participantStats, laneStats };
+            }
+
+            Object.entries(bracket.classes).forEach(([classKey, classData]) => {
+                const rounds = Array.isArray(classData.rounds) ? classData.rounds : [];
+                rounds.forEach(round => {
+                    const heats = Array.isArray(round.heats) ? round.heats : [];
+                    heats.forEach(heat => {
+                        if (!isHeatCompleted(heat)) return;
+
+                        const results = normalizeHeatResults(heat);
+                        if (results.length === 0) return;
+
+                        const laneMap = getHeatLaneMap(heat);
+
+                        results.forEach(result => {
+                            const participantId = result?.participantId;
+                            const position = Number(result?.position);
+                            if (!participantId || !Number.isFinite(position) || position <= 0) return;
+
+                            const pid = String(participantId);
+
+                            if (!participantStats.has(pid)) {
+                                participantStats.set(pid, {
+                                    races: 0,
+                                    wins: 0,
+                                    positionsSum: 0,
+                                    positionsCount: 0,
+                                    lanePerformance: {},
+                                });
+                            }
+
+                            const s = participantStats.get(pid);
+                            s.races += 1;
+                            s.positionsSum += position;
+                            s.positionsCount += 1;
+                            if (position === 1) s.wins += 1;
+
+                            const laneKey = laneMap.get(pid);
+                            if (laneKey) {
+                                if (!s.lanePerformance[laneKey]) {
+                                    s.lanePerformance[laneKey] = { races: 0, wins: 0 };
+                                }
+                                s.lanePerformance[laneKey].races += 1;
+                                if (position === 1) s.lanePerformance[laneKey].wins += 1;
+
+                                if (!laneStats.has(laneKey)) {
+                                    laneStats.set(laneKey, { races: 0, wins: 0 });
+                                }
+                                const ls = laneStats.get(laneKey);
+                                ls.races += 1;
+                                if (position === 1) ls.wins += 1;
+                            }
+                        });
+                    });
+                });
+            });
+
+            return { participantStats, laneStats };
+        }
+
         // Load class breakdown
         function loadClassBreakdown(eventParticipants) {
             const container = document.getElementById('classBreakdown');
+            if (!container) return;
+
+            const eventId = currentEvent?.id;
+            if (!eventId) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">Select an event to view class breakdown.</p>';
+                return;
+            }
             
-            // Group by class
             const classData = {};
-            eventParticipants.forEach(p => {
-                if (p.selectedClasses) {
-                    p.selectedClasses.forEach(className => {
-                        if (!classData[className]) {
-                            classData[className] = { participants: [], revenue: 0 };
-                        }
-                        classData[className].participants.push(p);
-                        classData[className].revenue += p.totalFee || 0;
-                    });
-                }
+            (eventParticipants || []).forEach(p => {
+                const classes = getParticipantClassesForEvent(p, eventId);
+                classes.forEach(classKey => {
+                    const classLabel = resolveEventClassLabel(currentEvent, classKey);
+                    if (!classData[classLabel]) {
+                        classData[classLabel] = { driverIds: new Set(), entries: 0, revenue: 0 };
+                    }
+                    classData[classLabel].driverIds.add(p.id);
+                    classData[classLabel].entries += 1;
+                    const price = getEventClassPrice(currentEvent, classKey);
+                    if (typeof price === 'number') {
+                        classData[classLabel].revenue += price;
+                    }
+                });
             });
+
+            if (Object.keys(classData).length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">No class registrations found for this event.</p>';
+                return;
+            }
             
-            const classCards = Object.entries(classData).map(([className, data]) => `
+            const classCards = Object.entries(classData)
+                .sort((a, b) => b[1].entries - a[1].entries)
+                .map(([className, data]) => {
+                    const revenueText = data.revenue > 0 ? `$${data.revenue.toFixed(2)}` : '—';
+                    return `
                 <div class="class-card">
                     <h4>${className}</h4>
                     <div class="class-stats">
                         <div class="class-stat">
-                            <div class="class-stat-value">${data.participants.length}</div>
+                            <div class="class-stat-value">${data.driverIds.size}</div>
                             <div class="class-stat-label">Drivers</div>
                         </div>
                         <div class="class-stat">
-                            <div class="class-stat-value">$${data.revenue}</div>
+                            <div class="class-stat-value">${revenueText}</div>
                             <div class="class-stat-label">Revenue</div>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+                })
+                .join('');
             
             container.innerHTML = classCards;
         }
@@ -2819,6 +3341,15 @@
         function loadDriverStatistics(eventParticipants) {
             const tbody = document.querySelector('#driverStatsTable tbody');
             const header = document.querySelector('#driverStatsHeader tr');
+            if (!tbody || !header) return;
+
+            const eventId = currentEvent?.id;
+            if (!eventId) {
+                tbody.innerHTML = '';
+                return;
+            }
+
+            const performance = computeEventPerformanceFromBracket(eventId);
             
             // Get number of tracks from current event
             const numberOfTracks = currentEvent ? parseInt(currentEvent.numberOfTracks || 4, 10) : 4;
@@ -2832,37 +3363,39 @@
             // Add lane columns to header
             for (let lane = 1; lane <= numberOfTracks; lane++) {
                 const columnIndex = 5 + lane; // Start after AVG POS column (index 5)
+                const laneNumber = lane;
                 const laneHeader = document.createElement('th');
                 laneHeader.className = 'sortable';
-                laneHeader.onclick = (function(index) {
-                    return function() {
-                        console.log('🖱️ Lane column clicked:', lane, 'Column index:', index);
-                        sortTable('driverStatsTable', index);
-                    };
-                })(columnIndex);
-                laneHeader.innerHTML = `L${lane}% <i class="fas fa-sort"></i>`;
+                laneHeader.onclick = function () {
+                    console.log('🖱️ Lane column clicked:', laneNumber, 'Column index:', columnIndex);
+                    sortTable('driverStatsTable', columnIndex);
+                };
+                laneHeader.innerHTML = `L${laneNumber}% <i class="fas fa-sort"></i>`;
                 header.appendChild(laneHeader);
             }
             
             const driverStats = eventParticipants.map(participant => {
-                const classes = participant.selectedClasses ? participant.selectedClasses.join(', ') : 'Unknown';
-                const races = participant.totalRaces || 0;
-                const wins = participant.totalWins || 0;
-                const winRate = races > 0 ? ((wins / races) * 100).toFixed(1) : '0.0';
-                const avgPosition = participant.avgPosition || 0;
+                const classKeys = getParticipantClassesForEvent(participant, eventId);
+                const classes =
+                    classKeys.length > 0
+                        ? classKeys.map(cls => resolveEventClassLabel(currentEvent, cls)).join(', ')
+                        : '—';
+
+                const perf = performance.participantStats.get(String(participant.id)) || null;
+                const races = perf?.races || 0;
+                const wins = perf?.wins || 0;
+                const winRate = races > 0 ? (wins / races) * 100 : 0;
+                const avgPosition =
+                    perf?.positionsCount > 0 ? perf.positionsSum / perf.positionsCount : 0;
                 
                 // Calculate lane win percentages
                 const laneWinRates = {};
                 for (let lane = 1; lane <= numberOfTracks; lane++) {
                     const laneKey = lane.toString();
-                    if (participant.statistics && participant.statistics.lanePerformance && participant.statistics.lanePerformance[laneKey]) {
-                        const laneStats = participant.statistics.lanePerformance[laneKey];
-                        const laneRaces = laneStats.total || 0;
-                        const laneWins = laneStats.wins || 0;
-                        laneWinRates[laneKey] = laneRaces > 0 ? ((laneWins / laneRaces) * 100).toFixed(1) : '0.0';
-                    } else {
-                        laneWinRates[laneKey] = '0.0';
-                    }
+                    const laneStats = perf?.lanePerformance?.[laneKey] || null;
+                    const laneRaces = laneStats?.races || 0;
+                    const laneWins = laneStats?.wins || 0;
+                    laneWinRates[laneKey] = laneRaces > 0 ? ((laneWins / laneRaces) * 100).toFixed(1) : '—';
                 }
                 
                 return {
@@ -2870,20 +3403,27 @@
                     classes: classes,
                     races: races,
                     wins: wins,
-                    winRate: parseFloat(winRate),
+                    winRate: Math.round(winRate * 10) / 10,
                     avgPosition: avgPosition,
                     laneWinRates: laneWinRates
                 };
             });
             
             // Sort by wins by default
-            driverStats.sort((a, b) => b.wins - a.wins);
+            driverStats.sort((a, b) => {
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+                return a.driver.localeCompare(b.driver);
+            });
             
             const driverRows = driverStats.map(stat => {
                 // Build lane percentage cells
                 const laneCells = Object.keys(stat.laneWinRates)
                     .sort((a, b) => parseInt(a) - parseInt(b))
-                    .map(lane => `<td>${stat.laneWinRates[lane]}%</td>`)
+                    .map(lane => {
+                        const value = stat.laneWinRates[lane];
+                        return `<td>${value === '—' ? '—' : `${value}%`}</td>`;
+                    })
                     .join('');
                 
                 return `
@@ -2909,32 +3449,30 @@
             
             container.innerHTML = ''; // Clear previous content
 
-            const laneStats = {};
-            eventParticipants.forEach(participant => {
-                if (participant.statistics && participant.statistics.lanePerformance) {
-                    for (const lane in participant.statistics.lanePerformance) {
-                        if (!laneStats[lane]) {
-                            laneStats[lane] = { races: 0, wins: 0 };
-                        }
-                        // Use 'total' from lanePerformance for number of races
-                        laneStats[lane].races += participant.statistics.lanePerformance[lane].total || 0;
-                        laneStats[lane].wins += participant.statistics.lanePerformance[lane].wins || 0;
-                    }
-                }
-            });
+            const eventId = currentEvent?.id;
+            const numberOfTracks = currentEvent ? parseInt(currentEvent.numberOfTracks || 4, 10) : 4;
+            if (!eventId) return;
 
-            const laneWinCards = Object.entries(laneStats).map(([lane, data]) => {
-                const winRate = data.races > 0 ? ((data.wins / data.races) * 100).toFixed(1) : '0.0';
-                return `
+            const performance = computeEventPerformanceFromBracket(eventId);
+            const laneStats = performance.laneStats;
+
+            const laneWinCards = [];
+            for (let lane = 1; lane <= numberOfTracks; lane++) {
+                const laneKey = String(lane);
+                const data = laneStats.get(laneKey) || { races: 0, wins: 0 };
+                const winRate = data.races > 0 ? ((data.wins / data.races) * 100).toFixed(1) : null;
+                const valueText = winRate ? `${winRate}%` : '—';
+                const labelText = data.races > 0 ? `Lane ${lane} (${data.wins}/${data.races})` : `Lane ${lane} (no data)`;
+                laneWinCards.push(`
                     <div class="lane-win-card">
                         <div class="lane-win-icon"><i class="fas fa-car"></i></div>
-                        <div class="lane-win-value">${winRate}%</div>
-                        <div class="lane-win-label">Lane ${lane} (${data.wins}/${data.races})</div>
+                        <div class="lane-win-value">${valueText}</div>
+                        <div class="lane-win-label">${labelText}</div>
                     </div>
-                `;
-            }).join('');
+                `);
+            }
 
-            container.innerHTML = laneWinCards;
+            container.innerHTML = laneWinCards.join('');
         }
 
         // Sort table
@@ -3112,96 +3650,104 @@
                 eventDuration: 0,
                 racesPerHour: {},
                 startTime: null,
-                endTime: null
+                endTime: null,
+                totalStartedHeats: 0,
+                totalCompletedHeats: 0
             };
 
-            // Analyze race brackets for this specific event
-            if (window.raceBrackets && window.raceBrackets[eventId]) {
-                const eventBrackets = window.raceBrackets[eventId];
-                
-                if (eventBrackets && eventBrackets.classes) {
-                    Object.values(eventBrackets.classes).forEach(classData => {
-                        if (classData.rounds && Array.isArray(classData.rounds)) {
-                            let classStartTime = null;
-                            let classEndTime = null;
-                            
-                            classData.rounds.forEach(round => {
-                                if (round.heats && Array.isArray(round.heats)) {
-                                    round.heats.forEach(heat => {
-                                        if (heat.startTime && heat.endTime) {
-                                            // Calculate race duration
-                                            const startTime = new Date(heat.startTime);
-                                            const endTime = new Date(heat.endTime);
-                                            const duration = endTime - startTime;
-                                            
-                                            if (duration > 0 && duration < 3600000) { // Less than 1 hour (reasonable race time)
-                                                stats.raceTimes.push(duration);
-                                            }
-                                            
-                                            // Track class timing
-                                            if (!classStartTime || startTime < classStartTime) {
-                                                classStartTime = startTime;
-                                            }
-                                            if (!classEndTime || endTime > classEndTime) {
-                                                classEndTime = endTime;
-                                            }
-                                        }
-                                        
-                                        // Track race intervals
-                                        if (heat.startTime) {
-                                            const raceTime = new Date(heat.startTime);
-                                            const hour = raceTime.getHours();
-                                            stats.racesPerHour[hour] = (stats.racesPerHour[hour] || 0) + 1;
-                                        }
-                                    });
-                                }
-                            });
-                            
-                            // Calculate class duration
-                            if (classStartTime && classEndTime) {
-                                const classDuration = classEndTime - classStartTime;
-                                if (classDuration > 0) {
-                                    stats.eventDuration = Math.max(stats.eventDuration, classDuration);
-                                    if (!stats.startTime || classStartTime < stats.startTime) {
-                                        stats.startTime = classStartTime;
-                                    }
-                                    if (!stats.endTime || classEndTime > stats.endTime) {
-                                        stats.endTime = classEndTime;
-                                    }
+            function parseTimestamp(value) {
+                if (!value) return null;
+                const dt = new Date(value);
+                return Number.isFinite(dt.getTime()) ? dt : null;
+            }
+
+            function getHeatStartDate(heat) {
+                return (
+                    parseTimestamp(heat?.startTime) ||
+                    parseTimestamp(heat?.scheduledTime) ||
+                    parseTimestamp(heat?.createdAt) ||
+                    parseTimestamp(heat?.updatedAt)
+                );
+            }
+
+            function getHeatEndDate(heat) {
+                return (
+                    parseTimestamp(heat?.endTime) ||
+                    parseTimestamp(heat?.completedAt) ||
+                    parseTimestamp(heat?.updatedAt)
+                );
+            }
+
+            let eventBrackets = window.raceBrackets?.[eventId] || null;
+            if (!eventBrackets && window.raceBrackets && typeof window.raceBrackets === 'object') {
+                eventBrackets = Object.values(window.raceBrackets).find(b => b && b.eventId === eventId) || null;
+            }
+
+            const allStartTimesMs = [];
+            const allEndTimesMs = [];
+
+            if (eventBrackets && eventBrackets.classes && typeof eventBrackets.classes === 'object') {
+                Object.values(eventBrackets.classes).forEach(classData => {
+                    const rounds = Array.isArray(classData.rounds) ? classData.rounds : [];
+                    rounds.forEach(round => {
+                        const heats = Array.isArray(round.heats) ? round.heats : [];
+                        heats.forEach(heat => {
+                            const startDt = getHeatStartDate(heat);
+                            const endDt = getHeatEndDate(heat);
+
+                            const status = String(heat.status || '').toLowerCase();
+                            const hasResults = Array.isArray(heat.results) ? heat.results.length > 0 : !!heat.results;
+                            const isComplete = status === 'completed' || heat.isComplete === true || !!endDt || hasResults;
+
+                            if (startDt) {
+                                stats.totalStartedHeats += 1;
+                                allStartTimesMs.push(startDt.getTime());
+
+                                const hour = startDt.getHours();
+                                stats.racesPerHour[hour] = (stats.racesPerHour[hour] || 0) + 1;
+                            }
+
+                            if (isComplete) {
+                                stats.totalCompletedHeats += 1;
+                            }
+
+                            if (endDt) {
+                                allEndTimesMs.push(endDt.getTime());
+                            }
+
+                            // Race duration (start -> end)
+                            if (startDt && endDt && endDt > startDt) {
+                                const duration = endDt - startDt;
+                                // Ignore obviously invalid durations
+                                if (duration > 0 && duration < 60 * 60 * 1000) {
+                                    stats.raceTimes.push(duration);
                                 }
                             }
-                        }
+                        });
                     });
-                }
+                });
             }
 
-            // Calculate race intervals (time between consecutive races for this event)
-            const allRaceTimes = [];
-            if (window.raceBrackets && window.raceBrackets[eventId]) {
-                const eventBrackets = window.raceBrackets[eventId];
-                
-                if (eventBrackets && eventBrackets.classes) {
-                    Object.values(eventBrackets.classes).forEach(classData => {
-                        if (classData.rounds && Array.isArray(classData.rounds)) {
-                            classData.rounds.forEach(round => {
-                                if (round.heats && Array.isArray(round.heats)) {
-                                    round.heats.forEach(heat => {
-                                        if (heat.startTime) {
-                                            allRaceTimes.push(new Date(heat.startTime));
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
+            // Event duration = earliest start -> latest end (across all classes)
+            const minStartMs = allStartTimesMs.length > 0 ? Math.min(...allStartTimesMs) : null;
+            const maxEndMs =
+                allEndTimesMs.length > 0
+                    ? Math.max(...allEndTimesMs)
+                    : allStartTimesMs.length > 0
+                      ? Math.max(...allStartTimesMs)
+                      : null;
+
+            if (Number.isFinite(minStartMs)) stats.startTime = new Date(minStartMs);
+            if (Number.isFinite(maxEndMs)) stats.endTime = new Date(maxEndMs);
+            if (stats.startTime && stats.endTime && stats.endTime > stats.startTime) {
+                stats.eventDuration = stats.endTime - stats.startTime;
             }
 
-            // Sort race times and calculate intervals
-            allRaceTimes.sort((a, b) => a - b);
-            for (let i = 1; i < allRaceTimes.length; i++) {
-                const interval = allRaceTimes[i] - allRaceTimes[i - 1];
-                if (interval > 0 && interval < 1800000) { // Less than 30 minutes (reasonable interval)
+            // Start-to-start cycle times (filters gaps > 30 min)
+            const startMsSorted = allStartTimesMs.filter(Number.isFinite).sort((a, b) => a - b);
+            for (let i = 1; i < startMsSorted.length; i++) {
+                const interval = startMsSorted[i] - startMsSorted[i - 1];
+                if (interval > 0 && interval < 30 * 60 * 1000) {
                     stats.raceIntervals.push(interval);
                 }
             }
@@ -3210,50 +3756,101 @@
         }
 
         function updateEventTimeAnalyticsDisplay(timeStats) {
-            // Average Race Duration
-            const avgRaceTime = timeStats.raceTimes.length > 0 
-                ? timeStats.raceTimes.reduce((sum, time) => sum + time, 0) / timeStats.raceTimes.length 
-                : 0;
-            const avgRaceTimeSeconds = Math.round(avgRaceTime / 1000);
-            document.getElementById('eventAvgRaceTime').textContent = `${avgRaceTimeSeconds}s`;
+            const STANDARD_CYCLE_MS = 7 * 60 * 1000;
+            const STANDARD_RUNS_PER_HOUR = 60 / 7;
 
-            // Races per Hour
-            const totalRaces = Object.values(timeStats.racesPerHour).reduce((sum, count) => sum + count, 0);
-            const totalHours = Object.keys(timeStats.racesPerHour).length || 1;
-            const avgRacesPerHour = Math.round(totalRaces / totalHours);
-            document.getElementById('eventRacesPerHour').textContent = avgRacesPerHour.toString();
+            function formatMsAsMinutesSeconds(ms) {
+                if (!Number.isFinite(ms) || ms <= 0) return '0s';
+                const totalSeconds = Math.round(ms / 1000);
+                if (totalSeconds < 60) return `${totalSeconds}s`;
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                return `${minutes}:${String(seconds).padStart(2, '0')}`;
+            }
 
-            // Average Time Between Races
-            const avgTimeBetweenRaces = timeStats.raceIntervals.length > 0 
-                ? timeStats.raceIntervals.reduce((sum, time) => sum + time, 0) / timeStats.raceIntervals.length 
-                : 0;
-            const avgTimeBetweenSeconds = Math.round(avgTimeBetweenRaces / 1000);
-            document.getElementById('eventAvgTimeBetweenRaces').textContent = `${avgTimeBetweenSeconds}s`;
+            function formatMsAsHoursMinutes(ms) {
+                if (!Number.isFinite(ms) || ms <= 0) return '0m';
+                const totalMinutes = Math.round(ms / (1000 * 60));
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                if (hours <= 0) return `${minutes}m`;
+                if (minutes <= 0) return `${hours}h`;
+                return `${hours}h ${minutes}m`;
+            }
 
-            // Event Duration
-            const eventHours = Math.round(timeStats.eventDuration / (1000 * 60 * 60));
-            document.getElementById('eventDuration').textContent = `${eventHours}h`;
+            function setTrend(elementId, text, tone = 'neutral') {
+                const el = document.getElementById(elementId);
+                if (!el) return;
+                el.textContent = text;
+                el.className = `stat-trend ${tone}`;
+            }
 
-            // Add trend indicators (simplified)
-            const trendElements = ['eventRaceTimeTrend', 'eventRacesPerHourTrend', 'eventTimeBetweenRacesTrend', 'eventDurationTrend'];
-            trendElements.forEach(elementId => {
-                const element = document.getElementById(elementId);
-                if (element) {
-                    element.textContent = '📈 Event Data';
-                    element.className = 'stat-trend neutral';
-                }
-            });
+            // Average Race Duration (start -> end)
+            const avgRaceDurationMs =
+                timeStats.raceTimes.length > 0
+                    ? timeStats.raceTimes.reduce((sum, v) => sum + v, 0) / timeStats.raceTimes.length
+                    : 0;
+            document.getElementById('eventAvgRaceTime').textContent = formatMsAsMinutesSeconds(avgRaceDurationMs);
+            setTrend('eventRaceTimeTrend', `Timed heats: ${timeStats.raceTimes.length}`, 'neutral');
+
+            // Average cycle time (start-to-start)
+            const cycleTotalMs = timeStats.raceIntervals.reduce((sum, v) => sum + v, 0);
+            const cycleCount = timeStats.raceIntervals.length;
+            const avgCycleMs = cycleCount > 0 ? cycleTotalMs / cycleCount : 0;
+
+            const avgRunsPerHour = avgCycleMs > 0 ? 3600000 / avgCycleMs : 0;
+            document.getElementById('eventRacesPerHour').textContent = avgRunsPerHour > 0 ? avgRunsPerHour.toFixed(1) : '0';
+
+            const vsPct = avgRunsPerHour > 0 ? (avgRunsPerHour / STANDARD_RUNS_PER_HOUR - 1) * 100 : 0;
+            const vsPctText = avgRunsPerHour > 0 ? `${vsPct > 0 ? '+' : ''}${vsPct.toFixed(0)}%` : '—';
+            setTrend('eventRacesPerHourTrend', `Std: ${STANDARD_RUNS_PER_HOUR.toFixed(2)}/hr (${vsPctText})`, vsPct > 5 ? 'positive' : vsPct < -5 ? 'negative' : 'neutral');
+
+            document.getElementById('eventAvgTimeBetweenRaces').textContent = formatMsAsMinutesSeconds(avgCycleMs);
+            const deltaCycleMs = avgCycleMs > 0 ? avgCycleMs - STANDARD_CYCLE_MS : 0;
+            const deltaText =
+                avgCycleMs > 0
+                    ? `${deltaCycleMs < 0 ? '-' : '+'}${formatMsAsMinutesSeconds(Math.abs(deltaCycleMs))}`
+                    : '—';
+            setTrend(
+                'eventTimeBetweenRacesTrend',
+                `Std: 7:00 (${deltaText})`,
+                deltaCycleMs < -15 * 1000 ? 'positive' : deltaCycleMs > 15 * 1000 ? 'negative' : 'neutral'
+            );
+
+            // Time saved vs standard (based on cycle intervals we considered “real”)
+            const expectedCycleMs = cycleCount * STANDARD_CYCLE_MS;
+            const timeSavedMs = cycleCount > 0 ? expectedCycleMs - cycleTotalMs : 0;
+            const absSavedText = formatMsAsHoursMinutes(Math.abs(timeSavedMs));
+            document.getElementById('eventTimeSaved').textContent = absSavedText;
+
+            const extraRuns = timeSavedMs > 0 ? timeSavedMs / STANDARD_CYCLE_MS : 0;
+            const savedTone = timeSavedMs > 60 * 1000 ? 'positive' : timeSavedMs < -60 * 1000 ? 'negative' : 'neutral';
+            const savedLabel =
+                cycleCount === 0
+                    ? 'Need start-time data'
+                    : timeSavedMs >= 0
+                      ? `Saved vs standard (~${extraRuns.toFixed(1)} extra runs)`
+                      : `Over standard (~${Math.abs(extraRuns).toFixed(1)} runs)`;
+            setTrend('eventTimeSavedTrend', savedLabel, savedTone);
+
+            // Event Duration (earliest start -> latest end)
+            document.getElementById('eventDuration').textContent = formatMsAsHoursMinutes(timeStats.eventDuration);
+            const durationDeltaText = cycleCount > 0 ? `${timeSavedMs >= 0 ? '+' : '-'}${absSavedText}` : '—';
+            setTrend('eventDurationTrend', `Δ vs 7:00 pace: ${durationDeltaText}`, savedTone);
         }
 
         function createEventTimingChart(timeStats) {
-            const ctx = document.getElementById('eventTimingChart');
-            if (!ctx || timeStats.raceTimes.length === 0) {
-                ctx.parentElement.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No timing data available for this event</p>';
-                return;
-            }
+            const canvas = document.getElementById('eventTimingChart');
+            if (!canvas) return;
 
             if (eventTimingChart) {
                 eventTimingChart.destroy();
+                eventTimingChart = null;
+            }
+
+            if (timeStats.raceTimes.length === 0) {
+                renderCanvasMessage(canvas, 'No timing data available for this event');
+                return;
             }
 
             // Create histogram data
@@ -3274,7 +3871,7 @@
                 return `${startTime}s-${endTime}s`;
             });
 
-            eventTimingChart = new Chart(ctx, {
+            eventTimingChart = new Chart(canvas, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -3323,7 +3920,7 @@
 
         function updateEventEfficiencyMetrics(timeStats, eventId) {
             // Calculate event completion rate
-            const eventParticipants = allParticipants.filter(p => p.eventId === eventId);
+            const eventParticipants = getEventParticipantsForEvent(eventId, currentEvent);
             const expectedRaces = calculateExpectedTotalRacesForEvent(currentEvent, eventParticipants);
             const completedRaces = calculateEventRaces(eventParticipants);
             const completionRate = expectedRaces > 0 ? Math.round((completedRaces / expectedRaces) * 100) : 0;
@@ -3332,14 +3929,19 @@
             document.getElementById('eventCompletionRate').textContent = `${completionRate}%`;
             document.getElementById('eventCompletionRateBar').style.width = `${completionRate}%`;
             
-            // Calculate time efficiency (based on race frequency for this event)
-            const avgRacesPerHour = Object.values(timeStats.racesPerHour).length > 0 
-                ? Object.values(timeStats.racesPerHour).reduce((sum, count) => sum + count, 0) / Object.values(timeStats.racesPerHour).length
-                : 0;
-            const timeEfficiency = Math.min(Math.round(avgRacesPerHour * 10), 100); // Scale to 0-100
+            // Time efficiency vs standard (1 run / 7 min start-to-start)
+            const standardRunsPerHour = 60 / 7;
+            const avgCycleMs =
+                timeStats.raceIntervals.length > 0
+                    ? timeStats.raceIntervals.reduce((sum, v) => sum + v, 0) / timeStats.raceIntervals.length
+                    : 0;
+            const actualRunsPerHour = avgCycleMs > 0 ? 3600000 / avgCycleMs : 0;
+            const timeEfficiencyPct =
+                actualRunsPerHour > 0 ? Math.round((actualRunsPerHour / standardRunsPerHour) * 100) : 0;
+            const barWidth = Math.min(timeEfficiencyPct, 100);
             
-            document.getElementById('eventTimeEfficiency').textContent = `${timeEfficiency}%`;
-            document.getElementById('eventTimeEfficiencyBar').style.width = `${timeEfficiency}%`;
+            document.getElementById('eventTimeEfficiency').textContent = `${timeEfficiencyPct}%`;
+            document.getElementById('eventTimeEfficiencyBar').style.width = `${barWidth}%`;
         }
 
         /**
@@ -3362,7 +3964,7 @@
                 }
 
                 // Get drivers data
-                const eventParticipants = allParticipants.filter(p => p.eventId === currentEvent.id);
+                const eventParticipants = getEventParticipantsForEvent(currentEvent.id, currentEvent);
                 
                 if (eventParticipants.length === 0) {
                     showPopup('No participants found for this event', 'error');
@@ -3391,20 +3993,48 @@
                     status: currentEvent.status
                 };
 
+                const eventId = currentEvent.id;
+                const performance = computeEventPerformanceFromBracket(eventId);
+
                 // Generate PDFs for all drivers
                 const pdfResults = [];
                 for (const participant of driversWithEmail) {
                     // Prepare driver data
+                    const perf = performance.participantStats.get(String(participant.id)) || null;
+                    const races = perf?.races || 0;
+                    const wins = perf?.wins || 0;
+                    const winRate = races > 0 ? Math.round((wins / races) * 1000) / 10 : 0;
+                    const avgPosition =
+                        perf?.positionsCount > 0 ? perf.positionsSum / perf.positionsCount : 0;
+
+                    const classKeys = getParticipantClassesForEvent(participant, eventId);
+                    const classesText =
+                        classKeys.length > 0
+                            ? classKeys.map(cls => resolveEventClassLabel(currentEvent, cls)).join(', ')
+                            : 'N/A';
+
+                    const lanePerformance = {};
+                    const lanePerfRaw = perf?.lanePerformance || {};
+                    Object.entries(lanePerfRaw).forEach(([laneKey, laneStats]) => {
+                        const total = laneStats?.races || 0;
+                        const laneWins = laneStats?.wins || 0;
+                        lanePerformance[laneKey] = {
+                            total,
+                            wins: laneWins,
+                            winRate: total > 0 ? (laneWins / total) * 100 : 0,
+                        };
+                    });
+
                     const driverData = {
                         id: participant.id,
                         name: participant.name,
                         email: participant.contact.email,
-                        classes: participant.selectedClasses ? participant.selectedClasses.join(', ') : 'N/A',
-                        races: participant.totalRaces || 0,
-                        wins: participant.totalWins || 0,
-                        winRate: participant.winRate || 0,
-                        avgPosition: participant.avgPosition || 0,
-                        lanePerformance: participant.lanePerformance || {}
+                        classes: classesText,
+                        races,
+                        wins,
+                        winRate,
+                        avgPosition,
+                        lanePerformance,
                     };
 
                     try {
