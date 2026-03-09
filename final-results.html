@@ -61,32 +61,33 @@
             padding: 0.875rem 1.5rem;
             font-size: 1rem;
             font-weight: 600;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
-            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
-            transition: all 0.3s ease;
+            border-radius: var(--radius-md);
+            background: var(--accent-primary) !important;
+            border: 1px solid rgba(255, 96, 56, 0.6);
+            box-shadow: var(--shadow-sm), var(--shadow-glow-sm) !important;
+            transition: all var(--transition-control);
         }
 
         .btn-hero:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
-            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md), var(--shadow-glow) !important;
+            background: var(--accent-hover) !important;
         }
 
         .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-strong);
+            color: var(--text-primary);
             padding: 0.875rem 1.5rem;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all var(--transition-control);
         }
 
         .btn-outline:hover {
             border-color: var(--accent-orange-warm);
-            color: var(--accent-orange-warm);
-            background: rgba(255, 140, 66, 0.1);
+            color: var(--text-primary);
+            background: var(--bg-elevated);
         }
 
         /* Responsive Design */
@@ -317,16 +318,18 @@
         }
 
         .event-card {
-            background: var(--bg-secondary);
+            background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: var(--radius-lg);
             padding: 1.5rem;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform var(--transition-control), box-shadow var(--transition-control), border-color var(--transition-control);
+            box-shadow: var(--shadow-xs);
         }
 
         .event-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            border-color: var(--border-accent);
+            box-shadow: var(--shadow-sm);
         }
 
         .event-header {
@@ -608,8 +611,16 @@
             <!-- Final Results Section -->
             <section class="final-results" id="final-results" style="display: none;">
                 <div class="final-results-header">
-                    <h3 id="selected-event-name">Event Name</h3>
-                    <p id="selected-event-details">Event Details</p>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="goBackToEvents()" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-arrow-left"></i> Back to Events
+                        </button>
+                        <div style="flex: 1; text-align: center;">
+                            <h3 id="selected-event-name" style="margin: 0;">Event Name</h3>
+                        </div>
+                        <div style="width: 130px;"></div><!-- Spacer for centering -->
+                    </div>
+                    <p id="selected-event-details" style="text-align: center;">Event Details</p>
                 </div>
                 
                 <div class="final-results-container" id="final-results-container">

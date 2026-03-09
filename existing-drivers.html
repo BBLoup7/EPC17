@@ -93,32 +93,33 @@
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
             font-weight: 600;
-            border-radius: 6px;
-            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
-            box-shadow: 0 3px 10px rgba(255, 140, 66, 0.3) !important;
-            transition: all 0.3s ease;
+            border-radius: var(--radius-md);
+            background: var(--accent-primary) !important;
+            border: 1px solid rgba(255, 96, 56, 0.6);
+            box-shadow: var(--shadow-xs), var(--shadow-glow-sm) !important;
+            transition: all var(--transition-control);
         }
 
         .btn-hero:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(255, 140, 66, 0.4) !important;
-            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+            box-shadow: var(--shadow-sm), var(--shadow-glow-sm) !important;
+            background: var(--accent-hover) !important;
         }
 
         .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-strong);
+            color: var(--text-primary);
             padding: 0.5rem 1rem;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all var(--transition-control);
         }
 
         .btn-outline:hover {
             border-color: var(--accent-orange-warm);
-            color: var(--accent-orange-warm);
-            background: rgba(255, 140, 66, 0.1);
+            color: var(--text-primary);
+            background: var(--bg-elevated);
         }
 
         /* Responsive Design */
@@ -785,6 +786,15 @@
         let selectedClasses = [];
         let currentEvent = null;
         let selectedEventId = null;
+        let driversPagination = {
+            page: 1,
+            limit: 50,
+            totalPages: 1,
+            total: 0,
+            search: '',
+            currentById: {}
+        };
+        let driverSearchDebounce = null;
 
         // Wait for authentication to complete before loading data
         async function waitForAuthentication() {
@@ -826,11 +836,11 @@
                 dataManager = new DataManager();
                 registrationManager = new RegistrationManager(dataManager);
                 
-                // Wait for data to load before initializing UI
-                await dataManager.loadFromStorage();
+                // Load only data needed for this page at startup.
+                await dataManager.loadFromStorage(['series', 'events']);
                 
                 // Initialize UI
-                loadDriversList();
+                await loadDriversList(1);
                 await loadEvents();
                 loadClassOptions();
                 
@@ -909,7 +919,10 @@
                     await new Promise(resolve => setTimeout(resolve, 700));
                     
                     // Get the participant data
-                    const participant = dataManager.getParticipant(driverParam);
+                    let participant = dataManager.getParticipant(driverParam);
+                    if (!participant && typeof dataManager.getParticipantById === 'function') {
+                        participant = await dataManager.getParticipantById(driverParam);
+                    }
                     if (!participant) {
                         console.error('❌ Participant not found:', driverParam);
                         showToast('Driver not found', 'error');
@@ -919,7 +932,7 @@
                     console.log('✅ Found participant:', participant.name);
                     
                     // Select the driver
-                    selectDriver(driverParam);
+                    await selectDriver(driverParam);
                     
                     // Show success message
                     showToast(`Driver selected: ${participant.name}`, 'success');
@@ -930,7 +943,10 @@
                     console.log('📝 Edit mode detected for participant:', editParticipantId);
                     
                     // Get the participant data
-                    const participant = dataManager.getParticipant(editParticipantId);
+                    let participant = dataManager.getParticipant(editParticipantId);
+                    if (!participant && typeof dataManager.getParticipantById === 'function') {
+                        participant = await dataManager.getParticipantById(editParticipantId);
+                    }
                     if (!participant) {
                         console.error('❌ Participant not found for edit:', editParticipantId);
                         showToast('Participant not found for editing', 'error');
@@ -985,11 +1001,26 @@
         }
 
         // Load drivers list
-        function loadDriversList() {
+        async function loadDriversList(page = 1) {
             const container = document.getElementById('existingDriversList');
             if (!container) return;
+            const searchInput = document.getElementById('driverSearch');
+            const search = (searchInput?.value || '').trim();
+            driversPagination.search = search;
+            driversPagination.page = page;
 
-            const drivers = dataManager.getParticipantsArray();
+            const result = await dataManager.getParticipants(
+                search ? { search } : {},
+                page,
+                driversPagination.limit
+            );
+            const drivers = result.participants || [];
+            driversPagination.total = result.total || 0;
+            driversPagination.totalPages = result.totalPages || 1;
+            driversPagination.currentById = {};
+            drivers.forEach(driver => {
+                driversPagination.currentById[driver.id] = driver;
+            });
             
             if (drivers.length === 0) {
                 container.innerHTML = `
@@ -1002,6 +1033,7 @@
                         </button>
                     </div>
                 `;
+                renderDriversPagination();
                 return;
             }
 
@@ -1018,6 +1050,38 @@
             `).join('');
             
             container.innerHTML = driversHtml;
+            renderDriversPagination();
+        }
+
+        function renderDriversPagination() {
+            const section = document.querySelector('.driver-search-section');
+            if (!section) return;
+            let controls = document.getElementById('driversPaginationControls');
+            if (!controls) {
+                controls = document.createElement('div');
+                controls.id = 'driversPaginationControls';
+                controls.style.display = 'flex';
+                controls.style.justifyContent = 'space-between';
+                controls.style.alignItems = 'center';
+                controls.style.gap = '0.75rem';
+                controls.style.marginTop = '0.75rem';
+                section.appendChild(controls);
+            }
+            const isFirst = driversPagination.page <= 1;
+            const isLast = driversPagination.page >= driversPagination.totalPages;
+            controls.innerHTML = `
+                <button type="button" class="btn btn-secondary" ${isFirst ? 'disabled' : ''} onclick="changeDriversPage(-1)">Previous</button>
+                <span style="color: var(--text-secondary); font-size: 0.875rem;">
+                    Page ${driversPagination.page} / ${Math.max(driversPagination.totalPages, 1)} (${driversPagination.total} drivers)
+                </span>
+                <button type="button" class="btn btn-secondary" ${isLast ? 'disabled' : ''} onclick="changeDriversPage(1)">Next</button>
+            `;
+        }
+
+        async function changeDriversPage(delta) {
+            const nextPage = driversPagination.page + delta;
+            if (nextPage < 1 || nextPage > driversPagination.totalPages) return;
+            await loadDriversList(nextPage);
         }
 
         // Load events for selection
@@ -1127,12 +1191,16 @@
                     };
                 }).filter(Boolean);
             } else {
-                // Fallback: If no class settings configured, show all series classes with warning
-                console.warn(`⚠️ Event ${currentEvent.name} has no class settings configured, showing all series classes`);
-                classes = series.sledClasses.map(sledClass => ({
-                    name: sledClass.name,
-                    price: sledClass.defaultFee
-                }));
+                // No class settings configured — do NOT fall back to all series classes
+                console.warn(`⚠️ Event ${currentEvent.name} has no class settings configured`);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 1.5rem; color: var(--warning);">
+                        <p style="font-weight: 600; margin-bottom: 0.5rem;">⚠️ No Classes Configured</p>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                            This event has no class settings configured. Please edit the event in the Events page and enable the classes you want before registering drivers.
+                        </p>
+                    </div>`;
+                return;
             }
             
             if (classes.length === 0) {
@@ -1161,29 +1229,22 @@
 
         // Filter drivers based on search
         function filterDrivers() {
-            const searchTerm = document.getElementById('driverSearch').value.toLowerCase().trim();
-            const driverCards = document.querySelectorAll('.driver-card');
-            
-            driverCards.forEach(card => {
-                const driverName = card.querySelector('.driver-name').textContent.toLowerCase();
-                const driverDetails = card.querySelector('.driver-details').textContent.toLowerCase();
-                
-                if (driverName.includes(searchTerm) || driverDetails.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+            if (driverSearchDebounce) {
+                clearTimeout(driverSearchDebounce);
+            }
+            driverSearchDebounce = setTimeout(() => {
+                loadDriversList(1);
+            }, 250);
         }
 
         // Clear driver search
         function clearDriverSearch() {
             document.getElementById('driverSearch').value = '';
-            filterDrivers();
+            loadDriversList(1);
         }
 
         // Select a driver
-        function selectDriver(driverId) {
+        async function selectDriver(driverId) {
             // Remove previous selection
             document.querySelectorAll('.driver-card').forEach(card => {
                 card.classList.remove('selected');
@@ -1196,7 +1257,10 @@
             }
             
             // Get driver data
-            selectedDriver = dataManager.getParticipant(driverId);
+            selectedDriver = driversPagination.currentById[driverId] || dataManager.getParticipant(driverId);
+            if (!selectedDriver && typeof dataManager.getParticipantById === 'function') {
+                selectedDriver = await dataManager.getParticipantById(driverId);
+            }
             if (!selectedDriver) {
                 showToast('Driver not found', 'error');
                 return;
@@ -1321,7 +1385,7 @@
                     }
                     
                     // Refresh drivers list
-                    loadDriversList();
+                    loadDriversList(driversPagination.page);
                 });
             }
         }
@@ -1446,8 +1510,8 @@
         // Refresh drivers
         function refreshDrivers() {
             showToast('Refreshing drivers...', 'info');
-            dataManager.loadFromStorage().then(() => {
-                loadDriversList();
+            dataManager.loadFromStorage(['participants']).then(() => {
+                loadDriversList(1);
                 showToast('Drivers refreshed successfully!', 'success');
             }).catch(error => {
                 console.error('Error refreshing drivers:', error);
@@ -1466,11 +1530,16 @@
         window.showToast = showToast;
         window.filterDrivers = filterDrivers;
         window.clearDriverSearch = clearDriverSearch;
+        window.changeDriversPage = changeDriversPage;
         window.selectDriver = selectDriver;
         window.toggleClass = toggleClass;
         window.editDriverInfo = editDriverInfo;
-        window.closeDriverEditModal = closeDriverEditModal;
-        window.saveDriverEdit = saveDriverEdit;
+        if (typeof closeDriverEditModal === 'function') {
+            window.closeDriverEditModal = closeDriverEditModal;
+        }
+        if (typeof saveDriverEdit === 'function') {
+            window.saveDriverEdit = saveDriverEdit;
+        }
         window.completeAddExisting = completeAddExisting;
         window.refreshDrivers = refreshDrivers;
         window.goToRegistration = goToRegistration;

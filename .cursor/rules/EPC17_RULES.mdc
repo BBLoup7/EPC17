@@ -40,7 +40,7 @@ that Cursor / LLM agents should always use when generating or modifying code for
 - `docs/EPC17_PROMPTS.md` — prompt specs and examples (authoritative).
 - `docs/EPC17_WORKFLOW.md` — workflow map, release & CI rules.
 - `EPC17_RULES.mdc` — this file (enforced).
-- `PATCHNOTES.txt` — must be updated at every change.
+- `PATCHNOTES.txt` — detailed change log (must be updated at every change). `CHANGELOG.md` — simple publication view. `version.json` — app version (single source of truth).
 
 ## Cursor / Session Behaviors
 - Use `Notepad` snippets for frequently used patterns: API template, fetch hook, prompt wrapper.
@@ -56,12 +56,11 @@ that Cursor / LLM agents should always use when generating or modifying code for
 - All generated code must align with the architecture defined in this repo.
 
 ## Patch Notes & Versioning Rules
-- **PATCHNOTES.txt must be updated for every change** (feature, fix, refactor, or rules update).
-- Each entry must include: version string, summary of changes, and impacted files.
-- When instructed to "change version to xx.xx", Cursor must:
-  1. Move all current patch notes under the new version number.
-  2. Clean up outdated/obsolete entries as specified.
-  3. Ensure `PATCHNOTES.txt` remains a clear history of project evolution.
+- **Version**: Stored in `version.json` as MAJOR.MINOR.PATCH (e.g. 2.6.0). Bump with `python scripts/version_bump.py` (patch), `python scripts/version_bump.py minor`, or `python scripts/version_bump.py major`. Server `/api/version` reads from this file.
+- **PATCHNOTES.txt (detailed)** must be updated for every change (feature, fix, refactor, or rules update). Each new entry must use the format at the top of PATCHNOTES.txt: `## [X.Y.Z] - YYYY-MM-DD - type`, then `### Summary`, `### Details`, `### Files`, `### Meta`. Include `Source: LLM` (and optional `Session: ...`) in Meta so all changes and LLM input leave a trace.
+- **CHANGELOG.md (simple)** is the publication view for users. Regenerate from PATCHNOTES with `python scripts/generate_changelog.py` after adding entries.
+- When adding a patch note: (1) read current version from `version.json`, (2) add the new entry at the top of the detailed section (after the format instructions), (3) run `python scripts/version_bump.py` (or `minor`/`major` if the change warrants it), (4) optionally run `python scripts/generate_changelog.py` to refresh CHANGELOG.md.
+- When instructed to "change version to xx.xx", move current patch notes under that version and update `version.json` accordingly; keep PATCHNOTES and CHANGELOG consistent.
 
 ## Exceptions
 - Direct DOM access allowed only in `src/utils/dom-bridge.js` and must be explicitly reviewed.

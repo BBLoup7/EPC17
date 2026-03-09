@@ -231,7 +231,12 @@ class EventDataService {
      */
     async isEventCompleted(eventId) {
         try {
-            return await this.dataManager.isEventCompleted(eventId);
+            const bracket = await this.dataManager.getRaceBracket(eventId);
+            const classBrackets = Object.values(bracket?.classes || {});
+            const hasClasses = classBrackets.length > 0;
+            const completedClassCount = classBrackets.filter(classBracket => classBracket?.isComplete === true || !!classBracket?.winner).length;
+            const isCompleted = hasClasses && completedClassCount === classBrackets.length;
+            return isCompleted;
         } catch (error) {
             console.error('Failed to check event completion:', error);
             return false;
@@ -313,9 +318,10 @@ class EventDataService {
         if (!event || !event.participants) {
             return [];
         }
-
+        const participants = this.dataManager.getParticipantsArray?.() || [];
+        const byId = new Map(participants.map(p => [p.id, p]));
         return event.participants
-            .map(participantId => this.dataManager.getParticipant(participantId))
+            .map(participantId => byId.get(participantId) || this.dataManager.getParticipant(participantId))
             .filter(p => p !== null);
     }
 
@@ -414,8 +420,8 @@ class EventDataService {
             return series.sledClasses.filter(sc => enabledClassIds.includes(sc.id));
         }
 
-        // Fallback: return all series classes
-        return series.sledClasses;
+        // Strict behavior: event must explicitly configure enabled classes
+        return [];
     }
 
     /**

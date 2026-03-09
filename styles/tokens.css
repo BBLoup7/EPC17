@@ -1,0 +1,15 @@
+/**
+ * CSS Design Tokens
+ * Target: Extract all :root CSS variables from styles.css into this file.
+ * This is the foundation for the entire design system.
+ * 
+ * File will contain:
+ *   - Color tokens (backgrounds, borders, text, accent, status)
+ *   - Spacing tokens
+ *   - Typography tokens (font families, sizes, weights)
+ *   - Shadow tokens
+ *   - Transition tokens
+ *   - Border radius tokens
+ * 
+ * Placeholder — tokens remain in styles.css until full CSS split.
+ */

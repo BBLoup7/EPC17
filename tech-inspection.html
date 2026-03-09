@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Inspection - EPC TECHNOLOGY</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .inspection-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .driver-list {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .driver-inspection-card {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .driver-inspection-card:hover { border-color: var(--accent-primary); }
+        .driver-inspection-card.selected { border-color: var(--accent-primary); background: rgba(255,96,56,0.06); }
+        .driver-inspection-card .driver-info { display: flex; flex-direction: column; }
+        .driver-inspection-card .driver-name { font-weight: 600; font-size: 0.95rem; }
+        .driver-inspection-card .driver-meta { font-size: 0.8rem; color: var(--text-secondary); }
+
+        .inspection-status { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; }
+        .status-passed { background: rgba(16,185,129,0.15); color: #10b981; }
+        .status-failed { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .status-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
+        .inspection-form { padding: 1.5rem; }
+        .checklist-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);
+        }
+        .checklist-item label { flex: 1; cursor: pointer; font-size: 0.95rem; }
+        .checklist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent-primary); }
+
+        .inspection-summary {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-stat { text-align: center; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .summary-stat .stat-val { font-size: 1.5rem; font-weight: 700; }
+        .summary-stat .stat-label { font-size: 0.8rem; color: var(--text-secondary); }
+
+        @media (max-width: 768px) {
+            .inspection-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation handled by sidebar-nav.js -->
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1><i class="fas fa-clipboard-check"></i> Tech Inspection</h1>
+                <p class="subtitle">Verify registered drivers before racing</p>
+            </div>
+            <div class="header-actions">
+                <select id="inspectionEventSelect" class="form-control" style="min-width:220px;">
+                    <option value="">Select an event...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Summary stats -->
+        <div class="inspection-summary" id="inspectionSummary" style="display:none;">
+            <div class="summary-stat">
+                <div class="stat-val" id="totalRegistered">0</div>
+                <div class="stat-label">Registered</div>
+            </div>
+            <div class="summary-stat">
+                <div class="stat-val" id="totalPassed" style="color:#10b981;">0</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="summary-stat">
+                <div class="stat-val" id="totalPending" style="color:#f59e0b;">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+
+        <!-- Main grid -->
+        <div class="inspection-grid" id="inspectionContent" style="display:none;">
+            <!-- Driver list sidebar -->
+            <div class="card">
+                <h3 style="margin-bottom:0.75rem;">Drivers</h3>
+                <input type="text" id="inspectionSearch" class="form-control" placeholder="Search drivers..." style="margin-bottom:0.75rem;">
+                <div class="driver-list" id="driverInspectionList">
+                    <p style="text-align:center;color:var(--text-secondary);padding:1rem;">Select an event to load drivers.</p>
+                </div>
+            </div>
+
+            <!-- Inspection form -->
+            <div class="card">
+                <div class="inspection-form" id="inspectionForm">
+                    <p style="text-align:center;color:var(--text-secondary);padding:2rem;">Select a driver to begin inspection.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/logger.js"></script>
+    <script src="utils/helpers.js"></script>
+    <script src="utils/event-bus.js"></script>
+    <script src="utils/validation.js"></script>
+    <script src="utils/data-manager.js?v=1.4"></script>
+    <script src="utils/auth.js"></script>
+    <script src="js/sidebar-nav.js"></script>
+    <script src="js/mobile-nav.js"></script>
+    <script>
+        /**
+         * Tech Inspection Page Controller
+         * Links registered participants to a pre-race inspection checklist.
+         */
+        let dataManager, currentEventId, selectedDriverId;
+        let inspectionData = {}; // { participantId: { checklist: {...}, status, notes, timestamp } }
+
+        const CHECKLIST_ITEMS = [
+            { id: 'helmet', label: 'Helmet approved' },
+            { id: 'suit', label: 'Racing suit / gear' },
+            { id: 'sled_number', label: 'Sled number visible' },
+            { id: 'kill_switch', label: 'Kill switch / tether functional' },
+            { id: 'throttle', label: 'Throttle returns cleanly' },
+            { id: 'brakes', label: 'Brakes functional' },
+            { id: 'skis', label: 'Skis / carbides within spec' },
+            { id: 'track', label: 'Track / studs within spec' },
+            { id: 'exhaust', label: 'Exhaust secured' },
+            { id: 'general', label: 'General mechanical soundness' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            dataManager = new DataManager();
+            await dataManager.initialize();
+
+            // Load inspection data from localStorage
+            const stored = localStorage.getItem('epc17_inspection_data');
+            if (stored) {
+                try { inspectionData = JSON.parse(stored); } catch (e) { inspectionData = {}; }
+            }
+
+            // Populate event select
+            const select = document.getElementById('inspectionEventSelect');
+            try {
+                const result = await dataManager.getEvents({}, 1, 1000);
+                const events = result.events || result;
+                events.forEach(event => {
+                    const opt = document.createElement('option');
+                    opt.value = event.id;
+                    opt.textContent = `${event.name} — ${event.date ? new Date(event.date).toLocaleDateString() : ''}`;
+                    select.appendChild(opt);
+                });
+            } catch (e) { console.error('Failed to load events:', e); }
+
+            select.addEventListener('change', () => {
+                currentEventId = select.value;
+                if (currentEventId) {
+                    loadDriversForInspection(currentEventId);
+                    document.getElementById('inspectionContent').style.display = '';
+                    document.getElementById('inspectionSummary').style.display = '';
+                }
+            });
+
+            document.getElementById('inspectionSearch').addEventListener('input', filterDrivers);
+        });
+
+        function loadDriversForInspection(eventId) {
+            const list = document.getElementById('driverInspectionList');
+            const event = dataManager.getEvent(eventId);
+            if (!event) { list.innerHTML = '<p>Event not found.</p>'; return; }
+
+            const participants = (event.participants || []).map(pid =>
+                typeof pid === 'string' ? dataManager.getParticipant(pid) : pid
+            ).filter(Boolean);
+
+            if (participants.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:1rem;">No participants registered.</p>';
+                updateSummary(participants);
+                return;
+            }
+
+            list.innerHTML = participants.map(p => {
+                const insp = inspectionData[p.id];
+                const status = insp?.status || 'pending';
+                const statusClass = status === 'passed' ? 'status-passed' : status === 'failed' ? 'status-failed' : 'status-pending';
+                return `
+                    <div class="driver-inspection-card ${selectedDriverId === p.id ? 'selected' : ''}" data-driver-id="${p.id}" onclick="selectDriverForInspection('${p.id}')">
+                        <div class="driver-info">
+                            <span class="driver-name">${p.name}</span>
+                            <span class="driver-meta">#${p.racingNumber || '—'} | ${(p.selectedClasses || []).join(', ') || '—'}</span>
+                        </div>
+                        <span class="inspection-status ${statusClass}">${status.toUpperCase()}</span>
+                    </div>
+                `;
+            }).join('');
+
+            updateSummary(participants);
+        }
+
+        function selectDriverForInspection(driverId) {
+            selectedDriverId = driverId;
+            const driver = dataManager.getParticipant(driverId);
+            if (!driver) return;
+
+            // Highlight
+            document.querySelectorAll('.driver-inspection-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-driver-id="${driverId}"]`)?.classList.add('selected');
+
+            const insp = inspectionData[driverId] || { checklist: {}, status: 'pending', notes: '' };
+
+            const form = document.getElementById('inspectionForm');
+            form.innerHTML = `
+                <h3 style="margin-bottom:1rem;">${driver.name} <span style="color:var(--text-secondary);font-weight:400;">#${driver.racingNumber || '—'}</span></h3>
+                <div class="checklist">
+                    ${CHECKLIST_ITEMS.map(item => `
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check-${item.id}" ${insp.checklist[item.id] ? 'checked' : ''} onchange="updateChecklist('${driverId}', '${item.id}', this.checked)">
+                            <label for="check-${item.id}">${item.label}</label>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="form-group" style="margin-top:1rem;">
+                    <label class="form-label">Notes</label>
+                    <textarea id="inspectionNotes" class="form-control" rows="3" placeholder="Any notes..." onchange="updateNotes('${driverId}', this.value)">${insp.notes || ''}</textarea>
+                </div>
+                <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                    <button class="btn btn-success" onclick="markInspection('${driverId}', 'passed')"><i class="fas fa-check"></i> Pass</button>
+                    <button class="btn btn-danger" onclick="markInspection('${driverId}', 'failed')"><i class="fas fa-times"></i> Fail</button>
+                    <button class="btn btn-secondary" onclick="markInspection('${driverId}', 'pending')"><i class="fas fa-clock"></i> Reset to Pending</button>
+                </div>
+            `;
+        }
+
+        function updateChecklist(driverId, itemId, checked) {
+            if (!inspectionData[driverId]) inspectionData[driverId] = { checklist: {}, status: 'pending', notes: '' };
+            inspectionData[driverId].checklist[itemId] = checked;
+            saveInspectionData();
+        }
+
+        function updateNotes(driverId, notes) {
+            if (!inspectionData[driverId]) inspectionData[driverId] = { checklist: {}, status: 'pending', notes: '' };
+            inspectionData[driverId].notes = notes;
+            saveInspectionData();
+        }
+
+        function markInspection(driverId, status) {
+            if (!inspectionData[driverId]) inspectionData[driverId] = { checklist: {}, status: 'pending', notes: '' };
+            inspectionData[driverId].status = status;
+            inspectionData[driverId].timestamp = new Date().toISOString();
+            saveInspectionData();
+            loadDriversForInspection(currentEventId);
+            selectDriverForInspection(driverId);
+            
+            const label = status === 'passed' ? 'PASSED' : status === 'failed' ? 'FAILED' : 'PENDING';
+            if (window.showToast || window.Helpers?.showToast) {
+                (window.showToast || window.Helpers.showToast)(`Inspection: ${label}`, status === 'passed' ? 'success' : status === 'failed' ? 'error' : 'info');
+            }
+        }
+
+        function updateSummary(participants) {
+            const total = participants.length;
+            const passed = participants.filter(p => inspectionData[p.id]?.status === 'passed').length;
+            const pending = total - passed;
+            document.getElementById('totalRegistered').textContent = total;
+            document.getElementById('totalPassed').textContent = passed;
+            document.getElementById('totalPending').textContent = pending;
+        }
+
+        function filterDrivers() {
+            const term = document.getElementById('inspectionSearch').value.toLowerCase();
+            document.querySelectorAll('.driver-inspection-card').forEach(card => {
+                const name = card.querySelector('.driver-name').textContent.toLowerCase();
+                card.style.display = name.includes(term) ? '' : 'none';
+            });
+        }
+
+        function saveInspectionData() {
+            try { localStorage.setItem('epc17_inspection_data', JSON.stringify(inspectionData)); } catch (e) {}
+        }
+
+        // Make showToast available
+        function showToast(message, type) {
+            if (window.Helpers?.showToast) window.Helpers.showToast(message, type);
+        }
+        window.showToast = showToast;
+    </script>
+</body>
+</html>

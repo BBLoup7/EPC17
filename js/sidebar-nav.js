@@ -72,6 +72,7 @@ class SidebarNavigation {
                             <li><a href="participants.html" title="Participants"><i class="fas fa-users"></i> <span class="nav-text">Participants</span></a></li>
                             <li><a href="existing-drivers.html" title="Existing Drivers"><i class="fas fa-user-plus"></i> <span class="nav-text">Existing Drivers</span></a></li>
                             <li><a href="driver-profile.html" title="Driver Profile"><i class="fas fa-id-card"></i> <span class="nav-text">Driver Profile</span></a></li>
+                            <li><a href="tech-inspection.html" title="Tech Inspection"><i class="fas fa-clipboard-check"></i> <span class="nav-text">Tech Inspection</span></a></li>
                         </ul>
                     </li>
                     

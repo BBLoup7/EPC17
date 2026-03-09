@@ -60,32 +60,33 @@
             padding: 0.875rem 1.5rem;
             font-size: 1rem;
             font-weight: 600;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
-            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
-            transition: all 0.3s ease;
+            border-radius: var(--radius-md);
+            background: var(--accent-primary) !important;
+            border: 1px solid rgba(255, 96, 56, 0.6);
+            box-shadow: var(--shadow-sm), var(--shadow-glow-sm) !important;
+            transition: all var(--transition-control);
         }
 
         .btn-hero:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
-            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md), var(--shadow-glow) !important;
+            background: var(--accent-hover) !important;
         }
 
         .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-strong);
+            color: var(--text-primary);
             padding: 0.875rem 1.5rem;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all var(--transition-control);
         }
 
         .btn-outline:hover {
             border-color: var(--accent-orange-warm);
-            color: var(--accent-orange-warm);
-            background: rgba(255, 140, 66, 0.1);
+            color: var(--text-primary);
+            background: var(--bg-elevated);
         }
 
         /* Responsive Design */
@@ -124,21 +125,23 @@
         .events-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
+            gap: var(--space-4);
             margin-top: 2rem;
         }
         
         .event-card {
-            background: var(--bg-secondary);
-            border-radius: 8px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
             padding: 1.5rem;
             border: 1px solid var(--border-color);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform var(--transition-control), box-shadow var(--transition-control), border-color var(--transition-control);
+            box-shadow: var(--shadow-xs);
         }
         
         .event-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            border-color: var(--border-accent);
+            box-shadow: var(--shadow-sm);
         }
         
         .event-header {
@@ -1248,8 +1251,10 @@
             
             const classesHtml = orderedClasses.map(cls => {
                 const existingClass = eventClassSettings.find(ec => ec.classId === cls.id);
-                const isSelected = !!existingClass;
-                const price = existingClass ? existingClass.fee : (cls.defaultFee || '');
+                const isSelected = existingClass ? existingClass.enabled !== false : false;
+                const price = existingClass
+                    ? (existingClass.price ?? existingClass.fee ?? (cls.defaultFee || ''))
+                    : (cls.defaultFee || '');
                 
                 console.log('🔍 Rendering class in saved order:', cls.name, 'isSelected:', isSelected, 'price:', price);
                 
@@ -1310,11 +1315,11 @@
                 // Reconstruct editClassOrder from the existing classOrder and classSettings
                 event.classOrder.forEach(classId => {
                     const classSetting = event.classSettings.find(cs => cs.classId === classId);
-                    if (classSetting) {
+                    if (classSetting && classSetting.enabled !== false) {
                         editClassOrder.push({
                             classId: classSetting.classId,
                             className: classSetting.className,
-                            fee: classSetting.fee || 0,
+                            fee: classSetting.fee ?? classSetting.price ?? 0,
                             description: classSetting.description || ''
                         });
                     }
@@ -1323,7 +1328,15 @@
                 console.log('🔧 Loaded existing edit class order:', editClassOrder);
             } else if (event.classSettings) {
                 // Fallback: create order from classSettings (alphabetical)
-                editClassOrder = [...event.classSettings].sort((a, b) => a.className.localeCompare(b.className));
+                editClassOrder = event.classSettings
+                    .filter(cs => cs.enabled !== false)
+                    .map(cs => ({
+                        classId: cs.classId,
+                        className: cs.className,
+                        fee: cs.fee ?? cs.price ?? 0,
+                        description: cs.description || ''
+                    }))
+                    .sort((a, b) => a.className.localeCompare(b.className));
                 console.log('🔧 Created fallback edit class order from classSettings:', editClassOrder);
             }
         }
@@ -1388,6 +1401,11 @@
                         });
                     }
                     
+                    if (!seriesId && selectedSeriesId) {
+                        seriesId = selectedSeriesId;
+                        console.log('🔍 Series selection (fallback to selectedSeriesId):', seriesId);
+                    }
+
                     if (seriesId) {
                         const series = dataManager.getSeries(seriesId);
                         console.log('🔍 Series data:', series ? 'FOUND' : 'NOT FOUND');
@@ -1685,6 +1703,11 @@
                 console.log('🔧 Series ID (select fallback):', seriesId);
             }
             
+            if (!seriesId && selectedSeriesId) {
+                seriesId = selectedSeriesId;
+                console.log('🔧 Series ID (fallback to selectedSeriesId):', seriesId);
+            }
+
             if (!seriesId) {
                 console.log('🔧 ❌ No series selected, cannot update class order');
                 console.log('🔧 Debug selectors:', {
@@ -1742,7 +1765,7 @@
             console.log('🔍 getSelectedClasses called, classOrder:', classOrder);
             
             // Always read from DOM checkboxes to get current user selections
-            const selectedClasses = [];
+            const classSettings = [];
             let seriesInput = document.querySelector('#seriesId-input');
             let seriesId = null;
             
@@ -1770,60 +1793,44 @@
             console.log('🔍 Series input element:', seriesInput);
             console.log('🔍 Series input data-selected-value:', seriesInput ? seriesInput.getAttribute('data-selected-value') : 'N/A');
             
+            if (!seriesId && selectedSeriesId) {
+                seriesId = selectedSeriesId;
+                console.log('🔍 Series selection (fallback to selectedSeriesId):', seriesId);
+            }
+
             if (!seriesId) {
                 console.log('🔍 No series ID found, returning empty array');
-                return selectedClasses;
+                return classSettings;
             }
             
             const series = dataManager.getSeries(seriesId);
             console.log('🔍 Found series:', series);
             if (!series || !series.sledClasses) {
                 console.log('🔍 No series or no sled classes found, returning empty array');
-                return selectedClasses;
+                return classSettings;
             }
             
-            // Build selected classes array from DOM checkboxes
-            const selectedClassesMap = new Map();
-            
+            // Build full class settings array from DOM checkboxes
             series.sledClasses.forEach(cls => {
                 const checkbox = document.getElementById(`checkbox-${cls.id}`);
                 const priceInput = document.getElementById(`price-${cls.id}`);
+                const rawPrice = parseFloat(priceInput?.value);
+                const price = Number.isFinite(rawPrice) ? rawPrice : (cls.defaultFee || 0);
                 
                 console.log(`🔍 Checking class ${cls.name}: checkbox=${checkbox?.checked}, price=${priceInput?.value}`);
                 
-                if (checkbox && checkbox.checked) {
-                    selectedClassesMap.set(cls.id, {
-                        classId: cls.id,
-                        className: cls.name,
-                        fee: parseFloat(priceInput.value) || 0,
-                        description: cls.description
-                    });
-                }
+                classSettings.push({
+                    classId: cls.id,
+                    className: cls.name,
+                    enabled: !!(checkbox && checkbox.checked),
+                    price: price,
+                    fee: price,
+                    description: cls.description
+                });
             });
             
-            // If we have an existing order and classes match, use that order
-            if (classOrder.length > 0) {
-                // First add classes in the existing order (if they're still selected)
-                classOrder.forEach(orderedClass => {
-                    if (selectedClassesMap.has(orderedClass.classId)) {
-                        selectedClasses.push(selectedClassesMap.get(orderedClass.classId));
-                        selectedClassesMap.delete(orderedClass.classId);
-                    }
-                });
-                
-                // Then add any newly selected classes that weren't in the order
-                selectedClassesMap.forEach(classData => {
-                    selectedClasses.push(classData);
-                });
-            } else {
-                // No existing order, just return classes in series order
-                selectedClassesMap.forEach(classData => {
-                    selectedClasses.push(classData);
-                });
-            }
-            
-            console.log('🔍 Returning selected classes:', selectedClasses);
-            return selectedClasses;
+            console.log('🔍 Returning class settings:', classSettings);
+            return classSettings;
         }
 
 
@@ -2200,7 +2207,7 @@
             console.log('🔍 getSelectedClassesEdit called, editClassOrder:', editClassOrder);
             
             // Always read from DOM checkboxes to get current user selections
-            const selectedClasses = [];
+            const classSettings = [];
             let seriesSelect = document.querySelector('#editEventForm select[name="seriesId"]');
             if (!seriesSelect) {
                 seriesSelect = document.querySelector('select[name="seriesId"]');
@@ -2212,53 +2219,32 @@
                 editFormSelect: document.querySelector('#editEventForm select[name="seriesId"]') ? 'FOUND' : 'NOT FOUND'
             });
             
-            if (!seriesId) return selectedClasses;
+            if (!seriesId) return classSettings;
             
             const series = dataManager.getSeries(seriesId);
-            if (!series || !series.sledClasses) return selectedClasses;
+            if (!series || !series.sledClasses) return classSettings;
             
-            // Build selected classes array from DOM checkboxes
-            const selectedClassesMap = new Map();
-            
+            // Build full class settings array from DOM checkboxes
             series.sledClasses.forEach(cls => {
                 const checkbox = document.getElementById(`edit-checkbox-${cls.id}`);
                 const priceInput = document.getElementById(`edit-price-${cls.id}`);
+                const rawPrice = parseFloat(priceInput?.value);
+                const price = Number.isFinite(rawPrice) ? rawPrice : (cls.defaultFee || 0);
                 
                 console.log(`🔍 Checking class ${cls.name}: checkbox=${checkbox?.checked}, price=${priceInput?.value}`);
                 
-                if (checkbox && checkbox.checked) {
-                    selectedClassesMap.set(cls.id, {
-                        classId: cls.id,
-                        className: cls.name,
-                        fee: parseFloat(priceInput.value) || 0,
-                        description: cls.description
-                    });
-                }
+                classSettings.push({
+                    classId: cls.id,
+                    className: cls.name,
+                    enabled: !!(checkbox && checkbox.checked),
+                    price: price,
+                    fee: price,
+                    description: cls.description
+                });
             });
             
-            // If we have an existing order and classes match, use that order
-            if (editClassOrder.length > 0) {
-                // First add classes in the existing order (if they're still selected)
-                editClassOrder.forEach(orderedClass => {
-                    if (selectedClassesMap.has(orderedClass.classId)) {
-                        selectedClasses.push(selectedClassesMap.get(orderedClass.classId));
-                        selectedClassesMap.delete(orderedClass.classId);
-                    }
-                });
-                
-                // Then add any newly selected classes that weren't in the order
-                selectedClassesMap.forEach(classData => {
-                    selectedClasses.push(classData);
-                });
-            } else {
-                // No existing order, just return classes in series order
-                selectedClassesMap.forEach(classData => {
-                    selectedClasses.push(classData);
-                });
-            }
-            
-            console.log('🔍 Returning selected classes:', selectedClasses);
-            return selectedClasses;
+            console.log('🔍 Returning class settings:', classSettings);
+            return classSettings;
         }
 
         // Simple edit class ordering - just update the toggle function
@@ -2547,9 +2533,9 @@
             }
             
             try {
-                // Get selected classes with pricing and ordering
-                const selectedClasses = getSelectedClasses();
-                console.log('🔍 Selected classes for new event:', selectedClasses);
+                // Get class settings with pricing and enabled flags
+                const classSettings = getSelectedClasses();
+                console.log('🔍 Class settings for new event:', classSettings);
                 
                 // Use DataManager to create event
                 const newEvent = {
@@ -2580,7 +2566,7 @@
                         const select = document.getElementById('customFinalType');
                         return select?.value || 'unique';
                     })(),
-                    classSettings: selectedClasses,
+                    classSettings: classSettings,
                     classOrder: classOrder.map(cls => cls.classId), // Store class order
                     registrationOpen: true,
                     description: eventData.description || '',
@@ -2907,8 +2893,8 @@
                 // Get all events without pagination for search/sort functionality
                 let eventsResult;
                 if (dataManager) {
-                    // Try to get all events by using a very high limit
-                    eventsResult = await dataManager.getEvents({}, 1, 10000);
+                    // Keep payload bounded; server handles pagination.
+                    eventsResult = await dataManager.getEvents({}, 1, 1000);
                     
                     // If we still don't get all events, try using getEventsArray() as fallback
                     if (eventsResult.total && eventsResult.events.length < eventsResult.total) {
@@ -3797,16 +3783,16 @@
                     return;
                 }
                 
-                // Get selected classes with pricing and ordering
-                const selectedClasses = getSelectedClassesEdit();
-                console.log('🔍 Selected classes from getSelectedClassesEdit:', selectedClasses);
+                // Get class settings with pricing and enabled flags
+                const classSettings = getSelectedClassesEdit();
+                console.log('🔍 Class settings from getSelectedClassesEdit:', classSettings);
                 
                 console.log('📝 ================= EVENT EDIT SAVE DEBUG =================');
                 console.log('📝 Current editClassOrder array:', editClassOrder);
                 console.log('📝 editClassOrder class names:', editClassOrder.map(cls => cls.className));
                 console.log('📝 editClassOrder class IDs:', editClassOrder.map(cls => cls.classId));
-                console.log('📝 selectedClasses count:', selectedClasses.length);
-                console.log('📝 selectedClasses class names:', selectedClasses.map(cls => cls.className));
+                console.log('📝 classSettings count:', classSettings.length);
+                console.log('📝 classSettings class names:', classSettings.map(cls => cls.className));
                 
                 const classOrderToSave = editClassOrder.map(cls => cls.classId);
                 console.log('📝 classOrder that will be saved:', classOrderToSave);
@@ -3869,7 +3855,7 @@
                     maxParticipants: parseInt(formData.get('maxParticipants')),
                     driverMeetingTime: formData.get('driverMeetingTime') || '08:00',
                     status: formData.get('status'),
-                    classSettings: selectedClasses,
+                    classSettings: classSettings,
                     classOrder: classOrderToSave, // Store edit class order
                     freeRunEnabled: formData.get('freeRunEnabled') === 'true',
                     // Preserve existing data that shouldn't be overwritten

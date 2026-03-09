@@ -1,4 +1,282 @@
-# EPC17 Patch Notes
+# EPC17 Patch Notes (Detailed — documentation & trace)
+
+All changes and LLM edits must add an entry below. Version lives in version.json; bump with:
+  python scripts/version_bump.py        (patch, default)
+  python scripts/version_bump.py minor
+  python scripts/version_bump.py major
+
+Entry format (use for every new change):
+  ## [X.Y.Z] - YYYY-MM-DD - type
+  Type: patch | minor | major
+  ### Summary
+  One-line for CHANGELOG/publication.
+  ### Details
+  Full description, file lists, technical notes.
+  ### Files
+  - path/to/file
+  ### Meta
+  Source: LLM | Session: (optional)
+---
+---
+
+## [2.6.3] - 2026-02-22 - patch
+
+### Summary
+Refresh the app UI into a lighter racing dashboard theme with non-modal navigation, cleaner controls, and preserved race/event layouts.
+
+### Details
+- Updated global design tokens in `styles.css` to align with the new palette direction (`#0F0F0F`, `#1A1A1A`, `#222222`), brighter content text hierarchy, softer structural shadows, and dedicated fast interaction tokens (`120ms` controls, `200ms` sidebar).
+- Reworked sidebar styling to remove heavy modal feel: transparent non-dimming overlay behavior, cleaner active/hover states (left orange indicator instead of full gradient fill), and synchronized slide/panel transitions for smoother navigation feedback.
+- Refined global button system for a more mechanical and responsive feel: 8px radius controls, simplified interactions (removed shimmer/ripple effects), orange primary actions, and dark outline-style secondary actions.
+- Restyled global cards/panels to use darker grey dashboard surfaces with subtle lift, reduced visual noise, and token-driven hover/focus feedback.
+- Updated race/event presentation styles while preserving layout structure: `styles/race.css` now uses the new token system for event cards and race cards without changing event/race DOM organization.
+- Updated inline hero/button overrides across core pages (`index.html`, `registration.html`, `existing-drivers.html`, `participants.html`, `series.html`, `races.html`, `events.html`, `final-results.html`) so primary/secondary actions and spacing feel consistent while preserving existing layouts.
+
+### Files
+- styles.css
+- styles/race.css
+- index.html
+- registration.html
+- existing-drivers.html
+- participants.html
+- series.html
+- races.html
+- events.html
+- final-results.html
+- version.json
+- CHANGELOG.md
+- PATCHNOTES.txt
+
+### Meta
+Source: LLM | Session: racing-dashboard-visual-overhaul
+
+---
+
+## [2.6.2] - 2026-02-17 - patch
+
+### Summary
+Fix remaining participant edit lookup failures by adding participant-by-id API retrieval and wiring edit pages to use server fallback when cache misses.
+
+### Details
+- Added `GET /api/participants/<participant_id>` support in `server.py` so edit UIs can reliably fetch a participant record by ID.
+- Added `getParticipantById()` to `utils/data-manager.js` with server fallback and cache refresh, and warmed cache from paginated participant fetches.
+- Updated `modules/driver-edit-form.js` to use `dataManager.getParticipantById()` and corrected auth fetch wrapper usage (`Auth.fetch`) for secure participant lookup.
+- Updated `participants.html` edit flow to fetch participant by ID when not in local cache and to keep the registration-focused edit modal path active.
+- Updated `existing-drivers.html` driver/edit URL-parameter and selection flows to use participant-by-id fallback so valid drivers no longer trip false `Driver not found`.
+
+### Files
+- server.py
+- utils/data-manager.js
+- modules/driver-edit-form.js
+- participants.html
+- existing-drivers.html
+- PATCHNOTES.txt
+
+### Meta
+Source: LLM | Session: issue-111-followup-driver-not-found
+
+---
+
+## [2.6.1] - 2026-02-17 - patch
+
+### Summary
+Fix issue #111 existing-event registration editing by correcting participant lookup, event-specific class handling, and edit-flow persistence.
+
+### Details
+- Fixed `existing-drivers.html` runtime bootstrapping failure by guarding optional global handler exports that were previously referencing undefined symbols (`closeDriverEditModal`, `saveDriverEdit`).
+- Normalized participant/event ID comparisons across frontend and backend participant lookup paths to prevent false `Driver not found` / `Participant not found` outcomes when IDs differ by type (string vs number).
+- Corrected race class grouping to resolve `eventClasses` using normalized event IDs before falling back to aggregate classes, preventing event-specific class edits from being interpreted as global/all-class assignments.
+- Updated registration edit-mode submission to persist event-scoped class changes under `eventClasses[eventId]` and recompute aggregate `selectedClasses` without overwriting other event mappings.
+- Hardened DB update semantics so unchanged participant updates still return success when the record exists, avoiding false failure responses on no-op saves.
+- Added regression coverage for:
+  - participant registration endpoint ID normalization,
+  - participant DB unchanged-vs-changed update behavior,
+  - race event-class resolution normalization,
+  - registration edit-mode event-specific class persistence.
+
+### Files
+- existing-drivers.html
+- utils/data-manager.js
+- server.py
+- modules/race.js
+- modules/registration.js
+- utils/db_manager.py
+- tests/test_api_participants.py
+- tests/issue111-registration-editing.test.js
+- PATCHNOTES.txt
+
+### Meta
+Source: LLM | Session: issue-111-registration-editing
+
+---
+
+## [2.6.0] - 2025-02-17 - minor
+
+### Summary
+Version system rework: automatic MAJOR.MINOR.PATCH versioning, organised patch notes (detailed + simple publication view), and trace for all changes/LLM input.
+
+### Details
+- Replaced custom version scheme (D0L12R*) with simple semantic versioning: MAJOR.MINOR.PATCH (e.g. 2.6.0). Single source of truth: version.json.
+- Added scripts/version_bump.py to bump patch (default), minor, or major automatically.
+- Restructured patch notes: PATCHNOTES.txt = detailed (documentation) with Summary/Details/Files/Meta; CHANGELOG.md = simple view for publication (user-facing bullets). All changes and LLM input must leave a trace in PATCHNOTES with Meta/Source.
+- Added scripts/generate_changelog.py to build CHANGELOG.md from PATCHNOTES (new-format entries only).
+- Server /api/version now reads from version.json instead of parsing PATCHNOTES.
+- EPC17_RULES.mdc updated with new versioning and patchnote rules. Legacy entries (pre-2.6) kept below for history.
+
+### Files
+- version.json
+- scripts/version_bump.py
+- scripts/generate_changelog.py
+- PATCHNOTES.txt
+- CHANGELOG.md
+- server.py
+- .cursor/rules/EPC17_RULES.mdc
+
+### Meta
+Source: LLM | Session: version-system-rework
+
+---
+
+# Legacy entries (pre-2.6 — previous format)
+
+## Version D0L12R2.5 (Patch)
+
+### Large Dataset Performance Optimization
+- Reworked backend list APIs to use SQL-level pagination/filtering instead of loading whole tables in memory:
+  - `/api/participants` now uses paginated DB queries with bounded limits.
+  - `/api/events` now uses paginated DB queries with bounded limits and allowed-event scope filtering.
+  - `/api/race-brackets` now returns lightweight metadata for list views and full bracket payload only for `eventId` queries.
+- Race stats stability fix for metadata-only bracket cache entries:
+  - `utils/data-manager.js#getRaceBracket()` now treats cached brackets as usable only when they include `classes`; metadata-only cache hits are bypassed and replaced by an event-scoped fetch (`/api/race-brackets?eventId=...`) that returns full bracket payload.
+  - Event-scoped bracket responses are now cached by both `eventId` and bracket `id` to prevent fallback paths from reusing metadata-only records.
+  - This resolves `TypeError: Cannot convert undefined or null to object` in `RaceManager.getTournamentStats()` when selecting events after metadata-first list loads.
+- Regression fix: restored a missing JSDoc opener above `getRaceBracket()` that caused `Unexpected identifier 'race'` and prevented `DataManager` from loading on `races.html`.
+- Debug instrumentation cleanup: removed temporary debug POST probes from `js/race-ui.js`, `modules/race.js`, and `utils/data-manager.js` after runtime verification confirmed the race event selection issue is fixed.
+- Added runtime/permanent DB indexes and new aggregation/count query methods in `utils/db_manager.py` to reduce full scans and expensive JSON-heavy loads.
+- Optimized `/api/health` to use count queries instead of fetching full entities.
+- Reduced analytics N+1 patterns:
+  - `/api/stats/event/<event_id>` now queries event participants directly.
+  - `/api/stats/driver/<driver_id>` now fetches only brackets relevant to that driver.
+  - `/api/stats/time` and `/api/stats/series/<series_id>` now batch participant/bracket retrieval instead of reloading full datasets per event.
+- Frontend data-loading improvements:
+  - `utils/data-manager.js` now defaults `getParticipants()`/`getEvents()` to server-side pagination and increased cache TTLs for high-volume usage.
+  - `existing-drivers.html` now uses server-paginated driver loading with debounced search and prev/next controls.
+  - `driver-profile.html` now uses server-side driver search for selector population instead of unbounded preload.
+  - `event-analytics.html` now lazy-loads participants/brackets per selected event instead of preloading huge global datasets.
+  - `modules/registration.js` now paginates participant list rendering and uses API-compatible class filtering.
+  - `modules/event-data-service.js` now batches participant lookup via map before fallback single lookups.
+  - `events.html` removed the 10k event fetch pattern and uses a bounded request.
+  - *Files*: `utils/db_manager.py`, `server.py`, `utils/data-manager.js`, `existing-drivers.html`, `event-analytics.html`, `driver-profile.html`, `modules/registration.js`, `modules/event-data-service.js`, `events.html`, `PATCHNOTES.txt`
+
+---
+
+## Version D0L12R2.4 (Patch)
+
+### Race Swap Completion Fixes (Debug-Instrumented)
+- Fixed an `isEventCompleted` recursion loop by implementing non-recursive completion evaluation in `EventDataService` (based on bracket class completion state) instead of routing back through deprecated `dataManager.isEventCompleted()`.
+- Fixed deferred race completion `ReferenceError` by resolving `classBracket` inside `processDeferredTasks()` before tie-break checks and guarding access with optional chaining.
+- Updated race completion status checks to prefer `window.eventDataService` directly, preventing deprecated recursion paths from being reintroduced.
+- Removed temporary debug instrumentation after post-fix runtime verification confirmed the issue is resolved.
+  - *Files*: `modules/event-data-service.js`, `modules/race.js`, `PATCHNOTES.txt`
+
+---
+
+## Version D0L12R2.3 (Patch)
+
+### Issue #123 Realistic Large-Scale Data Simulation
+- Rebuilt `utils/generate_data.py` into an API-driven simulator that creates realistic one-series load scenarios through real endpoints instead of direct DB batch inserts.
+- Added issue-specific event modeling:
+  - 40 events split into completed/upcoming with deterministic archetypes (`high-class`, `low-key`, `balanced-default`).
+  - Logical class selection rules (stock removal for high-class events, biggest-class removal for low-key events).
+  - Lane/elimination policy tuned for race-management realism (mostly 3 lanes, mostly double elimination, rare 2-lane single-elim high-load events).
+- Added stable driver class-profile generation to keep cross-event participation coherent for analytics.
+- Added completed-event bracket simulation with realistic multi-round heats (`lanes`, `results`, completion timestamps, race numbers) so stats endpoints consume data like truly raced events.
+- Added post-generation validation checks for event split, driver/registration constraints, lane/elimination distribution, and stats endpoint visibility.
+- Added focused unit tests for issue-123 generation constraints.
+- Updated README with issue-123 simulator usage examples and dry-run command.
+  - *Files*: `utils/generate_data.py`, `tests/test_generate_data_issue123.py`, `README.md`, `PATCHNOTES.txt`
+
+---
+
+## Version D0L12R2.2 (Patch)
+
+### Driver Achievements Restored (#122)
+- Restored achievements display in Driver Profile by adding a dedicated Achievements section with earned/total summary and badge rendering.
+- Added `modules/achievements.js` integration to `driver-profile.html` and wired it into the existing profile load flow.
+- Extended `GET /api/stats/driver/<driver_id>` to return an `achievements` payload computed from race brackets, including earned badges and supporting stats.
+- Hardened achievements computation for sparse bracket data (works even when participant arrays are incomplete but race results exist).
+- Updated automated coverage:
+  - `tests/achievements.test.js` now loads the achievements engine via global export in test runtime.
+  - `tests/test_stats_driver_profile.py` now validates the new API achievements payload.
+- Added missing JS test tooling dependencies for this test suite (`vitest`, `jsdom`).
+  - *Files*: `driver-profile.html`, `server.py`, `tests/achievements.test.js`, `tests/test_stats_driver_profile.py`, `README.md`, `package.json`, `package-lock.json`
+
+---
+
+## Version D0L12R2.1 (Patch)
+
+### 🤖 Local GitHub Issue Agent
+- Added a new Python `agent/` module to support an API-driven GitHub issue workflow with Cursor-assisted responses.
+  - Includes env-based config loading, GitHub issue operations (list/read/comment/label/close), prompt/context builders, and a CLI entrypoint (`python -m agent.cli`).
+- Added local action trace logging via `agent/memory.json` to keep a history of automated operations.
+- Added tests for prompt building and issue manager flow (`tests/test_agent_context_builder.py`, `tests/test_agent_issue_manager.py`).
+- Updated dependency manifest to include `PyGithub` and `requests`.
+- Added setup/usage docs in `agent/README.md` and linked quick-start usage in `README.md`.
+  - *Files*: `agent/__init__.py`, `agent/config.py`, `agent/github_client.py`, `agent/context_builder.py`, `agent/cursor_interface.py`, `agent/issue_manager.py`, `agent/cli.py`, `agent/memory.json`, `agent/README.md`, `tests/test_agent_context_builder.py`, `tests/test_agent_issue_manager.py`, `requirements.txt`, `README.md`
+
+---
+
+## Version D0L12R2.0 (Major — Integrated Improvement Plan)
+
+### 🐛 Bug Fixes (Phase 0)
+- **Class Registration (#6, #7)**: Removed fallback that showed all series classes when an event has no class settings; now displays a clear "No Classes Configured" warning in both existing-drivers.html and registration.js.
+- **Event Class Selection Persistence**: Save event class settings with enabled flags and reliable series fallback so only chosen classes stay enabled on create/edit.
+  - *Files*: `events.html`
+- **Stats Counting Unraced Heats (#8)**: Added `isHeatCompleted()` guard in statistics-manager.js so incomplete heats are no longer counted as losses.
+- **Heat Reset Error (#9)**: Fixed `canSafelyResetHeat()` inversion and used `isHeatCompleted()` consistently in `resetCompletedHeat()`. Verified event completion timing.
+- **Final Race Ordering (#11)**: Sorted heats by raceNumber before rendering across all bracket render paths in race-ui.js.
+- **Final Results Navigation (#12)**: Added "Back to Events" button in final-results.html header.
+- **Analytics Fixes (#13, #14, #15)**: Fixed race completion % using actual bracket data, forced horizontal board titles, and confirmed revenue binding correctness.
+- **Registration Event Linking**: `dataManager.registerParticipantForEvent()` now calls the server endpoint and updates local caches when `eventDataService` is unavailable.
+  - *Files*: `utils/data-manager.js`
+  - *Files*: `existing-drivers.html`, `modules/registration.js`, `modules/statistics-manager.js`, `modules/race.js`, `js/race-ui.js`, `final-results.html`, `event-analytics.html`
+
+### ⚙️ Race Engine (Phases 1–2)
+- **Tie-breaker Logic (#1)**: Auto-triggers tie-breaker races after finals complete; includes result processing and settings UI (`tieBreakerEnabled`, `tieBreakerRank`) in event form.
+- **Manual Loss / Un-DQ (#10)**: Added `addManualLoss`, `removeManualLoss`, `undoDisqualification` to RaceManager with context menu integration.
+- **SVG Visual Bracket Tree (#2)**: New toggle between List View and Tree View in race-ui.js; tree rendered via `js/race-ui/bracket-tree.js`.
+- **Module Split (stubs)**: Created `modules/race/` (bracket-builder, elimination-engine, result-processor, tie-breaker, final-results) and `js/race-ui/` (8 sub-modules) with documented migration targets.
+  - *Files*: `modules/race.js`, `js/race-ui.js`, `modules/event-ui.js`, `modules/event-controller.js`, `races.html`, `js/race-ui/bracket-tree.js`, `modules/race/*`, `js/race-ui/*`
+
+### 📄 New Modules (Phases 3–4)
+- **Crash-proof Event Snapshot (#3)**: `modules/event-snapshot.js` — generates printable event snapshots with auto-print option on EventBus updates.
+- **Purse Calculator (#4)**: `modules/purse-calculator.js` — pool config, per-class/injected money, position payouts, and summary HTML.
+- **Tech Inspection Page (#5)**: `tech-inspection.html` — event selection, driver checklist, summary stats, localStorage persistence. Added sidebar nav link and Flask route.
+- **Data Manager Split (stubs)**: Created `utils/data-manager/` (6 domain sub-modules) with documented migration targets. Slimmed deprecated methods in `utils/data-manager.js`.
+  - *Files*: `modules/event-snapshot.js`, `modules/purse-calculator.js`, `tech-inspection.html`, `server.py`, `js/sidebar-nav.js`, `utils/data-manager.js`, `utils/data-manager/*`
+
+### 🏗️ Backend (Phase 5)
+- **Flask Blueprint Stubs**: Created `routes/` directory with 10 blueprint stub files + 2 helper modules (`utils/server_helpers.py`, `utils/auth_helpers.py`).
+- **Migration Runner**: `utils/migration_runner.py` — versioned DB migration with `_migrations` table, auto-discovery, server-startup integration.
+- **DB Logging**: Replaced `print()` statements in `utils/db_manager.py` with Python `logging` module calls.
+  - *Files*: `routes/*`, `utils/server_helpers.py`, `utils/auth_helpers.py`, `utils/migration_runner.py`, `utils/db_manager.py`
+
+### 🔧 Pairing & Achievements (Phase 6)
+- **Pairing Engine Split (stubs)**: Created `modules/pairing/` (lane-assigner, opponent-tracker, heat-generator) with documented migration targets.
+- **Driver Achievements (#16)**: `modules/achievements.js` — 10 achievement types with check functions, badge rendering.
+  - *Files*: `modules/pairing/*`, `modules/achievements.js`
+
+### 📦 Tooling & Infrastructure (Phases 7–8)
+- **Vite Bundler**: `vite.config.js` — multi-page entry points, dev proxy to Flask backend.
+- **ESLint + Prettier**: `.eslintrc.json`, `.prettierrc.json` with project globals.
+- **Constants**: `utils/constants.js` — extracted magic numbers (breakpoints, timing, race engine, UI).
+- **Vitest**: `vitest.config.js` + `tests/purse-calculator.test.js`, `tests/achievements.test.js`.
+- **Pytest**: `tests/conftest.py`, `tests/test_api_participants.py`, `tests/test_api_events.py`.
+- **CSS Split**: `styles/print.css` (print media styles), `styles/tokens.css`, `styles/components.css` (stubs), `styles/pages/` (8 page-specific CSS stubs).
+- **Lazy Charts**: Added `lazyChart()` IntersectionObserver helper to `utils/chart-helpers.js`; integrated into `event-analytics.html` for all 3 charts.
+  - *Files*: `vite.config.js`, `package.json`, `.eslintrc.json`, `.prettierrc.json`, `utils/constants.js`, `vitest.config.js`, `tests/*`, `styles/*`, `utils/chart-helpers.js`, `event-analytics.html`
+
+---
 
 ## Version D0L12R1.12 (Patch)
 
@@ -11,11 +289,11 @@
 ## Version D0L12R1.8 (Patch)
 
 ### 🎬 Animator
-- **Stability + Accuracy Fixes**: Fixed the “Since last race” timer resetting on refresh by correcting completion detection (empty results no longer treated as finished). Recent Results now only shows completed heats, and the header “heats left” now reflects **event remaining** (with current class context).
+- **Stability + Accuracy Fixes**: Fixed the "Since last race" timer resetting on refresh by correcting completion detection (empty results no longer treated as finished). Recent Results now only shows completed heats, and the header "heats left" now reflects **event remaining** (with current class context).
   - *Files*: `modules/animator-controller.js`, `modules/animator-utils.js`, `modules/animator-renderer.js`
 - **Better Driver Cards**: Reduced current-race card size and added a **hover/focus details overlay** (overall stats, win rate, avg position, best streak, recent form, sled info when available).
   - *Files*: `animator.html`, `modules/animator-renderer.js`, `modules/animator-utils.js`
-- **Smoother Feel**: Debounced bursty WebSocket refreshes, optimized participant lookups via an ID map, and avoided re-animating/re-rendering side lists when content hasn’t changed.
+- **Smoother Feel**: Debounced bursty WebSocket refreshes, optimized participant lookups via an ID map, and avoided re-animating/re-rendering side lists when content hasn't changed.
   - *Files*: `modules/animator-controller.js`, `modules/animator-renderer.js`, `modules/animator-utils.js`
 
 ---
@@ -23,7 +301,7 @@
 ## Version D0L12R1.9 (Patch)
 
 ### 🎬 Animator
-- **Instant Result Updates + Cinematic Flow**: Animator now refreshes immediately on bracket/result updates (Socket.IO-first, with a fast 3s fallback poll only when WS is unavailable). When a heat completes, the center panel performs an **in-place finish-order reveal** (all lanes), then the completed heat **slides into Recent Results** and the next heat **promotes from Up Next into center** using a floating layer so cards don’t “teleport”.
+- **Instant Result Updates + Cinematic Flow**: Animator now refreshes immediately on bracket/result updates (Socket.IO-first, with a fast 3s fallback poll only when WS is unavailable). When a heat completes, the center panel performs an **in-place finish-order reveal** (all lanes), then the completed heat **slides into Recent Results** and the next heat **promotes from Up Next into center** using a floating layer so cards don't "teleport".
   - *Files*: `animator.html`, `modules/animator-controller.js`, `modules/animator-renderer.js`
 
 ---
@@ -31,7 +309,7 @@
 ## Version D0L12R1.10 (Patch)
 
 ### 🎬 Animator
-- **UI Polish + Readability**: Removed the “Updated: … ago” status pill (cleaner broadcast UI), added clear **finish-position badges/colors** during result reveals, and expanded driver info (last race class + richer career context). Also prevented periodic refreshes from resetting hover/expanded states by skipping DOM rebuilds when the displayed content hasn’t changed.
+- **UI Polish + Readability**: Removed the "Updated: … ago" status pill (cleaner broadcast UI), added clear **finish-position badges/colors** during result reveals, and expanded driver info (last race class + richer career context). Also prevented periodic refreshes from resetting hover/expanded states by skipping DOM rebuilds when the displayed content hasn't changed.
   - *Files*: `animator.html`, `modules/animator-controller.js`, `modules/animator-renderer.js`, `modules/animator-utils.js`
 
 ---
@@ -39,7 +317,7 @@
 ## Version D0L12R1.7 (Patch)
 
 ### 🎬 Animator
-- **Live Animator Dashboard Rework**: Made `animator.html` consistently functional and “live” by bootstrapping the missing data layer, forcing fresh bracket loads on real-time events, and improving driver name resolution. Added **AUTO vs PINNED** mode (click Up Next to pin; `L` to return to live) plus **Recent Results replay** (click results or `1/2/3`). Improved GSAP transitions and aligned visuals to the app’s glass UI styling.
+- **Live Animator Dashboard Rework**: Made `animator.html` consistently functional and "live" by bootstrapping the missing data layer, forcing fresh bracket loads on real-time events, and improving driver name resolution. Added **AUTO vs PINNED** mode (click Up Next to pin; `L` to return to live) plus **Recent Results replay** (click results or `1/2/3`). Improved GSAP transitions and aligned visuals to the app's glass UI styling.
   - *Files*: `animator.html`, `modules/animator-controller.js`, `modules/animator-renderer.js`, `modules/animator-utils.js`
 
 ---
@@ -55,7 +333,7 @@
 ## Version D0L12R1.5 (Patch)
 
 ### 🖥️ Live Display
-- **Visual Refresh + Controls**: Improved Live Display visuals to better match EPC17’s glass UI (spacing, card contrast, in-progress highlighting, focus visibility, reduced-motion support) and fixed the Refresh/Fullscreen controls (implemented handlers + fullscreen label updates).
+- **Visual Refresh + Controls**: Improved Live Display visuals to better match EPC17's glass UI (spacing, card contrast, in-progress highlighting, focus visibility, reduced-motion support) and fixed the Refresh/Fullscreen controls (implemented handlers + fullscreen label updates).
   - *File*: `live-display.html`
 
 ### 🧾 Logging
@@ -67,11 +345,11 @@
 ## Version D0L12R1.4 (Patch)
 
 ### 🖥️ Live Display
-- **Recent Results Auto-Refresh Fix**: Fixed the Live Display’s 8s refresh clearing “Recent Results” by properly awaiting `getRaceBracket()` and re-extracting races from the bracket during refresh.
+- **Recent Results Auto-Refresh Fix**: Fixed the Live Display's 8s refresh clearing "Recent Results" by properly awaiting `getRaceBracket()` and re-extracting races from the bracket during refresh.
   - *File*: `live-display.html`
 
 ### 🏁 Races
-- **Live Display App Init Crash Fix**: Hardened `RaceUI` session persistence calls so pages that don’t include `SessionPersistence` (e.g., Live Display) don’t crash initialization (`Cannot read properties of undefined (reading 'Races')`).
+- **Live Display App Init Crash Fix**: Hardened `RaceUI` session persistence calls so pages that don't include `SessionPersistence` (e.g., Live Display) don't crash initialization (`Cannot read properties of undefined (reading 'Races')`).
   - *File*: `js/race-ui.js`
 
 ---
@@ -83,7 +361,7 @@
   - *File*: `styles.css`
 - **Drivers / Registrations Counts Fix**: Corrected event driver + registration counts to reflect actual event registrations (`event.participants` / `participant.eventIds`) and event-specific class entries (`eventClasses[eventId]`).
   - *File*: `utils/data-manager.js`
-- **View Modal “Edit Event” Button Fix**: Fixed the modal’s Edit button closing the overlay immediately after opening the edit form (corrected click handler order).
+- **View Modal "Edit Event" Button Fix**: Fixed the modal's Edit button closing the overlay immediately after opening the edit form (corrected click handler order).
   - *File*: `events.html`
 
 ### 📊 Analytics
@@ -91,7 +369,7 @@
   - *File*: `analytics.html`
 
 ### 🏁 Races
-- **“Back to Events” Button Fix**: Bound RaceUI’s delegated listeners during races page initialization so the “Back to Events” button (and other race-management actions) work reliably. Also prevented event-card selection from firing when clicking action buttons/links.
+- **"Back to Events" Button Fix**: Bound RaceUI's delegated listeners during races page initialization so the "Back to Events" button (and other race-management actions) work reliably. Also prevented event-card selection from firing when clicking action buttons/links.
   - *Files*: `races.html`, `js/race-ui.js`
 
 ---
@@ -103,13 +381,13 @@
   - **Pace vs Standard**: Added an Event Pace chart (runs/hour) with a 7-minute standard baseline and improved pace calculations using start-to-start cycle times.
   - **Driver Demographics**: Added Driver Age Distribution (DOB-based, calculated at event date).
   - **Event Time Analysis**: Fixed event duration calculation, improved timestamp extraction, added time-saved vs standard metric, and prevented Chart.js canvases from being destroyed when data is missing.
-  - **Event-Specific Panels**: Class breakdown, driver stats, and lane win % now derive from the selected event’s bracket/results (not lifetime participant totals). Email/PDF “Send Event Stats” now uses event-specific stats.
+  - **Event-Specific Panels**: Class breakdown, driver stats, and lane win % now derive from the selected event's bracket/results (not lifetime participant totals). Email/PDF "Send Event Stats" now uses event-specific stats.
   - *File*: `event-analytics.html`
 
 ### 👤 Driver Profiles
 - **Driver Profile Stats Fix**: Fixed driver stats not populating by aligning analytics heat completion detection with the current bracket schema (`status: 'completed'` + results) and hardening lane/finish-position parsing to avoid FS/DSQ type errors.
   - **Access Model**: Driver profile page now allows `registration` users (and keeps legacy `drivers profile` permission) so registration workflows can view driver performance.
-  - **UX**: Added a clear “No completed races yet” banner and chart/table placeholders instead of blank widgets when a driver has no completed race data.
+  - **UX**: Added a clear "No completed races yet" banner and chart/table placeholders instead of blank widgets when a driver has no completed race data.
   - **Lane Performance UI**: Made the Lane Statistics table compact, scroll-safe, and resilient to malformed/oversized lane data (sorted lanes + safety cap).
   - **Chart Resize Fix**: Wrapped Chart.js canvases in fixed-height containers to prevent runaway canvas growth (e.g., `height: 32760px`) during responsive resizing.
   - *Files*: `server.py`, `utils/auth.js`, `driver-profile.html`, `tests/test_stats_driver_profile.py`
@@ -139,7 +417,7 @@
 **Summary**: This major release represents a significant milestone for EPC17, consolidating months of development into a stable, feature-rich platform for professional race management. It includes a complete overhaul of the user interface, robust backend improvements, enhanced analytics, and a refined pairing engine.
 
 ### 🌟 Core Features
-- **Deterministic Pairing Engine**: 
+- **Deterministic Pairing Engine**:
   - Guaranteed rematch avoidance until necessary.
   - Intelligent lane balancing and bye-run handling.
   - Tie-breaker race generation for ranking resolution.

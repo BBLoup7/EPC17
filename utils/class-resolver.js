@@ -114,13 +114,9 @@ const ClassResolver = {
      * Manual resolution (fallback if SeriesBusinessLogic not available)
      */
     _manualResolve(series, eventClassSettings) {
-        // If no event class settings, return all series classes (enabled by default)
+        // Strict behavior: event must explicitly configure classes
         if (!eventClassSettings || eventClassSettings.length === 0) {
-            return series.sledClasses.map(cls => ({
-                ...cls,
-                enabled: true,
-                price: cls.defaultFee
-            }));
+            return [];
         }
         
         // Merge event settings with series class definitions

@@ -96,6 +96,12 @@ class DriverStatsEndpointTests(unittest.TestCase):
             self.assertIn("1", lane_perf)  # JSON keys become strings
             self.assertIn("2", lane_perf)
 
+            achievements = data.get("achievements")
+            self.assertIsInstance(achievements, dict)
+            self.assertEqual(10, achievements.get("total"))
+            earned_ids = {a.get("id") for a in achievements.get("earned", [])}
+            self.assertIn("first_win", earned_ids)
+
 
 if __name__ == "__main__":
     unittest.main()

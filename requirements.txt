@@ -5,3 +5,5 @@ python-socketio==5.11.0
 cryptography==41.0.7
 uuid 
 Faker==23.2.1
+PyGithub
+requests

@@ -336,6 +336,9 @@ class StatisticsManager {
                         for (const heat of round.heats) {
                             if (!heat.results || !heat.lanes) continue;
                             
+                            // Skip incomplete heats — only count completed races
+                            if (!StatisticsManager.isHeatCompleted(heat)) continue;
+                            
                             // Find this participant in the heat
                             const participantLane = heat.lanes.find(lane => 
                                 lane.participant && lane.participant.id === participantId
@@ -932,6 +935,9 @@ class StatisticsManager {
                     for (const heat of round.heats) {
                         if (!heat.results || !heat.lanes) continue;
                         
+                        // Skip incomplete heats — only count completed races
+                        if (!StatisticsManager.isHeatCompleted(heat)) continue;
+                        
                         for (const result of heat.results) {
                             const lane = heat.lanes.find(l => 
                                 l.participant && l.participant.id === result.participantId
@@ -972,6 +978,23 @@ class StatisticsManager {
         this.lastUpdateTime.set(cacheKey, Date.now());
 
         return laneStats;
+    }
+
+    /**
+     * Determine whether a heat should be treated as completed for statistics.
+     * Mirrors the Python is_heat_completed() logic in server.py.
+     * @param {Object} heat - Heat object from bracket data
+     * @returns {boolean} True if the heat is completed
+     */
+    static isHeatCompleted(heat) {
+        if (!heat || typeof heat !== 'object') return false;
+        // Legacy schema: isComplete flag
+        if (heat.isComplete === true) return true;
+        // Current schema: status + non-empty results
+        if (heat.status === 'completed') {
+            return Array.isArray(heat.results) && heat.results.length > 0;
+        }
+        return false;
     }
 }
 

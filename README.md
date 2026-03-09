@@ -40,6 +40,7 @@ The system includes a **Flask backend** for API and data management, a modular *
 ### 👥 Participant & Driver Management
 - **Registration**: Full CRUD operations for participants, including tech sheet tracking.
 - **Driver Profiles**: Comprehensive stats tracking (wins, losses, reaction times).
+- **Driver Achievements**: Achievement badges and progress summary on Driver Profile.
 - **Class Management**: Flexible assignment of drivers to multiple classes.
 - **Driver Editing**: Dedicated interface for managing driver details without affecting event data.
 
@@ -99,6 +100,15 @@ The system uses SQLite. The database will be automatically initialized on the fi
 ```bash
 # Optional: Generate synthetic test data
 python utils/generate_data.py --force-reset
+
+# Issue #123 realistic API simulation (40 events in one series)
+# - 25 completed events, 15 upcoming events
+# - 50-100 unique drivers per event
+# - 70-250 registrations per event (rare peak events can approach 300)
+python utils/generate_data.py --base-url http://localhost:5000 --username Admin --password Admin321
+
+# Dry-run only (prints event archetype/lane/elimination plan, no writes)
+python utils/generate_data.py --dry-run
 ```
 
 ### 5. Start the Server
@@ -212,6 +222,18 @@ Run unit tests using `pytest`:
 ```bash
 pytest tests/
 ```
+
+### Local GitHub Issue Agent
+You can run a local, API-driven issue workflow from `agent/`:
+
+```powershell
+set GITHUB_TOKEN=your_token_here
+set GITHUB_REPO=owner/repo
+python -m agent.cli list
+python -m agent.cli resolve 14 --context server.py --post --label in-progress
+```
+
+See `agent/README.md` for modes and full command options.
 
 ## Deployment
 

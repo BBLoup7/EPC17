@@ -1,0 +1,35 @@
+{
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "extends": ["eslint:recommended"],
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-console": "off",
+    "prefer-const": "warn",
+    "no-var": "warn",
+    "eqeqeq": ["warn", "smart"],
+    "curly": ["warn", "multi-line"],
+    "no-throw-literal": "warn"
+  },
+  "globals": {
+    "DataManager": "readonly",
+    "RaceManager": "readonly",
+    "RaceUI": "readonly",
+    "PairingEngine": "readonly",
+    "Helpers": "readonly",
+    "Validator": "readonly",
+    "EventBus": "readonly",
+    "debugLogger": "readonly",
+    "Chart": "readonly",
+    "jsPDF": "readonly",
+    "gsap": "readonly",
+    "io": "readonly"
+  }
+}

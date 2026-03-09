@@ -1,5 +1,22 @@
 {
+  "name": "epc17",
+  "version": "1.0.0",
+  "description": "EPC17 Snowmobile Drag Racing Event Management System",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "lint": "eslint js/ modules/ utils/ --ext .js",
+    "lint:fix": "eslint js/ modules/ utils/ --ext .js --fix",
+    "format": "prettier --write \"js/**/*.js\" \"modules/**/*.js\" \"utils/**/*.js\""
+  },
   "dependencies": {
     "better-sqlite3": "^12.4.1"
+  },
+  "devDependencies": {
+    "jsdom": "^28.0.0",
+    "vitest": "^4.0.18"
   }
 }

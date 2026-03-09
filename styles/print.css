@@ -1,0 +1,99 @@
+/**
+ * Print Styles for EPC17
+ * Applied via @media print — ensures clean printed output
+ * for race brackets, results, and analytics.
+ */
+
+@media print {
+    /* Hide navigation and interactive elements */
+    .sidebar,
+    .mobile-nav,
+    .toast-container,
+    .btn,
+    button,
+    .header-actions,
+    .filter-controls,
+    .bracket-view-toggle,
+    .context-menu,
+    .generate-next-round-btn,
+    .bottom-actions {
+        display: none !important;
+    }
+
+    /* Reset backgrounds for printing */
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 11px !important;
+    }
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .card,
+    .stat-card,
+    .stat-card-modern {
+        background: white !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+
+    /* Table formatting */
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+
+    th, td {
+        border: 1px solid #999 !important;
+        padding: 4px 8px !important;
+        color: black !important;
+        background: white !important;
+    }
+
+    th {
+        background: #eee !important;
+        font-weight: bold !important;
+    }
+
+    /* Heat cards */
+    .heat-card,
+    .heat-horizontal {
+        border: 1px solid #999 !important;
+        background: white !important;
+        page-break-inside: avoid;
+    }
+
+    /* Charts — hide canvas, show data */
+    canvas {
+        max-height: 200px !important;
+    }
+
+    /* Page breaks */
+    .round-section {
+        page-break-before: auto;
+        page-break-inside: avoid;
+    }
+
+    h1, h2, h3 {
+        color: black !important;
+        page-break-after: avoid;
+    }
+
+    /* Ensure links show URL */
+    a[href]::after {
+        content: none; /* Don't clutter race printouts with URLs */
+    }
+
+    /* Status badges — use text instead of colors */
+    .badge,
+    .status-badge {
+        border: 1px solid #666 !important;
+        background: transparent !important;
+        color: black !important;
+    }
+}

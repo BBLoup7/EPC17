@@ -274,6 +274,38 @@ const EventUI = {
                 </div>
                 
                 ${this.renderCustomOutcomesSection(event, isEdit, lockSettings)}
+                
+                ${this.renderTieBreakerSection(event, isEdit)}
+            </div>
+        `;
+    },
+
+    /**
+     * Render tie-breaker settings section
+     */
+    renderTieBreakerSection(event, isEdit) {
+        const enabled = isEdit && (event.tieBreakerEnabled === true || event.tieBreakerEnabled === 'true' || event.tieBreakerEnabled === 1);
+        const rank = isEdit && event.tieBreakerRank ? event.tieBreakerRank : 3;
+        
+        return `
+            <div class="form-group" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                <h5>Tie-Breaker Settings</h5>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-checkbox" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="tieBreakerEnabled" id="tieBreakerEnabled" 
+                                   ${enabled ? 'checked' : ''}>
+                            <span>Enable tie-breaker races</span>
+                        </label>
+                        <small>When enabled, automatic tie-breaker races are generated after the final to resolve ties.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="tieBreakerRank">Resolve ties up to position</label>
+                        <input type="number" name="tieBreakerRank" id="tieBreakerRank" 
+                               min="1" max="20" value="${rank}" style="max-width: 100px;">
+                        <small>Tie-breaker races will be generated for ties within this rank.</small>
+                    </div>
+                </div>
             </div>
         `;
     },

@@ -319,29 +319,28 @@ def users_permissions_page():
         return 'Access Denied', 403
     return render_template('users.html')
 
+# Tech Inspection page
+@app.route('/tech-inspection.html')
+def tech_inspection_page():
+    return render_template('tech-inspection.html')
+
 # Version endpoint
 @app.route('/api/version', methods=['GET'])
 def get_version():
-    """Get the latest version from PATCHNOTES.txt"""
+    """Get the current version from version.json (single source of truth)."""
     try:
-        patchnotes_path = os.path.join(os.path.dirname(__file__), 'PATCHNOTES.txt')
-        if os.path.exists(patchnotes_path):
-            with open(patchnotes_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                # Extract version from first line that starts with "## Version"
-                lines = content.split('\n')
-                for line in lines:
-                    if line.startswith('## Version'):
-                        # Extract version like "D0L11R1.36" from "## Version D0L11R1.36 (description)"
-                        version_match = line.replace('## Version ', '').split(' ')[0]
-                        return jsonify({'version': version_match, 'name': 'EPC17'})
+        version_path = os.path.join(os.path.dirname(__file__), 'version.json')
+        if os.path.exists(version_path):
+            with open(version_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            v = f"{data.get('major', 0)}.{data.get('minor', 0)}.{data.get('patch', 0)}"
+            return jsonify({'version': v, 'name': 'EPC17'})
         return jsonify({'version': 'unknown', 'name': 'EPC17'})
     except Exception as e:
-        print(f"[ERROR] Failed to read version from PATCHNOTES.txt: {e}")
+        print(f"[ERROR] Failed to read version from version.json: {e}")
         import traceback
         traceback.print_exc()
-        # Return a valid response instead of 500 error
-        return jsonify({'version': 'D0L11R1.36', 'name': 'EPC17'})
+        return jsonify({'version': '2.6.0', 'name': 'EPC17'})
 
 # API Endpoints
 @app.route('/api/participants', methods=['GET', 'POST'])
@@ -387,65 +386,51 @@ def handle_participants():
         log_debug(f"[DEBUG] Permission check failed: {msg}")
         return jsonify({'error': msg}), code
 
-    log_debug("[DEBUG] Permission check passed, getting database manager")
+    log_debug("[DEBUG] Permission check passed, querying paginated participants")
+    event_id = request.args.get('eventId')
+    search = request.args.get('search')
+    class_filter = request.args.get('class')
+    status = request.args.get('status')
+    page = max(int(request.args.get('page', 1)), 1)
+    limit = min(max(int(request.args.get('limit', 50)), 1), 500)
+
     try:
-        # Get all participants from database
-        participants = get_db_manager().get_participants()
-        log_debug(f"[DEBUG] Retrieved {len(participants)} participants from database - SERVER_VERSION_2025")
+        result = get_db_manager().get_participants_paginated(
+            page=page,
+            limit=limit,
+            search=search,
+            status=status,
+            event_id=event_id,
+            class_filter=class_filter,
+        )
     except Exception as e:
         print(f"[ERROR] Failed to get participants from database: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Database error retrieving participants'}), 500
 
-    # Apply filters
-    event_id = request.args.get('eventId')
-    series_id = request.args.get('seriesId')
-    search = request.args.get('search')
-    class_filter = request.args.get('class')
+    log_debug(
+        f"DEBUG DEBUG - Returning {len(result['participants'])} participants "
+        f"(total: {result['total']}, page={result['page']}, limit={result['limit']})"
+    )
+    return jsonify(result)
 
-    if event_id:
-        log_debug(f"DEBUG DEBUG - Filtering participants by eventId: {event_id}")
-        filtered_participants = [p for p in participants if p.get('eventId') == event_id]
-        log_debug(f"DEBUG DEBUG - Found {len(filtered_participants)} participants for event {event_id}")
-        participants = filtered_participants
-    if series_id:
-        participants = [p for p in participants if series_id in p.get('series', [])]
-    if search:
-        search_lower = search.lower()
-        participants = [p for p in participants if p.get('name', '').lower().find(search_lower) != -1]
-    if class_filter:
-        participants = [p for p in participants if class_filter in p.get('classes', [])]
-
-    # Apply pagination
-    page = int(request.args.get('page', 1))
-    limit = min(int(request.args.get('limit', 10000)), 10000)  # Allow up to 10000 participants
-
-    # Log performance warning for large datasets
-    if len(participants) > 10000:
-        print(f"PERFORMANCE WARNING: Loading {len(participants)} participants. Consider contacting software representative for optimization.")
-
-    log_debug(f"DEBUG DEBUG - Loading participants: page={page}, limit={limit}, total_participants={len(participants)}")
-
-    total = len(participants)
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-
-    paginated_participants = participants[start_idx:end_idx]
-
-    log_debug(f"DEBUG DEBUG - Returning {len(paginated_participants)} participants (total: {total})")
-
-    return jsonify({
-        'participants': paginated_participants,
-        'total': total,
-        'page': page,
-        'limit': limit,
-        'totalPages': (total + limit - 1) // limit
-    })
-
-@app.route('/api/participants/<participant_id>', methods=['PUT', 'DELETE'])
+@app.route('/api/participants/<participant_id>', methods=['GET', 'PUT', 'DELETE'])
 def handle_participant_by_id(participant_id):
     """Handle participant updates and deletion"""
+    if request.method == 'GET':
+        ok, err = require_permission('registration')
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
+        try:
+            participant = get_db_manager().get_participant(participant_id)
+            if not participant:
+                return jsonify({'error': 'Participant not found'}), 404
+            return jsonify(participant), 200
+        except Exception as e:
+            return jsonify({'error': f'Lookup failed: {str(e)}'}), 500
+
     if request.method == 'PUT':
         ok, err = require_permission('registration')
         if not ok:
@@ -678,46 +663,32 @@ def handle_events():
     if not ok:
         msg, code = err
         return jsonify({'error': msg}), code
-    events = get_db_manager().get_events()
     # Admin sees all; non-admins may be scoped by allowedEvents
     sess = get_session_from_request()
+    allowed_events = None
     if sess and not is_admin_session(sess):
         allowed = set(sess.get('allowedEvents', []) or [])
         if allowed:
-            events = [e for e in events if e.get('id') in allowed]
-    
-    # Apply filters
+            allowed_events = sorted(allowed)
+
+    # Apply filters (at SQL level)
     series_id = request.args.get('seriesId')
     status = request.args.get('status')
     search = request.args.get('search')
-    
-    if series_id:
-        events = [e for e in events if e.get('seriesId') == series_id]
-    if status:
-        events = [e for e in events if e.get('status') == status]
-    if search:
-        search_lower = search.lower()
-        events = [e for e in events if e.get('name', '').lower().find(search_lower) != -1]
-    
-    # Apply pagination
-    page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 1000))  # Increased limit to allow more events
-    
-    total = len(events)
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    
-    paginated_events = events[start_idx:end_idx]
-    
-    log_debug(f"DEBUG - Returning {len(paginated_events)} events (total: {total})")
-    
-    return jsonify({
-        'events': paginated_events,
-        'total': total,
-        'page': page,
-        'limit': limit,
-        'totalPages': (total + limit - 1) // limit
-    })
+    page = max(int(request.args.get('page', 1)), 1)
+    limit = min(max(int(request.args.get('limit', 50)), 1), 500)
+
+    result = get_db_manager().get_events_paginated(
+        page=page,
+        limit=limit,
+        series_id=series_id,
+        status=status,
+        search=search,
+        allowed_event_ids=allowed_events,
+    )
+
+    log_debug(f"DEBUG - Returning {len(result['events'])} events (total: {result['total']})")
+    return jsonify(result)
 
 @app.route('/api/events/<event_id>', methods=['PUT', 'DELETE'])
 def handle_event_by_id(event_id):
@@ -861,8 +832,9 @@ def register_participant_for_event(event_id):
         if not event:
             return jsonify({'error': 'Event not found'}), 404
         
-        # Find participant
-        participant = next((p for p in participants if p['id'] == participant_id), None)
+        # Find participant with normalized ID comparison to avoid false misses
+        participant_id_str = str(participant_id)
+        participant = next((p for p in participants if str(p.get('id')) == participant_id_str), None)
         if not participant:
             return jsonify({'error': 'Participant not found'}), 404
         
@@ -1069,39 +1041,39 @@ def get_race_brackets():
     db = get_db_manager()
 
     # Get query parameters
-    page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 100))
+    page = max(int(request.args.get('page', 1)), 1)
+    limit = min(max(int(request.args.get('limit', 50)), 1), 200)
     event_id = request.args.get('eventId')
-
-    # Get brackets from database
-    brackets = db.get_race_brackets()
-
-    # Apply filtering
-    if event_id:
-        brackets = [b for b in brackets if b.get('eventId') == event_id]
-
-    # Apply pagination
-    total = len(brackets)
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    paginated_brackets = brackets[start_idx:end_idx]
 
     # Scope by allowedEvents if not admin
     sess = get_session_from_request()
+    allowed_ids = None
     if sess and not is_admin_session(sess):
         allowed = set(sess.get('allowedEvents', []) or [])
         if allowed:
-            paginated_brackets = [b for b in paginated_brackets if b.get('eventId') in allowed]
-            # Recalculate total for filtered results
-            total = len([b for b in brackets if b.get('eventId') in allowed])
+            allowed_ids = sorted(allowed)
 
-    return jsonify({
-        'brackets': paginated_brackets,
-        'total': total,
-        'page': page,
-        'limit': limit,
-        'totalPages': (total + limit - 1) // limit
-    })
+    if event_id:
+        # Fetch full bracket data only for a specific event.
+        bracket = db.get_race_bracket_by_event_id(event_id)
+        brackets = [bracket] if bracket else []
+        if allowed_ids is not None:
+            brackets = [b for b in brackets if b and b.get('eventId') in allowed_ids]
+        total = len(brackets)
+        return jsonify({
+            'brackets': brackets,
+            'total': total,
+            'page': 1,
+            'limit': max(total, 1),
+            'totalPages': 1
+        })
+
+    metadata_result = db.get_race_bracket_metadata(
+        page=page,
+        limit=limit,
+        allowed_event_ids=allowed_ids,
+    )
+    return jsonify(metadata_result)
 
 # WORKING POST ENDPOINT - COPIED EXACTLY FROM auth/login
 @app.route('/api/race-brackets', methods=['POST'])
@@ -1247,13 +1219,7 @@ def health_check():
         return jsonify({
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
-            'database_stats': {
-                'participants': len(db_manager.get_participants()),
-                'series': len(db_manager.get_series()),
-                'events': len(db_manager.get_events()),
-                'races': len(db_manager.get_all_races()),
-                'race_brackets': len(db_manager.get_race_brackets())
-            }
+            'database_stats': db_manager.get_stats_counts()
         })
     except Exception as e:
         return jsonify({
@@ -1791,6 +1757,208 @@ def parse_finish_position(value):
     return None
 
 
+def compute_driver_achievements(driver_id, race_brackets, event_filter=None):
+    """
+    Compute driver achievements based on race bracket history.
+
+    Mirrors the frontend AchievementsEngine rules so API consumers can render
+    achievements without re-processing the full bracket tree on the client.
+    """
+    stats = {
+        'totalRaces': 0,
+        'totalWins': 0,
+        'totalLosses': 0,
+        'bestWinStreak': 0,
+        'classWins': 0,
+        'uniqueClasses': 0,
+        'comebackWins': 0,
+        'perfectEvents': 0,
+        'uniqueWinLanes': 0,
+    }
+
+    achievement_definitions = [
+        {
+            'id': 'first_win',
+            'name': 'First Blood',
+            'description': 'Win your very first race',
+            'icon': '🏆',
+            'rarity': 'common',
+            'check': lambda s: s['totalWins'] >= 1,
+        },
+        {
+            'id': 'win_streak_3',
+            'name': 'Hot Streak',
+            'description': 'Win 3 races in a row',
+            'icon': '🔥',
+            'rarity': 'rare',
+            'check': lambda s: s['bestWinStreak'] >= 3,
+        },
+        {
+            'id': 'win_streak_5',
+            'name': 'Unstoppable',
+            'description': 'Win 5 races in a row',
+            'icon': '⚡',
+            'rarity': 'epic',
+            'check': lambda s: s['bestWinStreak'] >= 5,
+        },
+        {
+            'id': 'race_10',
+            'name': 'Veteran',
+            'description': 'Complete 10 races',
+            'icon': '🎖️',
+            'rarity': 'common',
+            'check': lambda s: s['totalRaces'] >= 10,
+        },
+        {
+            'id': 'race_50',
+            'name': 'Road Warrior',
+            'description': 'Complete 50 races',
+            'icon': '🛡️',
+            'rarity': 'rare',
+            'check': lambda s: s['totalRaces'] >= 50,
+        },
+        {
+            'id': 'event_winner',
+            'name': 'Champion',
+            'description': 'Win a class in an event',
+            'icon': '👑',
+            'rarity': 'epic',
+            'check': lambda s: s['classWins'] >= 1,
+        },
+        {
+            'id': 'multi_class',
+            'name': 'Jack of All Trades',
+            'description': 'Race in 3 or more different classes',
+            'icon': '🃏',
+            'rarity': 'rare',
+            'check': lambda s: s['uniqueClasses'] >= 3,
+        },
+        {
+            'id': 'comeback_king',
+            'name': 'Comeback King',
+            'description': 'Win a race after being in the lower bracket',
+            'icon': '💪',
+            'rarity': 'rare',
+            'check': lambda s: s['comebackWins'] >= 1,
+        },
+        {
+            'id': 'perfect_event',
+            'name': 'Flawless Victory',
+            'description': 'Win every race in a class with no losses',
+            'icon': '💎',
+            'rarity': 'legendary',
+            'check': lambda s: s['perfectEvents'] >= 1,
+        },
+        {
+            'id': 'lane_master',
+            'name': 'Lane Master',
+            'description': 'Win from every lane position (1-4)',
+            'icon': '🎯',
+            'rarity': 'epic',
+            'check': lambda s: s['uniqueWinLanes'] >= 4,
+        },
+    ]
+
+    current_streak = 0
+    win_lanes = set()
+    classes = set()
+    chronological_results = []
+
+    for bracket in race_brackets or []:
+        if not isinstance(bracket, dict):
+            continue
+
+        bracket_event_id = bracket.get('eventId')
+        if event_filter and bracket_event_id != event_filter:
+            continue
+
+        classes_map = bracket.get('classes')
+        if not isinstance(classes_map, dict):
+            continue
+
+        for class_name, class_data in classes_map.items():
+            if not isinstance(class_data, dict):
+                continue
+
+            participants = class_data.get('participants') or []
+            participant_obj = next(
+                (p for p in participants if isinstance(p, dict) and p.get('id') == driver_id),
+                None
+            )
+
+            winner = class_data.get('winner')
+            if isinstance(winner, dict) and winner.get('id') == driver_id:
+                stats['classWins'] += 1
+                if participant_obj and (participant_obj.get('losses') or 0) == 0:
+                    stats['perfectEvents'] += 1
+                if participant_obj and participant_obj.get('currentBracket') == 'lower':
+                    stats['comebackWins'] += 1
+
+            for round_data in class_data.get('rounds') or []:
+                if not isinstance(round_data, dict):
+                    continue
+                for heat in round_data.get('heats') or []:
+                    if not is_heat_completed(heat):
+                        continue
+                    if not isinstance(heat.get('results'), list):
+                        continue
+
+                    result = next(
+                        (
+                            r for r in heat['results']
+                            if isinstance(r, dict) and r.get('participantId') == driver_id
+                        ),
+                        None
+                    )
+                    if not result:
+                        continue
+
+                    classes.add(class_name)
+                    position = parse_finish_position(result.get('position')) or 0
+                    is_win = position == 1
+                    completed_at = heat.get('completedAt') or ''
+                    chronological_results.append((completed_at, is_win))
+
+                    stats['totalRaces'] += 1
+                    if is_win:
+                        stats['totalWins'] += 1
+                        lane = get_heat_lane_for_participant(heat, driver_id)
+                        if lane not in [None, 'Unknown']:
+                            win_lanes.add(lane)
+                    else:
+                        stats['totalLosses'] += 1
+
+    for _, is_win in sorted(chronological_results, key=lambda item: item[0]):
+        if is_win:
+            current_streak += 1
+            stats['bestWinStreak'] = max(stats['bestWinStreak'], current_streak)
+        else:
+            current_streak = 0
+
+    stats['uniqueClasses'] = len(classes)
+    stats['uniqueWinLanes'] = len(win_lanes)
+
+    earned = []
+    for ach in achievement_definitions:
+        try:
+            if ach['check'](stats):
+                earned.append({
+                    'id': ach['id'],
+                    'name': ach['name'],
+                    'description': ach['description'],
+                    'icon': ach['icon'],
+                    'rarity': ach['rarity'],
+                })
+        except Exception:
+            continue
+
+    return {
+        'earned': earned,
+        'stats': stats,
+        'total': len(achievement_definitions),
+    }
+
+
 def add_cors_headers(response):
     """Add CORS headers to response"""
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -1811,41 +1979,25 @@ def get_overall_analytics():
     try:
         db = get_db_manager()
         
-        # Get all participants, events, and race brackets
-        participants = db.get_participants()
-        events = db.get_events()
-        race_brackets = db.get_race_brackets()
-        
-        # Calculate overall statistics
-        total_drivers = len(participants)
-        total_events = len(events)
-        
-        # Calculate total revenue from participants
-        total_revenue = sum(p.get('totalFee', 0) or 0 for p in participants)
-        
-        # Count total entries (participant-event registrations)
+        counts = db.get_stats_counts()
+        total_drivers = counts.get('participants', 0)
+        total_events = counts.get('events', 0)
+        total_revenue = db.get_total_revenue()
+        total_races = db.get_completed_races_count()
+
+        # Count total entries from eventClasses map (single table scan only).
         total_entries = 0
-        for p in participants:
-            event_classes = p.get('eventClasses', {})
+        for participant in db.get_participants():
+            event_classes = participant.get('eventClasses', {})
             if isinstance(event_classes, dict):
                 total_entries += len(event_classes)
-        
-        # Count completed races from race brackets
-        total_races = 0
-        for bracket in race_brackets:
-            if bracket and isinstance(bracket.get('classes'), dict):
-                for class_name, class_data in bracket['classes'].items():
-                    if isinstance(class_data.get('rounds'), list):
-                        for round_data in class_data['rounds']:
-                            if isinstance(round_data.get('heats'), list):
-                                total_races += sum(1 for heat in round_data['heats'] if is_heat_completed(heat))
-        
-        # Events by status
+
+        status_counts = db.get_events_by_status_counts()
         events_by_status = {
-            'upcoming': sum(1 for e in events if e.get('status') == 'upcoming'),
-            'active': sum(1 for e in events if e.get('status') in ['active', 'in-progress']),
-            'completed': sum(1 for e in events if e.get('status') == 'completed'),
-            'cancelled': sum(1 for e in events if e.get('status') == 'cancelled')
+            'upcoming': status_counts.get('upcoming', 0),
+            'active': status_counts.get('active', 0) + status_counts.get('in-progress', 0),
+            'completed': status_counts.get('completed', 0),
+            'cancelled': status_counts.get('cancelled', 0),
         }
         
         # Average participants per event
@@ -1881,12 +2033,8 @@ def get_event_analytics(event_id):
         if not event:
             return jsonify({'error': 'Event not found'}), 404
         
-        # Get participants for this event
-        all_participants = db.get_participants()
-        event_participants = [
-            p for p in all_participants 
-            if event_id in (p.get('eventClasses', {}) or {})
-        ]
+        # Get participants for this event (database-level filter).
+        event_participants = db.get_participants_by_event(event_id)
         
         # Get race bracket for this event
         race_bracket = db.get_race_bracket_by_event_id(event_id)
@@ -1972,8 +2120,8 @@ def get_driver_analytics(driver_id):
         if not participant:
             return jsonify({'error': 'Driver not found'}), 404
         
-        # Get all race brackets to find driver's races
-        race_brackets = db.get_race_brackets()
+        # Get only race brackets that likely include this driver.
+        race_brackets = db.get_race_brackets_for_driver(driver_id, event_filter)
         
         # Collect race history
         all_races = []
@@ -2106,6 +2254,12 @@ def get_driver_analytics(driver_id):
             }
             for eid, estats in event_stats.items()
         ]
+
+        achievements = compute_driver_achievements(
+            driver_id=driver_id,
+            race_brackets=race_brackets,
+            event_filter=event_filter,
+        )
         
         return jsonify({
             'driverId': driver_id,
@@ -2119,6 +2273,7 @@ def get_driver_analytics(driver_id):
             'lanePerformance': lane_performance,
             'classPerformance': class_performance,
             'eventPerformance': event_performance,
+            'achievements': achievements,
             'raceHistory': all_races[-20:],  # Last 20 races
             'lastUpdated': datetime.now().isoformat()
         })
@@ -2424,15 +2579,22 @@ def get_time_analytics(event_id=None):
     try:
         db = get_db_manager()
         
-        # Get events
-        events = db.get_events()
-        if event_id:
-            events = [e for e in events if e.get('id') == event_id]
-        
-        # Get race brackets
-        race_brackets = db.get_race_brackets()
-        if event_id:
-            race_brackets = [b for b in race_brackets if b.get('eventId') == event_id]
+        # Get events and brackets once, then batch participant lookup.
+        events = [db.get_event(event_id)] if event_id else db.get_events()
+        events = [e for e in events if e]
+        event_ids = [e.get('id') for e in events if e.get('id')]
+        race_brackets = (
+            db.get_race_brackets_by_event_ids(event_ids) if event_ids else []
+        )
+
+        participants = db.get_participants_by_event_ids(event_ids) if event_ids else []
+        participant_counts_by_event = {eid: 0 for eid in event_ids}
+        for participant in participants:
+            event_classes = participant.get('eventClasses', {}) or {}
+            if isinstance(event_classes, dict):
+                for eid in event_classes.keys():
+                    if eid in participant_counts_by_event:
+                        participant_counts_by_event[eid] += 1
         
         # Time-based statistics
         events_by_month = {}
@@ -2447,13 +2609,7 @@ def get_time_analytics(event_id=None):
                     
                     events_by_month[month_key] = events_by_month.get(month_key, 0) + 1
                     
-                    # Count participants for this event
-                    all_participants = db.get_participants()
-                    event_participants = [
-                        p for p in all_participants 
-                        if event['id'] in (p.get('eventClasses', {}) or {})
-                    ]
-                    participants_by_month[month_key] = participants_by_month.get(month_key, 0) + len(event_participants)
+                    participants_by_month[month_key] = participants_by_month.get(month_key, 0) + participant_counts_by_event.get(event.get('id'), 0)
                 except:
                     pass
         
@@ -2502,31 +2658,40 @@ def get_series_analytics(series_id):
         if not series:
             return jsonify({'error': 'Series not found'}), 404
         
-        # Get events in this series
-        all_events = db.get_events()
-        series_events = [e for e in all_events if e.get('seriesId') == series_id]
+        # Get events in this series.
+        series_events = db.get_events_paginated(
+            page=1,
+            limit=100000,
+            series_id=series_id,
+        ).get('events', [])
         
         # Aggregate statistics across all events in series
         total_participants = set()
         total_races = 0
         total_revenue = 0
         
+        series_event_ids = [e.get('id') for e in series_events if e.get('id')]
+        series_participants = db.get_participants_by_event_ids(series_event_ids)
+        participants_by_event = {eid: [] for eid in series_event_ids}
+        for participant in series_participants:
+            event_classes = participant.get('eventClasses', {}) or {}
+            if isinstance(event_classes, dict):
+                for eid in event_classes.keys():
+                    if eid in participants_by_event:
+                        participants_by_event[eid].append(participant)
+
+        series_brackets = db.get_race_brackets_by_event_ids(series_event_ids)
+        brackets_by_event = {b.get('eventId'): b for b in series_brackets if b.get('eventId')}
+
         for event in series_events:
             event_id = event.get('id')
-            
-            # Get participants for this event
-            all_participants = db.get_participants()
-            event_participants = [
-                p for p in all_participants 
-                if event_id in (p.get('eventClasses', {}) or {})
-            ]
-            
-            for p in event_participants:
-                total_participants.add(p.get('id'))
-                total_revenue += p.get('totalFee', 0) or 0
-            
+            event_participants = participants_by_event.get(event_id, [])
+            for participant in event_participants:
+                total_participants.add(participant.get('id'))
+                total_revenue += participant.get('totalFee', 0) or 0
+
             # Count races
-            race_bracket = db.get_race_bracket_by_event_id(event_id)
+            race_bracket = brackets_by_event.get(event_id)
             if race_bracket and isinstance(race_bracket.get('classes'), dict):
                 for class_data in race_bracket['classes'].values():
                     if isinstance(class_data.get('rounds'), list):

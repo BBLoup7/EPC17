@@ -120,6 +120,15 @@
                 </div>
             </div>
 
+            <!-- Achievements -->
+            <div class="tab-section achievements-section">
+                <h3><i class="fas fa-medal"></i> Achievements</h3>
+                <p id="achievementsSummary" class="achievements-summary">No achievements data loaded.</p>
+                <div id="achievementsBadges">
+                    <p style="color: var(--text-secondary);">Select a driver to view achievements.</p>
+                </div>
+            </div>
+
             <!-- Tabs Navigation -->
             <div class="profile-tabs">
                 <button class="profile-tab active" data-tab="overview" onclick="switchProfileTab('overview')">
@@ -498,6 +507,15 @@
             text-align: center;
         }
 
+        .achievements-section {
+            margin-bottom: 2rem;
+        }
+
+        .achievements-summary {
+            margin: 0 0 1rem 0;
+            color: var(--text-secondary);
+        }
+
         /* Charts */
         .charts-grid {
             display: grid;
@@ -646,6 +664,7 @@
     <script src="utils/auth.js"></script>
     <script src="utils/data-manager.js"></script>
     <script src="modules/analytics-engine.js"></script>
+    <script src="modules/achievements.js"></script>
     <script src="utils/chart-helpers.js"></script>
     <!-- Export libs -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -720,6 +739,39 @@
             canvas.style.display = 'block';
         }
 
+        function renderAchievements(stats) {
+            const summaryEl = document.getElementById('achievementsSummary');
+            const badgesEl = document.getElementById('achievementsBadges');
+            if (!summaryEl || !badgesEl) return;
+
+            const achievements = stats?.achievements;
+            const earned = Array.isArray(achievements?.earned) ? achievements.earned : [];
+            const total = Number(achievements?.total) || 0;
+
+            if (!achievements || total <= 0) {
+                summaryEl.textContent = 'Achievements are currently unavailable for this driver.';
+                badgesEl.innerHTML = '<p style="color: var(--text-secondary);">No achievements data available.</p>';
+                return;
+            }
+
+            summaryEl.textContent = `${earned.length} of ${total} achievements earned`;
+
+            if (window.AchievementsEngine) {
+                const engine = new window.AchievementsEngine();
+                badgesEl.innerHTML = engine.renderBadges(earned);
+                return;
+            }
+
+            if (!earned.length) {
+                badgesEl.innerHTML = '<p style="color: var(--text-secondary);">No achievements yet - keep racing!</p>';
+                return;
+            }
+
+            badgesEl.innerHTML = earned
+                .map((a) => `<span class="badge" title="${a.description || ''}" style="margin-right:0.4rem;">${a.icon || ''} ${a.name || 'Achievement'}</span>`)
+                .join('');
+        }
+
         // Wait for authentication
         async function waitForAuthentication() {
             console.log('🔐 Driver Profile: Waiting for authentication...');
@@ -767,29 +819,11 @@
         // Load drivers and events
         async function loadDriversAndEvents() {
             try {
-                // Fetch drivers
-                const driversResponse = await fetch('/api/participants');
-                if (driversResponse.ok) {
-                    const driversData = await driversResponse.json();
-                    allDrivers = driversData.participants || driversData || [];
-                    
-                    // Populate driver selector
-                    const driverSelector = document.getElementById('driverSelector');
-                    driverSelector.innerHTML = '<option value="">-- Select a Driver --</option>';
-                    
-                    // Sort drivers by name
-                    allDrivers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-                    
-                    allDrivers.forEach(driver => {
-                        const option = document.createElement('option');
-                        option.value = driver.id;
-                        option.textContent = driver.name || `Driver ${driver.id}`;
-                        driverSelector.appendChild(option);
-                    });
-                }
+                ensureDriverSearchInput();
+                await fetchDriversForSelector('');
 
                 // Fetch events for filter
-                const eventsResponse = await fetch('/api/events');
+                const eventsResponse = await fetch('/api/events?page=1&limit=1000');
                 if (eventsResponse.ok) {
                     const eventsData = await eventsResponse.json();
                     allEvents = eventsData.events || eventsData || [];
@@ -806,6 +840,61 @@
                 }
             } catch (error) {
                 console.error('Error loading drivers and events:', error);
+            }
+        }
+
+        function ensureDriverSearchInput() {
+            if (document.getElementById('driverSearchInput')) return;
+            const driverSelector = document.getElementById('driverSelector');
+            if (!driverSelector || !driverSelector.parentElement) return;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = 'driverSearchInput';
+            input.placeholder = 'Search driver by name...';
+            input.style.marginBottom = '0.5rem';
+            input.style.width = '100%';
+            input.style.padding = '0.625rem';
+            input.style.borderRadius = '8px';
+            input.style.border = '1px solid var(--border-color)';
+            input.style.background = 'var(--bg-secondary)';
+            input.style.color = 'var(--text-primary)';
+
+            let debounceTimer = null;
+            input.addEventListener('input', () => {
+                if (debounceTimer) clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    fetchDriversForSelector(input.value.trim());
+                }, 250);
+            });
+
+            driverSelector.parentElement.insertBefore(input, driverSelector);
+        }
+
+        async function fetchDriversForSelector(searchTerm = '') {
+            const params = new URLSearchParams({ page: '1', limit: '100' });
+            if (searchTerm) params.set('search', searchTerm);
+            const driversResponse = await fetch(`/api/participants?${params.toString()}`);
+            if (!driversResponse.ok) return;
+
+            const driversData = await driversResponse.json();
+            allDrivers = driversData.participants || [];
+            const driverSelector = document.getElementById('driverSelector');
+            if (!driverSelector) return;
+
+            const previousValue = driverSelector.value;
+            driverSelector.innerHTML = '<option value="">-- Select a Driver --</option>';
+            allDrivers
+                .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                .forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = driver.name || `Driver ${driver.id}`;
+                    driverSelector.appendChild(option);
+                });
+
+            if (previousValue && allDrivers.some(d => d.id === previousValue)) {
+                driverSelector.value = previousValue;
             }
         }
 
@@ -854,6 +943,9 @@
                 document.getElementById('statAvgPosition').textContent = stats.avgPosition > 0 ? stats.avgPosition.toFixed(2) : '--';
                 document.getElementById('statBestStreak').textContent = stats.bestStreak;
                 document.getElementById('statEventsCount').textContent = stats.eventsParticipated;
+
+                // Render achievements from API payload.
+                renderAchievements(stats);
                 
                 // Load tab data
                 await loadOverviewData(stats);

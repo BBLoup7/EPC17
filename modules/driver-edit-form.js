@@ -444,14 +444,21 @@ class DriverEditFormManager {
      */
     async getDriverData(driverId) {
         if (window.dataManager) {
+            if (typeof window.dataManager.getParticipantById === 'function') {
+                const participant = await window.dataManager.getParticipantById(driverId);
+                if (participant) {
+                    return participant;
+                }
+            }
+
             // Try getParticipant first (synchronous)
             let driver = window.dataManager.getParticipant(driverId);
             
             // If not found, try fetching from server
             if (!driver) {
                 try {
-                    const fetchFn = window.Auth?.authFetch || fetch;
-                    const response = await fetchFn(`/api/participants/${driverId}`);
+                    const fetchFn = window.Auth?.fetch || window.Auth?.authFetch || fetch;
+                    const response = await fetchFn(`/api/participants/${encodeURIComponent(driverId)}`);
                     if (response.ok) {
                         driver = await response.json();
                     }

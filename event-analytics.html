@@ -1118,6 +1118,10 @@
                    color: var(--text-primary);
                    font-weight: 600;
                    margin-bottom: 0.5rem;
+                   writing-mode: horizontal-tb;
+                   white-space: nowrap;
+                   overflow: hidden;
+                   text-overflow: ellipsis;
                }
 
                .stat-description {
@@ -2055,6 +2059,7 @@
         let eventTimingChart = null;
         let eventPaceChart = null;
         let ageDistributionChart = null;
+        let participantsByEvent = {};
 
         function normalizeKey(value) {
             return String(value || '').trim().toLowerCase();
@@ -2232,7 +2237,7 @@
                 await waitForAuthentication();
                 
                 dataManager = new DataManager();
-                await dataManager.loadFromStorage(['events', 'participants']);
+                await dataManager.loadFromStorage(['events']);
                 
                 // Load data
                 await loadAllData();
@@ -2253,10 +2258,8 @@
         // Load all data
         async function loadAllData() {
             try {
-                // Load ALL events, participants, and race brackets
-                const eventsResult = await dataManager.getEvents({}, 1, 50000); // Get all events
-                const participantsResult = await dataManager.getParticipants({}, 1, 50000); // Get all participants
-                const raceBracketsMap = await dataManager.getRaceBrackets(); // eventId -> bracket map
+                // Load events only; participants and brackets are fetched on demand per event.
+                const eventsResult = await dataManager.getEvents({}, 1, 1000);
                 
                 // Handle the data structure properly - API returns paginated results
                 if (eventsResult && eventsResult.events) {
@@ -2267,16 +2270,9 @@
                     allEvents = [];
                 }
                 
-                if (participantsResult && participantsResult.participants) {
-                    allParticipants = participantsResult.participants;
-                } else if (Array.isArray(participantsResult)) {
-                    allParticipants = participantsResult;
-                } else {
-                    allParticipants = [];
-                }
-                
-                // Store race brackets globally for race counting
-                window.raceBrackets = raceBracketsMap || {};
+                allParticipants = [];
+                participantsByEvent = {};
+                window.raceBrackets = {};
                 
             } catch (error) {
                 console.error('Error loading event analytics data:', error);
@@ -2435,10 +2431,22 @@
             });
         }
 
-        // Create modern charts
+        // Lazy-loaded modern charts — defer Chart.js work until canvas is visible
+        let _lazyHandles = [];
         function createModernCharts(eventData) {
-            createEventPaceChart(eventData);
-            createDriverAgeDistributionChart(eventData);
+            // Cancel any pending lazy observers from a previous event selection
+            _lazyHandles.forEach(h => h.cancel());
+            _lazyHandles = [];
+
+            const lazy = window.ChartHelpers?.lazyChart;
+            if (typeof lazy === 'function') {
+                _lazyHandles.push(lazy('revenueChart', () => createEventPaceChart(eventData)));
+                _lazyHandles.push(lazy('participationChart', () => createDriverAgeDistributionChart(eventData)));
+            } else {
+                // Fallback: create immediately
+                createEventPaceChart(eventData);
+                createDriverAgeDistributionChart(eventData);
+            }
         }
 
         function renderCanvasMessage(canvas, message) {
@@ -2867,7 +2875,7 @@
         }
 
         // Select event
-        function selectEvent(event) {
+        async function selectEvent(event) {
             const searchInput = document.getElementById('eventSearch');
             searchInput.value = `${event.name} - ${event.date ? new Date(event.date).toLocaleDateString() : 'Date TBD'}`;
             
@@ -2879,11 +2887,28 @@
             }
             
             hideEventDropdown();
-            loadEventAnalytics(event.id);
+            await loadEventAnalytics(event.id);
+        }
+
+        async function ensureEventAnalyticsData(eventId) {
+            if (!eventId) return;
+            if (!participantsByEvent[eventId]) {
+                const participantsResult = await dataManager.getParticipants({ eventId }, 1, 5000);
+                participantsByEvent[eventId] = participantsResult?.participants || [];
+            }
+            allParticipants = participantsByEvent[eventId] || [];
+
+            window.raceBrackets = window.raceBrackets || {};
+            if (!window.raceBrackets[eventId]) {
+                const eventBracket = await dataManager.getRaceBracket(eventId);
+                if (eventBracket) {
+                    window.raceBrackets[eventId] = eventBracket;
+                }
+            }
         }
 
         // Load event analytics with modern UI integration
-        function loadEventAnalytics(eventId = null) {
+        async function loadEventAnalytics(eventId = null) {
             // If no eventId provided, try to get it from the search input
             if (!eventId) {
                 const searchInput = document.getElementById('eventSearch');
@@ -2911,6 +2936,7 @@
             
             currentEvent = allEvents.find(e => e.id === eventId);
             if (!currentEvent) return;
+            await ensureEventAnalyticsData(eventId);
             
             // Get event participants
             const eventParticipants = getEventParticipantsForEvent(eventId, currentEvent);
@@ -2930,10 +2956,9 @@
                 getParticipantClassesForEvent(p, eventId).forEach(c => eventClasses.add(c));
             });
             
-            // Calculate completed races
-            const eventRaces = calculateEventRaces(eventParticipants);
-            const expectedTotalRaces = calculateExpectedTotalRacesForEvent(currentEvent, eventParticipants);
-            const completionPct = expectedTotalRaces > 0 ? Math.round((eventRaces / expectedTotalRaces) * 100) : 0;
+            // Calculate completed races — use actual bracket data for both numerator and denominator
+            const { completedRaces: eventRaces, totalHeats: totalBracketHeats } = calculateEventRacesFromBracket();
+            const completionPct = totalBracketHeats > 0 ? Math.round((eventRaces / totalBracketHeats) * 100) : 0;
             
             // Update modern statistics cards
             document.getElementById('eventRevenue').textContent = `$${eventRevenue.toLocaleString()}`;
@@ -3048,6 +3073,36 @@
             
             console.log(`🏁 Event ${eventId}: Found ${completedRaces} completed races from race brackets`);
             return completedRaces;
+        }
+
+        /**
+         * Calculate completed and total heats directly from bracket data.
+         * This gives an accurate completion % rather than a theoretical estimate.
+         */
+        function calculateEventRacesFromBracket() {
+            if (!currentEvent || !window.raceBrackets) {
+                return { completedRaces: 0, totalHeats: 0 };
+            }
+            const eventBrackets = window.raceBrackets[currentEvent.id];
+            if (!eventBrackets || !eventBrackets.classes) {
+                return { completedRaces: 0, totalHeats: 0 };
+            }
+            let completedRaces = 0;
+            let totalHeats = 0;
+            Object.values(eventBrackets.classes).forEach(classData => {
+                if (!classData.rounds || !Array.isArray(classData.rounds)) return;
+                classData.rounds.forEach(round => {
+                    if (!round.heats || !Array.isArray(round.heats)) return;
+                    round.heats.forEach(heat => {
+                        totalHeats++;
+                        if (heat.status === 'completed' || heat.isComplete === true ||
+                            (heat.results && Array.isArray(heat.results) && heat.results.length > 0)) {
+                            completedRaces++;
+                        }
+                    });
+                });
+            });
+            return { completedRaces, totalHeats };
         }
 
         // Compute expected total races for the selected event based on class sizes and lanes per race
@@ -3631,8 +3686,13 @@
                 // Update event time analytics displays
                 updateEventTimeAnalyticsDisplay(eventTimeStats);
                 
-                // Create event timing chart
-                createEventTimingChart(eventTimeStats);
+                // Lazy-load event timing chart when canvas scrolls into view
+                const lazyFn = window.ChartHelpers?.lazyChart;
+                if (typeof lazyFn === 'function') {
+                    _lazyHandles.push(lazyFn('eventTimingChart', () => createEventTimingChart(eventTimeStats)));
+                } else {
+                    createEventTimingChart(eventTimeStats);
+                }
                 
                 // Update event efficiency metrics
                 updateEventEfficiencyMetrics(eventTimeStats, eventId);
@@ -3919,10 +3979,8 @@
         }
 
         function updateEventEfficiencyMetrics(timeStats, eventId) {
-            // Calculate event completion rate
-            const eventParticipants = getEventParticipantsForEvent(eventId, currentEvent);
-            const expectedRaces = calculateExpectedTotalRacesForEvent(currentEvent, eventParticipants);
-            const completedRaces = calculateEventRaces(eventParticipants);
+            // Calculate event completion rate from actual bracket data
+            const { completedRaces, totalHeats: expectedRaces } = calculateEventRacesFromBracket();
             const completionRate = expectedRaces > 0 ? Math.round((completedRaces / expectedRaces) * 100) : 0;
             
             // Update completion rate

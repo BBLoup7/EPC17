@@ -101,13 +101,9 @@ const SeriesBusinessLogic = {
     resolveEventClasses(series, eventClassSettings = []) {
         if (!series || !series.sledClasses) return [];
         
-        // If no event class settings, return all series classes (enabled by default)
+        // Strict behavior: event must explicitly configure classes
         if (!eventClassSettings || eventClassSettings.length === 0) {
-            return series.sledClasses.map(cls => ({
-                ...cls,
-                enabled: true,
-                price: cls.defaultFee
-            }));
+            return [];
         }
         
         // Merge event settings with series class definitions

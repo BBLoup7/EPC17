@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Enhanced Race Management Module for EPC17 Event Management System
  * Handles race generation, bracket management, elimination logic, and result tracking
  */
@@ -1533,6 +1533,8 @@ class RaceManager {
      */
     async processDeferredTasks(eventId, className, heatId, results) {
         window.debugLogger.debug('Race', 'Processing deferred tasks in background...');
+        const bracket = this.getBracket(eventId);
+        const classBracket = bracket?.classes?.[className];
 
         try {
             // 📊 DEFERRED: Statistics update (already deferred in StatisticsManager)
@@ -1552,6 +1554,11 @@ class RaceManager {
             // 🎯 DEFERRED: Event status check
             window.debugLogger.debug('Race', 'Checking event completion status (deferred)');
             await this.checkAndUpdateEventStatus(eventId);
+
+            // 🏁 AUTO TIE-BREAKER: If this class just completed, auto-check for ties
+            if (classBracket?.isComplete) {
+                await this.autoCheckTieBreakers(eventId, className);
+            }
 
             // 📡 DEFERRED: Broadcast race result recorded event
             if (this.dataManager.eventBus) {
@@ -2385,8 +2392,19 @@ class RaceManager {
             // 2. sledClasses - legacy format
             // 3. selectedClasses - current format
             let participantClasses = [];
-            if (participant.eventClasses && participant.eventClasses[event.id]) {
-                participantClasses = participant.eventClasses[event.id];
+            const normalizedEventId = event && event.id != null ? String(event.id) : '';
+            if (participant.eventClasses && typeof participant.eventClasses === 'object') {
+                const directClasses = participant.eventClasses[normalizedEventId];
+                const matchedEventKey = Object.keys(participant.eventClasses).find(
+                    key => String(key) === normalizedEventId
+                );
+                const normalizedClasses = matchedEventKey ? participant.eventClasses[matchedEventKey] : null;
+                participantClasses = Array.isArray(directClasses)
+                    ? directClasses
+                    : (Array.isArray(normalizedClasses) ? normalizedClasses : []);
+            }
+
+            if (participantClasses.length > 0) {
                 window.debugLogger.debug('Race', ` DEBUG - Using eventClasses for event ${event.id}:`, participantClasses);
             } else {
                 participantClasses = participant.sledClasses || participant.selectedClasses || [];
@@ -2545,10 +2563,12 @@ class RaceManager {
 
     async getBracket(eventId) {
         let bracket = this.eventBrackets.get(eventId);
+        let source = 'cache';
         window.debugLogger.debug('Race', 'getBracket: checking cache for eventId:', eventId, 'found:', !!bracket);
 
         if (!bracket) {
             // Try to load from storage
+            source = 'storage';
             bracket = await this.dataManager.getRaceBracket(eventId);
             if (bracket) {
                 window.debugLogger.debug('Race', 'getBracket: loaded bracket from storage, has classes:', !!bracket.classes);
@@ -3414,20 +3434,26 @@ class RaceManager {
             const heat = {
                 id: tieBreakerId,
                 raceNumber,
+                heatNumber: 1,
+                numberOfLanes,
                 type: 'tie_breaker',
+                bracketType: 'tie_breaker',
                 forRank: tieGroup.rank,
-                participants: participants.map(p => ({
-                    id: p.id,
-                    name: p.name,
-                    racingNumber: p.racingNumber,
-                    nickname: p.nickname
-                })),
+                className,
                 lanes: participants.map((p, index) => ({
                     lane: index + 1,
-                    participantId: p.id,
-                    participantName: p.name
+                    participant: {
+                        id: p.id,
+                        name: p.name,
+                        racingNumber: p.racingNumber || '',
+                        nickname: p.nickname || ''
+                    }
                 })),
+                results: null,
+                resultsProcessed: false,
                 status: 'pending',
+                startTime: null,
+                endTime: null,
                 createdAt: new Date().toISOString()
             };
             
@@ -3475,6 +3501,51 @@ class RaceManager {
         } catch (error) {
             console.error('❌ Error generating tie-breaker race:', error);
             return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Auto-check and generate tie-breaker races for a class that just completed.
+     * Called automatically after class completion if tie-breaker is enabled.
+     * Also handles re-ranking after a tie-breaker heat completes.
+     */
+    async autoCheckTieBreakers(eventId, className) {
+        try {
+            const settings = this.getTieBreakerSettings(eventId);
+            if (!settings.enabled) return;
+
+            const bracket = await this.getBracket(eventId);
+            if (!bracket || !bracket.classes[className]) return;
+            const classBracket = bracket.classes[className];
+
+            // Check if there is already a pending tie-breaker round
+            const existingTBRound = classBracket.rounds.find(r => r.type === 'tie_breaker');
+            if (existingTBRound) {
+                const hasPending = existingTBRound.heats.some(h => h.status === 'pending' || h.status === 'active');
+                if (hasPending) {
+                    window.debugLogger?.debug('Race', `Tie-breaker round already has pending heats for ${className}, skipping auto-generate`);
+                    return;
+                }
+            }
+
+            const result = await this.checkAndHandleTies(eventId, className, {
+                tieBreakerRank: settings.rank,
+                generateRaces: true
+            });
+
+            if (result.success && result.hasTies && result.racesGenerated > 0) {
+                window.debugLogger?.debug('Race', `🏁 Auto-generated ${result.racesGenerated} tie-breaker race(s) for ${className}`);
+                
+                // Un-mark class as complete since there are tie-breakers to resolve
+                classBracket.isComplete = false;
+                await this.dataManager.saveRaceBracket(eventId, bracket);
+
+                if (window.showToast) {
+                    window.showToast(`Tie-breaker race generated for ${className}!`, 'info');
+                }
+            }
+        } catch (error) {
+            console.error('Error in autoCheckTieBreakers:', error);
         }
     }
 
@@ -3628,7 +3699,10 @@ class RaceManager {
     async checkAndUpdateEventStatus(eventId) {
         try {
             // Check if all classes are complete
-            const isCompleted = await this.dataManager.isEventCompleted(eventId);
+            const hasEventDataService = !!window.eventDataService;
+            const isCompleted = hasEventDataService
+                ? await window.eventDataService.isEventCompleted(eventId)
+                : await this.dataManager.isEventCompleted(eventId);
             
             if (isCompleted) {
                 window.debugLogger.debug('Race', ` Event ${eventId} is completed - updating status to 'completed'`);
@@ -3659,8 +3733,8 @@ class RaceManager {
      */
     canSafelyResetHeat(eventId, heatId) {
         const heat = this.getHeat(eventId, heatId);
-        if (!heat || heat.status !== 'completed') {
-            return { canReset: true, reason: 'Heat is not completed' };
+        if (!heat || !RaceManager.isHeatCompleted(heat)) {
+            return { canReset: false, reason: 'Heat is not completed and cannot be reset' };
         }
 
         const bracket = this.getBracket(eventId);
@@ -3724,7 +3798,7 @@ class RaceManager {
                 throw new Error('Heat not found');
             }
 
-            if (heat.status !== 'completed') {
+            if (!RaceManager.isHeatCompleted(heat)) {
                 throw new Error('Heat is not completed and cannot be reset');
             }
 
@@ -4254,6 +4328,153 @@ class RaceManager {
             console.error('Error getting no-show participants:', error);
             return [];
         }
+    }
+
+    /**
+     * Manually add a loss to a participant without creating a heat.
+     * Does NOT affect stats — purely adjusts bracket status.
+     * @param {string} eventId
+     * @param {string} participantId
+     * @param {string} className
+     */
+    async addManualLoss(eventId, participantId, className) {
+        const bracket = await this.getBracket(eventId);
+        if (!bracket || !bracket.classes[className]) throw new Error('Bracket/class not found');
+        
+        const classBracket = bracket.classes[className];
+        const participant = classBracket.participants.find(p => p.id === participantId);
+        if (!participant) throw new Error('Participant not found in class bracket');
+        
+        participant.losses = (participant.losses || 0) + 1;
+        
+        // Check elimination based on elimination type
+        const event = this.dataManager.getEvent(eventId);
+        const elimType = classBracket.eliminationType || event?.eliminationType || 'double';
+        const lossLimit = elimType === 'single' ? 1 :
+                          elimType === 'custom' ? (event?.customLossLimit || 2) : 2;
+        
+        if (participant.losses >= lossLimit) {
+            participant.status = 'eliminated';
+            if (participant.currentBracket) participant.currentBracket = null;
+        } else if (elimType === 'double' && participant.losses === 1 && participant.currentBracket === 'upper') {
+            participant.currentBracket = 'lower';
+        }
+        
+        await this.dataManager.saveRaceBracket(eventId, bracket);
+        window.debugLogger?.debug('Race', `Manual loss added to ${participant.name}: now ${participant.losses}L, status=${participant.status}`);
+        return { success: true, losses: participant.losses, status: participant.status };
+    }
+
+    /**
+     * Manually remove a loss from a participant without affecting stats.
+     * May re-activate an eliminated participant.
+     * @param {string} eventId
+     * @param {string} participantId
+     * @param {string} className
+     */
+    async removeManualLoss(eventId, participantId, className) {
+        const bracket = await this.getBracket(eventId);
+        if (!bracket || !bracket.classes[className]) throw new Error('Bracket/class not found');
+        
+        const classBracket = bracket.classes[className];
+        const participant = classBracket.participants.find(p => p.id === participantId);
+        if (!participant) throw new Error('Participant not found in class bracket');
+        
+        if ((participant.losses || 0) <= 0) throw new Error('Participant has no losses to remove');
+        
+        participant.losses = participant.losses - 1;
+        
+        // Re-activate if they were eliminated
+        if (participant.status === 'eliminated') {
+            participant.status = 'active';
+            // For double elimination, if they now have 1 loss, put in lower bracket
+            const elimType = classBracket.eliminationType || 'double';
+            if ((elimType === 'double' || elimType === 'double_random') && participant.losses >= 1) {
+                participant.currentBracket = 'lower';
+            } else if ((elimType === 'double' || elimType === 'double_random') && participant.losses === 0) {
+                participant.currentBracket = 'upper';
+            }
+        }
+        
+        await this.dataManager.saveRaceBracket(eventId, bracket);
+        window.debugLogger?.debug('Race', `Manual loss removed from ${participant.name}: now ${participant.losses}L, status=${participant.status}`);
+        return { success: true, losses: participant.losses, status: participant.status };
+    }
+
+    /**
+     * Undo a disqualification — clears DSQ flag on the result and recalculates participant status.
+     * @param {string} eventId
+     * @param {string} participantId
+     * @param {string} heatId
+     */
+    async undoDisqualification(eventId, participantId, heatId) {
+        const bracket = await this.getBracket(eventId);
+        if (!bracket) throw new Error('Bracket not found');
+        
+        // Find the heat across all classes
+        let targetHeat = null;
+        let targetClassName = null;
+        for (const [cn, cb] of Object.entries(bracket.classes)) {
+            for (const round of (cb.rounds || [])) {
+                for (const h of (round.heats || [])) {
+                    if (h.id === heatId) {
+                        targetHeat = h;
+                        targetClassName = cn;
+                        break;
+                    }
+                }
+                if (targetHeat) break;
+            }
+            if (targetHeat) break;
+        }
+        
+        if (!targetHeat) throw new Error('Heat not found');
+        
+        // Clear DSQ on the result
+        if (targetHeat.results && Array.isArray(targetHeat.results)) {
+            const result = targetHeat.results.find(r => r.participantId === participantId);
+            if (result) {
+                result.disqualified = false;
+                result.result = 'completed';
+                // Restore a reasonable position if it was cleared
+                if (!result.position || result.position === 'DSQ') {
+                    result.position = targetHeat.results.length; // Last position
+                }
+            }
+        }
+        
+        // Re-activate the participant in the bracket
+        const classBracket = bracket.classes[targetClassName];
+        if (classBracket) {
+            const participant = classBracket.participants.find(p => p.id === participantId);
+            if (participant && participant.status === 'eliminated') {
+                participant.status = 'active';
+                // Restore bracket position based on current losses
+                const elimType = classBracket.eliminationType || 'double';
+                if ((elimType === 'double' || elimType === 'double_random')) {
+                    participant.currentBracket = (participant.losses || 0) >= 1 ? 'lower' : 'upper';
+                }
+            }
+        }
+        
+        await this.dataManager.saveRaceBracket(eventId, bracket);
+        window.debugLogger?.debug('Race', `Disqualification undone for participant ${participantId} in heat ${heatId}`);
+        return { success: true, className: targetClassName };
+    }
+
+    /**
+     * Determine whether a heat should be treated as completed.
+     * Supports both legacy (isComplete) and current (status + results) schemas.
+     * @param {Object} heat - Heat object from bracket data
+     * @returns {boolean}
+     */
+    static isHeatCompleted(heat) {
+        if (!heat || typeof heat !== 'object') return false;
+        if (heat.isComplete === true) return true;
+        if (heat.status === 'completed') {
+            return Array.isArray(heat.results) && heat.results.length > 0;
+        }
+        return false;
     }
 }
 

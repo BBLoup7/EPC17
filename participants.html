@@ -60,32 +60,33 @@
             padding: 0.875rem 1.5rem;
             font-size: 1rem;
             font-weight: 600;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent-orange-warm), var(--accent-orange-glow)) !important;
-            box-shadow: 0 6px 20px rgba(255, 140, 66, 0.4) !important;
-            transition: all 0.3s ease;
+            border-radius: var(--radius-md);
+            background: var(--accent-primary) !important;
+            border: 1px solid rgba(255, 96, 56, 0.6);
+            box-shadow: var(--shadow-sm), var(--shadow-glow-sm) !important;
+            transition: all var(--transition-control);
         }
 
         .btn-hero:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(255, 140, 66, 0.5) !important;
-            background: linear-gradient(135deg, var(--accent-orange-glow), var(--accent-orange-warm)) !important;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md), var(--shadow-glow) !important;
+            background: var(--accent-hover) !important;
         }
 
         .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-strong);
+            color: var(--text-primary);
             padding: 0.875rem 1.5rem;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all var(--transition-control);
         }
 
         .btn-outline:hover {
             border-color: var(--accent-orange-warm);
-            color: var(--accent-orange-warm);
-            background: rgba(255, 140, 66, 0.1);
+            color: var(--text-primary);
+            background: var(--bg-elevated);
         }
 
         /* Responsive Design */
@@ -1128,35 +1129,29 @@
             filterParticipants();
         }
 
-        // Edit participant
-        // REFACTORED: Use unified registration form for editing
+        // Edit participant (registration-focused legacy editor)
         async function editParticipant(participantId) {
-            console.log('📝 Opening unified edit form for participant:', participantId);
+            console.log('📝 Opening participant edit form for participant:', participantId);
             
             try {
-                // Use unified registration form in edit mode
-                if (window.registrationManager && window.registrationManager.showUnifiedForm) {
-                    await window.registrationManager.showUnifiedForm({
-                        mode: 'edit',
-                        participantId: participantId
-                    });
-                } else {
-                    // Fallback to legacy edit modal if registrationManager not available
-                    console.warn('⚠️ RegistrationManager not available, using legacy edit modal');
-                    const participant = dataManager.getParticipant(participantId);
-                    if (!participant) {
-                        alert('Participant not found');
-                        return;
-                    }
-                    const editModalHtml = createEditParticipantModal(participant);
-                    showEditModal('Edit Participant', editModalHtml);
-                    setTimeout(() => {
-                        initializeEditForm(participant);
-                    }, 100);
+                let participant = dataManager.getParticipant(participantId);
+                if (!participant && typeof dataManager.getParticipantById === 'function') {
+                    participant = await dataManager.getParticipantById(participantId);
                 }
+
+                if (!participant) {
+                    showToast('Participant not found', 'error');
+                    return;
+                }
+
+                const editModalHtml = createEditParticipantModal(participant);
+                showEditModal('Edit Participant', editModalHtml);
+                setTimeout(() => {
+                    initializeEditForm(participant);
+                }, 100);
             } catch (error) {
                 console.error('Error opening edit form:', error);
-                alert('Error opening edit form. Please try again.');
+                showToast('Error opening edit form. Please try again.', 'error');
             }
         }
 
@@ -2056,7 +2051,14 @@
 
             try {
                 const participantId = document.getElementById('editParticipantId').value;
-                const participant = dataManager.getParticipant(participantId);
+                let participant = dataManager.getParticipant(participantId);
+                if (!participant && typeof dataManager.getParticipantById === 'function') {
+                    participant = await dataManager.getParticipantById(participantId);
+                }
+                if (!participant) {
+                    showToast('Participant not found', 'error');
+                    return;
+                }
                 
                 // Gather form data
                 const selectedClassElements = document.querySelectorAll('.class-option.selected');

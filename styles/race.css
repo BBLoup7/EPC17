@@ -30,22 +30,20 @@
 .events-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: var(--space-5);
+    gap: var(--space-4);
     margin-top: var(--space-6);
 }
 
 .event-card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
     padding: var(--space-6);
     cursor: pointer;
-    transition: all var(--transition-slow);
+    transition: transform var(--transition-control), border-color var(--transition-control), box-shadow var(--transition-control), background-color var(--transition-control);
     position: relative;
     overflow: hidden;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
 }
 
 .event-card::before {
@@ -62,8 +60,8 @@
 
 .event-card:hover {
     border-color: var(--border-accent);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl), var(--shadow-glow-sm);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md), var(--shadow-glow-sm);
 }
 
 .event-card:hover::before {
@@ -73,7 +71,7 @@
 .event-card.selected {
     border-color: var(--accent-primary);
     background: var(--bg-elevated);
-    box-shadow: var(--shadow-lg), 0 0 0 2px var(--accent-muted);
+    box-shadow: var(--shadow-md), 0 0 0 2px var(--accent-muted);
 }
 
 .event-card.selected::before {
@@ -97,7 +95,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
 }
 
 .event-header h3 {
@@ -150,14 +148,14 @@
 }
 
 .event-details {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-6);
 }
 
 .detail-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
     color: var(--text-secondary);
     font-size: 0.9rem;
 }
@@ -204,7 +202,7 @@
 
 .event-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 /* ===== RACE MANAGEMENT ===== */
@@ -1418,21 +1416,22 @@
 }
 
 .race-card {
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition: transform var(--transition-control), border-color var(--transition-control), box-shadow var(--transition-control);
 }
 
 .race-card:hover {
     border-color: var(--accent-primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm), var(--shadow-glow-sm);
 }
 
 .race-card.active {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 2px var(--accent-muted);
 }
 
 .race-card.completed {
@@ -1440,8 +1439,8 @@
 }
 
 .race-card .race-header {
-    background: var(--bg-primary);
-    padding: 1rem;
+    background: var(--bg-secondary);
+    padding: var(--space-4);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -1451,9 +1450,9 @@
 }
 
 .race-info {
-    padding: 1rem;
+    padding: var(--space-4);
     display: flex;
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .race-stat {
@@ -1469,14 +1468,14 @@
 }
 
 .race-participants {
-    padding: 0 1rem;
+    padding: 0 var(--space-4);
 }
 
 .participant-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -1506,11 +1505,11 @@
 }
 
 .race-actions {
-    padding: 1rem;
-    background: var(--bg-primary);
+    padding: var(--space-4);
+    background: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
     display: flex;
-    gap: 0.5rem;
+    gap: var(--space-2);
     justify-content: center;
     align-items: center;
 }

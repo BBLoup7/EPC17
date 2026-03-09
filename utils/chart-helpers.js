@@ -575,6 +575,67 @@ function generateBorderColors(count) {
 }
 
 // ============================================================================
+// LAZY CHART OBSERVER
+// ============================================================================
+
+/**
+ * Lazy-loads chart creation using IntersectionObserver.
+ * Defers expensive Chart.js instantiation until the canvas scrolls into view.
+ *
+ * @param {string} canvasId    – ID of the <canvas> element
+ * @param {Function} createFn  – Zero-arg function that creates the Chart.js instance
+ * @param {Object} [opts]
+ * @param {string} [opts.rootMargin='200px'] – Pre-load margin (trigger slightly before visible)
+ * @param {number} [opts.threshold=0]        – Visibility fraction to trigger
+ * @returns {{ cancel: Function }} Handle to cancel the pending observation
+ */
+function lazyChart(canvasId, createFn, opts = {}) {
+    const canvas = typeof canvasId === 'string'
+        ? document.getElementById(canvasId)
+        : canvasId;
+
+    if (!canvas) {
+        console.warn(`[LazyChart] Canvas "${canvasId}" not found`);
+        return { cancel() {} };
+    }
+
+    // If IntersectionObserver is unavailable (old browsers), fall back to immediate
+    if (typeof IntersectionObserver === 'undefined') {
+        createFn();
+        return { cancel() {} };
+    }
+
+    let fired = false;
+    const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+            if (entry.isIntersecting && !fired) {
+                fired = true;
+                observer.disconnect();
+                // Use requestAnimationFrame so the paint isn't jank
+                requestAnimationFrame(() => {
+                    try {
+                        createFn();
+                    } catch (err) {
+                        console.error(`[LazyChart] Error creating chart "${canvasId}":`, err);
+                    }
+                });
+            }
+        }
+    }, {
+        rootMargin: opts.rootMargin || '200px',
+        threshold: opts.threshold || 0,
+    });
+
+    observer.observe(canvas);
+
+    return {
+        cancel() {
+            if (!fired) observer.disconnect();
+        },
+    };
+}
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 
@@ -585,6 +646,9 @@ window.ChartHelpers = {
     createBarChart,
     createLineChart,
     createRadarChart,
+    
+    // Lazy loading
+    lazyChart,
     
     // Utility functions
     formatNumber,

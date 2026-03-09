@@ -89,6 +89,14 @@ class DataManager {
     }
 
     /**
+     * Normalize identifiers to string for reliable cross-layer comparisons.
+     * Some API/database paths may surface IDs as numbers while UI paths keep strings.
+     */
+    normalizeId(id) {
+        return id == null ? '' : String(id);
+    }
+
+    /**
      * Perform a fetch using Auth wrapper if available (adds Authorization token)
      */
     request(url, options = {}) {
@@ -208,9 +216,12 @@ class DataManager {
                 console.log(`🔍 Loading ${type} from server (attempt ${retryCount + 1})`);
                 
                 const startTime = performance.now();
-                // For participants, load all pages to get complete dataset
+                // For participants, keep memory footprint bounded on initial load.
                 if (type === 'participants') {
-                    await this.loadAllParticipantPages();
+                    const firstPage = await this.fetchParticipantsPage({}, 1, 200);
+                    await this.processLoadedData('participants', {
+                        participants: firstPage.participants || []
+                    });
                     return this.data[type];
                 }
 
@@ -719,8 +730,8 @@ class DataManager {
      */
     getCacheTTL(type) {
         const ttlMap = {
-            'participants': 30000,      // 30 seconds (frequently changing)
-            'events': 60000,           // 1 minute (moderately changing)  
+            'participants': 120000,    // 2 minutes
+            'events': 300000,          // 5 minutes
             'series': 300000,          // 5 minutes (rarely changing)
             'race-brackets': 120000    // 2 minutes (slow to load, moderate changes)
         };
@@ -765,7 +776,7 @@ class DataManager {
     /**
      * Load all participant pages to get complete dataset
      */
-    async loadAllParticipantPages() {
+    async loadAllParticipantPages(maxPages = 100) {
         const pageSize = 2000; // Load 2000 participants per page
         let allParticipants = [];
         let page = 1;
@@ -825,8 +836,8 @@ class DataManager {
                 page++;
 
                 // Prevent infinite loops
-                if (page > 100) {
-                    console.warn('⚠️ Too many pages, stopping at page 100');
+                if (page > maxPages) {
+                    console.warn(`⚠️ Too many pages, stopping at page ${maxPages}`);
                     hasMorePages = false;
                 }
 
@@ -1119,48 +1130,7 @@ class DataManager {
      * SIMPLIFIED: Get participants with pagination and filtering
      */
     async getParticipants(filters = {}, page = 1, limit = 50) {
-        // Check if we need to load participants
-        if (!this.loadedDataTypes.has('participants')) {
-            await this.loadFromStorage(['participants']);
-        }
-        
-        let participants = this.data.participants;
-        
-        // Apply filters
-        if (filters.eventId) {
-            participants = participants.filter(p => 
-                p.events && p.events.includes(filters.eventId)
-            );
-        }
-        if (filters.seriesId) {
-            participants = participants.filter(p => 
-                p.series && p.series.includes(filters.seriesId)
-            );
-        }
-        if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
-            participants = participants.filter(p => 
-                p.name && p.name.toLowerCase().includes(searchLower)
-            );
-        }
-        if (filters.class) {
-            participants = participants.filter(p => 
-                p.classes && p.classes.includes(filters.class)
-            );
-        }
-        
-        // Apply pagination
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        const paginatedParticipants = participants.slice(startIndex, endIndex);
-        
-        return {
-            participants: paginatedParticipants,
-            total: participants.length,
-            page,
-            limit,
-            totalPages: Math.ceil(participants.length / limit)
-        };
+        return this.fetchParticipantsPage(filters, page, limit);
     }
 
     /**
@@ -1187,6 +1157,17 @@ class DataManager {
             // Normalize data structure if needed
             if (result.participants) {
                 result.participants = result.participants.map(p => this.normalizeParticipantData(p));
+                // Keep local cache warm for edit flows that fetch participant by ID.
+                if (!Array.isArray(this.data.participants)) {
+                    this.data.participants = [];
+                }
+                const cacheById = new Map(
+                    this.data.participants.map(p => [this.normalizeId(p.id), p])
+                );
+                result.participants.forEach(participant => {
+                    cacheById.set(this.normalizeId(participant.id), participant);
+                });
+                this.data.participants = Array.from(cacheById.values());
             }
             
             return result;
@@ -1199,43 +1180,34 @@ class DataManager {
     /**
      * SIMPLIFIED: Get events with pagination and filtering
      */
-    async getEvents(filters = {}, page = 1, limit = 1000) {
-        // Check if we need to load events
-        if (!this.loadedDataTypes.has('events')) {
-            await this.loadFromStorage(['events']);
+    async getEvents(filters = {}, page = 1, limit = 50) {
+        return this.fetchEventsPage(filters, page, limit);
+    }
+
+    /**
+     * Fetch events page directly from server (Server-side Pagination)
+     */
+    async fetchEventsPage(filters = {}, page = 1, limit = 50) {
+        const queryParams = new URLSearchParams({
+            page: page,
+            limit: limit
+        });
+
+        if (filters.seriesId) queryParams.append('seriesId', filters.seriesId);
+        if (filters.seasonId) queryParams.append('seasonId', filters.seasonId);
+        if (filters.status) queryParams.append('status', filters.status);
+        if (filters.search) queryParams.append('search', filters.search);
+
+        try {
+            const response = await this.request(`${this.baseUrl}/events?${queryParams.toString()}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching events page:', error);
+            throw error;
         }
-        
-        let events = this.data.events;
-        
-        // Apply filters
-        if (filters.seriesId) {
-            events = events.filter(e => e.seriesId === filters.seriesId);
-        }
-        if (filters.seasonId) {
-            events = events.filter(e => e.seasonId === filters.seasonId);
-        }
-        if (filters.status) {
-            events = events.filter(e => e.status === filters.status);
-        }
-        if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
-            events = events.filter(e => 
-                e.name && e.name.toLowerCase().includes(searchLower)
-            );
-        }
-        
-        // Apply pagination
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        const paginatedEvents = events.slice(startIndex, endIndex);
-        
-        return {
-            events: paginatedEvents,
-            total: events.length,
-            page,
-            limit,
-            totalPages: Math.ceil(events.length / limit)
-        };
     }
 
     /**
@@ -1402,7 +1374,10 @@ class DataManager {
      */
     async updateParticipant(id, updates) {
         try {
-            const index = this.data.participants.findIndex(p => p.id === id);
+            const normalizedId = this.normalizeId(id);
+            const index = this.data.participants.findIndex(
+                p => this.normalizeId(p.id) === normalizedId
+            );
             if (index === -1) {
                 throw new Error('Participant not found');
             }
@@ -1442,9 +1417,13 @@ class DataManager {
      * Get participant by ID
      */
     getParticipant(id) {
+        const normalizedId = this.normalizeId(id);
+
         // First check in main participants array
         if (this.data.participants) {
-            const participant = this.data.participants.find(p => p.id === id);
+            const participant = this.data.participants.find(
+                p => this.normalizeId(p.id) === normalizedId
+            );
             if (participant) {
                 return participant;
             }
@@ -1454,15 +1433,54 @@ class DataManager {
         if (this.data.eventParticipants) {
             for (const eventId in this.data.eventParticipants) {
                 const eventParticipants = this.data.eventParticipants[eventId];
-                const participant = eventParticipants.find(p => p.id === id);
+                const participant = eventParticipants.find(
+                    p => this.normalizeId(p.id) === normalizedId
+                );
                 if (participant) {
                     return participant;
                 }
             }
         }
         
-        console.log(`🔍 DEBUG - Participant ${id} not found. Available: ${this.data.participants?.length || 0} participants + event-specific participants`);
+        console.log(`🔍 DEBUG - Participant ${normalizedId} not found. Available: ${this.data.participants?.length || 0} participants + event-specific participants`);
         return null;
+    }
+
+    /**
+     * Get participant by ID with server fallback.
+     */
+    async getParticipantById(id) {
+        const participantId = this.normalizeId(id);
+        if (!participantId) return null;
+
+        const cached = this.getParticipant(participantId);
+        if (cached) {
+            return cached;
+        }
+
+        try {
+            const response = await this.request(`${this.baseUrl}/participants/${encodeURIComponent(participantId)}`);
+            if (!response.ok) {
+                return null;
+            }
+
+            const participant = this.normalizeParticipantData(await response.json());
+            if (!Array.isArray(this.data.participants)) {
+                this.data.participants = [];
+            }
+            const existingIndex = this.data.participants.findIndex(
+                p => this.normalizeId(p.id) === participantId
+            );
+            if (existingIndex >= 0) {
+                this.data.participants[existingIndex] = participant;
+            } else {
+                this.data.participants.push(participant);
+            }
+            return participant;
+        } catch (error) {
+            console.error('Failed to fetch participant by ID:', error);
+            return null;
+        }
     }
 
     /**
@@ -1861,41 +1879,10 @@ class DataManager {
     async addEvent(eventData) {
         console.warn('⚠️ DEPRECATED: dataManager.addEvent() - Use eventDataService.createEvent() instead');
         
-        // FIXED: Don't delegate to eventDataService to avoid circular calls
-        // Directly use the implementation below instead
-        
-        // Fallback to inline implementation
-        try {
-            // Generate ID if not provided
-            if (!eventData.id) {
-                eventData.id = 'event_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            }
-            
-            // Add timestamps and set initial status
-            eventData.createdAt = new Date().toISOString();
-            eventData.updatedAt = new Date().toISOString();
-            eventData.status = eventData.status || 'upcoming'; // Set default status to upcoming
-            
-            // Save to server
-            const savedEvent = await this.saveToServer('events', eventData, false);
-            
-            // Update local data cache
-            this.data.events.push(savedEvent);
-            
-            // Broadcast event added event
-            if (this.eventBus) {
-                this.eventBus.emit('event-added', {
-                    event: savedEvent,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            console.log('✅ Event added via server:', savedEvent.id);
-            return savedEvent;
-        } catch (error) {
-            console.error('Failed to add event:', error);
-            throw error;
+        if (window.eventDataService) {
+            return await window.eventDataService.createEvent(eventData);
         }
+        throw new Error('eventDataService not available — cannot use deprecated dataManager.addEvent()');
     }
 
     /**
@@ -1962,40 +1949,7 @@ class DataManager {
         if (window.eventDataService) {
             return await window.eventDataService.updateEvent(id, updates);
         }
-        
-        // Fallback
-        try {
-            const index = this.data.events.findIndex(e => e.id === id);
-            if (index === -1) {
-            throw new Error('Event not found');
-            }
-
-            // Add updated timestamp
-            updates.updatedAt = new Date().toISOString();
-
-            // Update the event (merge with existing data)
-            const updatedEvent = { ...this.data.events[index], ...updates };
-
-            // Save to server
-            const savedEvent = await this.saveToServer('events', updatedEvent, true);
-            
-            // Update local data cache
-            this.data.events[index] = savedEvent;
-            
-            // Broadcast event updated event
-            if (this.eventBus) {
-                this.eventBus.emit('event-updated', {
-                    event: savedEvent,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            console.log('✅ Event updated via server:', id);
-            return savedEvent;
-        } catch (error) {
-            console.error('Failed to update event:', error);
-            throw error;
-        }
+        throw new Error('eventDataService not available — cannot use deprecated dataManager.updateEvent()');
     }
 
     /**
@@ -2008,38 +1962,7 @@ class DataManager {
         if (window.eventDataService) {
             return await window.eventDataService.deleteEvent(id);
         }
-        
-        // Fallback
-        try {
-            // Find the event first
-            const index = this.data.events.findIndex(e => e.id === id);
-            if (index === -1) {
-                throw new Error('Event not found');
-            }
-
-            const event = this.data.events[index];
-            
-            // Delete from server
-            await this.deleteFromServer('events', id);
-            
-            // Update local data cache
-            this.data.events.splice(index, 1);
-
-            // Broadcast event deleted event
-            if (this.eventBus) {
-                this.eventBus.emit('event-deleted', {
-                    eventId: id,
-                    eventName: event.name,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            console.log('✅ Event deleted via server:', event.name);
-            return true;
-        } catch (error) {
-            console.error('Failed to delete event:', error);
-            throw error;
-        }
+        throw new Error('eventDataService not available — cannot use deprecated dataManager.deleteEvent()');
     }
 
     /**
@@ -2129,45 +2052,7 @@ class DataManager {
         if (window.eventDataService) {
             return await window.eventDataService.isEventCompleted(eventId);
         }
-        
-        // Fallback implementation
-        try {
-            const bracket = await this.getRaceBracket(eventId);
-            if (!bracket || !bracket.classes) {
-                console.log(`🔍 Event ${eventId}: No bracket or classes found`);
-                return false;
-            }
-
-            const classNames = Object.keys(bracket.classes);
-            const totalClasses = classNames.length;
-            
-            if (totalClasses === 0) {
-                console.log(`🔍 Event ${eventId}: No classes in bracket`);
-                return false;
-            }
-
-            // Check each class completion status
-            const classStatuses = {};
-            let completedCount = 0;
-            
-            Object.entries(bracket.classes).forEach(([className, classBracket]) => {
-                const isComplete = classBracket.isComplete === true;
-                classStatuses[className] = isComplete;
-                if (isComplete) completedCount++;
-            });
-
-            const allClassesComplete = completedCount === totalClasses;
-            
-            console.log(`🔍 Event ${eventId} completion check:`);
-            console.log(`   📊 Classes: ${completedCount}/${totalClasses} complete`);
-            console.log(`   📋 Status by class:`, classStatuses);
-            console.log(`   🎯 Result: ${allClassesComplete ? 'COMPLETED ✅' : 'IN PROGRESS ⏳'}`);
-            
-            return allClassesComplete;
-        } catch (error) {
-            console.error('❌ Error checking event completion:', error);
-            return false;
-        }
+        throw new Error('eventDataService not available — cannot use deprecated dataManager.isEventCompleted()');
     }
 
     /**
@@ -2200,104 +2085,99 @@ class DataManager {
      * @deprecated Use window.eventDataService.addParticipantToEvent() instead
      */
     async registerParticipantForEvent(eventId, participantId) {
-        return this.executeExclusive(`event_${eventId}`, async () => {
-            console.warn('⚠️ DEPRECATED: dataManager.registerParticipantForEvent() - Use eventDataService.addParticipantToEvent() instead');
-            
-            if (window.eventDataService) {
-                return await window.eventDataService.addParticipantToEvent(eventId, participantId);
+        console.warn('⚠️ DEPRECATED: dataManager.registerParticipantForEvent() - Use eventDataService.addParticipantToEvent() instead');
+
+        if (!eventId || !participantId) {
+            throw new Error('Event ID and Participant ID are required');
+        }
+
+        try {
+            const normalizedEventId = this.normalizeId(eventId);
+            const normalizedParticipantId = this.normalizeId(participantId);
+            const response = await this.request(`${this.baseUrl}/events/${eventId}/participants`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ participantId })
+            });
+
+            if (!response.ok) {
+                let errorPayload = null;
+                try {
+                    errorPayload = await response.json();
+                } catch (parseError) {
+                    errorPayload = null;
+                }
+                const message = errorPayload?.error || `Failed to register participant for event: ${response.statusText}`;
+                throw new Error(message);
             }
-            
-            // Fallback implementation
+
+            let responseData = null;
             try {
-                console.log(`📝 Registering participant ${participantId} for event ${eventId}`);
-                
-                // Find the event
-                const event = this.getEvent(eventId);
-                if (!event) {
-                    throw new Error('Event not found');
-                }
-                
-                // Check if participant exists - if not found, try refreshing cache first
-                let participant = this.getParticipant(participantId);
-                if (!participant) {
-                    console.log('⚠️ Participant not found in cache, refreshing from server...');
-                    await this.loadFromStorage(['participants'], true); // Force refresh
-                    participant = this.getParticipant(participantId);
-                }
-                
-                if (!participant) {
-                    console.error('❌ Participant still not found after cache refresh:', participantId);
-                    console.log('🔍 Available participants:', this.data.participants.map(p => ({ id: p.id, name: p.name })));
-                    throw new Error('Participant not found');
-                }
-                
-                // Debug: Log the actual objects to see their structure
-                console.log('🔍 DEBUG - Event object:', {
-                    id: event.id,
-                    name: event.name,
-                    hasName: 'name' in event,
-                    keys: Object.keys(event)
-                });
-                console.log('🔍 DEBUG - Participant object:', {
-                    id: participant.id,
-                    name: participant.name,
-                    hasName: 'name' in participant,
-                    keys: Object.keys(participant)
-                });
-                
-                // Initialize participants array if it doesn't exist
-                if (!event.participants) {
-                    event.participants = [];
-                }
-                
-                // Check if participant is already registered
-                if (event.participants.includes(participantId)) {
-                    console.log(`⚠️ Participant ${participantId} is already registered for event ${eventId}`);
-                    return true; // Already registered, return success
-                }
-                
-                // Check if event is full
-                if (event.maxParticipants && event.participants.length >= event.maxParticipants) {
-                    throw new Error('Event is full');
-                }
-                
-                // Add participant to event
-                event.participants.push(participantId);
-                
-                // 🔧 CRITICAL FIX: Also set the participant's eventId field for race system compatibility
-                const updatedParticipant = {
-                    ...participant,
-                    eventId: eventId
-                };
-                
-                // Update both event and participant
-                const [updatedEvent, updatedParticipantRecord] = await Promise.all([
-                    this.updateEvent(eventId, {
-                        participants: event.participants
-                    }),
-                    this.updateParticipant(participantId, updatedParticipant)
-                ]);
-                
-                console.log(`🔧 Updated participant ${participant.name || participant.id || 'Unknown'} eventId to ${eventId}`);
-                
-                // Broadcast participant registered event
-                if (this.eventBus) {
-                    this.eventBus.emit('participant-registered', {
-                        eventId,
-                        participantId,
-                        eventName: event.name || 'Unknown Event',
-                        participantName: participant.name || 'Unknown Participant',
-                        timestamp: new Date().toISOString()
-                    });
-                }
-                
-                console.log(`✅ Participant ${participant.name || participant.id || 'Unknown'} registered for event ${event.name || event.id || 'Unknown'}`);
-                return true;
-            } catch (error) {
-                console.error('Failed to register participant for event:', error);
-                throw error;
+                responseData = await response.json();
+            } catch (parseError) {
+                responseData = null;
             }
-        });
+
+            // Update local cache for event + participant records
+            if (Array.isArray(this.data.events)) {
+                const eventIndex = this.data.events.findIndex(
+                    e => this.normalizeId(e.id) === normalizedEventId
+                );
+                if (eventIndex !== -1) {
+                    const event = this.data.events[eventIndex];
+                    let participants = Array.isArray(event.participants) ? event.participants : [];
+                    const hasParticipant = participants.some(
+                        pid => this.normalizeId(pid) === normalizedParticipantId
+                    );
+                    if (!hasParticipant) {
+                        participants = [...participants, participantId];
+                    }
+                    this.data.events[eventIndex] = {
+                        ...event,
+                        participants,
+                        currentParticipants: participants.length
+                    };
+                }
+            }
+
+            if (Array.isArray(this.data.participants)) {
+                const participantIndex = this.data.participants.findIndex(
+                    p => this.normalizeId(p.id) === normalizedParticipantId
+                );
+                if (participantIndex !== -1) {
+                    const participant = this.data.participants[participantIndex];
+                    const eventIds = Array.isArray(participant.eventIds) ? participant.eventIds : [];
+                    const hasEventId = eventIds.some(eid => this.normalizeId(eid) === normalizedEventId);
+                    const updatedEventIds = hasEventId ? eventIds : [...eventIds, eventId];
+                    this.data.participants[participantIndex] = {
+                        ...participant,
+                        eventIds: updatedEventIds
+                    };
+                }
+            }
+
+            if (this.data.eventParticipants && Array.isArray(this.data.eventParticipants[eventId])) {
+                const eventParticipants = this.data.eventParticipants[eventId];
+                const alreadyIncluded = eventParticipants.some(
+                    p => this.normalizeId(p.id) === normalizedParticipantId
+                );
+                if (!alreadyIncluded) {
+                    const participant = this.data.participants?.find(
+                        p => this.normalizeId(p.id) === normalizedParticipantId
+                    );
+                    if (participant) {
+                        this.data.eventParticipants[eventId] = [...eventParticipants, participant];
+                    }
+                }
+            }
+
+            return responseData?.success ?? true;
+        } catch (error) {
+            console.error('Failed to register participant for event:', error);
+            throw error;
+        }
     }
 
     /**
@@ -2310,71 +2190,7 @@ class DataManager {
         if (window.eventDataService) {
             return await window.eventDataService.removeParticipantFromEvent(eventId, participantId);
         }
-        
-        // Fallback implementation
-        try {
-            console.log(`📝 Removing participant ${participantId} from event ${eventId}`);
-            
-            // Find the event
-            const event = this.getEvent(eventId);
-            if (!event) {
-                throw new Error('Event not found');
-            }
-            
-            // Check if participant exists
-            const participant = this.getParticipant(participantId);
-            if (!participant) {
-                throw new Error('Participant not found');
-            }
-            
-            // Initialize participants array if it doesn't exist
-            if (!event.participants) {
-                event.participants = [];
-            }
-            
-            // Find and remove participant
-            const participantIndex = event.participants.indexOf(participantId);
-            if (participantIndex === -1) {
-                console.log(`⚠️ Participant ${participantId} is not registered for event ${eventId}`);
-                return true; // Not registered, return success
-            }
-            
-            // Remove participant from event
-            event.participants.splice(participantIndex, 1);
-            
-            // 🔧 CRITICAL FIX: Also clear the participant's eventId field if this was their only event
-            const updatedParticipant = {
-                ...participant,
-                eventId: null  // Clear eventId when removing from event
-            };
-            
-            // Update both event and participant
-            const [updatedEvent, updatedParticipantRecord] = await Promise.all([
-                this.updateEvent(eventId, {
-                    participants: event.participants
-                }),
-                this.updateParticipant(participantId, updatedParticipant)
-            ]);
-            
-            console.log(`🔧 Cleared participant ${participant.name} eventId`);
-            
-            // Broadcast participant removed event
-            if (this.eventBus) {
-                this.eventBus.emit('participant-removed', {
-                    eventId,
-                    participantId,
-                    eventName: event.name,
-                    participantName: participant.name,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            console.log(`✅ Participant ${participant.name} removed from event ${event.name}`);
-            return true;
-        } catch (error) {
-            console.error('Failed to remove participant from event:', error);
-            throw error;
-        }
+        throw new Error('eventDataService not available — cannot use deprecated dataManager.removeParticipantFromEvent()');
     }
 
     /**
@@ -2693,7 +2509,11 @@ class DataManager {
         // Try the new eventId map first, then fallback to old structure
         let bracket = this.data.raceBracketsByEvent?.[eventId] || this.data.raceBrackets?.[eventId];
         
-        if (bracket) return bracket;
+        if (bracket && bracket.classes) {
+            if (!this.data.raceBracketsByEvent) this.data.raceBracketsByEvent = {};
+            this.data.raceBracketsByEvent[eventId] = bracket;
+            return bracket;
+        }
 
         // Not found in cache, try fetching specifically for this event
         try {
@@ -2705,25 +2525,16 @@ class DataManager {
                 const data = await response.json();
                 // The API returns { brackets: [...], total: ... }
                 if (data.brackets && data.brackets.length > 0) {
-                     bracket = data.brackets[0];
-                     
-                     // Process the loaded bracket to ensure structure matches client expectations
-                     if (bracket.bracketData && typeof bracket.bracketData === 'string') {
-                         try {
-                             const parsedData = JSON.parse(bracket.bracketData);
-                             Object.assign(bracket, parsedData);
-                         } catch (e) {
-                             console.warn('Failed to parse bracketData for specific fetch:', e);
-                         }
-                     }
+                    bracket = data.brackets[0];
                      
                      // Cache it
                      if (!this.data.raceBrackets) this.data.raceBrackets = {};
                      if (!this.data.raceBracketsByEvent) this.data.raceBracketsByEvent = {};
                      
                      if (bracket.id) {
-                         this.data.raceBrackets[bracket.id] = bracket;
+                        this.data.raceBrackets[bracket.id] = bracket;
                      }
+                     this.data.raceBrackets[eventId] = bracket;
                      this.data.raceBracketsByEvent[eventId] = bracket;
                      
                      console.log(`✅ Successfully fetched and cached bracket for event ${eventId}`);

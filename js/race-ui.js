@@ -1981,17 +1981,47 @@ class RaceUI {
         // Organize heats by round number across all classes (now async)
         const roundsData = await this.organizeHeatsByRound(bracket);
         
-        let html = '';
-        
-        // Render each round with all classes
-        roundsData.forEach(roundData => {
-            html += this.renderRoundAcrossClasses(roundData);
-        });
-        
-        // Add generate next round button at the bottom
-        html += this.renderGenerateNextRoundButton(bracket);
+        // View mode toggle (list vs tree)
+        const viewMode = this._bracketViewMode || 'list';
+        let html = `
+            <div class="bracket-view-toggle" style="display:flex;gap:0.5rem;justify-content:flex-end;margin-bottom:1rem;">
+                <button class="btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-secondary'}" onclick="window.raceUI.setBracketViewMode('list')">
+                    <i class="fas fa-list"></i> List View
+                </button>
+                <button class="btn btn-sm ${viewMode === 'tree' ? 'btn-primary' : 'btn-secondary'}" onclick="window.raceUI.setBracketViewMode('tree')">
+                    <i class="fas fa-project-diagram"></i> Tree View
+                </button>
+            </div>
+        `;
 
-        bracketsContainer.innerHTML = html;
+        if (viewMode === 'tree') {
+            // SVG bracket tree mode
+            html += '<div id="bracket-tree-container"></div>';
+            html += this.renderGenerateNextRoundButton(bracket);
+            bracketsContainer.innerHTML = html;
+
+            // Render SVG trees per class
+            const treeContainer = document.getElementById('bracket-tree-container');
+            if (treeContainer && window.BracketTreeRenderer) {
+                const renderer = new window.BracketTreeRenderer(treeContainer);
+                let treeSvg = '';
+                for (const [className, classBracket] of Object.entries(bracket.classes)) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.marginBottom = '2rem';
+                    const classRenderer = new window.BracketTreeRenderer(tempDiv);
+                    classRenderer.render(classBracket, className);
+                    treeSvg += `<div style="margin-bottom:2rem;overflow-x:auto;">${tempDiv.innerHTML}</div>`;
+                }
+                treeContainer.innerHTML = treeSvg;
+            }
+        } else {
+            // Default list view
+            roundsData.forEach(roundData => {
+                html += this.renderRoundAcrossClasses(roundData);
+            });
+            html += this.renderGenerateNextRoundButton(bracket);
+            bracketsContainer.innerHTML = html;
+        }
         window.debugLogger?.debug('RaceUI', 'Brackets rendered successfully');
         
         // Update heat count tracking
@@ -2165,11 +2195,12 @@ class RaceUI {
      * Render unified final heats
      */
     renderUnifiedFinalHeats(round, className) {
+        const sortedHeats = round.heats.slice().sort((a, b) => (a.raceNumber || 0) - (b.raceNumber || 0));
         return `
             <div class="bracket-section unified-final">
                 <h5><i class="fas fa-trophy"></i> Unified Final</h5>
                 <div class="heats-horizontal">
-                    ${round.heats.map(heat => this.renderHeatHorizontal(heat, className)).join('')}
+                    ${sortedHeats.map(heat => this.renderHeatHorizontal(heat, className)).join('')}
                 </div>
             </div>
         `;
@@ -2203,7 +2234,7 @@ class RaceUI {
                 <div class="bracket-section ${bracketClass}">
                     <h5><i class="fas fa-layer-group"></i> ${bracketName}</h5>
                     <div class="heats-horizontal">
-                        ${heats.map(heat => this.renderHeatHorizontal(heat, className)).join('')}
+                        ${heats.slice().sort((a, b) => (a.raceNumber || 0) - (b.raceNumber || 0)).map(heat => this.renderHeatHorizontal(heat, className)).join('')}
                     </div>
                 </div>
             `;
@@ -2216,9 +2247,10 @@ class RaceUI {
      * Render double elimination heats
      */
     renderDoubleEliminationHeats(round, className) {
-        const upperBracketHeats = round.heats.filter(h => h.bracketType === 'upper');
-        const lowerBracketHeats = round.heats.filter(h => h.bracketType === 'lower');
-        const championshipHeats = round.heats.filter(h => h.bracketType === 'championship');
+        const sortByRaceNumber = (a, b) => (a.raceNumber || 0) - (b.raceNumber || 0);
+        const upperBracketHeats = round.heats.filter(h => h.bracketType === 'upper').sort(sortByRaceNumber);
+        const lowerBracketHeats = round.heats.filter(h => h.bracketType === 'lower').sort(sortByRaceNumber);
+        const championshipHeats = round.heats.filter(h => h.bracketType === 'championship').sort(sortByRaceNumber);
 
         window.debugLogger?.debug('RaceUI', `?? Rendering double elimination heats for ${className}:`);
         window.debugLogger?.debug('RaceUI', `  Total heats: ${round.heats.length}`);
@@ -2273,9 +2305,10 @@ class RaceUI {
      * Render single elimination heats
      */
     renderSingleEliminationHeats(round, className) {
+        const sortedHeats = round.heats.slice().sort((a, b) => (a.raceNumber || 0) - (b.raceNumber || 0));
         return `
             <div class="heats-horizontal">
-                ${round.heats.map(heat => this.renderHeatHorizontal(heat, className)).join('')}
+                ${sortedHeats.map(heat => this.renderHeatHorizontal(heat, className)).join('')}
             </div>
         `;
     }
@@ -2853,6 +2886,16 @@ class RaceUI {
         
         document.body.appendChild(this.scrollAnchorIndicator);
         window.debugLogger?.debug('RaceUI', 'Scroll anchor indicator created and added to DOM');
+    }
+
+    /**
+     * Switch between list and tree bracket view modes.
+     * @param {'list'|'tree'} mode
+     */
+    async setBracketViewMode(mode) {
+        this._bracketViewMode = mode;
+        const bracket = await this.raceManager.getBracket(this.selectedEventId);
+        if (bracket) await this.renderBrackets(bracket);
     }
 
     /**
@@ -3735,6 +3778,19 @@ class RaceUI {
                 </div>
             `}
             <div class="context-menu-separator"></div>
+            <div class="context-menu-item" data-action="add-manual-loss">
+                <i class="fas fa-plus-circle"></i>
+                Add Manual Loss
+            </div>
+            <div class="context-menu-item" data-action="remove-manual-loss">
+                <i class="fas fa-minus-circle"></i>
+                Remove Manual Loss
+            </div>
+            <div class="context-menu-item" data-action="undo-disqualification">
+                <i class="fas fa-undo-alt"></i>
+                Undo Disqualification
+            </div>
+            <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="pairing-analysis">
                 <i class="fas fa-chart-line"></i>
                 View Pairing Analysis
@@ -3843,6 +3899,28 @@ class RaceUI {
                 case 'pairing-analysis':
                     this.showPairingAnalysis(heatId, participantId);
                     break;
+                case 'add-manual-loss': {
+                    const bracket = await this.raceManager.getBracket(this.selectedEventId);
+                    const cn = currentHeat.className || this.determineHeatClass(heatId, bracket);
+                    const result = await this.raceManager.addManualLoss(this.selectedEventId, participantId, cn);
+                    this.showToast(`Manual loss added (now ${result.losses}L, ${result.status})`, 'info');
+                    await this.renderBrackets(await this.raceManager.getBracket(this.selectedEventId));
+                    break;
+                }
+                case 'remove-manual-loss': {
+                    const bracket2 = await this.raceManager.getBracket(this.selectedEventId);
+                    const cn2 = currentHeat.className || this.determineHeatClass(heatId, bracket2);
+                    const result2 = await this.raceManager.removeManualLoss(this.selectedEventId, participantId, cn2);
+                    this.showToast(`Loss removed (now ${result2.losses}L, ${result2.status})`, 'success');
+                    await this.renderBrackets(await this.raceManager.getBracket(this.selectedEventId));
+                    break;
+                }
+                case 'undo-disqualification': {
+                    const result3 = await this.raceManager.undoDisqualification(this.selectedEventId, participantId, heatId);
+                    this.showToast('Disqualification undone', 'success');
+                    await this.renderBrackets(await this.raceManager.getBracket(this.selectedEventId));
+                    break;
+                }
             }
         } catch (error) {
             console.error('Error handling participant action:', error);

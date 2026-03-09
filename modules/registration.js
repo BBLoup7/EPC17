@@ -8,6 +8,10 @@ class RegistrationManager {
         this.registrations = new Map();
         this.currentEvent = null;
         this.currentEventId = null;
+        this.currentParticipantsPage = 1;
+        this.participantsPerPage = 50;
+        this.participantsTotalPages = 1;
+        this.participantsTotal = 0;
         this.initialized = false;
         // Don't initialize immediately - wait for authentication
         this.initAfterAuth();
@@ -475,7 +479,11 @@ class RegistrationManager {
         // Get participant data if ID provided
         let participant = null;
         if (participantId) {
-            participant = dataManager.getParticipant(participantId);
+            if (typeof dataManager.getParticipantById === 'function') {
+                participant = await dataManager.getParticipantById(participantId);
+            } else {
+                participant = dataManager.getParticipant(participantId);
+            }
             if (!participant) {
                 Helpers.showToast('Participant not found', 'error');
                 return;
@@ -572,8 +580,20 @@ class RegistrationManager {
             
             // Handle based on mode
             if (mode === 'edit') {
-                // Update existing participant
-                await dataManager.updateParticipant(participantId, participantData);
+                // Update existing participant profile and, when scoped to an event, registration classes.
+                const updates = { ...participantData };
+                if (eventId) {
+                    const currentEventClasses =
+                        participant && participant.eventClasses && typeof participant.eventClasses === 'object'
+                            ? { ...participant.eventClasses }
+                            : {};
+
+                    currentEventClasses[eventId] = selectedClasses;
+                    updates.eventClasses = currentEventClasses;
+                    updates.selectedClasses = this.computeSelectedClasses(currentEventClasses);
+                }
+
+                await dataManager.updateParticipant(participantId, updates);
                 Helpers.showToast('Participant updated successfully', 'success');
             } else if (mode === 'existing') {
                 // Add existing participant to event
@@ -682,12 +702,20 @@ class RegistrationManager {
     /**
      * Load and display participant list
      */
-    loadParticipantList() {
+    async loadParticipantList(page = this.currentParticipantsPage) {
         const container = document.getElementById('participant-list-content');
         if (!container) return;
 
         const filters = this.getActiveFilters();
-        const participants = dataManager.getParticipants(filters);
+        const result = await dataManager.getParticipants(
+            filters,
+            page,
+            this.participantsPerPage
+        );
+        const participants = result?.participants || [];
+        this.currentParticipantsPage = result?.page || page;
+        this.participantsTotalPages = result?.totalPages || 1;
+        this.participantsTotal = result?.total || participants.length;
 
         // Sort participants alphabetically by name
         const sortedParticipants = participants.sort((a, b) => 
@@ -712,10 +740,21 @@ class RegistrationManager {
 
         container.innerHTML = `
             <div class="participant-count">
-                <p><strong>${sortedParticipants.length}</strong> participant${sortedParticipants.length !== 1 ? 's' : ''} found</p>
+                <p><strong>${this.participantsTotal}</strong> participant${this.participantsTotal !== 1 ? 's' : ''} found</p>
             </div>
+                <div class="participant-pagination" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                    <button class="btn btn-secondary" ${this.currentParticipantsPage <= 1 ? 'disabled' : ''} onclick="registrationManager.changeParticipantsPage(-1)">Previous</button>
+                    <span style="color: var(--text-secondary);">Page ${this.currentParticipantsPage} / ${Math.max(this.participantsTotalPages, 1)}</span>
+                    <button class="btn btn-secondary" ${this.currentParticipantsPage >= this.participantsTotalPages ? 'disabled' : ''} onclick="registrationManager.changeParticipantsPage(1)">Next</button>
+                </div>
             ${participantHtml}
         `;
+    }
+
+    async changeParticipantsPage(delta) {
+        const nextPage = this.currentParticipantsPage + delta;
+        if (nextPage < 1 || nextPage > this.participantsTotalPages) return;
+        await this.loadParticipantList(nextPage);
     }
 
     /**
@@ -782,7 +821,7 @@ class RegistrationManager {
         
         const classFilter = document.getElementById('class-filter');
         if (classFilter && classFilter.value) {
-            filters.sledClass = classFilter.value;
+            filters.class = classFilter.value;
         }
         
         const searchInput = document.getElementById('search-participants');
@@ -797,7 +836,8 @@ class RegistrationManager {
      * Filter participants based on current filter settings
      */
     filterParticipants() {
-        this.loadParticipantList();
+        this.currentParticipantsPage = 1;
+        this.loadParticipantList(1);
     }
 
     /**
@@ -999,25 +1039,12 @@ class RegistrationManager {
         const availableClasses = currentEvent.classSettings?.filter(cs => cs.enabled) || [];
         
         if (availableClasses.length === 0) {
-            // Fallback: If no class settings, show all series classes with warning
-            const fallbackHtml = series.sledClasses.map(seriesClass => {
-                return `
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="sledClasses" value="${seriesClass.id}" 
-                               onchange="registrationManager.updatePaymentSummary()">
-                        <span class="checkmark"></span>
-                        ${seriesClass.name} - $${seriesClass.defaultFee || 0}/class
-                    </label>
-                `;
-            }).join('');
-
+            // No class settings configured — do NOT fall back to all series classes
             return `
                 <div class="registration-warning">
-                    <p><strong>⚠️ Event Configuration Incomplete</strong></p>
-                    <p>This event hasn't been configured with specific class settings. Showing all classes from the series "${series.name}" with default pricing.</p>
-                    <p><em>Event organizers should configure specific classes and pricing for this event.</em></p>
+                    <p><strong>⚠️ No Classes Configured</strong></p>
+                    <p>This event has no class settings configured. Please edit the event in the Events page and enable the classes you want before registering drivers.</p>
                 </div>
-                ${fallbackHtml}
             `;
         }
 

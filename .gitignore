@@ -15,7 +15,8 @@ ENV/
 cert.pem
 key.pem
 
-# Data backups
+# Data (DB too large for GitHub; use local/sample only)
+data/*.db
 data/*.backup
 data/*.corrupted.*
 
@@ -33,3 +34,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Node
+node_modules/
+
+# SQLite WAL
+*.db-shm
+*.db-wal
