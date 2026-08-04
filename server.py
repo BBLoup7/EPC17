@@ -4,16 +4,18 @@ EPC17 - Event Management System - Network Server
 Robust data management for multi-client access across local network
 """
 
-from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
+from flask import Flask, render_template, request, jsonify, send_from_directory, make_response, redirect
 # from flask_cors import CORS  # Temporarily disabled
 import os
 import json
 import threading
 import time
+import atexit
 from datetime import datetime
 import uuid
 import ssl
 import secrets
+import traceback
 from utils.db_manager import DatabaseManager
 
 # WebSocket support
@@ -33,10 +35,35 @@ app.config['SECRET_KEY'] = secrets.token_hex(16)
 # Debug logging helper
 DEBUG_MODE = os.environ.get('FLASK_DEBUG', '0') == '1' or os.environ.get('DEBUG', '0') == '1'
 
+# Reload Jinja templates from disk when HTML changes (long-running local server)
+app.config['TEMPLATES_AUTO_RELOAD'] = (
+    DEBUG_MODE or os.environ.get('EPC17_DEV', '1') != '0'
+)
+
+_APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+
+def _read_html_page(filename):
+    """Read an HTML page from disk (bypasses Jinja template cache)."""
+    path = os.path.join(_APP_ROOT, filename)
+    with open(path, encoding='utf-8') as f:
+        return f.read()
+
+
+def _html_response(html):
+    """HTML response with no-cache headers for development."""
+    response = make_response(html)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
 def log_debug(*args, **kwargs):
     """Conditional logging based on environment variable"""
     if DEBUG_MODE:
         print(*args, **kwargs)
+
 
 # Initialize SocketIO if available
 socketio = SocketIO(app, cors_allowed_origins="*") if SOCKETIO_AVAILABLE else None
@@ -72,6 +99,20 @@ def get_db_manager():
     if _db_manager is None:
         _db_manager = DatabaseManager('data/epc17.db')
     return _db_manager
+
+
+def _shutdown_database():
+    """Checkpoint WAL and close SQLite on process exit."""
+    global _db_manager
+    if _db_manager is not None:
+        try:
+            _db_manager.close()
+        except Exception:
+            pass
+        _db_manager = None
+
+
+atexit.register(_shutdown_database)
 
 # In-memory session store for simple auth (no external libraries)
 # Rule: EPC17_WORKFLOW.md - lightweight local dev, no DB
@@ -203,13 +244,16 @@ def create_self_signed_cert():
 
 # Database operations - no more JSON files needed!
 
-def create_session(user_id, username, permissions, allowed_events=None):
+def create_session(user_id, username, permissions, allowed_events=None, role_id=None, role_name=None, status='active'):
     token = secrets.token_hex(16)
     SESSIONS[token] = {
         'userId': user_id,
         'username': username,
         'permissions': permissions,
         'allowedEvents': allowed_events or [],
+        'roleId': role_id,
+        'roleName': role_name,
+        'status': status or 'active',
         'createdAt': datetime.now().isoformat()
     }
     return token
@@ -299,6 +343,14 @@ def statistics():
         return msg, code
     return render_template('analytics.html')  # Redirect to analytics for backward compatibility
 
+@app.route('/event-analytics.html')
+def event_analytics_redirect():
+    ok, err = require_permission(['analytics'])
+    if not ok:
+        msg, code = err
+        return msg, code
+    return render_template('analytics.html')  # Legacy URL → unified analytics dashboard
+
 @app.route('/big-screen.html')
 def big_screen_redirect():
     ok, err = require_permission(['live display'])
@@ -315,14 +367,22 @@ def network_test():
 @app.route('/users.html')
 def users_permissions_page():
     sess = get_session_from_request()
+    if not sess:
+        return redirect('/login.html?next=/users.html&msg=denied')
     if not ensure_admin(sess):
         return 'Access Denied', 403
     return render_template('users.html')
 
 # Tech Inspection page
 @app.route('/tech-inspection.html')
+@app.route('/tech-inspection')
 def tech_inspection_page():
-    return render_template('tech-inspection.html')
+    ok, err = require_permission(['registration'])
+    if not ok:
+        msg, code = err
+        return msg, code
+    # Always read from disk — render_template caches when debug is off
+    return _html_response(_read_html_page('tech-inspection.html'))
 
 # Version endpoint
 @app.route('/api/version', methods=['GET'])
@@ -513,8 +573,15 @@ def handle_series():
             
         data['id'] = generate_id()
         data['createdDate'] = datetime.now().isoformat()
-        data['status'] = data.get('status', 'upcoming')
+        # Normalize status to active | archived
+        raw_status = (data.get('status') or 'active').strip().lower()
+        data['status'] = 'archived' if raw_status in ('archived', 'completed', 'cancelled', 'canceled') else 'active'
+        data['shortName'] = (data.get('shortName') or '').strip() or None
+        data['defaultSeasonId'] = data.get('defaultSeasonId') or None
         data['events'] = data.get('events', [])
+        data['seasons'] = data.get('seasons', [])
+        data['sledClasses'] = data.get('sledClasses', [])
+        data['standings'] = data.get('standings', [])
         data['createdAt'] = data['createdDate']
         data['updatedAt'] = data['createdDate']
 
@@ -525,41 +592,63 @@ def handle_series():
     
     # GET request with pagination
     # Allow registration users to read series for registration workflows
-    ok, err = require_permission(['series', 'registration'])
-    if not ok:
-        msg, code = err
-        return jsonify({'error': msg}), code
-    series = get_db_manager().get_series()
-    
-    # Apply filters
-    status = request.args.get('status')
-    search = request.args.get('search')
-    
-    if status:
-        series = [s for s in series if s.get('status') == status]
-    if search:
-        search_lower = search.lower()
-        series = [s for s in series if s.get('name', '').lower().find(search_lower) != -1]
-    
-    # Apply pagination
-    page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 1000))  # Increase default limit to 1000 to get all series
-    
-    total = len(series)
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    
-    paginated_series = series[start_idx:end_idx]
-    
-    log_debug(f"DEBUG DEBUG - Returning {len(paginated_series)} series (total: {total})")
-    
-    return jsonify({
-        'series': paginated_series,
-        'total': total,
-        'page': page,
-        'limit': limit,
-        'totalPages': (total + limit - 1) // limit
-    })
+    try:
+        ok, err = require_permission(['series', 'registration'])
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
+        series = get_db_manager().get_series()
+
+        # Apply filters
+        status = request.args.get('status')
+        search = request.args.get('search')
+
+        if status and status != 'all':
+            status_lower = status.strip().lower()
+            series = [s for s in series if (s.get('status') or 'active') == status_lower]
+        if search:
+            search_lower = search.lower()
+            series = [
+                s
+                for s in series
+                if search_lower in (s.get('name') or '').lower()
+                or search_lower in (s.get('shortName') or '').lower()
+                or search_lower in (s.get('description') or '').lower()
+            ]
+
+        # Apply pagination (guard invalid query params)
+        try:
+            page = max(int(request.args.get("page", 1)), 1)
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            limit = min(max(int(request.args.get("limit", 1000)), 1), 5000)
+        except (TypeError, ValueError):
+            limit = 1000
+
+        total = len(series)
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+
+        paginated_series = series[start_idx:end_idx]
+
+        log_debug(
+            f"DEBUG DEBUG - Returning {len(paginated_series)} series (total: {total})"
+        )
+
+        return jsonify(
+            {
+                "series": paginated_series,
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "totalPages": (total + limit - 1) // limit,
+            }
+        )
+    except Exception as e:
+        print(f"[ERROR] handle_series GET: {e}")
+        traceback.print_exc()
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/api/series/<series_id>', methods=['PUT', 'DELETE'])
 def handle_series_by_id(series_id):
@@ -586,10 +675,18 @@ def handle_series_by_id(series_id):
             # Update the series data
             data['id'] = series_id  # Ensure ID doesn't change
             data['updatedAt'] = datetime.now().isoformat()
+            raw_status = (data.get('status') or existing_series.get('status') or 'active')
+            raw_status = str(raw_status).strip().lower()
+            data['status'] = 'archived' if raw_status in ('archived', 'completed', 'cancelled', 'canceled') else 'active'
+            data['shortName'] = (data.get('shortName') if 'shortName' in data else existing_series.get('shortName')) or None
+            if isinstance(data['shortName'], str):
+                data['shortName'] = data['shortName'].strip() or None
+            if 'defaultSeasonId' in data:
+                data['defaultSeasonId'] = data.get('defaultSeasonId') or None
 
             # Preserve original creation date if not provided
-            if 'createdAt' not in data and 'createdDate' in existing_series:
-                data['createdAt'] = existing_series['createdDate']
+            if 'createdAt' not in data:
+                data['createdAt'] = existing_series.get('createdAt') or existing_series.get('createdDate')
 
             if get_db_manager().update_series(series_id, data):
                 print(f"SUCCESS - Successfully updated series {series_id}")
@@ -602,7 +699,7 @@ def handle_series_by_id(series_id):
             return jsonify({'error': f'Update failed: {str(e)}'}), 500
     
     elif request.method == 'DELETE':
-        """Delete a specific series"""
+        """Delete a specific series (blocked when events are linked)"""
         try:
             ok, err = require_permission('series')
             if not ok:
@@ -613,14 +710,12 @@ def handle_series_by_id(series_id):
             if not series:
                 return jsonify({'error': 'Series not found'}), 404
 
-            # Get all participants to remove series from their lists
-            participants = get_db_manager().get_participants()
-
-            # Remove series from participants' series lists (if they have series field)
-            for participant in participants:
-                # Note: participants table doesn't have series field in current schema
-                # This might need to be updated if series membership is tracked per participant
-                pass
+            event_count = get_db_manager().count_events_for_series(series_id)
+            if event_count > 0:
+                return jsonify({
+                    'error': f'Cannot delete series with {event_count} linked event(s). Archive it instead.',
+                    'eventCount': event_count
+                }), 409
 
             # Delete the series
             if get_db_manager().delete_series(series_id):
@@ -1033,47 +1128,59 @@ def calculate_event_achievements(*args, **kwargs):
 @app.route('/api/race-brackets', methods=['GET'])
 def get_race_brackets():
     """Get all race brackets with pagination and filtering"""
-    ok, err = require_permission(['races'])
-    if not ok:
-        msg, code = err
-        return jsonify({'error': msg}), code
+    try:
+        ok, err = require_permission(['races'])
+        if not ok:
+            msg, code = err
+            return jsonify({'error': msg}), code
 
-    db = get_db_manager()
+        db = get_db_manager()
 
-    # Get query parameters
-    page = max(int(request.args.get('page', 1)), 1)
-    limit = min(max(int(request.args.get('limit', 50)), 1), 200)
-    event_id = request.args.get('eventId')
+        try:
+            page = max(int(request.args.get("page", 1)), 1)
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            limit = min(max(int(request.args.get("limit", 50)), 1), 200)
+        except (TypeError, ValueError):
+            limit = 50
+        event_id = request.args.get('eventId')
 
-    # Scope by allowedEvents if not admin
-    sess = get_session_from_request()
-    allowed_ids = None
-    if sess and not is_admin_session(sess):
-        allowed = set(sess.get('allowedEvents', []) or [])
-        if allowed:
-            allowed_ids = sorted(allowed)
+        # Scope by allowedEvents if not admin
+        sess = get_session_from_request()
+        allowed_ids = None
+        if sess and not is_admin_session(sess):
+            allowed = set(sess.get('allowedEvents', []) or [])
+            if allowed:
+                allowed_ids = sorted(allowed)
 
-    if event_id:
-        # Fetch full bracket data only for a specific event.
-        bracket = db.get_race_bracket_by_event_id(event_id)
-        brackets = [bracket] if bracket else []
-        if allowed_ids is not None:
-            brackets = [b for b in brackets if b and b.get('eventId') in allowed_ids]
-        total = len(brackets)
-        return jsonify({
-            'brackets': brackets,
-            'total': total,
-            'page': 1,
-            'limit': max(total, 1),
-            'totalPages': 1
-        })
+        if event_id:
+            # Fetch full bracket data only for a specific event.
+            bracket = db.get_race_bracket_by_event_id(event_id)
+            brackets = [bracket] if bracket else []
+            if allowed_ids is not None:
+                brackets = [
+                    b for b in brackets if b and b.get('eventId') in allowed_ids
+                ]
+            total = len(brackets)
+            return jsonify({
+                'brackets': brackets,
+                'total': total,
+                'page': 1,
+                'limit': max(total, 1),
+                'totalPages': 1
+            })
 
-    metadata_result = db.get_race_bracket_metadata(
-        page=page,
-        limit=limit,
-        allowed_event_ids=allowed_ids,
-    )
-    return jsonify(metadata_result)
+        metadata_result = db.get_race_bracket_metadata(
+            page=page,
+            limit=limit,
+            allowed_event_ids=allowed_ids,
+        )
+        return jsonify(metadata_result)
+    except Exception as e:
+        print(f"[ERROR] get_race_brackets: {e}")
+        traceback.print_exc()
+        return jsonify({'error': 'Internal server error'}), 500
 
 # WORKING POST ENDPOINT - COPIED EXACTLY FROM auth/login
 @app.route('/api/race-brackets', methods=['POST'])
@@ -1398,9 +1505,12 @@ def clear_database():
         backup_path = f"data/backups/backup_clear_all_{int(datetime.now().timestamp())}.db"
 
         try:
-            # Create backup of the database file
-            import shutil
-            shutil.copy2('data/epc17.db', backup_path)
+            db = get_db_manager()
+            if not db.create_backup(backup_path):
+                return jsonify({
+                    'status': 'error',
+                    'error': 'Failed to create backup (SQLite backup API)',
+                }), 500
             print(f"[INFO] Database backup created: {backup_path}")
         except Exception as e:
             print(f"[WARNING] Failed to create database backup: {e}")
@@ -1418,16 +1528,16 @@ def clear_database():
                 log_debug("[DEBUG] Closing existing database manager...")
                 _db_manager.close()
                 log_debug("[DEBUG] Database manager closed")
+                _db_manager = None
 
-            # Remove the current database file
+            # Remove DB + WAL sidecars (copying/deleting .db alone corrupts WAL mode DBs)
             if os.path.exists('data/epc17.db'):
-                log_debug("[DEBUG] Removing existing database file...")
-                os.remove('data/epc17.db')
-                log_debug("[DEBUG] Database file removed")
+                log_debug("[DEBUG] Removing database files (db, wal, shm)...")
+                DatabaseManager.remove_database_files('data/epc17.db')
+                log_debug("[DEBUG] Database files removed")
 
             # Create a new database manager which will initialize a fresh database
             log_debug("[DEBUG] Creating new database manager...")
-            from utils.db_manager import DatabaseManager
             _db_manager = DatabaseManager('data/epc17.db')
             log_debug("[DEBUG] New database manager created")
 
@@ -1501,13 +1611,17 @@ def serve_static(filename):
             return render_template('login.html')
         page_perm_map = {
             'registration.html': ['registration'],
+            'tech-inspection.html': ['registration'],
+            'existing-drivers.html': ['registration'],
+            'participants.html': ['registration'],
             'series.html': ['series'],
             'events.html': ['events'],
             'races.html': ['races'],
+            'final-results.html': ['races', 'analytics'],
             'analytics.html': ['analytics'],
-            # Allow driver profiles for registration workflows (and keep legacy permission)
             'driver-profile.html': ['drivers profile', 'registration'],
             'live-display.html': ['live display'],
+            'animator.html': ['animator'],
             'users.html': ['admin_power'],
         }
         required = page_perm_map.get(filename)
@@ -1515,6 +1629,9 @@ def serve_static(filename):
             ok, err = require_permission(required)
             if not ok:
                 msg, code = err
+                if code == 401:
+                    from urllib.parse import quote
+                    return redirect(f'/login.html?next={quote("/" + filename)}&msg=expired')
                 return msg, code
         else:
             # Deny any other .html pages not explicitly allowed
@@ -1533,48 +1650,104 @@ def serve_static(filename):
 # Rule: EPC17_WORKFLOW.md - simple JSON storage, no external libs
 # Rule: EPC17_PROMPTS.md not applicable here; feature is backend auth
 
+def _sanitize_user(user, db=None):
+    """Return a public user dict (no password) with resolved role fields."""
+    if not user:
+        return None
+    db = db or get_db_manager()
+    role_id = user.get('roleId')
+    role = db.get_role(role_id) if role_id else None
+    permissions = db.resolve_user_permissions(user)
+    return {
+        'id': user.get('id'),
+        'username': user.get('username'),
+        'roleId': role_id,
+        'roleName': role.get('name') if role else None,
+        'permissions': permissions,
+        'allowedEvents': user.get('allowedEvents') or [],
+        'status': user.get('status') or 'active',
+        'createdAt': user.get('createdAt'),
+        'updatedAt': user.get('updatedAt'),
+    }
+
+
+def _cookie_max_age(remember_me):
+    """30 days when Remember Me; session cookie otherwise."""
+    return 60 * 60 * 24 * 30 if remember_me else None
+
+
 @app.route('/api/auth/login', methods=['POST'])
 def auth_login():
     data = request.get_json() or {}
     username = data.get('username', '')
     password = data.get('password', '')
+    remember_me = data.get('rememberMe', True)
+    if isinstance(remember_me, str):
+        remember_me = remember_me.lower() in ('1', 'true', 'yes')
 
     # Simple login for Admin without database check
     if username == 'Admin' and password == 'Admin321':
-        # Create admin user with all permissions
         admin_permissions = ALL_CATEGORIES[:]
         token = create_session(
             'admin-user-id',
             'Admin',
             admin_permissions,
-            []  # No event restrictions for admin
+            [],
+            role_id='role-full-access',
+            role_name='Full Access',
+            status='active',
         )
-        resp = jsonify({'token': token, 'username': 'Admin', 'permissions': admin_permissions, 'allowedEvents': []})
-        resp.set_cookie('auth_token', token, max_age=60*60*24*30, httponly=False, samesite='Lax')
+        resp = jsonify({
+            'token': token,
+            'username': 'Admin',
+            'permissions': admin_permissions,
+            'allowedEvents': [],
+            'roleId': 'role-full-access',
+            'roleName': 'Full Access',
+            'status': 'active',
+        })
+        max_age = _cookie_max_age(remember_me)
+        resp.set_cookie('auth_token', token, max_age=max_age, httponly=False, samesite='Lax')
         return resp
 
-    # Fallback to database authentication for other users
-    users = get_db_manager().get_users()
-    user = next((u for u in users if u.get('username') == username and u.get('password') == password), None)
-    if not user:
-        return jsonify({'error': 'Invalid credentials'}), 401
+    db = get_db_manager()
+    user = db.get_user_by_username(username)
+    if not user or user.get('password') != password:
+        return jsonify({'error': 'Invalid username or password.'}), 401
 
-    # Ensure Admin invariants: Admin always has all categories
+    if (user.get('status') or 'active') == 'disabled':
+        return jsonify({'error': 'This account is disabled. Contact an administrator.'}), 403
+
+    permissions = db.resolve_user_permissions(user)
+    # Ensure DB Admin row keeps full categories
     if user.get('username') == 'Admin':
-        if set(user.get('permissions', [])) != set(ALL_CATEGORIES):
-            user['permissions'] = ALL_CATEGORIES[:]
-            get_db_manager().update_user(user['id'], user)
+        permissions = ALL_CATEGORIES[:]
+
+    role = db.get_role(user.get('roleId')) if user.get('roleId') else None
+    role_name = role.get('name') if role else None
 
     token = create_session(
         user.get('id'),
         user.get('username'),
-        user.get('permissions', []),
-        user.get('allowedEvents', [])
+        permissions,
+        user.get('allowedEvents', []),
+        role_id=user.get('roleId'),
+        role_name=role_name,
+        status=user.get('status') or 'active',
     )
-    resp = jsonify({'token': token, 'username': user.get('username'), 'permissions': user.get('permissions', []), 'allowedEvents': user.get('allowedEvents', [])})
-    # Set cookie so subsequent page GETs include auth
-    resp.set_cookie('auth_token', token, max_age=60*60*24*30, httponly=False, samesite='Lax')
+    resp = jsonify({
+        'token': token,
+        'username': user.get('username'),
+        'permissions': permissions,
+        'allowedEvents': user.get('allowedEvents', []),
+        'roleId': user.get('roleId'),
+        'roleName': role_name,
+        'status': user.get('status') or 'active',
+    })
+    max_age = _cookie_max_age(remember_me)
+    resp.set_cookie('auth_token', token, max_age=max_age, httponly=False, samesite='Lax')
     return resp
+
 
 @app.route('/api/auth/logout', methods=['POST'])
 def auth_logout():
@@ -1582,102 +1755,260 @@ def auth_logout():
     if auth_header.startswith('Bearer '):
         token = auth_header.split(' ', 1)[1].strip()
         SESSIONS.pop(token, None)
+    # Also clear cookie-based session
+    cookie_token = request.cookies.get('auth_token')
+    if cookie_token:
+        SESSIONS.pop(cookie_token, None)
     resp = jsonify({'success': True})
-    # Clear auth cookie
     resp.set_cookie('auth_token', '', expires=0)
     return resp
+
 
 @app.route('/api/auth/me', methods=['GET'])
 def auth_me():
     sess = get_session_from_request()
     if not sess:
         return jsonify({'authenticated': False}), 200
-    return jsonify({'authenticated': True, 'username': sess['username'], 'permissions': sess['permissions'], 'allowedEvents': sess.get('allowedEvents', [])})
+    return jsonify({
+        'authenticated': True,
+        'username': sess['username'],
+        'permissions': sess['permissions'],
+        'allowedEvents': sess.get('allowedEvents', []),
+        'roleId': sess.get('roleId'),
+        'roleName': sess.get('roleName'),
+        'status': sess.get('status', 'active'),
+    })
+
 
 def ensure_admin(sess):
     """Check if user has admin privileges (either Admin username or admin_power permission)"""
     if not sess:
         return False
-    # Admin username has all privileges
     if sess.get('username') == 'Admin':
         return True
-    # Or user has admin_power permission
     return 'admin_power' in (sess.get('permissions', []) or [])
+
 
 @app.route('/api/users', methods=['GET', 'POST'])
 def users_collection():
     sess = get_session_from_request()
     if not ensure_admin(sess):
         return jsonify({'error': 'Access Denied'}), 403
+    db = get_db_manager()
     if request.method == 'GET':
-        # Get all users from database
-        users = get_db_manager().get_users()
-        return jsonify(users)
-    # POST - Create new user
+        users = db.get_users()
+        return jsonify([_sanitize_user(u, db) for u in users])
+
     data = request.get_json() or {}
     if not data.get('username') or not data.get('password'):
         return jsonify({'error': 'username and password are required'}), 400
-    users = get_db_manager().get_users()
+    if data['username'] == 'Admin':
+        return jsonify({'error': 'Cannot create another Admin user'}), 400
+    users = db.get_users()
     if any(u.get('username') == data['username'] for u in users):
         return jsonify({'error': 'Username already exists'}), 400
+
+    role_id = data.get('roleId')
+    if not role_id:
+        return jsonify({'error': 'roleId is required'}), 400
+    role = db.get_role(role_id)
+    if not role:
+        return jsonify({'error': 'Role not found'}), 400
+
+    status = data.get('status') or 'active'
+    if status not in ('active', 'disabled'):
+        return jsonify({'error': 'Invalid status'}), 400
+
     new_user = {
         'id': generate_id(),
         'username': data['username'],
         'password': data['password'],
-        'permissions': [p for p in (data.get('permissions', []) or []) if p in ALL_CATEGORIES],
-        'allowedEvents': data.get('allowedEvents', [])
+        'permissions': list(role.get('permissions') or []),
+        'allowedEvents': data.get('allowedEvents', []),
+        'roleId': role_id,
+        'status': status,
     }
-    # Prevent creation of another Admin username
-    if new_user['username'] == 'Admin':
-        return jsonify({'error': 'Cannot create another Admin user'}), 400
-    if get_db_manager().add_user(new_user):
-        return jsonify(new_user), 201
-    else:
-        return jsonify({'error': 'Failed to create user'}), 500
+    if db.add_user(new_user):
+        return jsonify(_sanitize_user(new_user, db)), 201
+    return jsonify({'error': 'Failed to create user'}), 500
+
 
 @app.route('/api/users/<user_id>', methods=['PUT', 'DELETE'])
 def users_item(user_id):
     sess = get_session_from_request()
     if not ensure_admin(sess):
         return jsonify({'error': 'Access Denied'}), 403
-    users = get_db_manager().get_users()
-    idx = next((i for i, u in enumerate(users) if u.get('id') == user_id), None)
-    if idx is None:
+    db = get_db_manager()
+    user = db.get_user_by_id(user_id)
+    if not user:
         return jsonify({'error': 'User not found'}), 404
-    # Disallow modifying Admin permissions or deleting Admin
-    if users[idx].get('username') == 'Admin':
+
+    if user.get('username') == 'Admin':
         if request.method == 'DELETE':
             return jsonify({'error': 'Cannot delete Admin user'}), 400
-        if request.method == 'PUT':
-            data = request.get_json() or {}
-            # Admin username/password can be changed? Keep it simple: disallow username change; allow password change if desired
-            if 'username' in data and data['username'] != 'Admin':
-                return jsonify({'error': 'Cannot change Admin username'}), 400
-            # Force keep wildcard permissions
-            users[idx]['permissions'] = ALL_CATEGORIES[:]
-            if 'password' in data:
-                users[idx]['password'] = data['password']
-            get_db_manager().update_user(users[idx]['id'], users[idx])
-            return jsonify(users[idx])
+        data = request.get_json() or {}
+        if 'username' in data and data['username'] != 'Admin':
+            return jsonify({'error': 'Cannot change Admin username'}), 400
+        if 'password' in data and data['password']:
+            user['password'] = data['password']
+        # Keep Admin fully privileged
+        full_role = db.get_role('role-full-access')
+        if full_role:
+            user['roleId'] = full_role['id']
+            user['permissions'] = list(full_role.get('permissions') or ALL_CATEGORIES)
+        else:
+            user['permissions'] = ALL_CATEGORIES[:]
+        user['status'] = 'active'
+        if 'allowedEvents' in data:
+            user['allowedEvents'] = list({
+                e for e in (data.get('allowedEvents') or []) if isinstance(e, str) and e
+            })
+        db.update_user(user['id'], user)
+        return jsonify(_sanitize_user(user, db))
+
     if request.method == 'PUT':
         data = request.get_json() or {}
-        if 'username' in data:
-            # prevent duplicate username
-            if any(u.get('username') == data['username'] and u.get('id') != user_id for u in users):
+        if 'username' in data and data['username']:
+            if any(u.get('username') == data['username'] and u.get('id') != user_id for u in db.get_users()):
                 return jsonify({'error': 'Username already exists'}), 400
-            users[idx]['username'] = data['username']
-        if 'password' in data:
-            users[idx]['password'] = data['password']
-        if 'permissions' in data:
-            users[idx]['permissions'] = [p for p in (data.get('permissions', []) or []) if p in ALL_CATEGORIES]
+            user['username'] = data['username']
+        if 'password' in data and data['password']:
+            user['password'] = data['password']
+        if 'roleId' in data:
+            role = db.get_role(data['roleId'])
+            if not role:
+                return jsonify({'error': 'Role not found'}), 400
+            user['roleId'] = data['roleId']
+            user['permissions'] = list(role.get('permissions') or [])
         if 'allowedEvents' in data:
-            users[idx]['allowedEvents'] = list({e for e in (data.get('allowedEvents', []) or []) if isinstance(e, str) and e})
-        get_db_manager().update_user(users[idx]['id'], users[idx])
-        return jsonify(users[idx])
-    else:
-        deleted = users.pop(idx)
-        get_db_manager().delete_user(deleted['id'])
-        return jsonify({'success': True, 'deletedId': deleted.get('id')})
+            user['allowedEvents'] = list({
+                e for e in (data.get('allowedEvents') or []) if isinstance(e, str) and e
+            })
+        if 'status' in data:
+            if data['status'] not in ('active', 'disabled'):
+                return jsonify({'error': 'Invalid status'}), 400
+            user['status'] = data['status']
+        db.update_user(user['id'], user)
+        return jsonify(_sanitize_user(user, db))
+
+    deleted_id = user.get('id')
+    db.delete_user(deleted_id)
+    return jsonify({'success': True, 'deletedId': deleted_id})
+
+
+# -------------------- ROLES API (RBAC) --------------------
+
+@app.route('/api/roles', methods=['GET', 'POST'])
+def roles_collection():
+    sess = get_session_from_request()
+    if not ensure_admin(sess):
+        return jsonify({'error': 'Access Denied'}), 403
+    db = get_db_manager()
+    if request.method == 'GET':
+        roles = db.get_roles()
+        result = []
+        for role in roles:
+            item = dict(role)
+            item['userCount'] = db.count_users_for_role(role['id'])
+            result.append(item)
+        return jsonify(result)
+
+    data = request.get_json() or {}
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({'error': 'name is required'}), 400
+    if db.get_role_by_name(name):
+        return jsonify({'error': 'A role with that name already exists'}), 400
+    permissions = [p for p in (data.get('permissions') or []) if p in ALL_CATEGORIES]
+    new_role = {
+        'id': generate_id(),
+        'name': name,
+        'description': (data.get('description') or '').strip(),
+        'permissions': permissions,
+        'isSystem': False,
+    }
+    if db.add_role(new_role):
+        created = db.get_role(new_role['id'])
+        created['userCount'] = 0
+        return jsonify(created), 201
+    return jsonify({'error': 'Failed to create role'}), 500
+
+
+@app.route('/api/roles/<role_id>', methods=['GET', 'PUT', 'DELETE'])
+def roles_item(role_id):
+    sess = get_session_from_request()
+    if not ensure_admin(sess):
+        return jsonify({'error': 'Access Denied'}), 403
+    db = get_db_manager()
+    role = db.get_role(role_id)
+    if not role:
+        return jsonify({'error': 'Role not found'}), 404
+
+    if request.method == 'GET':
+        item = dict(role)
+        item['userCount'] = db.count_users_for_role(role_id)
+        return jsonify(item)
+
+    if request.method == 'PUT':
+        data = request.get_json() or {}
+        updates = {}
+        if 'name' in data:
+            name = (data.get('name') or '').strip()
+            if not name:
+                return jsonify({'error': 'name cannot be empty'}), 400
+            existing = db.get_role_by_name(name)
+            if existing and existing.get('id') != role_id:
+                return jsonify({'error': 'A role with that name already exists'}), 400
+            updates['name'] = name
+        if 'description' in data:
+            updates['description'] = data.get('description') or ''
+        if 'permissions' in data:
+            updates['permissions'] = [p for p in (data.get('permissions') or []) if p in ALL_CATEGORIES]
+        if not db.update_role(role_id, updates):
+            return jsonify({'error': 'Failed to update role'}), 500
+        updated = db.get_role(role_id)
+        updated['userCount'] = db.count_users_for_role(role_id)
+        return jsonify(updated)
+
+    # DELETE
+    if role.get('isSystem'):
+        return jsonify({'error': 'Cannot delete a system role'}), 400
+    user_count = db.count_users_for_role(role_id)
+    if user_count > 0:
+        return jsonify({'error': f'Role is assigned to {user_count} user(s). Reassign them first.'}), 400
+    if not db.delete_role(role_id):
+        return jsonify({'error': 'Failed to delete role'}), 500
+    return jsonify({'success': True, 'deletedId': role_id})
+
+
+@app.route('/api/roles/<role_id>/clone', methods=['POST'])
+def roles_clone(role_id):
+    sess = get_session_from_request()
+    if not ensure_admin(sess):
+        return jsonify({'error': 'Access Denied'}), 403
+    db = get_db_manager()
+    source = db.get_role(role_id)
+    if not source:
+        return jsonify({'error': 'Role not found'}), 404
+    data = request.get_json() or {}
+    base_name = (data.get('name') or f"{source['name']} (Copy)").strip()
+    name = base_name
+    suffix = 2
+    while db.get_role_by_name(name):
+        name = f"{base_name} {suffix}"
+        suffix += 1
+    new_role = {
+        'id': generate_id(),
+        'name': name,
+        'description': data.get('description') if 'description' in data else (source.get('description') or ''),
+        'permissions': list(source.get('permissions') or []),
+        'isSystem': False,
+    }
+    if db.add_role(new_role):
+        created = db.get_role(new_role['id'])
+        created['userCount'] = 0
+        return jsonify(created), 201
+    return jsonify({'error': 'Failed to clone role'}), 500
 
 # ============================================================================
 # ANALYTICS API ENDPOINTS
@@ -1983,7 +2314,7 @@ def get_overall_analytics():
         total_drivers = counts.get('participants', 0)
         total_events = counts.get('events', 0)
         total_revenue = db.get_total_revenue()
-        total_races = db.get_completed_races_count()
+        completed_heats = db.count_completed_heats_from_brackets()
 
         # Count total entries from eventClasses map (single table scan only).
         total_entries = 0
@@ -2007,7 +2338,8 @@ def get_overall_analytics():
             'totalRevenue': round(total_revenue, 2),
             'totalDrivers': total_drivers,
             'totalEntries': total_entries,
-            'totalRaces': total_races,
+            'totalRaces': completed_heats,
+            'completedRaces': completed_heats,
             'totalEvents': total_events,
             'eventsByStatus': events_by_status,
             'avgParticipantsPerEvent': avg_participants_per_event,
@@ -2016,7 +2348,6 @@ def get_overall_analytics():
         return add_cors_headers(response)
     except Exception as e:
         print(f"[ERROR] Error getting overall analytics: {e}")
-        import traceback
         traceback.print_exc()
         error_response = jsonify({'error': str(e), 'message': 'Failed to fetch overall analytics'})
         return add_cors_headers(error_response), 500
@@ -2279,7 +2610,6 @@ def get_driver_analytics(driver_id):
         })
     except Exception as e:
         print(f"[ERROR] Error getting driver analytics: {e}")
-        import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
@@ -2773,8 +3103,18 @@ def get_top_performers():
                                                 driver_performance[driver_id]['totalRaces'] += 1
                                                 if position == 1:
                                                     driver_performance[driver_id]['wins'] += 1
-                                                if position is not None and position <= 3:
-                                                    driver_performance[driver_id]['podiums'] += 1
+        
+        podium_counts = db.count_podiums_from_final_standings(event_filter)
+        for driver_id, perf in driver_performance.items():
+            perf['podiums'] = podium_counts.get(driver_id, 0)
+        for driver_id, podium_total in podium_counts.items():
+            if driver_id not in driver_performance and podium_total > 0:
+                driver_performance[driver_id] = {
+                    'driverId': driver_id,
+                    'totalRaces': 0,
+                    'wins': 0,
+                    'podiums': podium_total,
+                }
         
         # Calculate win rates and add driver names
         top_drivers = []
@@ -2840,7 +3180,8 @@ if __name__ == '__main__':
             app,
             host='0.0.0.0',
             port=5000,
-            debug=True,
+            debug=DEBUG_MODE,
+            use_reloader=False,  # reloader spawns 2 processes → SQLite WAL corruption risk
             allow_unsafe_werkzeug=True  # Allow in development
         )
     else:
@@ -2848,6 +3189,7 @@ if __name__ == '__main__':
         app.run(
             host='0.0.0.0',
             port=5000,
-            debug=True,
-            threaded=False
+            debug=DEBUG_MODE,
+            use_reloader=False,
+            threaded=True,
         ) 

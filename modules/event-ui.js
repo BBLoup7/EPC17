@@ -572,7 +572,7 @@ const EventUI = {
                 
                 ${series ? `
                     <div class="series-badge-large">
-                        Part of ${this._sanitize(series.name)}
+                        Part of ${this._sanitize(series.shortName || series.name)}
                     </div>
                 ` : ''}
                 
@@ -777,7 +777,8 @@ const EventUI = {
      */
     renderSeriesBadge(series) {
         if (!series) return '';
-        return `<span class="series-badge">${this._sanitize(series.name)}</span>`;
+        const label = series.shortName || series.name;
+        return `<span class="series-badge" title="${this._sanitize(series.name)}">${this._sanitize(label)}</span>`;
     },
 
     /**

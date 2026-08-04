@@ -46,27 +46,17 @@ const SeriesBusinessLogic = {
      * @returns {boolean} True if series is active
      */
     isSeriesActive(series, events = []) {
-        // Check for active seasons
+        // Explicit archived status wins
+        if (series?.status === 'archived') return false;
+        if (series?.status === 'active') return true;
+
+        // Legacy fallback
         if (series.seasons && series.seasons.length > 0) {
             const activeSeasons = this.getActiveSeasons(series.seasons);
             if (activeSeasons.length > 0) return true;
         }
-        
-        // Check for recent events (within last 90 days)
-        if (events.length > 0) {
-            const ninetyDaysAgo = new Date();
-            ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-            
-            const recentEvents = events.filter(event => {
-                const eventDate = new Date(event.date);
-                return eventDate >= ninetyDaysAgo;
-            });
-            
-            return recentEvents.length > 0;
-        }
-        
-        // Check explicit status
-        return series.status === 'active';
+
+        return false;
     },
 
     /**
@@ -232,38 +222,82 @@ const SeriesBusinessLogic = {
      * @param {string} order - Sort order ('asc' or 'desc')
      * @returns {Array} Sorted array
      */
-    sortSeries(seriesArray, sortBy = 'date', order = 'desc') {
+    sortSeries(seriesArray, sortBy = 'name', order = 'asc', statsMap = {}) {
         const sorted = [...seriesArray];
-        
+
         sorted.sort((a, b) => {
             let comparison = 0;
-            
+
             switch (sortBy) {
                 case 'name':
-                    comparison = a.name.localeCompare(b.name);
+                    comparison = (a.name || '').localeCompare(b.name || '');
                     break;
-                    
-                case 'date':
-                    const dateA = new Date(a.createdAt);
-                    const dateB = new Date(b.createdAt);
+
+                case 'events': {
+                    const eventsA = statsMap[a.id]?.totalEvents || 0;
+                    const eventsB = statsMap[b.id]?.totalEvents || 0;
+                    comparison = eventsA - eventsB;
+                    break;
+                }
+
+                case 'updated': {
+                    const dateA = new Date(a.updatedAt || a.createdAt || 0);
+                    const dateB = new Date(b.updatedAt || b.createdAt || 0);
                     comparison = dateA - dateB;
                     break;
-                    
-                case 'active':
-                    // Active first
+                }
+
+                case 'date': {
+                    const dateA = new Date(a.createdAt || 0);
+                    const dateB = new Date(b.createdAt || 0);
+                    comparison = dateA - dateB;
+                    break;
+                }
+
+                case 'active': {
                     const activeA = a.status === 'active' ? 1 : 0;
                     const activeB = b.status === 'active' ? 1 : 0;
                     comparison = activeB - activeA;
                     break;
-                    
+                }
+
                 default:
                     comparison = 0;
             }
-            
+
             return order === 'asc' ? comparison : -comparison;
         });
-        
+
         return sorted;
+    },
+
+    /**
+     * Filter series by search text and status
+     */
+    filterSeries(seriesArray, { search = '', status = 'all' } = {}) {
+        const query = (search || '').trim().toLowerCase();
+        return seriesArray.filter((series) => {
+            if (status && status !== 'all') {
+                const seriesStatus = series.status === 'archived' ? 'archived' : 'active';
+                if (seriesStatus !== status) return false;
+            }
+            if (!query) return true;
+            const haystack = [
+                series.name,
+                series.shortName,
+                series.description
+            ].filter(Boolean).join(' ').toLowerCase();
+            return haystack.includes(query);
+        });
+    },
+
+    /**
+     * Display label: short name preferred when present
+     */
+    getSeriesDisplayName(series, preferShort = true) {
+        if (!series) return 'Unknown Series';
+        if (preferShort && series.shortName) return series.shortName;
+        return series.name || 'Unknown Series';
     }
 };
 

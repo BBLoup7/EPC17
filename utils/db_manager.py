@@ -7,12 +7,59 @@ Provides SQLite database operations for the Flask server
 import sqlite3
 import json
 import os
+import re
 import logging
 import threading
+import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger('EPC17.db')
+
+
+def _is_sqlite_disk_corruption(err: BaseException) -> bool:
+    msg = str(err).lower()
+    return "malformed" in msg or "disk image" in msg
+
+
+_SERIES_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS series (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        shortName TEXT,
+        description TEXT,
+        sledClasses TEXT,
+        events TEXT,
+        standings TEXT,
+        seasons TEXT,
+        defaultSeasonId TEXT,
+        status TEXT DEFAULT 'active',
+        createdAt TEXT,
+        updatedAt TEXT
+    )
+"""
+
+
+def _normalize_series_status(status: Optional[str]) -> str:
+    """Map legacy series statuses to active | archived."""
+    if not status:
+        return "active"
+    value = str(status).strip().lower()
+    if value in ("archived", "completed", "cancelled", "canceled"):
+        return "archived"
+    return "active"
+
+_RACE_BRACKETS_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS race_brackets (
+        id TEXT PRIMARY KEY,
+        eventId TEXT UNIQUE,
+        bracketData TEXT,
+        createdAt TEXT,
+        updatedAt TEXT,
+        FOREIGN KEY (eventId) REFERENCES events (id)
+    )
+"""
+
 
 class DatabaseManager:
     """
@@ -37,14 +84,316 @@ class DatabaseManager:
         else:
             print("[INFO] SQLite database exists, connecting...")
 
-        # Establish connection
+        # Establish connection (with one-shot repair for corrupt index rootpages)
         self.connection = sqlite3.connect(self.db_path, check_same_thread=False)
-        self.connection.execute("PRAGMA journal_mode=WAL")
-        self.connection.execute("PRAGMA synchronous=NORMAL")
-        self.connection.execute("PRAGMA foreign_keys=ON")
         self.connection.row_factory = sqlite3.Row  # Enable column access by name
-        self._ensure_indexes()
-        self._ensure_event_columns()
+        self.connection.execute("PRAGMA busy_timeout=30000")
+
+        max_schema_repairs = 20
+        repairs_done = 0
+        for attempt in range(max_schema_repairs):
+            try:
+                self.connection.execute("PRAGMA journal_mode=WAL")
+                self.connection.execute("PRAGMA synchronous=NORMAL")
+                self.connection.execute("PRAGMA wal_autocheckpoint=1000")
+                self.connection.execute("PRAGMA foreign_keys=ON")
+                self._ensure_indexes()
+                self._ensure_event_columns()
+                self._ensure_series_columns()
+                self._ensure_participant_columns()
+                self._ensure_rbac_schema()
+                if repairs_done > 0:
+                    print(
+                        "[INFO] SQLite schema repaired (removed "
+                        f"{repairs_done} corrupt index entr(y/ies)); connection OK."
+                    )
+                break
+            except sqlite3.DatabaseError as e:
+                err = str(e)
+                if (
+                    "malformed database schema" in err or "invalid rootpage" in err
+                ) and self._recover_corrupt_index_from_error(err):
+                    repairs_done += 1
+                    continue
+                print(f"[ERROR] SQLite database init failed: {err}")
+                raise
+
+        need_reindex = repairs_done > 0
+        try:
+            qc = self.connection.execute("PRAGMA quick_check").fetchone()
+            if not qc or qc[0] != "ok":
+                need_reindex = True
+                summary = (qc[0] if qc else "")[:200]
+                print(
+                    "[WARN] SQLite quick_check reported issues. "
+                    "Use Admin → Clear Database for a clean file if problems persist. "
+                    f"Detail: {summary}"
+                )
+        except sqlite3.Error as qe:
+            need_reindex = True
+            logger.warning("SQLite quick_check failed: %s", qe)
+        if need_reindex:
+            try:
+                self.connection.execute("REINDEX")
+            except sqlite3.Error as re_idx_e:
+                logger.warning("SQLite REINDEX failed: %s", re_idx_e)
+
+        self._ensure_series_table()
+        self._ensure_race_brackets_table()
+
+    @staticmethod
+    def remove_database_files(db_path: str) -> None:
+        """Remove main DB and WAL sidecar files (required after delete/recreate)."""
+        for path in (db_path, f"{db_path}-wal", f"{db_path}-shm"):
+            if os.path.exists(path):
+                os.remove(path)
+
+    def checkpoint_wal(self) -> None:
+        """Flush WAL into the main DB file before backup or shutdown."""
+        if not self.connection:
+            return
+        self.connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+    def create_backup(self, dest_path: str) -> bool:
+        """
+        Create a consistent backup using SQLite's backup API (never copy .db alone while WAL is active).
+        """
+        with self.lock:
+            os.makedirs(os.path.dirname(os.path.abspath(dest_path)) or ".", exist_ok=True)
+            self.checkpoint_wal()
+            dest = sqlite3.connect(dest_path)
+            try:
+                self._get_connection().backup(dest)
+                dest.commit()
+                return True
+            except sqlite3.Error as e:
+                logger.error("Database backup failed: %s", e)
+                return False
+            finally:
+                dest.close()
+
+    def _table_exists(self, name: str) -> bool:
+        row = self.connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+            (name,),
+        ).fetchone()
+        return row is not None
+
+    def _create_series_table(self, conn=None) -> None:
+        (conn or self._get_connection()).execute(_SERIES_TABLE_SQL)
+
+    def _ensure_series_table(self) -> None:
+        """Create series table if missing; rebuild via rename if row data is corrupt."""
+        if not self._table_exists("series"):
+            self._create_series_table()
+            self.connection.commit()
+            return
+        if not self._series_table_is_readable():
+            self._repair_corrupt_series_table()
+
+    def _series_table_is_readable(self) -> bool:
+        """True when at least one full series row can be read (not just id)."""
+        try:
+            self.connection.execute("SELECT * FROM series LIMIT 1").fetchone()
+            return True
+        except sqlite3.DatabaseError as e:
+            if _is_sqlite_disk_corruption(e):
+                return False
+            raise
+
+    def _repair_corrupt_series_table(self) -> bool:
+        """
+        Rebuild the series table when row storage is corrupt.
+        Uses ALTER RENAME (DROP often fails on corrupt pages), then CREATE fresh table.
+        """
+        with self.lock:
+            conn = self._get_connection()
+            series_ids = set()
+            if self._table_exists("series"):
+                try:
+                    for row in conn.execute("SELECT id FROM series"):
+                        if row[0]:
+                            series_ids.add(row[0])
+                except sqlite3.DatabaseError:
+                    pass
+            try:
+                for row in conn.execute(
+                    "SELECT DISTINCT seriesId FROM events "
+                    "WHERE seriesId IS NOT NULL AND seriesId != ''"
+                ):
+                    if row[0]:
+                        series_ids.add(row[0])
+            except sqlite3.Error:
+                pass
+
+            backup_dir = os.path.join(os.path.dirname(self.db_path), "backups")
+            os.makedirs(backup_dir, exist_ok=True)
+            backup_path = os.path.join(
+                backup_dir, f"backup_pre_series_repair_{int(time.time())}.db"
+            )
+            if not self.create_backup(backup_path):
+                return False
+
+            try:
+                if self._table_exists("series"):
+                    suffix = int(time.time())
+                    conn.execute(
+                        f"ALTER TABLE series RENAME TO series_corrupt_{suffix}"
+                    )
+                self._create_series_table(conn)
+                now = datetime.now().isoformat()
+                for sid in sorted(series_ids):
+                    short = sid[:8] if len(sid) >= 8 else sid
+                    conn.execute(
+                        """
+                        INSERT INTO series (
+                            id, name, description, sledClasses, events, standings,
+                            seasons, status, createdAt, updatedAt
+                        ) VALUES (?, ?, '', '[]', '[]', '[]', '[]', 'active', ?, ?)
+                        """,
+                        (sid, f"Recovered Series ({short})", now, now),
+                    )
+                conn.commit()
+            except sqlite3.Error as repair_err:
+                logger.error("Series table repair failed: %s", repair_err)
+                return False
+
+            print(
+                f"[INFO] Repaired corrupt series table ({len(series_ids)} row(s)); "
+                f"backup: {backup_path}"
+            )
+            return True
+
+    def _create_race_brackets_table(self, conn=None) -> None:
+        (conn or self._get_connection()).execute(_RACE_BRACKETS_TABLE_SQL)
+
+    def _ensure_race_brackets_table(self) -> None:
+        """Create race_brackets if missing; rebuild via rename if row data is corrupt."""
+        if not self._table_exists("race_brackets"):
+            self._create_race_brackets_table()
+            self.connection.commit()
+            return
+        if not self._race_brackets_table_is_readable():
+            self._repair_corrupt_race_brackets_table()
+
+    def _race_brackets_table_is_readable(self) -> bool:
+        """True when metadata columns on race_brackets can be read."""
+        try:
+            self.connection.execute(
+                "SELECT id, eventId, createdAt, updatedAt FROM race_brackets LIMIT 1"
+            ).fetchone()
+            return True
+        except sqlite3.DatabaseError as e:
+            if _is_sqlite_disk_corruption(e):
+                return False
+            raise
+
+    def _repair_corrupt_race_brackets_table(self) -> bool:
+        """Rebuild race_brackets when pages are corrupt (ALTER RENAME, then CREATE)."""
+        with self.lock:
+            conn = self._get_connection()
+            bracket_rows = []
+            if self._table_exists("race_brackets"):
+                try:
+                    for row in conn.execute("SELECT id FROM race_brackets"):
+                        if row[0]:
+                            bracket_rows.append({"id": row[0], "eventId": None})
+                except sqlite3.DatabaseError:
+                    pass
+            try:
+                for row in conn.execute(
+                    """
+                    SELECT DISTINCT bracketId, eventId FROM races
+                    WHERE bracketId IS NOT NULL AND bracketId != ''
+                    """
+                ):
+                    bracket_rows.append({"id": row[0], "eventId": row[1]})
+            except sqlite3.Error:
+                pass
+
+            seen = set()
+            unique_rows = []
+            for item in bracket_rows:
+                bid = item["id"]
+                if bid and bid not in seen:
+                    seen.add(bid)
+                    unique_rows.append(item)
+
+            backup_dir = os.path.join(os.path.dirname(self.db_path), "backups")
+            os.makedirs(backup_dir, exist_ok=True)
+            backup_path = os.path.join(
+                backup_dir,
+                f"backup_pre_race_brackets_repair_{int(time.time())}.db",
+            )
+            if not self.create_backup(backup_path):
+                return False
+
+            try:
+                if self._table_exists("race_brackets"):
+                    suffix = int(time.time())
+                    conn.execute(
+                        f"ALTER TABLE race_brackets RENAME TO race_brackets_corrupt_{suffix}"
+                    )
+                self._create_race_brackets_table(conn)
+                now = datetime.now().isoformat()
+                empty_bracket = json.dumps(
+                    {
+                        "classes": {},
+                        "participants": [],
+                        "lowerBracket": {},
+                        "isComplete": False,
+                    }
+                )
+                for item in unique_rows:
+                    conn.execute(
+                        """
+                        INSERT OR IGNORE INTO race_brackets (
+                            id, eventId, bracketData, createdAt, updatedAt
+                        ) VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (item["id"], item["eventId"], empty_bracket, now, now),
+                    )
+                conn.commit()
+            except sqlite3.Error as repair_err:
+                logger.error("race_brackets repair failed: %s", repair_err)
+                return False
+
+            print(
+                f"[INFO] Repaired corrupt race_brackets table ({len(unique_rows)} row(s)); "
+                f"backup: {backup_path}"
+            )
+            return True
+
+    def _recover_corrupt_index_from_error(self, err_msg: str) -> bool:
+        """
+        Remove a corrupt index named in SQLite's 'malformed database schema (name)' error.
+        DROP INDEX often fails with the same DatabaseError; use writable_schema + sqlite_master
+        and reconnect so the next open loads a clean schema entry list.
+        """
+        m = re.search(r"malformed database schema \(([^)]+)\)", err_msg)
+        if not m:
+            return False
+        idx_name = m.group(1).strip()
+        try:
+            cur = self.connection.cursor()
+            cur.execute("PRAGMA writable_schema=ON")
+            cur.execute(
+                "DELETE FROM sqlite_master WHERE type='index' AND name=?",
+                (idx_name,),
+            )
+            self.connection.commit()
+            cur.execute("PRAGMA writable_schema=OFF")
+            self.connection.commit()
+        except sqlite3.Error as e:
+            logger.warning("Failed to remove corrupt index %s: %s", idx_name, e)
+            return False
+        try:
+            self.connection.close()
+        except Exception:
+            pass
+        self.connection = sqlite3.connect(self.db_path, check_same_thread=False)
+        self.connection.row_factory = sqlite3.Row
+        return True
 
     def _initialize_database(self):
         """Initialize database with tables"""
@@ -79,20 +428,7 @@ class DatabaseManager:
         ''')
 
         # Series table
-        cursor.execute('''
-            CREATE TABLE series (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                sledClasses TEXT, -- JSON array
-                events TEXT, -- JSON array
-                standings TEXT, -- JSON array
-                seasons TEXT, -- JSON array
-                status TEXT DEFAULT 'active',
-                createdAt TEXT,
-                updatedAt TEXT
-            )
-        ''')
+        cursor.execute(_SERIES_TABLE_SQL)
 
         # Events table
         cursor.execute('''
@@ -160,14 +496,29 @@ class DatabaseManager:
             )
         ''')
 
+        # Roles table (RBAC)
+        cursor.execute('''
+            CREATE TABLE roles (
+                id TEXT PRIMARY KEY,
+                name TEXT UNIQUE NOT NULL,
+                description TEXT,
+                permissions TEXT,
+                isSystem INTEGER DEFAULT 0,
+                createdAt TEXT,
+                updatedAt TEXT
+            )
+        ''')
+
         # Users table
         cursor.execute('''
             CREATE TABLE users (
                 id TEXT PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                permissions TEXT, -- JSON array
+                permissions TEXT, -- legacy JSON array (deprecated; use roleId)
                 allowedEvents TEXT, -- JSON array
+                roleId TEXT,
+                status TEXT DEFAULT 'active',
                 createdAt TEXT,
                 updatedAt TEXT
             )
@@ -259,6 +610,429 @@ class DatabaseManager:
         if alter_statements:
             conn.commit()
             logger.info("Added missing events columns: %s", ", ".join(stmt.split()[-2] for stmt in alter_statements))
+
+    def _ensure_series_columns(self):
+        """Ensure shortName / defaultSeasonId columns exist on series table."""
+        conn = self.connection
+        if conn is None:
+            return
+
+        cursor = conn.cursor()
+        try:
+            rows = cursor.execute("PRAGMA table_info(series)").fetchall()
+        except sqlite3.Error:
+            return
+
+        existing_columns = {
+            row["name"] if isinstance(row, sqlite3.Row) else row[1] for row in rows
+        }
+
+        alter_statements = []
+        if "shortName" not in existing_columns:
+            alter_statements.append("ALTER TABLE series ADD COLUMN shortName TEXT")
+        if "defaultSeasonId" not in existing_columns:
+            alter_statements.append("ALTER TABLE series ADD COLUMN defaultSeasonId TEXT")
+
+        for statement in alter_statements:
+            cursor.execute(statement)
+
+        if alter_statements:
+            conn.commit()
+            logger.info(
+                "Added missing series columns: %s",
+                ", ".join(stmt.split()[-2] for stmt in alter_statements),
+            )
+
+    def _ensure_participant_columns(self):
+        """Ensure team/notes/licenseNumber columns exist on participants table."""
+        conn = self.connection
+        if conn is None:
+            return
+
+        cursor = conn.cursor()
+        rows = cursor.execute("PRAGMA table_info(participants)").fetchall()
+        existing_columns = {row["name"] if isinstance(row, sqlite3.Row) else row[1] for row in rows}
+
+        alter_statements = []
+        if "team" not in existing_columns:
+            alter_statements.append("ALTER TABLE participants ADD COLUMN team TEXT")
+        if "notes" not in existing_columns:
+            alter_statements.append("ALTER TABLE participants ADD COLUMN notes TEXT")
+        if "licenseNumber" not in existing_columns:
+            alter_statements.append("ALTER TABLE participants ADD COLUMN licenseNumber TEXT")
+        if "paymentMethod" not in existing_columns:
+            alter_statements.append("ALTER TABLE participants ADD COLUMN paymentMethod TEXT")
+        if "paymentNote" not in existing_columns:
+            alter_statements.append("ALTER TABLE participants ADD COLUMN paymentNote TEXT")
+        if "paidAt" not in existing_columns:
+            alter_statements.append("ALTER TABLE participants ADD COLUMN paidAt TEXT")
+
+        for statement in alter_statements:
+            cursor.execute(statement)
+
+        if alter_statements:
+            conn.commit()
+            logger.info(
+                "Added missing participants columns: %s",
+                ", ".join(stmt.split()[-2] for stmt in alter_statements),
+            )
+
+    @staticmethod
+    def build_participant_search_text(participant: Dict[str, Any]) -> str:
+        """Build lowercase _searchText from identity and contact fields."""
+        contact = participant.get("contact") or {}
+        if isinstance(contact, str):
+            try:
+                contact = json.loads(contact) if contact else {}
+            except (json.JSONDecodeError, TypeError):
+                contact = {}
+        if not isinstance(contact, dict):
+            contact = {}
+
+        parts = [
+            participant.get("name"),
+            participant.get("nickname"),
+            participant.get("racingNumber"),
+            participant.get("licenseNumber"),
+            participant.get("team"),
+            contact.get("email"),
+            contact.get("phone"),
+            contact.get("emergencyName"),
+            contact.get("emergencyPhone"),
+        ]
+        return " ".join(str(p).strip() for p in parts if p).lower()
+
+    # Canonical permission categories (kept in sync with server ALL_CATEGORIES)
+    ALL_PERMISSION_CATEGORIES = [
+        'series',
+        'events',
+        'registration',
+        'races',
+        'drivers profile',
+        'analytics',
+        'live display',
+        'animator',
+        'admin_power',
+    ]
+
+    SYSTEM_ROLE_SEEDS = [
+        {
+            'id': 'role-event-coordinator',
+            'name': 'Event Coordinator',
+            'description': 'Manage events and register participants for assigned events.',
+            'permissions': ['events', 'registration'],
+        },
+        {
+            'id': 'role-race-director',
+            'name': 'Race Director',
+            'description': 'Manage events, run races, and control live display.',
+            'permissions': ['events', 'races', 'live display'],
+        },
+        {
+            'id': 'role-data-analyst',
+            'name': 'Data Analyst',
+            'description': 'View analytics and driver profiles across events.',
+            'permissions': ['analytics', 'drivers profile'],
+        },
+        {
+            'id': 'role-system-administrator',
+            'name': 'System Administrator',
+            'description': 'Manage users, roles, and application settings.',
+            'permissions': ['admin_power'],
+        },
+        {
+            'id': 'role-full-access',
+            'name': 'Full Access',
+            'description': 'All feature pages plus user management.',
+            'permissions': None,  # filled at seed time
+        },
+    ]
+
+    def _ensure_rbac_schema(self):
+        """Create roles table, user roleId/status columns, seed system roles, migrate legacy users."""
+        conn = self.connection
+        if conn is None:
+            return
+
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS roles (
+                id TEXT PRIMARY KEY,
+                name TEXT UNIQUE NOT NULL,
+                description TEXT,
+                permissions TEXT,
+                isSystem INTEGER DEFAULT 0,
+                createdAt TEXT,
+                updatedAt TEXT
+            )
+        ''')
+
+        user_cols = cursor.execute("PRAGMA table_info(users)").fetchall()
+        existing = {row["name"] if isinstance(row, sqlite3.Row) else row[1] for row in user_cols}
+        alters = []
+        if 'roleId' not in existing:
+            alters.append("ALTER TABLE users ADD COLUMN roleId TEXT")
+        if 'status' not in existing:
+            alters.append("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'")
+        for statement in alters:
+            cursor.execute(statement)
+        if alters:
+            conn.commit()
+            logger.info("Added missing users RBAC columns: %s", ", ".join(alters))
+
+        self._seed_system_roles(cursor)
+        conn.commit()
+        self._migrate_users_to_roles(cursor)
+        conn.commit()
+
+    def _seed_system_roles(self, cursor):
+        """Insert built-in system roles if missing."""
+        now = datetime.now().isoformat()
+        for seed in self.SYSTEM_ROLE_SEEDS:
+            perms = seed['permissions']
+            if perms is None:
+                perms = list(self.ALL_PERMISSION_CATEGORIES)
+            existing = cursor.execute(
+                'SELECT id FROM roles WHERE id = ? OR name = ?',
+                (seed['id'], seed['name'])
+            ).fetchone()
+            if existing:
+                continue
+            cursor.execute('''
+                INSERT INTO roles (id, name, description, permissions, isSystem, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, 1, ?, ?)
+            ''', (
+                seed['id'],
+                seed['name'],
+                seed.get('description') or '',
+                json.dumps(perms),
+                now,
+                now,
+            ))
+        logger.info("System roles seeded / verified")
+
+    def _migrate_users_to_roles(self, cursor):
+        """Assign roleId to users that still only have legacy permissions JSON."""
+        rows = cursor.execute('SELECT * FROM users').fetchall()
+        if not rows:
+            return
+
+        roles = cursor.execute('SELECT * FROM roles').fetchall()
+        role_by_perm = {}
+        for r in roles:
+            rd = dict(r)
+            try:
+                perms = json.loads(rd.get('permissions') or '[]')
+            except (json.JSONDecodeError, TypeError):
+                perms = []
+            key = tuple(sorted(perms))
+            # Prefer system roles for matching
+            if key not in role_by_perm or rd.get('isSystem'):
+                role_by_perm[key] = rd['id']
+
+        now = datetime.now().isoformat()
+        migrated = 0
+        for row in rows:
+            user = dict(row)
+            if user.get('roleId'):
+                # Ensure status default
+                if not user.get('status'):
+                    cursor.execute(
+                        "UPDATE users SET status = 'active' WHERE id = ?",
+                        (user['id'],)
+                    )
+                continue
+
+            try:
+                perms = json.loads(user.get('permissions') or '[]')
+            except (json.JSONDecodeError, TypeError):
+                perms = []
+            if not isinstance(perms, list):
+                perms = []
+            perms = [p for p in perms if p in self.ALL_PERMISSION_CATEGORIES]
+            key = tuple(sorted(perms))
+
+            role_id = role_by_perm.get(key)
+            if not role_id:
+                role_id = f"role-custom-{user['id']}"
+                role_name = f"Custom - {user.get('username') or user['id'][:8]}"
+                # Avoid name collision
+                clash = cursor.execute(
+                    'SELECT id FROM roles WHERE name = ?', (role_name,)
+                ).fetchone()
+                if clash:
+                    role_name = f"{role_name} ({user['id'][:6]})"
+                cursor.execute('''
+                    INSERT INTO roles (id, name, description, permissions, isSystem, createdAt, updatedAt)
+                    VALUES (?, ?, ?, ?, 0, ?, ?)
+                ''', (
+                    role_id,
+                    role_name,
+                    f"Migrated permissions for {user.get('username')}",
+                    json.dumps(perms),
+                    now,
+                    now,
+                ))
+                role_by_perm[key] = role_id
+
+            status = user.get('status') or 'active'
+            cursor.execute(
+                'UPDATE users SET roleId = ?, status = ? WHERE id = ?',
+                (role_id, status, user['id'])
+            )
+            migrated += 1
+
+        if migrated:
+            logger.info("Migrated %s users to RBAC roles", migrated)
+
+    @staticmethod
+    def _parse_role_row(row) -> Dict[str, Any]:
+        role = dict(row)
+        try:
+            role['permissions'] = json.loads(role.get('permissions') or '[]')
+        except (json.JSONDecodeError, TypeError):
+            role['permissions'] = []
+        role['isSystem'] = bool(role.get('isSystem'))
+        return role
+
+    def _parse_user_row(self, row) -> Dict[str, Any]:
+        user = dict(row)
+        for field in ['permissions', 'allowedEvents']:
+            if user.get(field):
+                try:
+                    user[field] = json.loads(user[field])
+                except (json.JSONDecodeError, TypeError):
+                    user[field] = []
+            else:
+                user[field] = []
+        if not user.get('status'):
+            user['status'] = 'active'
+        return user
+
+    def get_roles(self) -> List[Dict[str, Any]]:
+        """Get all roles ordered by system flag then name."""
+        with self.lock:
+            conn = self._get_connection()
+            cursor = conn.execute(
+                'SELECT * FROM roles ORDER BY isSystem DESC, name COLLATE NOCASE'
+            )
+            return [self._parse_role_row(row) for row in cursor.fetchall()]
+
+    def get_role(self, role_id: str) -> Optional[Dict[str, Any]]:
+        """Get a single role by id."""
+        with self.lock:
+            conn = self._get_connection()
+            cursor = conn.execute('SELECT * FROM roles WHERE id = ?', (role_id,))
+            row = cursor.fetchone()
+            return self._parse_role_row(row) if row else None
+
+    def get_role_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        with self.lock:
+            conn = self._get_connection()
+            cursor = conn.execute('SELECT * FROM roles WHERE name = ?', (name,))
+            row = cursor.fetchone()
+            return self._parse_role_row(row) if row else None
+
+    def add_role(self, role: Dict[str, Any]) -> bool:
+        """Insert a new role."""
+        with self.lock:
+            conn = self._get_connection()
+            try:
+                now = datetime.now().isoformat()
+                perms = [p for p in (role.get('permissions') or []) if p in self.ALL_PERMISSION_CATEGORIES]
+                conn.execute('''
+                    INSERT INTO roles (id, name, description, permissions, isSystem, createdAt, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    role['id'],
+                    role['name'],
+                    role.get('description') or '',
+                    json.dumps(perms),
+                    1 if role.get('isSystem') else 0,
+                    role.get('createdAt', now),
+                    now,
+                ))
+                conn.commit()
+                return True
+            except Exception as e:
+                logger.error(f"Error adding role: {e}")
+                return False
+
+    def update_role(self, role_id: str, updates: Dict[str, Any]) -> bool:
+        """Update role fields."""
+        with self.lock:
+            conn = self._get_connection()
+            try:
+                existing = conn.execute('SELECT * FROM roles WHERE id = ?', (role_id,)).fetchone()
+                if not existing:
+                    return False
+                role = self._parse_role_row(existing)
+                if 'name' in updates and updates['name']:
+                    role['name'] = updates['name']
+                if 'description' in updates:
+                    role['description'] = updates['description'] or ''
+                if 'permissions' in updates:
+                    role['permissions'] = [
+                        p for p in (updates.get('permissions') or [])
+                        if p in self.ALL_PERMISSION_CATEGORIES
+                    ]
+                now = datetime.now().isoformat()
+                conn.execute('''
+                    UPDATE roles SET name = ?, description = ?, permissions = ?, updatedAt = ?
+                    WHERE id = ?
+                ''', (
+                    role['name'],
+                    role.get('description') or '',
+                    json.dumps(role['permissions']),
+                    now,
+                    role_id,
+                ))
+                conn.commit()
+                return True
+            except Exception as e:
+                logger.error(f"Error updating role: {e}")
+                return False
+
+    def delete_role(self, role_id: str) -> bool:
+        """Delete a non-system role that has no assigned users."""
+        with self.lock:
+            conn = self._get_connection()
+            try:
+                role = conn.execute('SELECT * FROM roles WHERE id = ?', (role_id,)).fetchone()
+                if not role:
+                    return False
+                if role['isSystem']:
+                    return False
+                assigned = conn.execute(
+                    'SELECT COUNT(*) AS c FROM users WHERE roleId = ?', (role_id,)
+                ).fetchone()
+                count = assigned['c'] if isinstance(assigned, sqlite3.Row) else assigned[0]
+                if count and count > 0:
+                    return False
+                cursor = conn.execute('DELETE FROM roles WHERE id = ?', (role_id,))
+                conn.commit()
+                return cursor.rowcount > 0
+            except Exception as e:
+                logger.error(f"Error deleting role: {e}")
+                return False
+
+    def count_users_for_role(self, role_id: str) -> int:
+        with self.lock:
+            conn = self._get_connection()
+            row = conn.execute(
+                'SELECT COUNT(*) AS c FROM users WHERE roleId = ?', (role_id,)
+            ).fetchone()
+            return int(row['c'] if isinstance(row, sqlite3.Row) else row[0])
+
+    def resolve_user_permissions(self, user: Dict[str, Any]) -> List[str]:
+        """Resolve effective permissions from the user's role (fallback to legacy permissions)."""
+        role_id = user.get('roleId')
+        if role_id:
+            role = self.get_role(role_id)
+            if role:
+                return list(role.get('permissions') or [])
+        legacy = user.get('permissions') or []
+        return [p for p in legacy if p in self.ALL_PERMISSION_CATEGORIES]
 
     @staticmethod
     def _parse_participant_row(row: sqlite3.Row) -> Dict[str, Any]:
@@ -410,8 +1184,19 @@ class DatabaseManager:
             params: List[Any] = []
 
             if search:
-                where.append("LOWER(name) LIKE ?")
-                params.append(f"%{search.lower()}%")
+                term = f"%{search.lower()}%"
+                where.append(
+                    "("
+                    "LOWER(COALESCE(name,'')) LIKE ? OR "
+                    "LOWER(COALESCE(nickname,'')) LIKE ? OR "
+                    "LOWER(COALESCE(racingNumber,'')) LIKE ? OR "
+                    "LOWER(COALESCE(licenseNumber,'')) LIKE ? OR "
+                    "LOWER(COALESCE(team,'')) LIKE ? OR "
+                    "LOWER(COALESCE(contact,'')) LIKE ? OR "
+                    "LOWER(COALESCE(_searchText,'')) LIKE ?"
+                    ")"
+                )
+                params.extend([term] * 7)
             if status:
                 where.append("status = ?")
                 params.append(status)
@@ -432,9 +1217,29 @@ class DatabaseManager:
             try:
                 total = conn.execute(count_sql, params).fetchone()["total"]
             except sqlite3.OperationalError:
-                # Fallback for SQLite builds without JSON1
-                fallback_where = [w for w in where if "json_each" not in w]
-                fallback_params = [p for i, p in enumerate(params) if "json_each" not in where[i]]
+                # Fallback for SQLite builds without JSON1 — rebuild clauses/params
+                fallback_where = []
+                fallback_params: List[Any] = []
+                if search:
+                    term = f"%{search.lower()}%"
+                    fallback_where.append(
+                        "("
+                        "LOWER(COALESCE(name,'')) LIKE ? OR "
+                        "LOWER(COALESCE(nickname,'')) LIKE ? OR "
+                        "LOWER(COALESCE(racingNumber,'')) LIKE ? OR "
+                        "LOWER(COALESCE(licenseNumber,'')) LIKE ? OR "
+                        "LOWER(COALESCE(team,'')) LIKE ? OR "
+                        "LOWER(COALESCE(contact,'')) LIKE ? OR "
+                        "LOWER(COALESCE(_searchText,'')) LIKE ?"
+                        ")"
+                    )
+                    fallback_params.extend([term] * 7)
+                if status:
+                    fallback_where.append("status = ?")
+                    fallback_params.append(status)
+                if class_filter:
+                    fallback_where.append("selectedClasses LIKE ?")
+                    fallback_params.append(f'%"{class_filter}"%')
                 if event_id:
                     fallback_where.append("eventClasses LIKE ?")
                     fallback_params.append(f'%"{event_id}"%')
@@ -525,6 +1330,7 @@ class DatabaseManager:
             try:
                 # Prepare data for storage (serialize JSON fields)
                 data = participant.copy()
+                data['_searchText'] = self.build_participant_search_text(participant)
                 for field in ['selectedClasses', 'sledClasses', 'contact', 'sponsors', 'sledConfigurations', 'statistics', 'eventClasses']:
                     if field in data and data[field] is not None:
                         data[field] = json.dumps(data[field])
@@ -539,19 +1345,23 @@ class DatabaseManager:
 
                 cursor = conn.execute('''
                     INSERT INTO participants (
-                        id, name, nickname, dob, racingNumber,
+                        id, name, nickname, dob, racingNumber, licenseNumber,
                         registrationType, registrationDate, paymentStatus, status, totalFee,
                         selectedClasses, sledConfigurations, contact, sponsors,
-                        statistics, eventClasses, _searchText, _migrated, _migrationDate, createdAt, updatedAt
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        statistics, eventClasses, team, notes,
+                        paymentMethod, paymentNote, paidAt,
+                        _searchText, _migrated, _migrationDate, createdAt, updatedAt
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     data['id'], data['name'], data.get('nickname'), data.get('dob'),
-                    data.get('racingNumber'),
+                    data.get('racingNumber'), data.get('licenseNumber'),
                     data.get('registrationType'), data.get('registrationDate'),
                     data.get('paymentStatus'), data.get('status', 'active'), data.get('totalFee', 0),
                     data['selectedClasses'], data['sledConfigurations'], data['contact'],
-                    data['sponsors'], data['statistics'], 
+                    data['sponsors'], data['statistics'],
                     data.get('eventClasses', json.dumps({})),
+                    data.get('team'), data.get('notes'),
+                    data.get('paymentMethod'), data.get('paymentNote'), data.get('paidAt'),
                     data.get('_searchText', ''), data.get('_migrated', 0), data.get('_migrationDate', ''),
                     data['createdAt'], data['updatedAt']
                 ))
@@ -573,6 +1383,7 @@ class DatabaseManager:
                 for participant in participants:
                     # Prepare data for storage (serialize JSON fields)
                     data = participant.copy()
+                    data['_searchText'] = self.build_participant_search_text(participant)
                     for field in ['selectedClasses', 'sledClasses', 'contact', 'sponsors', 'sledConfigurations', 'statistics', 'eventClasses']:
                         if field in data and data[field] is not None:
                             data[field] = json.dumps(data[field])
@@ -586,23 +1397,25 @@ class DatabaseManager:
                     
                     params_list.append((
                         data['id'], data['name'], data.get('nickname'), data.get('dob'),
-                        data.get('racingNumber'),
+                        data.get('racingNumber'), data.get('licenseNumber'),
                         data.get('registrationType'), data.get('registrationDate'),
                         data.get('paymentStatus'), data.get('status', 'active'), data.get('totalFee', 0),
                         data['selectedClasses'], data['sledConfigurations'], data['contact'],
                         data['sponsors'], data['statistics'], 
                         data.get('eventClasses', json.dumps({})),
+                        data.get('team'), data.get('notes'),
                         data.get('_searchText', ''), data.get('_migrated', 0), data.get('_migrationDate', ''),
                         data['createdAt'], data['updatedAt']
                     ))
 
                 cursor = conn.executemany('''
                     INSERT INTO participants (
-                        id, name, nickname, dob, racingNumber,
+                        id, name, nickname, dob, racingNumber, licenseNumber,
                         registrationType, registrationDate, paymentStatus, status, totalFee,
                         selectedClasses, sledConfigurations, contact, sponsors,
-                        statistics, eventClasses, _searchText, _migrated, _migrationDate, createdAt, updatedAt
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        statistics, eventClasses, team, notes,
+                        _searchText, _migrated, _migrationDate, createdAt, updatedAt
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', params_list)
                 if commit:
                     conn.commit()
@@ -620,6 +1433,7 @@ class DatabaseManager:
             try:
                 # Prepare data for storage
                 data = participant.copy()
+                data['_searchText'] = self.build_participant_search_text(participant)
                 for field in ['selectedClasses', 'sledClasses', 'contact', 'sponsors', 'sledConfigurations', 'statistics', 'eventClasses']:
                     if field in data and data[field] is not None:
                         data[field] = json.dumps(data[field])
@@ -631,18 +1445,25 @@ class DatabaseManager:
 
                 cursor = conn.execute('''
                     UPDATE participants SET
-                        name = ?, nickname = ?, dob = ?, racingNumber = ?,
+                        name = ?, nickname = ?, dob = ?, racingNumber = ?, licenseNumber = ?,
                         registrationType = ?, registrationDate = ?, paymentStatus = ?, status = ?, totalFee = ?,
                         selectedClasses = ?, sledConfigurations = ?, contact = ?, sponsors = ?,
-                        statistics = ?, eventClasses = ?, updatedAt = ?
+                        statistics = ?, eventClasses = ?, team = ?, notes = ?,
+                        paymentMethod = ?, paymentNote = ?, paidAt = ?,
+                        _searchText = ?, updatedAt = ?
                     WHERE id = ?
                 ''', (
                     data['name'], data.get('nickname'), data.get('dob'), data.get('racingNumber'),
+                    data.get('licenseNumber'),
                     data.get('registrationType'),
                     data.get('registrationDate'), data.get('paymentStatus'), data.get('status', 'active'),
                     data.get('totalFee', 0),
                     data['selectedClasses'], data['sledConfigurations'], data['contact'], data['sponsors'],
-                    data['statistics'], data['eventClasses'], data['updatedAt'], participant_id
+                    data['statistics'], data['eventClasses'],
+                    data.get('team'), data.get('notes'),
+                    data.get('paymentMethod'), data.get('paymentNote'), data.get('paidAt'),
+                    data.get('_searchText', ''),
+                    data['updatedAt'], participant_id
                 ))
                 if commit:
                     conn.commit()
@@ -676,23 +1497,41 @@ class DatabaseManager:
     def get_series(self) -> List[Dict[str, Any]]:
         """Get all series"""
         with self.lock:
-            conn = self._get_connection()
-            cursor = conn.execute('SELECT * FROM series ORDER BY name')
-            rows = cursor.fetchall()
+            for attempt in range(2):
+                try:
+                    return self._fetch_series_rows()
+                except sqlite3.DatabaseError as e:
+                    if attempt == 0 and _is_sqlite_disk_corruption(e):
+                        if self._repair_corrupt_series_table():
+                            continue
+                    raise
 
-            series_list = []
-            for row in rows:
-                series = dict(row)
-                # Parse JSON fields
-                for field in ['sledClasses', 'events', 'standings', 'seasons']:
-                    if series.get(field):
-                        try:
-                            series[field] = json.loads(series[field])
-                        except (json.JSONDecodeError, TypeError):
-                            series[field] = []
-                series_list.append(series)
+    def _fetch_series_rows(self) -> List[Dict[str, Any]]:
+        """Load all series rows (caller must hold self.lock)."""
+        conn = self._get_connection()
+        cursor = conn.execute("SELECT * FROM series ORDER BY name")
+        rows = cursor.fetchall()
 
-            return series_list
+        series_list = []
+        for row in rows:
+            series_list.append(self._parse_series_row(row))
+        return series_list
+
+    def _parse_series_row(self, row) -> Dict[str, Any]:
+        """Parse a series SQLite row into a dict with JSON fields decoded."""
+        series = dict(row)
+        for field in ["sledClasses", "events", "standings", "seasons"]:
+            if series.get(field):
+                try:
+                    series[field] = json.loads(series[field])
+                except (json.JSONDecodeError, TypeError):
+                    series[field] = []
+            else:
+                series[field] = series.get(field) or []
+        series["status"] = _normalize_series_status(series.get("status"))
+        series["shortName"] = series.get("shortName") or ""
+        series["defaultSeasonId"] = series.get("defaultSeasonId") or None
+        return series
 
     def get_series_by_id(self, series_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific series by ID"""
@@ -702,15 +1541,7 @@ class DatabaseManager:
             row = cursor.fetchone()
 
             if row:
-                series = dict(row)
-                # Parse JSON fields
-                for field in ['sledClasses', 'events', 'standings', 'seasons']:
-                    if series.get(field):
-                        try:
-                            series[field] = json.loads(series[field])
-                        except (json.JSONDecodeError, TypeError):
-                            series[field] = []
-                return series
+                return self._parse_series_row(row)
             return None
 
     def add_series(self, series: Dict[str, Any]) -> bool:
@@ -730,16 +1561,19 @@ class DatabaseManager:
                 now = datetime.now().isoformat()
                 data['createdAt'] = data.get('createdAt', now)
                 data['updatedAt'] = now
+                data['status'] = _normalize_series_status(data.get('status', 'active'))
 
                 cursor = conn.execute('''
                     INSERT INTO series (
-                        id, name, description, sledClasses, events, standings, seasons,
-                        status, createdAt, updatedAt
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        id, name, shortName, description, sledClasses, events, standings, seasons,
+                        defaultSeasonId, status, createdAt, updatedAt
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
-                    data['id'], data['name'], data.get('description'), data['sledClasses'],
+                    data['id'], data['name'], data.get('shortName') or None,
+                    data.get('description'), data['sledClasses'],
                     data['events'], data['standings'], data['seasons'],
-                    data.get('status', 'active'), data['createdAt'], data['updatedAt']
+                    data.get('defaultSeasonId') or None,
+                    data['status'], data['createdAt'], data['updatedAt']
                 ))
                 conn.commit()
                 return True
@@ -767,18 +1601,21 @@ class DatabaseManager:
                     # Set timestamps
                     data['createdAt'] = data.get('createdAt', now)
                     data['updatedAt'] = now
+                    data['status'] = _normalize_series_status(data.get('status', 'active'))
                     
                     params_list.append((
-                        data['id'], data['name'], data.get('description'), data['sledClasses'],
+                        data['id'], data['name'], data.get('shortName') or None,
+                        data.get('description'), data['sledClasses'],
                         data['events'], data['standings'], data['seasons'],
-                        data.get('status', 'active'), data['createdAt'], data['updatedAt']
+                        data.get('defaultSeasonId') or None,
+                        data['status'], data['createdAt'], data['updatedAt']
                     ))
 
                 cursor = conn.executemany('''
                     INSERT INTO series (
-                        id, name, description, sledClasses, events, standings, seasons,
-                        status, createdAt, updatedAt
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        id, name, shortName, description, sledClasses, events, standings, seasons,
+                        defaultSeasonId, status, createdAt, updatedAt
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', params_list)
                 conn.commit()
                 return True
@@ -801,15 +1638,18 @@ class DatabaseManager:
                         data[field] = json.dumps([])
 
                 data['updatedAt'] = datetime.now().isoformat()
+                data['status'] = _normalize_series_status(data.get('status', 'active'))
 
                 cursor = conn.execute('''
                     UPDATE series SET
-                        name = ?, description = ?, sledClasses = ?, events = ?,
-                        standings = ?, seasons = ?, status = ?, updatedAt = ?
+                        name = ?, shortName = ?, description = ?, sledClasses = ?, events = ?,
+                        standings = ?, seasons = ?, defaultSeasonId = ?, status = ?, updatedAt = ?
                     WHERE id = ?
                 ''', (
-                    data['name'], data.get('description'), data['sledClasses'], data['events'],
-                    data['standings'], data['seasons'], data.get('status', 'active'),
+                    data['name'], data.get('shortName') or None, data.get('description'),
+                    data['sledClasses'], data['events'],
+                    data['standings'], data['seasons'], data.get('defaultSeasonId') or None,
+                    data['status'],
                     data['updatedAt'], series_id
                 ))
                 conn.commit()
@@ -829,6 +1669,10 @@ class DatabaseManager:
             except Exception as e:
                 logger.error(f"Error deleting series: {e}")
                 return False
+
+    def count_events_for_series(self, series_id: str) -> int:
+        """Count events linked to a series."""
+        return self.count_events({"seriesId": series_id})
 
     # Events operations
     def get_events(self) -> List[Dict[str, Any]]:
@@ -1132,10 +1976,22 @@ class DatabaseManager:
     def get_race_brackets(self) -> List[Dict[str, Any]]:
         """Get all race brackets"""
         with self.lock:
-            conn = self._get_connection()
-            cursor = conn.execute('SELECT * FROM race_brackets ORDER BY createdAt DESC')
-            rows = cursor.fetchall()
-            return [self._parse_bracket_row(row) for row in rows]
+            for attempt in range(2):
+                try:
+                    return self._fetch_race_brackets_rows()
+                except sqlite3.DatabaseError as e:
+                    if attempt == 0 and _is_sqlite_disk_corruption(e):
+                        if self._repair_corrupt_race_brackets_table():
+                            continue
+                    raise
+
+    def _fetch_race_brackets_rows(self) -> List[Dict[str, Any]]:
+        conn = self._get_connection()
+        cursor = conn.execute(
+            "SELECT * FROM race_brackets ORDER BY createdAt DESC"
+        )
+        rows = cursor.fetchall()
+        return [self._parse_bracket_row(row) for row in rows]
 
     def get_race_brackets_by_event_ids(self, event_ids: List[str]) -> List[Dict[str, Any]]:
         """Get race brackets for specific event IDs."""
@@ -1184,41 +2040,59 @@ class DatabaseManager:
     ) -> Dict[str, Any]:
         """Get lightweight race bracket metadata without bracketData."""
         with self.lock:
-            conn = self._get_connection()
-            where = []
-            params: List[Any] = []
-            if event_id:
-                where.append("eventId = ?")
-                params.append(event_id)
-            if allowed_event_ids:
-                placeholders = ",".join(["?"] * len(allowed_event_ids))
-                where.append(f"eventId IN ({placeholders})")
-                params.extend(allowed_event_ids)
-            where_sql = f" WHERE {' AND '.join(where)}" if where else ""
+            for attempt in range(2):
+                try:
+                    return self._fetch_race_bracket_metadata(
+                        page, limit, event_id, allowed_event_ids
+                    )
+                except sqlite3.DatabaseError as e:
+                    if attempt == 0 and _is_sqlite_disk_corruption(e):
+                        if self._repair_corrupt_race_brackets_table():
+                            continue
+                    raise
 
-            total = conn.execute(
-                f"SELECT COUNT(*) AS total FROM race_brackets{where_sql}",
-                params,
-            ).fetchone()["total"]
-            offset = max(page - 1, 0) * limit
-            rows = conn.execute(
-                f"""
-                SELECT id, eventId, createdAt, updatedAt
-                FROM race_brackets
-                {where_sql}
-                ORDER BY createdAt DESC
-                LIMIT ? OFFSET ?
-                """,
-                params + [limit, offset],
-            ).fetchall()
-            brackets = [dict(row) for row in rows]
-            return {
-                "brackets": brackets,
-                "total": total,
-                "page": page,
-                "limit": limit,
-                "totalPages": (total + limit - 1) // limit if limit else 1,
-            }
+    def _fetch_race_bracket_metadata(
+        self,
+        page: int,
+        limit: int,
+        event_id: Optional[str],
+        allowed_event_ids: Optional[List[str]],
+    ) -> Dict[str, Any]:
+        conn = self._get_connection()
+        where = []
+        params: List[Any] = []
+        if event_id:
+            where.append("eventId = ?")
+            params.append(event_id)
+        if allowed_event_ids:
+            placeholders = ",".join(["?"] * len(allowed_event_ids))
+            where.append(f"eventId IN ({placeholders})")
+            params.extend(allowed_event_ids)
+        where_sql = f" WHERE {' AND '.join(where)}" if where else ""
+
+        total = conn.execute(
+            f"SELECT COUNT(*) AS total FROM race_brackets{where_sql}",
+            params,
+        ).fetchone()["total"]
+        offset = max(page - 1, 0) * limit
+        rows = conn.execute(
+            f"""
+            SELECT id, eventId, createdAt, updatedAt
+            FROM race_brackets
+            {where_sql}
+            ORDER BY createdAt DESC
+            LIMIT ? OFFSET ?
+            """,
+            params + [limit, offset],
+        ).fetchall()
+        brackets = [dict(row) for row in rows]
+        return {
+            "brackets": brackets,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "totalPages": (total + limit - 1) // limit if limit else 1,
+        }
 
     def get_all_races(self) -> List[Dict[str, Any]]:
         """Get all races without pagination"""
@@ -1780,8 +2654,136 @@ class DatabaseManager:
             return float(row["total"] if row else 0.0)
 
     def get_completed_races_count(self) -> int:
-        """Get completed race count from races table."""
+        """Get completed race count from races table (legacy; often empty)."""
         return self.count_races({"status": "completed"})
+
+    @staticmethod
+    def is_heat_completed(heat: Any) -> bool:
+        """Match server.py is_heat_completed for bracket heat analytics."""
+        if not isinstance(heat, dict):
+            return False
+        if heat.get("isComplete") is True:
+            return True
+        if heat.get("status") == "completed":
+            results = heat.get("results")
+            return isinstance(results, list) and len(results) > 0
+        return False
+
+    def count_completed_heats_from_brackets(self) -> int:
+        """Count completed heats across all race brackets (source of truth for race day)."""
+        total = 0
+        for bracket in self.get_race_brackets():
+            classes = bracket.get("classes")
+            if not isinstance(classes, dict):
+                continue
+            for class_data in classes.values():
+                if not isinstance(class_data, dict):
+                    continue
+                rounds = class_data.get("rounds")
+                if not isinstance(rounds, list):
+                    continue
+                for round_data in rounds:
+                    if not isinstance(round_data, dict):
+                        continue
+                    heats = round_data.get("heats")
+                    if not isinstance(heats, list):
+                        continue
+                    for heat in heats:
+                        if self.is_heat_completed(heat):
+                            total += 1
+        return total
+
+    @staticmethod
+    def _parse_finish_position(value: Any) -> Optional[int]:
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, (int, float)):
+            pos = int(value)
+            return pos if pos > 0 else None
+        s = str(value).strip().upper()
+        if s in ('DSQ', 'FS', 'DNS', 'DNF', ''):
+            return None
+        try:
+            pos = int(float(s))
+            return pos if pos > 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _round_sort_key(round_number: Any) -> int:
+        if round_number == 'final':
+            return 9999
+        try:
+            return int(round_number)
+        except (TypeError, ValueError):
+            return 0
+
+    def _class_standings_top_n(self, class_data: dict, n: int = 3) -> List[str]:
+        """Approximate final class top-N from bracket data (event/class podiums)."""
+        participants = class_data.get('participants') or []
+        pid_map = {p.get('id'): p for p in participants if p.get('id')}
+        if not pid_map:
+            return []
+
+        stats: Dict[str, Dict[str, Any]] = {
+            pid: {'wins': 0, 'positions': [], 'max_round': 0, 'elim_round': 0, 'dsq': False}
+            for pid in pid_map
+        }
+
+        for rnd in class_data.get('rounds') or []:
+            if not rnd.get('isComplete'):
+                continue
+            round_key = self._round_sort_key(rnd.get('roundNumber'))
+            for heat in rnd.get('heats') or []:
+                if not self.is_heat_completed(heat):
+                    continue
+                for res in heat.get('results') or []:
+                    pid = res.get('participantId')
+                    if pid not in stats:
+                        continue
+                    stats[pid]['max_round'] = max(stats[pid]['max_round'], round_key)
+                    if res.get('disqualified') or str(res.get('position', '')).upper() == 'DSQ':
+                        stats[pid]['dsq'] = True
+                    pos = self._parse_finish_position(res.get('position'))
+                    if pos == 1:
+                        stats[pid]['wins'] += 1
+                    if pos:
+                        stats[pid]['positions'].append(pos)
+
+        for pid, p in pid_map.items():
+            if p.get('status') == 'eliminated':
+                stats[pid]['elim_round'] = self._round_sort_key(p.get('eliminatedInRound'))
+            else:
+                stats[pid]['elim_round'] = stats[pid]['max_round']
+
+        ranked = []
+        for pid, s in stats.items():
+            if s['dsq']:
+                continue
+            latest = s['positions'][-1] if s['positions'] else 999
+            avg = sum(s['positions']) / len(s['positions']) if s['positions'] else 999
+            ranked.append((pid, s['elim_round'], latest, avg, -s['wins']))
+
+        ranked.sort(key=lambda x: (-x[1], x[2], x[3], x[4]))
+        return [r[0] for r in ranked[:n]]
+
+    def count_podiums_from_final_standings(self, event_filter: Optional[str] = None) -> Dict[str, int]:
+        """Podiums = top 3 in each class per event (not per heat)."""
+        podiums: Dict[str, int] = {}
+        for bracket in self.get_race_brackets():
+            if event_filter and bracket.get('eventId') != event_filter:
+                continue
+            classes = bracket.get('classes')
+            if not isinstance(classes, dict):
+                continue
+            for class_data in classes.values():
+                if not isinstance(class_data, dict):
+                    continue
+                for pid in self._class_standings_top_n(class_data, 3):
+                    podiums[pid] = podiums.get(pid, 0) + 1
+        return podiums
 
     # Users operations
     def get_users(self) -> List[Dict[str, Any]]:
@@ -1789,21 +2791,7 @@ class DatabaseManager:
         with self.lock:
             conn = self._get_connection()
             cursor = conn.execute('SELECT * FROM users ORDER BY username')
-            rows = cursor.fetchall()
-
-            users = []
-            for row in rows:
-                user = dict(row)
-                # Parse JSON fields
-                for field in ['permissions', 'allowedEvents']:
-                    if user.get(field):
-                        try:
-                            user[field] = json.loads(user[field])
-                        except (json.JSONDecodeError, TypeError):
-                            user[field] = []
-                users.append(user)
-
-            return users
+            return [self._parse_user_row(row) for row in cursor.fetchall()]
 
     def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:
         """Get a user by username"""
@@ -1811,25 +2799,21 @@ class DatabaseManager:
             conn = self._get_connection()
             cursor = conn.execute('SELECT * FROM users WHERE username = ?', (username,))
             row = cursor.fetchone()
+            return self._parse_user_row(row) if row else None
 
-            if row:
-                user = dict(row)
-                # Parse JSON fields
-                for field in ['permissions', 'allowedEvents']:
-                    if user.get(field):
-                        try:
-                            user[field] = json.loads(user[field])
-                        except (json.JSONDecodeError, TypeError):
-                            user[field] = []
-                return user
-            return None
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get a user by id"""
+        with self.lock:
+            conn = self._get_connection()
+            cursor = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+            row = cursor.fetchone()
+            return self._parse_user_row(row) if row else None
 
     def add_user(self, user: Dict[str, Any]) -> bool:
         """Add a new user"""
         with self.lock:
             conn = self._get_connection()
             try:
-                # Prepare data for storage
                 data = user.copy()
                 for field in ['permissions', 'allowedEvents']:
                     if field in data and data[field] is not None:
@@ -1837,18 +2821,21 @@ class DatabaseManager:
                     else:
                         data[field] = json.dumps([])
 
-                # Set timestamps
                 now = datetime.now().isoformat()
                 data['createdAt'] = data.get('createdAt', now)
                 data['updatedAt'] = now
+                data['status'] = data.get('status') or 'active'
+                data['roleId'] = data.get('roleId') or None
 
-                cursor = conn.execute('''
+                conn.execute('''
                     INSERT INTO users (
-                        id, username, password, permissions, allowedEvents, createdAt, updatedAt
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        id, username, password, permissions, allowedEvents,
+                        roleId, status, createdAt, updatedAt
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     data['id'], data['username'], data['password'], data['permissions'],
-                    data['allowedEvents'], data['createdAt'], data['updatedAt']
+                    data['allowedEvents'], data.get('roleId'), data.get('status', 'active'),
+                    data['createdAt'], data['updatedAt']
                 ))
                 conn.commit()
                 return True
@@ -1861,7 +2848,6 @@ class DatabaseManager:
         with self.lock:
             conn = self._get_connection()
             try:
-                # Prepare data for storage
                 data = user.copy()
                 for field in ['permissions', 'allowedEvents']:
                     if field in data and data[field] is not None:
@@ -1870,14 +2856,17 @@ class DatabaseManager:
                         data[field] = json.dumps([])
 
                 data['updatedAt'] = datetime.now().isoformat()
+                data['status'] = data.get('status') or 'active'
 
                 cursor = conn.execute('''
                     UPDATE users SET
-                        username = ?, password = ?, permissions = ?, allowedEvents = ?, updatedAt = ?
+                        username = ?, password = ?, permissions = ?, allowedEvents = ?,
+                        roleId = ?, status = ?, updatedAt = ?
                     WHERE id = ?
                 ''', (
                     data['username'], data.get('password'), data['permissions'],
-                    data['allowedEvents'], data['updatedAt'], user_id
+                    data['allowedEvents'], data.get('roleId'), data.get('status', 'active'),
+                    data['updatedAt'], user_id
                 ))
                 conn.commit()
                 return cursor.rowcount > 0
@@ -1971,8 +2960,12 @@ class DatabaseManager:
                 return False
 
     def close(self):
-        """Close database connection"""
+        """Checkpoint WAL and close database connection."""
         if self.connection:
+            try:
+                self.checkpoint_wal()
+            except sqlite3.Error:
+                pass
             self.connection.close()
             self.connection = None
 

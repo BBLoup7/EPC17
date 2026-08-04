@@ -1,7 +1,10 @@
 /**
- * Series Form Controller - Manages form state and validation
- * Coordinates between UI and data layers
- * NO direct DOM manipulation in business logic
+ * Series Form Controller - Manages detail-pane form state and validation
+ *
+ * Exports: SeriesFormController (window.SeriesFormController)
+ * Inputs: dataService, businessLogic, uiRenderer, optional onSaved callback
+ * Outputs: create/update via dataService; dispatches series-refresh
+ * Error modes: toast on validation/save failure
  */
 
 class SeriesFormController {
@@ -10,20 +13,23 @@ class SeriesFormController {
         this.businessLogic = businessLogic;
         this.uiRenderer = uiRenderer;
         this.currentSeries = null;
+        this.stats = {};
         window.debugLogger?.init('SeriesForm', 'SeriesFormController initialized');
     }
 
     /**
-     * Show series form (create or edit)
-     * @param {string|null} seriesId - Series ID for editing, null for create
-     * @param {HTMLElement} container - Container element
+     * Show series form in the detail pane
+     * @param {string|null} seriesId
+     * @param {HTMLElement} container
+     * @param {Object} stats - event/class counts for the series
      */
-    async showForm(seriesId = null, container) {
+    async showForm(seriesId = null, container, stats = {}) {
         if (!container) {
             throw new Error('Container element required');
         }
 
-        // Load series if editing
+        this.stats = stats || {};
+
         if (seriesId) {
             this.currentSeries = this.dataService.getSeries(seriesId);
             if (!this.currentSeries) {
@@ -33,61 +39,50 @@ class SeriesFormController {
             this.currentSeries = null;
         }
 
-        // Render form
-        container.innerHTML = this.uiRenderer.renderSeriesForm(this.currentSeries);
-
-        // Bind form events
+        container.innerHTML = this.uiRenderer.renderSeriesForm(this.currentSeries, this.stats);
         this.bindFormEvents(container);
     }
 
-    /**
-     * Bind form event listeners
-     */
     bindFormEvents(container) {
         const form = container.querySelector('#seriesForm');
         if (!form) return;
 
-        // Form submission
         form.addEventListener('submit', (e) => this.handleSubmit(e));
 
-        // Cancel button
         const cancelBtn = form.querySelector('.btn-cancel-form');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => this.handleCancel());
         }
 
-        // Add season button
         const addSeasonBtn = form.querySelector('.btn-add-season');
         if (addSeasonBtn) {
             addSeasonBtn.addEventListener('click', () => this.addSeasonRow());
         }
 
-        // Add class button
         const addClassBtn = form.querySelector('.btn-add-class');
         if (addClassBtn) {
             addClassBtn.addEventListener('click', () => this.addClassRow());
         }
 
-        // Remove season buttons (event delegation)
         form.addEventListener('click', (e) => {
             if (e.target.closest('.btn-remove-season')) {
                 const btn = e.target.closest('.btn-remove-season');
                 this.removeSeasonRow(btn.dataset.index);
             }
-        });
-
-        // Remove class buttons (event delegation)
-        form.addEventListener('click', (e) => {
             if (e.target.closest('.btn-remove-class')) {
                 const btn = e.target.closest('.btn-remove-class');
                 this.removeClassRow(btn.dataset.index);
             }
         });
+
+        // Keep default-season dropdown in sync when seasons change names/ids
+        form.addEventListener('input', (e) => {
+            if (e.target.matches('.season-name-input')) {
+                this.refreshDefaultSeasonOptions();
+            }
+        });
     }
 
-    /**
-     * Handle form submission
-     */
     async handleSubmit(event) {
         event.preventDefault();
 
@@ -95,115 +90,102 @@ class SeriesFormController {
         const formData = new FormData(form);
 
         try {
-            // Show loading state
-            if (window.Helpers) {
+            if (window.Helpers?.showLoading) {
                 window.Helpers.showLoading();
             }
 
-            // Collect form data
             const seriesData = this.collectFormData(formData);
 
-            // Create or update
-            let result;
             if (this.currentSeries) {
-                result = await this.dataService.updateSeries(this.currentSeries.id, seriesData);
-                if (result) {
-                    this.showSuccess('Series updated successfully!');
-                } else {
-                    throw new Error('Update failed');
-                }
+                const result = await this.dataService.updateSeries(this.currentSeries.id, seriesData);
+                if (!result) throw new Error('Update failed');
+                this.showSuccess('Series saved');
+                document.dispatchEvent(new CustomEvent('series-saved', {
+                    detail: { seriesId: this.currentSeries.id }
+                }));
             } else {
-                result = await this.dataService.createSeries(seriesData);
-                this.showSuccess('Series created successfully!');
+                const created = await this.dataService.createSeries(seriesData);
+                this.showSuccess('Series created');
+                document.dispatchEvent(new CustomEvent('series-saved', {
+                    detail: { seriesId: created.id }
+                }));
             }
 
-            // Trigger refresh event
             this.triggerRefreshEvent();
-
-            // Navigate back to list
-            this.handleCancel();
-
         } catch (error) {
             console.error('Form submission error:', error);
             this.showError('Error saving series: ' + error.message);
         } finally {
-            if (window.Helpers) {
+            if (window.Helpers?.hideLoading) {
                 window.Helpers.hideLoading();
             }
         }
     }
 
-    /**
-     * Collect data from form
-     */
     collectFormData(formData) {
-        const data = {
-            name: formData.get('name'),
-            description: formData.get('description'),
-            status: formData.get('status'),
-            seasons: this.collectSeasons(formData),
-            sledClasses: this.collectClasses(formData)
-        };
-
-        return data;
-    }
-
-    /**
-     * Collect seasons from form
-     */
-    collectSeasons(formData) {
-        const seasons = [];
-        const seasonNames = formData.getAll('seasonName[]');
-        const seasonStartDates = formData.getAll('seasonStartDate[]');
-        const seasonEndDates = formData.getAll('seasonEndDate[]');
-        const seasonStatuses = formData.getAll('seasonStatus[]');
-
-        for (let i = 0; i < seasonNames.length; i++) {
-            if (seasonNames[i].trim()) {
-                seasons.push({
-                    name: seasonNames[i].trim(),
-                    startDate: seasonStartDates[i] || null,
-                    endDate: seasonEndDates[i] || null,
-                    status: seasonStatuses[i] || 'upcoming'
-                });
-            }
+        const seasons = this.collectSeasons(formData);
+        let defaultSeasonId = formData.get('defaultSeasonId') || null;
+        if (defaultSeasonId && !seasons.some((s) => s.id === defaultSeasonId)) {
+            defaultSeasonId = null;
         }
 
+        return {
+            name: (formData.get('name') || '').trim(),
+            shortName: (formData.get('shortName') || '').trim(),
+            description: (formData.get('description') || '').trim(),
+            status: formData.get('status') === 'archived' ? 'archived' : 'active',
+            defaultSeasonId,
+            seasons,
+            sledClasses: this.collectClasses(formData)
+        };
+    }
+
+    collectSeasons(formData) {
+        const seasons = [];
+        const ids = formData.getAll('seasonId[]');
+        const names = formData.getAll('seasonName[]');
+        const starts = formData.getAll('seasonStartDate[]');
+        const ends = formData.getAll('seasonEndDate[]');
+        const statuses = formData.getAll('seasonStatus[]');
+
+        for (let i = 0; i < names.length; i++) {
+            if (!names[i].trim()) continue;
+            seasons.push({
+                id: (ids[i] || '').trim() || this.dataService.generateId('season'),
+                name: names[i].trim(),
+                startDate: starts[i] || null,
+                endDate: ends[i] || null,
+                status: statuses[i] || 'upcoming',
+                createdAt: new Date().toISOString()
+            });
+        }
         return seasons;
     }
 
-    /**
-     * Collect classes from form
-     */
     collectClasses(formData) {
         const classes = [];
-        const classNames = formData.getAll('className[]');
-        const classFees = formData.getAll('classFee[]');
-        const classDescriptions = formData.getAll('classDescription[]');
+        const ids = formData.getAll('classId[]');
+        const names = formData.getAll('className[]');
+        const fees = formData.getAll('classFee[]');
+        const descriptions = formData.getAll('classDescription[]');
 
-        for (let i = 0; i < classNames.length; i++) {
-            if (classNames[i].trim()) {
-                classes.push({
-                    name: classNames[i].trim(),
-                    defaultFee: parseFloat(classFees[i]) || 0,
-                    description: classDescriptions[i] || `${classNames[i].trim()} class racing`
-                });
-            }
+        for (let i = 0; i < names.length; i++) {
+            if (!names[i].trim()) continue;
+            classes.push({
+                id: (ids[i] || '').trim() || this.dataService.generateId('class'),
+                name: names[i].trim(),
+                defaultFee: parseFloat(fees[i]) || 0,
+                description: descriptions[i] || `${names[i].trim()} class racing`
+            });
         }
-
         return classes;
     }
 
-    /**
-     * Add season row to form
-     */
     addSeasonRow() {
         const container = document.getElementById('seasonsContainer');
         if (!container) return;
 
-        // Replace empty state if needed
-        const emptyState = container.querySelector('.seasons-empty');
-        if (emptyState) {
+        if (container.querySelector('.seasons-empty')) {
             container.innerHTML = '<div class="seasons-list"></div>';
         }
 
@@ -211,56 +193,49 @@ class SeriesFormController {
         if (!seasonsList) return;
 
         const index = seasonsList.querySelectorAll('.season-row').length;
+        const newId = this.dataService.generateId('season');
 
         const seasonRow = document.createElement('div');
         seasonRow.className = 'season-row';
-        seasonRow.dataset.seasonIndex = index;
+        seasonRow.dataset.seasonIndex = String(index);
         seasonRow.innerHTML = `
+            <input type="hidden" name="seasonId[]" value="${newId}">
             <div class="season-inputs">
-                <input type="text" name="seasonName[]" placeholder="Season name" class="season-name-input">
-                <input type="date" name="seasonStartDate[]" class="season-start-input">
-                <input type="date" name="seasonEndDate[]" class="season-end-input">
-                <select name="seasonStatus[]" class="season-status-input">
+                <input type="text" name="seasonName[]" placeholder="Season name" class="form-control season-name-input" aria-label="Season name">
+                <input type="date" name="seasonStartDate[]" class="form-control season-start-input" aria-label="Start date">
+                <input type="date" name="seasonEndDate[]" class="form-control season-end-input" aria-label="End date">
+                <select name="seasonStatus[]" class="form-control season-status-input" aria-label="Season status">
                     <option value="upcoming">Upcoming</option>
-                    <option value="active">Active</option>
+                    <option value="active" selected>Active</option>
                     <option value="completed">Completed</option>
                 </select>
             </div>
-            <button type="button" class="btn btn-danger btn-remove-season" data-index="${index}">
-                <i class="fas fa-trash"></i>
+            <button type="button" class="btn btn-icon btn-remove-season" data-index="${index}" aria-label="Remove season">
+                <i class="fas fa-trash" aria-hidden="true"></i>
             </button>
         `;
-
         seasonsList.appendChild(seasonRow);
+        this.refreshDefaultSeasonOptions();
     }
 
-    /**
-     * Remove season row
-     */
     removeSeasonRow(index) {
         const row = document.querySelector(`[data-season-index="${index}"]`);
-        if (row) {
-            row.remove();
+        if (!row) return;
+        row.remove();
 
-            // Check if list is now empty
-            const seasonsList = document.querySelector('.seasons-list');
-            if (seasonsList && seasonsList.children.length === 0) {
-                const container = document.getElementById('seasonsContainer');
-                container.innerHTML = '<div class="seasons-empty"><p>No seasons created yet. Add your first season to get started.</p></div>';
-            }
+        const seasonsList = document.querySelector('#seasonsContainer .seasons-list');
+        if (seasonsList && seasonsList.children.length === 0) {
+            document.getElementById('seasonsContainer').innerHTML =
+                '<div class="seasons-empty"><p>No seasons yet. Add a season to track events over time.</p></div>';
         }
+        this.refreshDefaultSeasonOptions();
     }
 
-    /**
-     * Add class row to form
-     */
     addClassRow() {
         const container = document.getElementById('classesContainer');
         if (!container) return;
 
-        // Replace empty state if needed
-        const emptyState = container.querySelector('.classes-empty');
-        if (emptyState) {
+        if (container.querySelector('.classes-empty')) {
             container.innerHTML = '<div class="classes-list"></div>';
         }
 
@@ -268,100 +243,91 @@ class SeriesFormController {
         if (!classesList) return;
 
         const index = classesList.querySelectorAll('.class-row').length;
+        const newId = this.dataService.generateId('class');
 
         const classRow = document.createElement('div');
         classRow.className = 'class-row';
-        classRow.dataset.classIndex = index;
+        classRow.dataset.classIndex = String(index);
         classRow.innerHTML = `
+            <input type="hidden" name="classId[]" value="${newId}">
             <div class="class-inputs">
-                <input type="text" name="className[]" placeholder="Class name" class="class-name-input">
-                <input type="number" name="classFee[]" min="0" step="0.01" value="0" 
-                       class="class-fee-input" placeholder="Default fee">
-                <input type="text" name="classDescription[]" placeholder="Class description" 
-                       class="class-description-input">
+                <input type="text" name="className[]" placeholder="Class name" class="form-control class-name-input" aria-label="Class name">
+                <input type="number" name="classFee[]" min="0" step="0.01" value="0"
+                       class="form-control class-fee-input" placeholder="Fee" aria-label="Default fee">
+                <input type="text" name="classDescription[]" placeholder="Description"
+                       class="form-control class-description-input" aria-label="Class description">
             </div>
-            <button type="button" class="btn btn-danger btn-remove-class" data-index="${index}">
-                <i class="fas fa-trash"></i>
+            <button type="button" class="btn btn-icon btn-remove-class" data-index="${index}" aria-label="Remove class">
+                <i class="fas fa-trash" aria-hidden="true"></i>
             </button>
         `;
-
         classesList.appendChild(classRow);
     }
 
-    /**
-     * Remove class row
-     */
     removeClassRow(index) {
         const row = document.querySelector(`[data-class-index="${index}"]`);
-        if (row) {
-            row.remove();
+        if (!row) return;
+        row.remove();
 
-            // Check if list is now empty
-            const classesList = document.querySelector('.classes-list');
-            if (classesList && classesList.children.length === 0) {
-                const container = document.getElementById('classesContainer');
-                container.innerHTML = '<div class="classes-empty"><p>No racing classes defined yet. Add classes to organize participants.</p></div>';
-            }
+        const classesList = document.querySelector('#classesContainer .classes-list');
+        if (classesList && classesList.children.length === 0) {
+            document.getElementById('classesContainer').innerHTML =
+                '<div class="classes-empty"><p>No racing classes yet. Add classes to organize participants and fees.</p></div>';
         }
     }
 
-    /**
-     * Handle cancel
-     */
+    refreshDefaultSeasonOptions() {
+        const select = document.getElementById('seriesDefaultSeason');
+        if (!select) return;
+
+        const current = select.value;
+        const rows = document.querySelectorAll('#seasonsContainer .season-row');
+        const options = ['<option value="">None</option>'];
+
+        rows.forEach((row) => {
+            const id = row.querySelector('input[name="seasonId[]"]')?.value;
+            const name = row.querySelector('.season-name-input')?.value || 'Unnamed Season';
+            if (!id) return;
+            options.push(`<option value="${id}">${this.uiRenderer.escapeHtml(name)}</option>`);
+        });
+
+        select.innerHTML = options.join('');
+        if ([...select.options].some((o) => o.value === current)) {
+            select.value = current;
+        }
+    }
+
     handleCancel() {
         this.currentSeries = null;
-        this.triggerCancelEvent();
+        document.dispatchEvent(new CustomEvent('series-form-cancel'));
     }
 
-    /**
-     * Show success message
-     */
     showSuccess(message) {
-        if (window.Helpers && window.Helpers.showToast) {
+        if (window.Helpers?.showToast) {
             window.Helpers.showToast(message, 'success');
-        } else {
-            window.debugLogger?.debug('SeriesForm', message);
         }
     }
 
-    /**
-     * Show error message
-     */
     showError(message) {
-        if (window.Helpers && window.Helpers.showToast) {
+        if (window.Helpers?.showToast) {
             window.Helpers.showToast(message, 'error');
         } else {
-            console.error('❌', message);
+            console.error(message);
         }
     }
 
-    /**
-     * Trigger refresh event
-     */
     triggerRefreshEvent() {
         if (window.globalEventBus) {
             window.globalEventBus.emit('series-updated');
         }
-        
-        // Also dispatch custom event
         document.dispatchEvent(new CustomEvent('series-refresh'));
-    }
-
-    /**
-     * Trigger cancel event
-     */
-    triggerCancelEvent() {
-        document.dispatchEvent(new CustomEvent('series-form-cancel'));
     }
 }
 
-// Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SeriesFormController;
 }
 
-// Make available globally
 if (typeof window !== 'undefined') {
     window.SeriesFormController = SeriesFormController;
 }
-

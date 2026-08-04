@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPC TECHNOLOGY - Events Management (Project 17)</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Hero Section Styles - Consistent with Series Page */
         .hero-section {
@@ -62,7 +62,7 @@
             font-weight: 600;
             border-radius: var(--radius-md);
             background: var(--accent-primary) !important;
-            border: 1px solid rgba(255, 96, 56, 0.6);
+            border: 1px solid rgba(153, 247, 255, 0.6);
             box-shadow: var(--shadow-sm), var(--shadow-glow-sm) !important;
             transition: all var(--transition-control);
         }
@@ -829,24 +829,15 @@
 
     <main class="main-content">
         <!-- Hero Section -->
-        <div class="hero-section">
+        <div class="cv-hero hud-panel" data-cv-reveal>
             <div class="hero-content">
                 <div class="hero-text">
-                    <h1 class="hero-title">Events Management</h1>
-                    <p class="hero-subtitle">Create and manage racing events with professional organization and real-time tracking</p>
+                    <h1 class="cv-hero-title">Events <span class="cv-accent">Management</span></h1>
+                    <p class="cv-hero-subtitle">Create and manage racing events with professional organization and real-time tracking</p>
                 </div>
-                <div class="hero-actions">
-                <button class="btn btn-primary" onclick="showNewEventModal()">
-                    New Event
-                </button>
-                <button class="btn btn-secondary" onclick="reloadData()">
-                    <i class="fas fa-sync"></i>
-                    Reload Data
-                </button>
-                <div class="utility-actions">
-                    <button class="btn-delete-subtle" onclick="clearAllData()" title="Clear All Test Data">
-                        <i class="fas fa-trash-alt"></i> Clear All Data
-                    </button>
+                <div class="cv-hero-actions">
+                <button class="btn btn-primary btn-large" onclick="showNewEventModal()"><i class="fas fa-plus"></i> New Event</button>
+                <button class="btn btn-secondary" onclick="reloadData()"><i class="fas fa-sync"></i> Reload</button>
                 </div>
             </div>
         </div>
@@ -882,6 +873,12 @@
                     <option value="upcoming">Upcoming</option>
                     <option value="active">Active</option>
                     <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="filter-container">
+                <label for="eventsSeriesFilter" class="filter-label">Series:</label>
+                <select id="eventsSeriesFilter" class="filter-select" onchange="filterEvents()">
+                    <option value="">All Series</option>
                 </select>
             </div>
         </div>
@@ -1006,14 +1003,6 @@
                     <small class="form-text text-muted">For each finishing position, choose the outcome: Win (no loss), Lose (adds a loss, continues), Eliminated (out of event).</small>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Driver Meeting Time</label>
-                    <input type="time" class="form-control" name="driverMeetingTime" value="08:00">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Max Participants</label>
-                    <input type="number" class="form-control" name="maxParticipants" min="1" required>
-                </div>
-                <div class="form-group">
                     <label class="form-label">Free Run Mode</label>
                     <select class="form-control" name="freeRunEnabled" required>
                         <option value="false">Disabled - Balance last races (fairer)</option>
@@ -1059,7 +1048,7 @@
     <script src="modules/event.js"></script>
     
     <!-- Mobile Navigation -->
-    <script src="js/mobile-nav.js"></script>
+    <script src="js/cv-load.js"></script>
     <script src="js/sidebar-nav.js"></script>
     
     <script>
@@ -2441,13 +2430,18 @@
                 const seriesSelectContainer = document.getElementById('seriesSelectContainer');
                 
                 console.log('Loading series options:', series);
+
+                // Prefer active series for new events
+                const usable = series.filter(s => (s.status || 'active') !== 'archived');
+                const list = usable.length > 0 ? usable : series;
                 
-                if (series.length === 0) {
+                if (list.length === 0) {
                     seriesSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No series available - Create series first" disabled></div>';
                 } else {
-                    const seriesOptions = series.map(s => ({
+                    const seriesOptions = list.map(s => ({
                         value: s.id,
-                        label: s.name
+                        label: s.shortName ? `${s.name} (${s.shortName})` : s.name,
+                        shortLabel: s.shortName || s.name
                     }));
                     
                     // Clean up existing combo box before recreating
@@ -2468,6 +2462,21 @@
                 console.error('Error loading series:', error);
                 const seriesSelectContainer = document.getElementById('seriesSelectContainer');
                 seriesSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="Error loading series" disabled></div>';
+            }
+        }
+
+        function populateEventsSeriesFilter() {
+            const select = document.getElementById('eventsSeriesFilter');
+            if (!select || !dataManager) return;
+            const current = select.value;
+            const series = dataManager.getAllSeries() || [];
+            select.innerHTML = '<option value="">All Series</option>' + series.map(s => {
+                const label = s.shortName ? `${s.shortName} — ${s.name}` : s.name;
+                const archived = s.status === 'archived' ? ' (archived)' : '';
+                return `<option value="${s.id}">${label}${archived}</option>`;
+            }).join('');
+            if ([...select.options].some(o => o.value === current)) {
+                select.value = current;
             }
         }
 
@@ -2570,12 +2579,10 @@
                     classOrder: classOrder.map(cls => cls.classId), // Store class order
                     registrationOpen: true,
                     description: eventData.description || '',
-                    driverMeetingTime: eventData.driverMeetingTime,
                     trackSurface: 'snow',
                     weatherContingency: 'proceed',
                     requiresClassSeparation: true,
                     participants: [],
-                    maxParticipants: parseInt(eventData.maxParticipants),
                     freeRunEnabled: eventData.freeRunEnabled === 'true'
                 };
                 
@@ -2606,6 +2613,7 @@
         let currentSortOption = 'date-desc';
         let currentSearchTerm = '';
         let currentStatusFilter = '';
+        let currentSeriesFilter = '';
         
         // Pagination Variables for Events Page
         let currentEventsPage = 1;
@@ -2615,6 +2623,7 @@
         function filterEvents() {
             const searchTerm = document.getElementById('eventsSearch').value.toLowerCase().trim();
             const statusFilter = document.getElementById('eventsStatusFilter').value;
+            const seriesFilter = document.getElementById('eventsSeriesFilter')?.value || '';
             const clearButton = document.getElementById('clearEventsSearch');
             
             // Update clear button visibility
@@ -2625,6 +2634,7 @@
             // Store current filters
             currentSearchTerm = searchTerm;
             currentStatusFilter = statusFilter;
+            currentSeriesFilter = seriesFilter;
             
             // Reset to first page when filtering
             currentEventsPage = 1;
@@ -2646,6 +2656,11 @@
                     if (eventStatus !== statusFilter) {
                         return false;
                     }
+                }
+
+                // Series filter
+                if (seriesFilter && event.seriesId !== seriesFilter) {
+                    return false;
                 }
                 
                 return true;
@@ -2720,8 +2735,8 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">📅</div>
                         <h3>No Events Found</h3>
-                        <p>${currentSearchTerm || currentStatusFilter ? 'No events match your current filters. Try adjusting your search criteria.' : 'Get started by creating your first racing event. Events are the foundation of your tournament system.'}</p>
-                        ${currentSearchTerm || currentStatusFilter ? `
+                        <p>${currentSearchTerm || currentStatusFilter || currentSeriesFilter ? 'No events match your current filters. Try adjusting your search criteria.' : 'Get started by creating your first racing event. Events are the foundation of your tournament system.'}</p>
+                        ${currentSearchTerm || currentStatusFilter || currentSeriesFilter ? `
                             <button class="btn btn-secondary" onclick="clearAllFilters()">
                                 <i class="fas fa-times"></i>
                                 Clear Filters
@@ -2760,7 +2775,10 @@
             const eventsHtml = pageEvents.map(event => {
                 // Find the series name and season
                 const eventSeries = series.find(s => s.id === event.seriesId);
-                const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
+                const seriesName = eventSeries
+                    ? (eventSeries.shortName || eventSeries.name)
+                    : 'Unknown Series';
+                const seriesFullName = eventSeries ? eventSeries.name : 'Unknown Series';
                 const season = event.seasonId && eventSeries ? eventSeries.seasons?.find(s => s.id === event.seasonId) : null;
                 
                 // Calculate participant statistics using the new data manager function
@@ -2778,7 +2796,7 @@
                         <div class="event-details">
                             <div class="detail-item">
                                 <span class="detail-label">Series:</span>
-                                <span class="detail-value">${seriesName}</span>
+                                <span class="detail-value" title="${seriesFullName}">${seriesName}</span>
                             </div>
                             ${season ? `
                                 <div class="detail-item">
@@ -2856,9 +2874,12 @@
         function clearAllFilters() {
             document.getElementById('eventsSearch').value = '';
             document.getElementById('eventsStatusFilter').value = '';
+            const seriesFilter = document.getElementById('eventsSeriesFilter');
+            if (seriesFilter) seriesFilter.value = '';
             document.getElementById('clearEventsSearch').style.display = 'none';
             currentSearchTerm = '';
             currentStatusFilter = '';
+            currentSeriesFilter = '';
             currentEventsPage = 1; // Reset to first page
             filteredEventsData = [...allEventsData];
             sortEventsData();
@@ -2948,6 +2969,8 @@
                 // Store all events data for search/sort
                 allEventsData = allEvents;
                 filteredEventsData = [...allEvents];
+
+                populateEventsSeriesFilter();
                 
                 // Apply initial sort
                 sortEventsData();
@@ -3119,7 +3142,9 @@
                 
                 const series = dataManager.getAllSeries();
                 const eventSeries = series.find(s => s.id === event.seriesId);
-                const seriesName = eventSeries ? eventSeries.name : 'Unknown Series';
+                const seriesName = eventSeries
+                    ? (eventSeries.shortName || eventSeries.name)
+                    : 'Unknown Series';
                 
                 // Get participants for this event - ensure we get fresh data
                 const eventParticipants = [];
@@ -3454,22 +3479,6 @@
                                     </p>
                                 </div>
                             </div>
-
-                            <!-- Edit Class Racing Order Section -->
-                            <div class="form-group" id="editClassOrderingSection" style="display: none;">
-                                <label class="form-label">Class Racing Order</label>
-                                <div class="class-ordering-section">
-                                    <div id="editClassOrderList">
-                                        <!-- Class order list will be populated here -->
-                                    </div>
-                                </div>
-                                <div class="form-help">
-                                    <p class="help-text">
-                                        <strong>📋 Class Racing Order:</strong><br>
-                                        Classes will race in the order shown below. This order determines the sequence of race numbers across all classes.
-                                    </p>
-                                </div>
-                            </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Date</label>
@@ -3486,18 +3495,6 @@
                             <div class="form-group">
                                 <label class="form-label">Description</label>
                                 <textarea class="form-control" name="description" rows="3">${(event.description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Max Participants</label>
-                                <input type="number" class="form-control" name="maxParticipants" min="1" required
-                                       value="${event.maxParticipants}">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Driver Meeting Time</label>
-                                <input type="time" class="form-control" name="driverMeetingTime"
-                                       value="${event.driverMeetingTime || '08:00'}">
                             </div>
 
                             <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--text-primary);">Race Configuration</h4>
@@ -3810,8 +3807,6 @@
                         date: formData.get('date'),
                         location: formData.get('location'),
                         description: formData.get('description'),
-                        driverMeetingTime: formData.get('driverMeetingTime'),
-                        maxParticipants: parseInt(formData.get('maxParticipants')),
                         updatedAt: new Date().toISOString()
                     };
                     
@@ -3852,8 +3847,6 @@
                     date: formData.get('date'),
                     location: formData.get('location'),
                     description: formData.get('description'),
-                    maxParticipants: parseInt(formData.get('maxParticipants')),
-                    driverMeetingTime: formData.get('driverMeetingTime') || '08:00',
                     status: formData.get('status'),
                     classSettings: classSettings,
                     classOrder: classOrderToSave, // Store edit class order
@@ -4121,10 +4114,12 @@
                 const series = dataManager.getSeries(seriesId);
                 const seasons = series?.seasons || [];
                 const seasonSelectContainer = document.getElementById('seasonSelectContainer');
+                const defaultSeasonId = series?.defaultSeasonId || '';
                 
                 console.log('Loading seasons for series:', seriesId, seasons);
                 
                 if (seasons.length === 0) {
+                    selectedSeasonId = '';
                     seasonSelectContainer.innerHTML = '<div class="combo-box-container"><input type="text" class="combo-box-input" placeholder="No seasons available for this series" disabled></div>';
                 } else {
                     const seasonOptions = seasons.map(season => ({
@@ -4137,6 +4132,11 @@
                         value: '',
                         label: 'No Season (General Event)'
                     });
+
+                    const preselect = (defaultSeasonId && seasons.some(s => s.id === defaultSeasonId))
+                        ? defaultSeasonId
+                        : '';
+                    selectedSeasonId = preselect;
                     
                     // Clean up existing combo box before recreating
                     UIComponents.cleanupComboBox('seasonSelect');
@@ -4146,7 +4146,7 @@
                         seasonOptions,
                         'Select Season (Optional)',
                         'onSeasonSelect',
-                        ''
+                        preselect
                     );
                     
                     // Initialize the combo box
