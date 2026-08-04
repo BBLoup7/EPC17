@@ -15,6 +15,7 @@ function renderNextRacesList(nextRaces, container, allParticipants = []) {
     
     if (nextRaces.length === 0) {
         container.innerHTML = '<div class="empty-state">No upcoming races</div>';
+        container.removeAttribute('data-sig');
         return;
     }
     
@@ -28,8 +29,8 @@ function renderNextRacesList(nextRaces, container, allParticipants = []) {
     container.innerHTML = nextRaces.map(race => createMiniRaceCard(race, allParticipants)).join('');
     container.setAttribute('data-sig', signature);
 
-    // Animate list only when contents change (avoids jank on frequent refreshes)
-    if (window.gsap && signature !== prevSig) {
+    // Animate list only on first paint (avoids blink on poll rebuilds)
+    if (window.gsap && !prevSig && signature) {
         const cards = Array.from(container.children);
         gsap.fromTo(cards, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.05, ease: 'power2.out' });
     }
@@ -89,6 +90,7 @@ function renderPreviousRacesList(previousRaces, container, allParticipants = [])
 
     if (previousRaces.length === 0) {
         container.innerHTML = '<div class="empty-state">No completed races</div>';
+        container.removeAttribute('data-sig');
         return;
     }
 
@@ -100,10 +102,13 @@ function renderPreviousRacesList(previousRaces, container, allParticipants = [])
 
     container.innerHTML = '';
     container.setAttribute('data-sig', signature);
-    
+
+    // Only stagger opacity intro on first paint; later rebuilds show immediately (no flash)
+    const animateIn = !prevSig;
+
     previousRaces.forEach((race, index) => {
         const card = document.createElement('div');
-        card.className = 'prev-card';
+        card.className = animateIn ? 'prev-card' : 'prev-card show';
         card.setAttribute('data-action', 'replay');
         card.setAttribute('data-race-id', race.id || '');
         card.setAttribute('role', 'button');
@@ -112,10 +117,11 @@ function renderPreviousRacesList(previousRaces, container, allParticipants = [])
         card.innerHTML = createPreviousRaceCardHTML(race, allParticipants);
         container.appendChild(card);
         
-        // Stagger animation
-        setTimeout(() => {
-            requestAnimationFrame(() => card.classList.add('show'));
-        }, index * 100);
+        if (animateIn) {
+            setTimeout(() => {
+                requestAnimationFrame(() => card.classList.add('show'));
+            }, index * 100);
+        }
     });
 }
 
@@ -129,7 +135,7 @@ function createPreviousRaceCardHTML(race, allParticipants = []) {
     const className = race.className || race.class || 'Unknown';
     const participants = window.AnimatorUtils.getRaceParticipants(race, allParticipants);
     const results = window.AnimatorUtils.extractResults(race);
-    const time = window.AnimatorUtils.formatTime(race.completedAt || race.updatedAt || race.createdAt);
+    const time = window.AnimatorUtils.formatTime(race.endTime || race.completedAt);
     
     // Sort by position
     const sortedParticipants = participants.sort((a, b) => {
@@ -206,44 +212,51 @@ function renderCurrentRace(race, allRaces, currentEventId, container, allPartici
             allParticipants
         );
 
-        newHTML = enrichedParticipants.map(driver => createDriverCard(driver, race)).join('');
+        if (enrichedParticipants.length === 0) {
+            const raceNo = race.raceNumber || 'TBD';
+            const className = race.className || race.class || '';
+            newHTML = `<div class="empty-state">Race #${raceNo}${className ? ` • ${className}` : ''} has no participants yet</div>`;
+            container.setAttribute('data-content-sig', 'empty-participants');
+        } else {
+            newHTML = enrichedParticipants.map(driver => createDriverCard(driver, race)).join('');
 
-        // Avoid resetting hover/animations on periodic refreshes if the displayed data is unchanged.
-        const sig = enrichedParticipants
-            .map(d => [
-                d.id,
-                d.lane,
-                d.dayWins,
-                d.dayRaces,
-                d.classWins,
-                d.classRaces,
-                d.lastFinish,
-                d.lastRaceNumber,
-                d.lastRaceClassName,
-                d.sponsor,
-                d.hometown,
-                d.age,
-                d.number,
-                d.vehicleYear,
-                d.vehicleMake,
-                d.vehicleModel,
-                d.statistics?.totalWins,
-                d.statistics?.totalRaces,
-                d.statistics?.winRate,
-                d.statistics?.avgPosition,
-                d.statistics?.bestStreak,
-                d.statistics?.bestPosition,
-                d.statistics?.recentWinRate,
-                d.statistics?.eventsParticipated,
-                d.statistics?.totalLosses
-            ].join(':'))
-            .join('|');
+            // Avoid resetting hover/animations on periodic refreshes if the displayed data is unchanged.
+            const sig = enrichedParticipants
+                .map(d => [
+                    d.id,
+                    d.lane,
+                    d.dayWins,
+                    d.dayRaces,
+                    d.classWins,
+                    d.classRaces,
+                    d.lastFinish,
+                    d.lastRaceNumber,
+                    d.lastRaceClassName,
+                    d.sponsor,
+                    d.hometown,
+                    d.age,
+                    d.number,
+                    d.vehicleYear,
+                    d.vehicleMake,
+                    d.vehicleModel,
+                    d.statistics?.totalWins,
+                    d.statistics?.totalRaces,
+                    d.statistics?.winRate,
+                    d.statistics?.avgPosition,
+                    d.statistics?.bestStreak,
+                    d.statistics?.bestPosition,
+                    d.statistics?.recentWinRate,
+                    d.statistics?.eventsParticipated,
+                    d.statistics?.totalLosses
+                ].join(':'))
+                .join('|');
 
-        const prevContentSig = container.getAttribute('data-content-sig') || '';
-        if (prevRaceId && prevRaceId === nextRaceId && prevContentSig === sig) {
-            return;
+            const prevContentSig = container.getAttribute('data-content-sig') || '';
+            if (prevRaceId && prevRaceId === nextRaceId && prevContentSig === sig) {
+                return;
+            }
+            container.setAttribute('data-content-sig', sig);
         }
-        container.setAttribute('data-content-sig', sig);
     }
 
     // Only animate when the displayed race changes
@@ -705,7 +718,7 @@ function showRaceResults(race, container, duration = 6000, callback) {
 /**
  * Update header information
  * @param {Object} event - Current event
- * @param {number} timeSinceLastRace - Milliseconds since last race
+ * @param {number|null} timeSinceLastRace - Milliseconds since last result entry, or null if idle
  * @param {number|Object} remainingInfo - Remaining heats info (number or { totalRemaining, className, classRemaining })
  */
 function updateHeader(event, timeSinceLastRace, remainingInfo) {
@@ -718,7 +731,11 @@ function updateHeader(event, timeSinceLastRace, remainingInfo) {
     }
     
     if (timerEl) {
-        timerEl.textContent = window.AnimatorUtils.formatDuration(timeSinceLastRace);
+        if (timeSinceLastRace == null || !Number.isFinite(timeSinceLastRace)) {
+            timerEl.textContent = '—';
+        } else {
+            timerEl.textContent = window.AnimatorUtils.formatDuration(timeSinceLastRace);
+        }
     }
     
     if (racesLeftEl) {

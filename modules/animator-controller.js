@@ -90,6 +90,10 @@ class AnimatorController {
         
         // Load initial data
         await this.loadData();
+
+        // Seed completion tracking BEFORE any WS/poll refresh so historical
+        // completed heats do not trigger a false cinematic sequence on join.
+        this.seedCompletionState();
         
         // Setup WebSocket connection
         this.setupWebSocket();
@@ -106,7 +110,7 @@ class AnimatorController {
         // Start timer
         this.startTimer();
         
-        // Render initial state
+        // Render initial state (calm first paint — no cinema)
         this.renderAll();
         
         // Setup fallback polling (only if WebSocket fails)
@@ -118,6 +122,23 @@ class AnimatorController {
         }, 5000);
         
         window.debugLogger?.debug('Animator', 'AnimatorController initialized successfully');
+    }
+
+    /**
+     * Mark all currently completed heats as already-seen so the first refresh
+     * does not treat them as newly completed (which caused join-time flashing).
+     */
+    seedCompletionState() {
+        this.computeQueues();
+        const completedNow = (this.races || [])
+            .filter(r => this.isRaceCompleted(r) && this.hasMeaningfulResults(r) && r?.id)
+            .map(r => r.id);
+        this.completedRaceIds = new Set(completedNow);
+        this.lastRenderedCenterRaceId = this.currentRace?.id || null;
+        window.debugLogger?.debug('Animator', 'Seeded completion state', {
+            completedCount: completedNow.length,
+            centerRaceId: this.lastRenderedCenterRaceId
+        });
     }
 
     getFloatLayer() {
@@ -616,17 +637,19 @@ class AnimatorController {
                                (events.length ? events.sort((a, b) => 
                                    new Date(b.createdAt) - new Date(a.createdAt))[0] : null);
             
-            // Infer last race time
-            const inferredLastRaceTime = window.AnimatorUtils.inferLastRaceTime(this.races);
+            // Infer last result-entry time for the active event only.
+            // Never seed with Date.now() — that made the timer reset on every page join.
+            const eventRacesForTimer = this.races.filter(race =>
+                !this.currentEvent?.id || !race.eventId || race.eventId === this.currentEvent.id
+            );
+            const inferredLastRaceTime = window.AnimatorUtils.inferLastRaceTime(eventRacesForTimer);
             if (inferredLastRaceTime) {
                 // Only move forward to avoid timer "resetting" on refresh
                 if (!this.lastRaceTime || inferredLastRaceTime >= this.lastRaceTime) {
                     this.lastRaceTime = inferredLastRaceTime;
                 }
-            } else if (!this.lastRaceTime) {
-                // Initialize once so the timer is stable even before first completion
-                this.lastRaceTime = Date.now();
             }
+            // If no inferable timestamp, leave lastRaceTime as-is (null on first load → idle "—")
             this.lastDataRefreshTime = Date.now();
             this.updateStatusIndicators();
             
@@ -672,13 +695,15 @@ class AnimatorController {
             );
         });
         
-        // Completed races
+        // Completed races — prefer result-entry timestamps
         const completed = sorted.filter(r => this.isRaceCompleted(r)).sort((a, b) => {
+            const ta = new Date(a.endTime || a.completedAt || 0).getTime();
+            const tb = new Date(b.endTime || b.completedAt || 0).getTime();
+            if (ta !== tb) return tb - ta;
             if (a.raceNumber && b.raceNumber) {
                 return b.raceNumber - a.raceNumber;
             }
-            return new Date(b.completedAt || b.updatedAt || b.createdAt || 0) -
-                   new Date(a.completedAt || a.updatedAt || a.createdAt || 0);
+            return String(b.id || '').localeCompare(String(a.id || ''));
         });
         
         this.liveCurrentRace = upcoming[0] || null;
@@ -732,8 +757,10 @@ class AnimatorController {
         // Apply visual markers (PINNED highlight, etc.)
         this.applyPinnedHighlights();
         
-        // Update header
-        const timeSinceLastRace = Date.now() - (this.lastRaceTime || Date.now());
+        // Update header — null lastRaceTime means idle (no results yet)
+        const timeSinceLastRace = this.lastRaceTime != null
+            ? Date.now() - this.lastRaceTime
+            : null;
         const eventRaces = this.races.filter(race =>
             !race.eventId || race.eventId === this.currentEvent?.id
         );
@@ -767,11 +794,12 @@ class AnimatorController {
     async handleRaceCompleted(data) {
         window.debugLogger?.debug('Animator', 'Handling race completion');
         
-        // Update last race time
+        // Prefer result-entry timestamp from payload; otherwise let loadData infer.
+        // Never fall back to Date.now() here — that desyncs the desk timer from real results.
         if (data.race?.endTime) {
             this.lastRaceTime = new Date(data.race.endTime).getTime();
-        } else {
-            this.lastRaceTime = Date.now();
+        } else if (data.race?.completedAt) {
+            this.lastRaceTime = new Date(data.race.completedAt).getTime();
         }
 
         // Let the unified refresh path detect the newly completed heat
@@ -817,16 +845,19 @@ class AnimatorController {
         await this.loadData(true, options);
 
         const newlyCompleted = this.detectNewlyCompletedRaces();
-        const preferred = beforeRaceId ? newlyCompleted.find(r => r.id === beforeRaceId) : null;
-        const candidate = preferred || newlyCompleted[0] || null;
+        // Only cinema when the race that was in center just completed.
+        // Falling back to newlyCompleted[0] caused join-time flash of historical heats.
+        const preferred = beforeRaceId
+            ? newlyCompleted.find(r => r.id === beforeRaceId)
+            : null;
 
-        if (candidate && !this.isShowingResults) {
-            window.debugLogger?.debug('Animator', 'Detected newly completed race, starting completion sequence', {
-                raceId: candidate.id,
-                raceNumber: candidate.raceNumber,
-                className: candidate.className
+        if (preferred && !this.isShowingResults) {
+            window.debugLogger?.debug('Animator', 'Detected newly completed center race, starting completion sequence', {
+                raceId: preferred.id,
+                raceNumber: preferred.raceNumber,
+                className: preferred.className
             });
-            await this.showCompletionSequence(candidate);
+            await this.showCompletionSequence(preferred);
             return;
         }
 
@@ -842,7 +873,7 @@ class AnimatorController {
             .filter(r => this.isRaceCompleted(r) && this.hasMeaningfulResults(r))
             .map(r => ({
                 race: r,
-                t: new Date(r.completedAt || r.endTime || r.updatedAt || r.createdAt || 0).getTime()
+                t: new Date(r.endTime || r.completedAt || 0).getTime()
             }))
             .filter(x => x.race?.id);
 
@@ -928,6 +959,14 @@ class AnimatorController {
             { focusMs: 900, gapMs: 250, focusScale: 1.08 }
         );
 
+        // Sync timer from this result entry if present
+        const entryTs = new Date(race.endTime || race.completedAt || 0).getTime();
+        if (Number.isFinite(entryTs) && entryTs > 0) {
+            if (!this.lastRaceTime || entryTs >= this.lastRaceTime) {
+                this.lastRaceTime = entryTs;
+            }
+        }
+
         // Continuous motion transitions: slide completed into results + promote next race
         await this.runContinuousMotionTransition(race);
 
@@ -946,146 +985,167 @@ class AnimatorController {
      * Continuous motion transition:
      * - Completed race becomes a summary card that slides into Recent Results (right)
      * - Next race card slides from Up Next (left) into the center as a presentation
+     * Always clears center so final renderAll is not stuck at opacity 0.
      */
     async runContinuousMotionTransition(completedRace) {
-        if (!window.gsap) return;
-
         const floatLayer = this.getFloatLayer();
 
         // Ensure next/previous queues reflect the post-completion world (without re-rendering the center yet)
         this.computeQueues();
 
-        // Fade out current driver cards so the stage can transition cleanly
+        const clearCenterForHandoff = () => {
+            if (!this.currentRaceContainer) return;
+            this.currentRaceContainer.innerHTML = '';
+            this.currentRaceContainer.removeAttribute('data-current-race-id');
+            this.currentRaceContainer.removeAttribute('data-content-sig');
+            this.currentRaceContainer.classList.remove('finish-mode');
+        };
+
+        if (!window.gsap) {
+            clearCenterForHandoff();
+            return;
+        }
+
         try {
-            const cards = Array.from(this.currentRaceContainer?.querySelectorAll('.driver-card') || []);
-            if (cards.length > 0) {
+            // Fade out current driver cards so the stage can transition cleanly
+            try {
+                const cards = Array.from(this.currentRaceContainer?.querySelectorAll('.driver-card') || []);
+                if (cards.length > 0) {
+                    await new Promise(resolve => {
+                        gsap.to(cards, {
+                            opacity: 0,
+                            y: 14,
+                            scale: 0.98,
+                            duration: 0.35,
+                            stagger: 0.03,
+                            ease: 'power2.in',
+                            onComplete: resolve
+                        });
+                    });
+                }
+            } catch (e) {
+                // Ignore fade failures
+            }
+
+            // 1) Slide a summary card into Recent Results
+            try {
+                const summaryEl = window.AnimatorRenderer.createPreviousRaceCardElement(completedRace, this.participantsById);
+                const targetWidth = this.previousRacesContainer?.getBoundingClientRect().width || 320;
+
+                floatLayer.appendChild(summaryEl);
+                summaryEl.style.width = `${targetWidth}px`;
+                summaryEl.style.height = 'auto';
+
+                const centerRect = this.currentRaceContainer?.getBoundingClientRect();
+                const startRect = centerRect
+                    ? {
+                          left: centerRect.left + (centerRect.width - targetWidth) / 2,
+                          top: centerRect.top + Math.min(80, centerRect.height * 0.15),
+                          width: targetWidth,
+                          height: Math.max(120, Math.min(220, centerRect.height * 0.35))
+                      }
+                    : { left: 200, top: 120, width: targetWidth, height: 160 };
+
+                this.setFloatingRect(summaryEl, startRect);
+
+                // Placeholder at top of results list to get an accurate target rect
+                const ph = document.createElement('div');
+                ph.className = 'prev-card show animator-placeholder';
+                ph.style.height = `${startRect.height}px`;
+
+                if (this.previousRacesContainer) {
+                    this.previousRacesContainer.insertBefore(ph, this.previousRacesContainer.firstChild);
+                }
+                const targetRect = ph.getBoundingClientRect();
+
                 await new Promise(resolve => {
-                    gsap.to(cards, {
-                        opacity: 0,
-                        y: 14,
-                        scale: 0.98,
-                        duration: 0.35,
-                        stagger: 0.03,
-                        ease: 'power2.in',
+                    gsap.to(summaryEl, {
+                        left: targetRect.left,
+                        top: targetRect.top,
+                        width: targetRect.width,
+                        height: targetRect.height,
+                        duration: 0.75,
+                        ease: 'power2.inOut',
                         onComplete: resolve
                     });
                 });
-            }
-        } catch (e) {
-            // Ignore
-        }
 
-        // 1) Slide a summary card into Recent Results
-        try {
-            const summaryEl = window.AnimatorRenderer.createPreviousRaceCardElement(completedRace, this.participantsById);
-            const targetWidth = this.previousRacesContainer?.getBoundingClientRect().width || 320;
+                // Replace placeholder with real element in the list
+                summaryEl.classList.remove('floating-card');
+                summaryEl.style.position = '';
+                summaryEl.style.left = '';
+                summaryEl.style.top = '';
+                summaryEl.style.width = '';
+                summaryEl.style.height = '';
+                summaryEl.style.zIndex = '';
+                summaryEl.style.pointerEvents = '';
 
-            floatLayer.appendChild(summaryEl);
-            summaryEl.style.width = `${targetWidth}px`;
-            summaryEl.style.height = 'auto';
+                if (ph.parentNode) ph.parentNode.removeChild(ph);
+                if (this.previousRacesContainer) {
+                    this.previousRacesContainer.insertBefore(summaryEl, this.previousRacesContainer.firstChild);
+                }
 
-            const centerRect = this.currentRaceContainer?.getBoundingClientRect();
-            const startRect = centerRect
-                ? {
-                      left: centerRect.left + (centerRect.width - targetWidth) / 2,
-                      top: centerRect.top + Math.min(80, centerRect.height * 0.15),
-                      width: targetWidth,
-                      height: Math.max(120, Math.min(220, centerRect.height * 0.35))
-                  }
-                : { left: 200, top: 120, width: targetWidth, height: 160 };
-
-            this.setFloatingRect(summaryEl, startRect);
-
-            // Placeholder at top of results list to get an accurate target rect
-            const ph = document.createElement('div');
-            ph.className = 'prev-card show animator-placeholder';
-            ph.style.height = `${startRect.height}px`;
-
-            if (this.previousRacesContainer) {
-                this.previousRacesContainer.insertBefore(ph, this.previousRacesContainer.firstChild);
-            }
-            const targetRect = ph.getBoundingClientRect();
-
-            await new Promise(resolve => {
-                gsap.to(summaryEl, {
-                    left: targetRect.left,
-                    top: targetRect.top,
-                    width: targetRect.width,
-                    height: targetRect.height,
-                    duration: 0.75,
-                    ease: 'power2.inOut',
-                    onComplete: resolve
-                });
-            });
-
-            // Replace placeholder with real element in the list
-            summaryEl.classList.remove('floating-card');
-            summaryEl.style.position = '';
-            summaryEl.style.left = '';
-            summaryEl.style.top = '';
-            summaryEl.style.width = '';
-            summaryEl.style.height = '';
-            summaryEl.style.zIndex = '';
-            summaryEl.style.pointerEvents = '';
-
-            if (ph.parentNode) ph.parentNode.removeChild(ph);
-            if (this.previousRacesContainer) {
-                this.previousRacesContainer.insertBefore(summaryEl, this.previousRacesContainer.firstChild);
+                // Lock signature so renderAll doesn't immediately rebuild and kill the just-inserted card
+                const sig = (this.previousRaces || []).map(r => r?.id || '').join('|');
+                this.previousRacesContainer?.setAttribute('data-sig', sig);
+            } catch (e) {
+                window.debugLogger?.warn('Animator', 'Failed to slide summary into results', e);
             }
 
-            // Lock signature so renderAll doesn't immediately rebuild and kill the just-inserted card
-            const sig = (this.previousRaces || []).map(r => r?.id || '').join('|');
-            this.previousRacesContainer?.setAttribute('data-sig', sig);
-        } catch (e) {
-            window.debugLogger?.warn('Animator', 'Failed to slide summary into results', e);
-        }
+            // 2) Promote the next race card from Up Next into the center (presentation)
+            try {
+                const nextEl = this.nextRacesContainer?.querySelector('.mini-race[data-action="pin"][data-race-id]');
+                if (nextEl) {
+                    const fromRect = nextEl.getBoundingClientRect();
+                    const placeholder = this.createPlaceholderFor(nextEl);
+                    nextEl.parentNode?.replaceChild(placeholder, nextEl);
 
-        // 2) Promote the next race card from Up Next into the center (presentation)
-        try {
-            const nextEl = this.nextRacesContainer?.querySelector('.mini-race[data-action="pin"][data-race-id]');
-            if (!nextEl) return;
+                    floatLayer.appendChild(nextEl);
+                    this.setFloatingRect(nextEl, fromRect);
 
-            const fromRect = nextEl.getBoundingClientRect();
-            const placeholder = this.createPlaceholderFor(nextEl);
-            nextEl.parentNode?.replaceChild(placeholder, nextEl);
+                    const centerRect = this.currentRaceContainer?.getBoundingClientRect();
+                    if (centerRect) {
+                        const toLeft = centerRect.left + (centerRect.width - fromRect.width) / 2;
+                        const toTop = centerRect.top + 18;
 
-            floatLayer.appendChild(nextEl);
-            this.setFloatingRect(nextEl, fromRect);
+                        await new Promise(resolve => {
+                            gsap.to(nextEl, {
+                                left: toLeft,
+                                top: toTop,
+                                duration: 0.75,
+                                ease: 'power2.inOut',
+                                onComplete: resolve
+                            });
+                        });
 
-            const centerRect = this.currentRaceContainer?.getBoundingClientRect();
-            if (!centerRect) return;
+                        // Hold briefly as a “presentation”, then fade out so the full driver cards can take over
+                        await new Promise(resolve => {
+                            gsap.to(nextEl, { duration: 0.35, ease: 'none', onComplete: resolve });
+                        });
+                        await new Promise(resolve => {
+                            gsap.to(nextEl, {
+                                opacity: 0,
+                                y: -10,
+                                duration: 0.35,
+                                ease: 'power2.in',
+                                onComplete: resolve
+                            });
+                        });
+                    }
 
-            const toLeft = centerRect.left + (centerRect.width - fromRect.width) / 2;
-            const toTop = centerRect.top + 18;
-
-            await new Promise(resolve => {
-                gsap.to(nextEl, {
-                    left: toLeft,
-                    top: toTop,
-                    duration: 0.75,
-                    ease: 'power2.inOut',
-                    onComplete: resolve
-                });
-            });
-
-            // Hold briefly as a “presentation”, then fade out so the full driver cards can take over
-            await new Promise(resolve => {
-                gsap.to(nextEl, { duration: 0.35, ease: 'none', onComplete: resolve });
-            });
-            await new Promise(resolve => {
-                gsap.to(nextEl, {
-                    opacity: 0,
-                    y: -10,
-                    duration: 0.35,
-                    ease: 'power2.in',
-                    onComplete: resolve
-                });
-            });
-
-            if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
-            if (nextEl.parentNode) nextEl.parentNode.removeChild(nextEl);
-        } catch (e) {
-            window.debugLogger?.warn('Animator', 'Failed to promote next race card', e);
+                    if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+                    if (nextEl.parentNode) nextEl.parentNode.removeChild(nextEl);
+                }
+            } catch (e) {
+                window.debugLogger?.warn('Animator', 'Failed to promote next race card', e);
+            }
+        } finally {
+            // Never leave center stuck at opacity 0 — renderAll paints the new current race
+            clearCenterForHandoff();
+            // Clean any leftover float nodes
+            while (floatLayer.firstChild) {
+                floatLayer.removeChild(floatLayer.firstChild);
+            }
         }
     }
     
@@ -1136,15 +1196,19 @@ class AnimatorController {
     }
     
     /**
-     * Update timer display
+     * Update timer display — idle "—" until a real result-entry timestamp exists
      */
     updateTimer() {
-        const timeSinceLastRace = Date.now() - (this.lastRaceTime || Date.now());
         const timerEl = document.querySelector('.race-timer .t');
-        
-        if (timerEl) {
-            timerEl.textContent = window.AnimatorUtils.formatDuration(timeSinceLastRace);
+        if (!timerEl) return;
+
+        if (this.lastRaceTime == null) {
+            timerEl.textContent = '—';
+            return;
         }
+
+        const timeSinceLastRace = Date.now() - this.lastRaceTime;
+        timerEl.textContent = window.AnimatorUtils.formatDuration(timeSinceLastRace);
     }
 
     /**

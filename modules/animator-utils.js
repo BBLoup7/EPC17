@@ -74,7 +74,9 @@ function extractRacesFromBrackets(brackets, eventIdOverride = null) {
                                 lanes: heat.lanes || [],
                                 results: normalizedResults,
                                 scheduledTime: heat.scheduledTime || heat.startTime,
-                                completedAt: heat.completedAt || heat.endTime,
+                                // Result-entry timestamp (race.js sets endTime on record)
+                                endTime: heat.endTime || heat.completedAt || null,
+                                completedAt: heat.completedAt || heat.endTime || null,
                                 // Avoid using "now" here; it breaks sorting and timers on refresh.
                                 createdAt: heat.createdAt || heat.scheduledTime || heat.startTime || heat.completedAt || heat.endTime || null,
                                 eliminationType: classData.eliminationType || 'single',
@@ -337,14 +339,16 @@ function formatDuration(milliseconds) {
 }
 
 /**
- * Infer last race completion time from races array
+ * Infer last result-entry time from races array.
+ * Uses only endTime / completedAt (never createdAt / scheduled / page-load).
  * @param {Array} races - Array of races
- * @returns {number|null} Timestamp of last completed race
+ * @returns {number|null} Timestamp of latest result entry, or null if none
  */
 function inferLastRaceTime(races) {
     const completedRaces = (races || [])
         .filter(r => {
-            if (r?.status === 'completed' || r?.endTime || r?.completedAt || r?.isComplete) return true;
+            if (r?.status === 'completed' || r?.isComplete) return true;
+            if (r?.endTime || r?.completedAt) return true;
             const results = r?.results || r?.raceResults || r?.finishOrder;
             if (Array.isArray(results)) return results.length > 0;
             if (results && typeof results === 'object') {
@@ -353,7 +357,7 @@ function inferLastRaceTime(races) {
             }
             return false;
         })
-        .map(r => new Date(r.endTime || r.completedAt || r.updatedAt || r.createdAt || 0).getTime())
+        .map(r => new Date(r.endTime || r.completedAt || 0).getTime())
         .filter(t => Number.isFinite(t) && t > 0)
         .sort((a, b) => b - a);
     

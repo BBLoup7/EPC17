@@ -7,8 +7,8 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- GSAP Animation Library -->
     <script src="js/logger.js"></script>
@@ -26,7 +26,7 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: radial-gradient(ellipse at center, rgba(255, 96, 56, 0.1) 0%, transparent 50%),
+            background: radial-gradient(ellipse at center, rgba(153, 247, 255, 0.1) 0%, transparent 50%),
                         radial-gradient(ellipse at 20% 80%, rgba(74, 144, 226, 0.1) 0%, transparent 50%),
                         radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
                         var(--bg-primary);
@@ -68,23 +68,23 @@
             color: white;
             text-decoration: none;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 15px rgba(255, 96, 56, 0.4);
+            box-shadow: 0 4px 15px rgba(153, 247, 255, 0.4);
         }
         
         .home-button:hover {
             transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(255, 96, 56, 0.6);
+            box-shadow: 0 8px 25px rgba(153, 247, 255, 0.6);
         }
         
         .event-title {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
             font-size: 1.8rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-primary), var(--info));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 20px rgba(255, 96, 56, 0.3);
+            text-shadow: 0 0 20px rgba(153, 247, 255, 0.3);
         }
 
         .header-right {
@@ -100,7 +100,7 @@
         }
 
         .status-pill {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
             font-size: 0.75rem;
             font-weight: 800;
             letter-spacing: 0.8px;
@@ -120,8 +120,8 @@
         }
 
         .status-pill.live.pinned {
-            background: linear-gradient(135deg, rgba(255, 96, 56, 0.25), rgba(139, 92, 246, 0.18));
-            border-color: rgba(255, 96, 56, 0.5);
+            background: linear-gradient(135deg, rgba(153, 247, 255, 0.25), rgba(139, 92, 246, 0.18));
+            border-color: rgba(153, 247, 255, 0.5);
         }
 
         .status-pill.ws-connected {
@@ -147,15 +147,15 @@
         
         .race-timer {
             font-variant-numeric: tabular-nums;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
             font-weight: 700;
             font-size: 1.1rem;
             color: white;
-            background: linear-gradient(135deg, rgba(255, 96, 56, 0.2), rgba(74, 144, 226, 0.2));
-            border: 2px solid rgba(255, 96, 56, 0.5);
+            background: linear-gradient(135deg, rgba(153, 247, 255, 0.2), rgba(74, 144, 226, 0.2));
+            border: 2px solid rgba(153, 247, 255, 0.5);
             padding: 0.6rem 1.2rem;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(255, 96, 56, 0.3);
+            box-shadow: 0 4px 20px rgba(153, 247, 255, 0.3);
         }
         
         .race-timer .label {
@@ -165,7 +165,12 @@
             font-size: 0.9rem;
         }
 
-        /* Main Layout */
+        /* Main Layout — fill viewport below fixed header, panels scroll internally */
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         .animator-layout {
             display: grid;
             grid-template-columns: 320px 1fr 380px;
@@ -173,7 +178,9 @@
             padding: 1.5rem;
             margin-top: 70px;
             height: calc(100vh - 70px);
+            max-height: calc(100vh - 70px);
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         /* Panel Styles */
@@ -182,7 +189,9 @@
             border: 1px solid var(--glass-border);
             border-radius: var(--radius-2xl);
             padding: 1.5rem;
+            overflow-x: hidden;
             overflow-y: auto;
+            min-height: 0;
             position: relative;
             backdrop-filter: var(--glass-blur);
             box-shadow: var(--shadow-xl);
@@ -244,12 +253,12 @@
             background: rgba(255, 255, 255, 0.1);
             border-color: var(--accent-primary);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 96, 56, 0.2);
+            box-shadow: 0 6px 20px rgba(153, 247, 255, 0.2);
         }
 
         .mini-race.is-pinned {
             border-color: var(--accent-primary);
-            box-shadow: 0 0 0 1px rgba(255, 96, 56, 0.25), 0 12px 28px rgba(255, 96, 56, 0.18);
+            box-shadow: 0 0 0 1px rgba(153, 247, 255, 0.25), 0 12px 28px rgba(153, 247, 255, 0.18);
             position: relative;
         }
 
@@ -264,8 +273,8 @@
             letter-spacing: 0.8px;
             text-transform: uppercase;
             color: rgba(255, 255, 255, 0.95);
-            background: rgba(255, 96, 56, 0.22);
-            border: 1px solid rgba(255, 96, 56, 0.35);
+            background: rgba(153, 247, 255, 0.22);
+            border: 1px solid rgba(153, 247, 255, 0.35);
             border-radius: 999px;
             padding: 0.25rem 0.5rem;
             pointer-events: none;
@@ -287,7 +296,7 @@
         .mini-race .meta {
             font-size: 0.75rem;
             color: var(--text-secondary);
-            background: rgba(255, 96, 56, 0.2);
+            background: rgba(153, 247, 255, 0.2);
             padding: 0.25rem 0.5rem;
             border-radius: 6px;
             font-weight: 600;
@@ -342,7 +351,7 @@
             align-items: center;
             justify-content: center;
             border: 3px solid var(--accent-primary);
-            box-shadow: var(--shadow-xl), 0 0 50px rgba(255, 96, 56, 0.25), inset 0 0 100px rgba(255, 96, 56, 0.05);
+            box-shadow: var(--shadow-xl), 0 0 50px rgba(153, 247, 255, 0.25), inset 0 0 100px rgba(153, 247, 255, 0.05);
         }
 
         .cards-row {
@@ -435,7 +444,7 @@
             font-size: 1.1rem;
             font-weight: 700;
             color: var(--accent-primary);
-            background: rgba(255, 96, 56, 0.2);
+            background: rgba(153, 247, 255, 0.2);
             padding: 0.4rem 0.8rem;
             border-radius: 8px;
         }
@@ -499,8 +508,8 @@
         }
 
         .stat {
-            background: linear-gradient(135deg, rgba(255, 96, 56, 0.25), rgba(74, 144, 226, 0.25));
-            border: 1px solid rgba(255, 96, 56, 0.4);
+            background: linear-gradient(135deg, rgba(153, 247, 255, 0.25), rgba(74, 144, 226, 0.25));
+            border: 1px solid rgba(153, 247, 255, 0.4);
             color: #ffffff;
             padding: 0.85rem;
             border-radius: 14px;
@@ -509,7 +518,7 @@
         }
 
         .stat:hover {
-            background: linear-gradient(135deg, rgba(255, 96, 56, 0.35), rgba(74, 144, 226, 0.35));
+            background: linear-gradient(135deg, rgba(153, 247, 255, 0.35), rgba(74, 144, 226, 0.35));
             transform: translateY(-3px);
         }
 
@@ -610,7 +619,7 @@
         .prev-card:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: var(--accent-primary);
-            box-shadow: 0 6px 20px rgba(255, 96, 56, 0.2);
+            box-shadow: 0 6px 20px rgba(153, 247, 255, 0.2);
         }
 
         .prev-card .head {
@@ -629,7 +638,7 @@
         .prev-card .time {
             font-size: 0.8rem;
             color: var(--text-secondary);
-            background: rgba(255, 96, 56, 0.2);
+            background: rgba(153, 247, 255, 0.2);
             padding: 0.25rem 0.5rem;
             border-radius: 6px;
         }
@@ -655,17 +664,17 @@
         }
 
         .prev-card .p.winner {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 96, 56, 0.25));
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(153, 247, 255, 0.25));
             border: 1px solid rgba(255, 215, 0, 0.4);
         }
 
         .prev-card .p.second {
-            background: linear-gradient(135deg, rgba(192, 192, 192, 0.25), rgba(255, 96, 56, 0.15));
+            background: linear-gradient(135deg, rgba(192, 192, 192, 0.25), rgba(153, 247, 255, 0.15));
             border: 1px solid rgba(192, 192, 192, 0.4);
         }
 
         .prev-card .p.third {
-            background: linear-gradient(135deg, rgba(205, 127, 50, 0.25), rgba(255, 96, 56, 0.15));
+            background: linear-gradient(135deg, rgba(205, 127, 50, 0.25), rgba(153, 247, 255, 0.15));
             border: 1px solid rgba(205, 127, 50, 0.4);
         }
 
@@ -748,7 +757,7 @@
             font-size: 2.8rem;
             font-weight: 800;
             color: var(--accent-primary);
-            text-shadow: 0 0 20px rgba(255, 96, 56, 0.5);
+            text-shadow: 0 0 20px rgba(153, 247, 255, 0.5);
         }
 
         .results-subtitle {
@@ -780,7 +789,7 @@
         }
 
         .result-row.winner {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 96, 56, 0.25));
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(153, 247, 255, 0.25));
             border: 2px solid rgba(255, 215, 0, 0.5);
         }
 
@@ -826,10 +835,16 @@
         }
 
         @media (max-width: 1100px) {
+            html, body {
+                overflow: auto;
+            }
+
             .animator-layout {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto auto 1fr;
                 height: auto;
+                max-height: none;
+                overflow: visible;
             }
         }
 
@@ -867,13 +882,13 @@
         </div>
         <div class="header-right">
             <div class="animator-status" aria-label="Animator live status">
-                <span id="animator-live-pill" class="status-pill live">LIVE</span>
+                <span id="animator-live-pill" class="status-pill live">AUTO</span>
                 <span id="animator-ws-pill" class="status-pill">WS: —</span>
             </div>
             <div class="race-info" id="races-left">—</div>
-            <div class="race-timer">
-                <span class="label">Since last race:</span>
-                <span class="t">00:00:00</span>
+            <div class="race-timer" title="Elapsed time since the latest result was entered">
+                <span class="label">Since last result:</span>
+                <span class="t">—</span>
             </div>
         </div>
     </div>
@@ -947,7 +962,9 @@
             
             console.log('✅ Animator Page Ready');
             console.log('⌨️ Keyboard Controls:');
-            console.log('  - Space: Skip to next race');
+            console.log('  - Space: Clear pin + refresh');
+            console.log('  - L: Return to AUTO (live)');
+            console.log('  - 1/2/3: Replay recent result slots');
             console.log('  - R: Refresh data');
             console.log('  - F: Toggle fullscreen');
             console.log('  - ESC: Clear overlays');
